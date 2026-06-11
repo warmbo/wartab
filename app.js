@@ -211,13 +211,9 @@ function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
    Cards snap to grid cells; gaps preserve blank spaces for customization.
 */
 function startDrag(e,id,idx){
-  if(e.button!==0)return;
+  e.preventDefault();
   const card=config.cards.find(x=>x.id===id);
   if(!card)return;
-  e.preventDefault();
-  // Capture pointer on the handle so all events route here
-  e.target.setPointerCapture(e.pointerId);
-
   const grid=$('#card-grid');
   const srcEl=grid.querySelector(`[data-card-id="${id}"]`);
   if(!srcEl)return;
@@ -236,69 +232,56 @@ function startDrag(e,id,idx){
   clone.innerHTML=`<div style="padding:12px 16px;"><div style="font-size:13px;font-weight:600;">${label}</div></div>`;
   document.body.appendChild(clone);
 
-  // Placeholder where source was
+  // Placeholder after source
   const ph=document.createElement('div');ph.className='drag-placeholder';
   ph.style.gridColumn='span '+(card.width||1);
-  ph.style.height=(srcEl.offsetHeight-10)+'px';
+  ph.style.height=Math.max(40,(srcEl.offsetHeight||80)-10)+'px';
   grid.insertBefore(ph,srcEl.nextSibling);
+  srcEl.style.opacity='0.15';
 
-  // Dim source
-  srcEl.style.opacity='0.2';
-  srcEl.style.transform='scale(0.97)';
+  // Snapshot card positions at drag start
+  const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==srcEl);
+  const snapshots=items.map(el=>({el,top:el.getBoundingClientRect().top}));
 
-  dragState={cardId:id,clone,placeholder,srcEl,gridRect:grid.getBoundingClientRect(),cols:config.layout.cols};
-  // Listen on the captured element (the handle)
-  e.target.addEventListener('pointermove',onDragMove);
-  e.target.addEventListener('pointerup',onDragEnd);
-  e.target.addEventListener('pointercancel',onDragEnd);
+  dragState={cardId:id,clone,placeholder,srcEl,snapshots};
+  // Use mouse events — simple and reliable
+  document.addEventListener('mousemove',onDragMove);
+  document.addEventListener('mouseup',onDragEnd);
 }
 
 function onDragMove(e){
   if(!dragState)return;
-  e.preventDefault();
-  const cl=dragState.clone;
-  cl.style.left=(e.clientX-30)+'px';cl.style.top=(e.clientY-15)+'px';
+  dragState.clone.style.left=(e.clientX-30)+'px';
+  dragState.clone.style.top=(e.clientY-15)+'px';
 
-  // Only update placeholder position every few ms — getBoundingClientRect is expensive
-  const now=Date.now();
-  if(dragState._lastMove&&now-dragState._lastMove<40)return; // ~25fps for positioning
-  dragState._lastMove=now;
-
+  // Find nearest card by vertical distance (use pre-cached positions)
+  let best=null,bestD=Infinity;
+  for(const s of dragState.snapshots){
+    const d=Math.abs(e.clientY-s.top);
+    if(d<bestD){bestD=d;best=s;}
+  }
+  if(!best)return;
   const grid=$('#card-grid');
   const ph=grid.querySelector('.drag-placeholder');
   if(!ph)return;
-
-  // Find nearest card to insert before
-  const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==ph&&el!==dragState.srcEl);
-  if(!items.length)return;
-  const ey=e.clientY;
-  let bestBefore=null,bestDist=Infinity;
-  for(const el of items){
-    const r=el.getBoundingClientRect();
-    const midY=r.top+r.height/2;
-    const dy=Math.abs(ey-midY);
-    if(dy<bestDist){bestDist=dy;bestBefore=el;}
-  }
-  if(bestBefore&&bestBefore!==ph.previousSibling)grid.insertBefore(ph,bestBefore);
-  else if(!bestBefore)grid.appendChild(ph);
+  if(best.el!==ph.previousElementSibling)grid.insertBefore(ph,best.el);
 }
 
 function onDragEnd(e){
-  e.target.removeEventListener('pointermove',onDragMove);
-  e.target.removeEventListener('pointerup',onDragEnd);
-  e.target.removeEventListener('pointercancel',onDragEnd);
-  try{e.target.releasePointerCapture(e.pointerId);}catch(ex){}
+  document.removeEventListener('mousemove',onDragMove);
+  document.removeEventListener('mouseup',onDragEnd);
   if(!dragState)return;
   const{cardId,clone,placeholder,srcEl}=dragState;
   if(clone.parentNode)clone.remove();
-  const grid=$('#card-grid');
 
+  const grid=$('#card-grid');
   if(placeholder&&placeholder.parentNode===grid){
     const allEls=[...grid.children];
     const pi=allEls.indexOf(placeholder);
     const beforeEl=allEls[pi+1]||null;
     const beforeId=beforeEl?beforeEl.dataset.cardId:null;
     placeholder.remove();
+    if(srcEl){srcEl.style.opacity='';}
 
     const cards=config.cards;
     const srcIdx=cards.findIndex(c=>c.id===cardId);
@@ -308,24 +291,19 @@ function onDragEnd(e){
     if(beforeId){const bi=cards.findIndex(c=>c.id===beforeId);if(bi>=0)tgtIdx=bi;}
 
     if(tgtIdx!==srcIdx&&tgtIdx>=0){
-      // Move DOM element for instant feedback
       const mel=grid.querySelector(`[data-card-id="${cardId}"]`);
       if(mel){
-        mel.style.opacity='';mel.style.transform='';
         const bd=beforeId?grid.querySelector(`[data-card-id="${beforeId}"]`):null;
         if(bd)grid.insertBefore(mel,bd);else grid.appendChild(mel);
       }
       const [m]=cards.splice(srcIdx,1);
       cards.splice(srcIdx<tgtIdx?tgtIdx-1:tgtIdx,0,m);
       saveConfig();
-      setTimeout(()=>{renderAll();},200);
+      setTimeout(()=>renderAll(),200);
       toast('Card moved');
-    } else {
-      if(srcEl){srcEl.style.opacity='';srcEl.style.transform='';}
-      renderAll();
-    }
+    } else {renderAll();}
   } else {
-    if(srcEl){srcEl.style.opacity='';srcEl.style.transform='';}
+    if(srcEl)srcEl.style.opacity='';
     renderAll();
   }
   dragState=null;
