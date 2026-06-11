@@ -217,7 +217,7 @@ for(const [gName,indices] of Object.entries(groups)){
   if(gName){
     renderedAny=true;
     const gc=document.createElement('div');gc.className='card-group';gc.style.gridColumn='1/-1';gc.dataset.group=gName;
-    const gh=document.createElement('div');gh.className='group-header';
+    const gh=document.createElement('div');gh.className='card group-header';
     const isCollapsed=config._groupCollapsed&&config._groupCollapsed[gName];
     const tog=document.createElement('span');tog.className='group-toggle';tog.textContent=isCollapsed?'▶':'▼';
     tog.addEventListener('click',()=>{if(!config._groupCollapsed)config._groupCollapsed={};config._groupCollapsed[gName]=!isCollapsed;saveConfig();renderAll();});
@@ -250,13 +250,20 @@ function renderCard(card,idx){
     div.style.gridColumn='span '+div.dataset.width;
     if(card.height>1)div.style.gridRow='span '+card.height;
     // Strip ALL visual properties — completely invisible card
-    div.style.cssText+=';background:none!important;border:none!important;box-shadow:none!important;outline:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-width:0;min-height:0;display:block;';
+    div.style.cssText+=';background:none!important;border:none!important;box-shadow:none!important;outline:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-width:0;min-height:0;display:block;position:relative;';
     div.style.setProperty('--card-accent','transparent');
     div.style.setProperty('--card-bg','transparent');
+    // Header at same position as regular cards (top-right)
     const h=document.createElement('div');
-    h.style.cssText='display:flex;align-items:center;justify-content:flex-end;padding:2px 4px;gap:2px;opacity:0;transition:opacity 0.15s;min-height:0;height:0;overflow:visible;';
+    h.style.cssText='position:absolute;top:8px;right:8px;display:flex;align-items:center;gap:4px;opacity:0;transition:opacity 0.15s;z-index:2;';
     div.addEventListener('mouseenter',()=>h.style.opacity='1');
     div.addEventListener('mouseleave',()=>h.style.opacity='0');
+    // Shadow behind controls on hover
+    const shadow=document.createElement('div');
+    shadow.style.cssText='position:absolute;top:4px;right:4px;width:50px;height:30px;border-radius:4px;background:rgba(0,0,0,0.4);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity 0.15s;z-index:1;pointer-events:none;';
+    div.addEventListener('mouseenter',()=>shadow.style.opacity='1');
+    div.addEventListener('mouseleave',()=>shadow.style.opacity='0');
+    div.appendChild(shadow);
     const eb2=document.createElement('button');eb2.className='card-edit-btn';eb2.textContent='✎';eb2.title='Edit gap';
     eb2.addEventListener('click',e=>{e.stopPropagation();toggleCardEdit(card.id);});
     h.appendChild(eb2);

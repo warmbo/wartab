@@ -131,17 +131,14 @@ body {
 .section-content.collapsed { max-height: 0; opacity: 0; }
 
 /* Card groups */
-.card-group { margin-bottom: 8px; }
+.card-group { margin-bottom: 8px; grid-column: 1 / -1; }
 .group-header {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 8px; margin-bottom: 6px;
-  background: var(--card-bg); border: 1px solid var(--glass-border);
+  display: flex; align-items: center; gap: 8px; min-height: 32px;
   cursor: pointer; user-select: none;
-  transition: background 0.15s;
 }
-.group-header:hover { background: rgba(255,255,255,0.04); }
-.group-toggle { font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.15s; }
-.group-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.group-header::before { content: ''; display: block; height: 3px; background: var(--accent); flex-shrink: 0; }
+.group-toggle { font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; }
+.group-name { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 .group-body { display: contents; }
 
 /* ══════ Buttons ══════ */
