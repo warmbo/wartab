@@ -219,12 +219,9 @@ function startDrag(e,id,idx){
   if(!srcEl)return;
   srcEl.classList.add('dragging');
 
-  // Thin insertion marker (single element, no clone)
+  // Single absolutely-positioned marker — adapts to row or column mode
   const marker=document.createElement('div');marker.className='drag-marker';
-  marker.style.cssText='height:3px;background:var(--accent);box-shadow:0 0 8px var(--accent-glow);border-radius:0;pointer-events:none;grid-column:1/-1;opacity:0;transition:opacity 0.1s;';
-  marker.style.gridColumn='1/-1';
-  grid.appendChild(marker);
-  requestAnimationFrame(()=>{marker.style.opacity='1';});
+  document.body.appendChild(marker); // relative to viewport for simplicity
 
   dragState={cardId:id,srcEl,marker,active:false};
   document.addEventListener('mousemove',onDragMove);
@@ -233,7 +230,6 @@ function startDrag(e,id,idx){
 
 function onDragMove(e){
   if(!dragState)return;
-  // Activate after 8px movement
   if(!dragState.active&&dragState.srcEl){
     if(!dragState._startX){dragState._startX=e.clientX;dragState._startY=e.clientY;return;}
     if((e.clientX-dragState._startX)**2+(e.clientY-dragState._startY)**2<64)return;
@@ -243,21 +239,64 @@ function onDragMove(e){
 
   const grid=$('#card-grid');
   const marker=dragState.marker;
-  if(!marker||marker.parentNode!==grid)return;
+  if(!marker)return;
+  const gr=grid.getBoundingClientRect();
+  const cols=config.layout.cols;
+  const colW=gr.width/cols;
 
-  // Find insertion point: iterate cards, check if cursor is above each midpoint
+  // Get all other cards
   const cards=[...grid.children].filter(el=>el.classList.contains('card')&&el!==dragState.srcEl);
-  let inserted=false;
+  if(!cards.length){marker.style.display='none';return;}
+  marker.style.display='';
+
+  // Find nearest card by vertical distance
+  let nearest=null,nearD=Infinity;
   for(const el of cards){
-    const r=el.getBoundingClientRect();
-    const midY=r.top+r.height/2;
-    if(e.clientY<midY){
-      if(marker.nextElementSibling!==el)grid.insertBefore(marker,el);
-      dragState._beforeCard=el.dataset.cardId;
-      inserted=true;break;
-    }
+    const r=el.getBoundingClientRect();const midY=r.top+r.height/2;
+    const d=Math.abs(e.clientY-midY);
+    if(d<nearD){nearD=d;nearest=el;}
   }
-  if(!inserted){grid.appendChild(marker);dragState._beforeCard=null;}
+  if(!nearest)return;
+  const nr=nearest.getBoundingClientRect();
+
+  // Determine if cursor is in the left/right gap (column insertion) or vertical gap (row insertion)
+  const relX=e.clientX-gr.left;
+  const colIdx=Math.floor(relX/colW);
+  // Column boundary: between colIdx and colIdx+1
+  const boundaryX=gr.left+(colIdx+1)*colW;
+
+  // Check if cursor is near a column boundary (within 15px of it)
+  const distToBoundary=Math.abs(e.clientX-boundaryX);
+  const isColumnMode=distToBoundary<20;
+
+  if(isColumnMode){
+    // Vertical bar at column boundary, spanning the nearest card's vertical space
+    const top=nr.top;
+    const bottom=nr.bottom;
+    marker.style.cssText=`
+      position:fixed;pointer-events:none;z-index:999;
+      left:${boundaryX-1.5}px;top:${top}px;
+      width:3px;height:${bottom-top}px;
+      background:var(--accent);box-shadow:0 0 8px var(--accent-glow);
+      transition:left 0.08s,top 0.08s,height 0.08s;
+    `;
+    // For column insertion, the target is the nearest card itself (insert before it)
+    dragState._beforeCard=nearest.dataset.cardId;
+    dragState._colMode=true;
+  } else {
+    // Horizontal bar: show before the nearest card's top edge
+    const aboveY=nr.top-1;
+    marker.style.cssText=`
+      position:fixed;pointer-events:none;z-index:999;
+      left:${gr.left}px;top:${aboveY}px;
+      width:${gr.width}px;height:3px;
+      background:var(--accent);box-shadow:0 0 8px var(--accent-glow);
+      transition:top 0.08s,left 0.08s,width 0.08s;
+    `;
+    // For row insertion, insert before the nearest card
+    dragState._beforeCard=nearest.dataset.cardId;
+    dragState._colMode=false;
+  }
 }
 
 function onDragEnd(e){
