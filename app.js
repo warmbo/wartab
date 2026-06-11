@@ -311,8 +311,32 @@ let configPanelOpen=false;
 function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);if(configPanelOpen)buildConfigPanel();}
 function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(ps('Branding'));
-  body.appendChild(pf('text','brandTitle','Page Title',null,(config.branding||{}).title||'WarTab',v=>{if(!config.branding)config.branding={};config.branding.title=v;applyTheme();saveConfig();}));
-  body.appendChild(pf('text','brandIcon','Brand Icon',null,(config.branding||{}).icon||'⚔️',v=>{if(!config.branding)config.branding={};config.branding.icon=v;applyTheme();saveConfig();}));
+  // Title + Icon on one row
+  const brandRow=document.createElement('div');brandRow.style.cssText='display:flex;gap:8px;align-items:flex-start;';
+  const titleGroup=document.createElement('div');titleGroup.style.cssText='flex:1;';
+  const titleLbl=document.createElement('label');titleLbl.style.cssText='display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;';titleLbl.textContent='Page Title';
+  titleGroup.appendChild(titleLbl);
+  const titleInp=document.createElement('input');titleInp.type='text';titleInp.value=(config.branding||{}).title||'WarTab';
+  titleInp.style.cssText='width:100%;padding:8px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:13px;outline:none;';
+  titleInp.addEventListener('change',()=>{if(!config.branding)config.branding={};config.branding.title=titleInp.value;applyTheme();saveConfig();});
+  titleGroup.appendChild(titleInp);
+  brandRow.appendChild(titleGroup);
+
+  // Brand icon with picker
+  const iconGroup=document.createElement('div');iconGroup.style.cssText='flex-shrink:0;';
+  const iconLbl=document.createElement('label');iconLbl.style.cssText='display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;';iconLbl.textContent='Icon';
+  iconGroup.appendChild(iconLbl);
+  const iconRow2=document.createElement('div');iconRow2.style.cssText='display:flex;gap:4px;align-items:center;';
+  const iconPrev=document.createElement('span');iconPrev.style.cssText='font-size:22px;width:30px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);';
+  const bi=config.branding&&config.branding.icon?config.branding.icon:'⚔️';
+  if(bi.startsWith('http')||bi.startsWith('data:')||bi.startsWith('/')){const img=document.createElement('img');img.src=bi;img.style.cssText='width:22px;height:22px;object-fit:contain;';iconPrev.appendChild(img);}else{iconPrev.textContent=bi;}
+  iconRow2.appendChild(iconPrev);
+  const iconBtn=document.createElement('button');iconBtn.className='btn btn-glass btn-sm';iconBtn.textContent='Change';
+  iconBtn.addEventListener('click',()=>openIconPicker(url=>{if(!config.branding)config.branding={};config.branding.icon=url;applyTheme();saveConfig();buildConfigPanel();}));
+  iconRow2.appendChild(iconBtn);
+  iconGroup.appendChild(iconRow2);
+  brandRow.appendChild(iconGroup);
+  body.appendChild(brandRow);
   body.appendChild(ps('Status Bar'));
   body.appendChild(pf('checkbox','sbEnabled','Show system stats bar',null,config.statusBar.enabled,v=>{config.statusBar.enabled=v;saveConfig();applyTheme();initStatusBar();renderAll();}));
   body.appendChild(pf('select','sbSource','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],config.statusBar.source,v=>{config.statusBar.source=v;saveConfig();initStatusBar();}));
@@ -360,7 +384,7 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
 }
 function renderFontPicker(){const g=document.getElementById('font-picker-grid');const c=g.dataset.cat||'all';const cur=config.theme.fontFamily||'Inter';g.innerHTML='';const ff=c==='all'?GOOGLE_FONTS:GOOGLE_FONTS.filter(f=>f.category===c);ff.forEach(f=>{const d=document.createElement('div');d.className='font-option'+(f.name===cur?' selected':'');d.style.fontFamily=`'${f.name}',sans-serif`;d.innerHTML=`<div class="font-name">${f.name}${f.category==='mono'?' 🧬':''}${f.category==='serif'?' 🔤':''}</div><div class="font-preview">${f.sample}</div>`;d.addEventListener('click',()=>{config.theme.fontFamily=f.name;saveConfig();applyTheme();renderAll();buildConfigPanel();toast('Font: '+f.name);});g.appendChild(d);});}
 function ps(t){const d=document.createElement('div');d.className='config-section';d.innerHTML=`<h3>${t}</h3>`;return d;}
-function pf(type,key,label,options,value,onChange,attrs){const g=document.createElement('div');g.className='form-group';const l=document.createElement('label');l.textContent=label;g.appendChild(l);if(type==='checkbox'){const w=document.createElement('div');w.style.cssText='display:flex;align-items:center;gap:8px;margin-top:4px;';const c=document.createElement('input');c.type='checkbox';c.checked=!!value;c.addEventListener('change',()=>onChange(c.checked));w.appendChild(c);g.replaceChild(w,l);}else if(type==='select'){const s=document.createElement('select');(options||[]).forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;if(o.value===value)opt.selected=true;s.appendChild(opt);});s.addEventListener('change',()=>onChange(s.value));g.appendChild(s);}else if(type==='range'){const r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:8px;';const i=document.createElement('input');i.type='range';i.min=attrs.min||0;i.max=attrs.max||100;i.value=value;i.style.flex='1';const s=document.createElement('span');s.textContent=value;s.style.cssText='font-size:12px;color:var(--text-secondary);min-width:30px;';i.addEventListener('input',()=>s.textContent=i.value);i.addEventListener('pointerup',()=>onChange(i.value));r.appendChild(i);r.appendChild(s);g.appendChild(r);}else if(type==='color'){const r=document.createElement('div');r.className='color-row';const i=document.createElement('input');i.type='color';i.value=value;const t=document.createElement('input');t.type='text';t.value=value;t.style.flex='1';const sync=v=>{i.value=v;t.value=v;onChange(v);};i.addEventListener('input',()=>sync(i.value));t.addEventListener('change',()=>sync(t.value));r.appendChild(i);r.appendChild(t);g.appendChild(r);}else{const i=document.createElement('input');i.type='text';i.value=value;i.addEventListener('change',()=>onChange(i.value));g.appendChild(i);}return g;}
+function pf(type,key,label,options,value,onChange,attrs){const g=document.createElement('div');g.className='form-group';const l=document.createElement('label');l.textContent=label;g.appendChild(l);if(type==='checkbox'){const w=document.createElement('div');w.style.cssText='display:flex;align-items:center;gap:6px;padding:4px 0;';const c=document.createElement('input');c.type='checkbox';c.checked=!!value;c.addEventListener('change',()=>onChange(c.checked));w.appendChild(c);w.appendChild(l);g.replaceChild(w,l);}else if(type==='select'){const s=document.createElement('select');(options||[]).forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;if(o.value===value)opt.selected=true;s.appendChild(opt);});s.addEventListener('change',()=>onChange(s.value));g.appendChild(s);}else if(type==='range'){const r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:8px;';const i=document.createElement('input');i.type='range';i.min=attrs.min||0;i.max=attrs.max||100;i.value=value;i.style.flex='1';const s=document.createElement('span');s.textContent=value;s.style.cssText='font-size:12px;color:var(--text-secondary);min-width:30px;';i.addEventListener('input',()=>s.textContent=i.value);i.addEventListener('pointerup',()=>onChange(i.value));r.appendChild(i);r.appendChild(s);g.appendChild(r);}else if(type==='color'){const r=document.createElement('div');r.className='color-row';const i=document.createElement('input');i.type='color';i.value=value;const t=document.createElement('input');t.type='text';t.value=value;t.style.flex='1';const sync=v=>{i.value=v;t.value=v;onChange(v);};i.addEventListener('input',()=>sync(i.value));t.addEventListener('change',()=>sync(t.value));r.appendChild(i);r.appendChild(t);g.appendChild(r);}else{const i=document.createElement('input');i.type='text';i.value=value;i.addEventListener('change',()=>onChange(i.value));g.appendChild(i);}return g;}
 function applyChanges(){saveConfig();applyTheme();}
 
 /* ═══════════════════════════════════════════ INIT ═══════════════════════════════════════════ */
