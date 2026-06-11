@@ -263,7 +263,8 @@ function onDragMove(e){
 
     // Check if they're on the same row (vertical overlap within 10px)
     const sameRow=Math.abs(ar.top-br.top)<10;
-    const gapCenterX=Math.max(ar.right,br.left)+(br.left-Math.max(ar.right,br.left))/2;
+    // Gap center: midpoint between the right edge of A and left edge of B
+    const gapCenterX=(ar.right+br.left)/2;
     const gapCenterY=(ar.top+ar.bottom)/2;
 
     if(sameRow){
@@ -277,11 +278,11 @@ function onDragMove(e){
       }
     } else {
       // Different rows — use distance to the vertical gap between them
-      const gapY2=ar.bottom+(br.top-ar.bottom)/2;
+      const gapY2=(ar.bottom+br.top)/2;
       const d=Math.abs(e.clientY-gapY2);
       if(d<bestDist){
         bestDist=d;
-        bestGap={before:b,mode:'row',x:br.left+br.width/2,y:gapY2};
+        bestGap={before:b,mode:'row',x:(ar.left+ar.right)/2,y:gapY2};
       }
     }
   }
@@ -331,35 +332,39 @@ function onDragEnd(e){
   const{cardId,srcEl,marker,active,_beforeCard}=dragState;
   if(srcEl)srcEl.classList.remove('dragging');
   if(marker&&marker.parentNode)marker.remove();
-  dragState=null;
-  if(!active)return;
 
-  const cards=config.cards;
-  const srcIdx=cards.findIndex(c=>c.id===cardId);
-  if(srcIdx<0){renderAll();return;}
-  let tgtIdx=cards.length;
-  if(_beforeCard){const bi=cards.findIndex(c=>c.id===_beforeCard);if(bi>=0)tgtIdx=bi;}
-  if(tgtIdx!==srcIdx){
-    // Animate: move DOM element to new position, then re-render after animation
+  if(active&&_beforeCard){
     const grid=$('#card-grid');
-    const mel=grid.querySelector(`[data-card-id="${cardId}"]`);
-    if(mel){
-      // Move to new position in DOM
-      const beforeDom=_beforeCard?grid.querySelector(`[data-card-id="${_beforeCard}"]`):null;
-      if(beforeDom)grid.insertBefore(mel,beforeDom);
-      else grid.appendChild(mel);
-      // Add placement animation
-      mel.classList.add('card-placement');
-      // Remove animation class after it completes
-      setTimeout(()=>mel.classList.remove('card-placement'),400);
+    const cards=config.cards;
+    const srcIdx=cards.findIndex(c=>c.id===cardId);
+    const tgtIdx=cards.findIndex(c=>c.id===_beforeCard);
+    if(srcIdx>=0&&tgtIdx>=0&&srcIdx!==tgtIdx){
+      // Move DOM element to new position
+      const mel=grid.querySelector(`[data-card-id="${cardId}"]`);
+      const bdom=grid.querySelector(`[data-card-id="${_beforeCard}"]`);
+      if(mel&&bdom){
+        grid.insertBefore(mel,bdom);
+        // Animate placement — bounce in
+        mel.classList.add('card-placement');
+        setTimeout(()=>mel.classList.remove('card-placement'),400);
+      }
+      // Update config array
+      const[m]=cards.splice(srcIdx,1);
+      cards.splice(srcIdx<tgtIdx?tgtIdx-1:tgtIdx,0,m);
+      saveConfig();
+      // Update data-index on all cards to match new order (no renderAll flash)
+      const allCards=[...grid.children].filter(el=>el.classList.contains('card'));
+      allCards.forEach((el,i)=>{el.dataset.index=i;});
+      toast('Card moved');
+      dragState=null;
+      return;
     }
-    const[m]=cards.splice(srcIdx,1);
-    cards.splice(srcIdx<tgtIdx?tgtIdx-1:tgtIdx,0,m);
-    saveConfig();
-    // Delay re-render to let animation play
-    setTimeout(()=>renderAll(),350);
-    toast('Card moved');
-  }else{renderAll();}
+  }
+
+  if(srcEl)srcEl.classList.remove('dragging');
+  // If active but no target, just refresh
+  if(active)renderAll();
+  dragState=null;
 }
 
 function addGap(){
