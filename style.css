@@ -277,22 +277,11 @@ body {
 .font-option .font-preview { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ══════ Drag ══════ */
-.drag-handle { cursor: grab; color: var(--text-tertiary); font-size: 14px; padding: 2px 4px; user-select: none; transition: color 0.15s; touch-action: none; }
+.drag-handle { cursor: grab; color: var(--text-tertiary); font-size: 14px; padding: 2px 4px; user-select: none; transition: color 0.15s; }
 .drag-handle:hover { color: var(--text-secondary); }
 .drag-handle:active { cursor: grabbing; }
-/* Placeholder — shows where card will land */
-.drag-placeholder {
-  background: var(--accent-glass);
-  border: 2px dashed var(--accent);
-  min-height: 60px;
-  transition: opacity 0.2s ease, height 0.15s ease, transform 0.1s;
-  animation: placeholder-pulse 1.5s ease-in-out infinite;
-}
-@keyframes placeholder-pulse {
-  0%, 100% { border-color: var(--accent); opacity: 1; }
-  50% { border-color: var(--accent-glow); opacity: 0.6; }
-}
-.drag-clone { }
+.card.dragging { opacity: 0.3; transform: scale(0.97); transition: opacity 0.15s, transform 0.15s; }
+.card.drop-target { border-color: var(--accent) !important; box-shadow: 0 0 16px var(--accent-glow), inset 0 0 0 1px var(--accent); transition: border-color 0.1s, box-shadow 0.1s; }
 
 /* ══════ Grid Gap (empty cells) ══════ */
 .grid-gap {

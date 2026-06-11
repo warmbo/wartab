@@ -217,96 +217,67 @@ function startDrag(e,id,idx){
   const grid=$('#card-grid');
   const srcEl=grid.querySelector(`[data-card-id="${id}"]`);
   if(!srcEl)return;
-
-  // Floating clone
-  const clone=document.createElement('div');clone.className='drag-clone';
-  clone.style.cssText='position:fixed;z-index:999;pointer-events:none;';
-  clone.style.width=(srcEl.offsetWidth||280)+'px';
-  clone.style.background='var(--card-bg)';
-  clone.style.backdropFilter='blur(var(--bg-blur))';
-  clone.style.border='1px solid var(--glass-border)';
-  clone.style.boxShadow='0 16px 48px rgba(0,0,0,0.6)';
-  clone.style.transform='rotate(1deg) scale(0.92)';
-  clone.style.left=(e.clientX-30)+'px';clone.style.top=(e.clientY-15)+'px';
-  const label=card._isGap?'empty':(card.icon||'📦')+' '+escAttr(card.title||'');
-  clone.innerHTML=`<div style="padding:12px 16px;"><div style="font-size:13px;font-weight:600;">${label}</div></div>`;
-  document.body.appendChild(clone);
-
-  // Placeholder after source
-  const ph=document.createElement('div');ph.className='drag-placeholder';
-  ph.style.gridColumn='span '+(card.width||1);
-  ph.style.height=Math.max(40,(srcEl.offsetHeight||80)-10)+'px';
-  grid.insertBefore(ph,srcEl.nextSibling);
-  srcEl.style.opacity='0.15';
-
-  // Snapshot card positions at drag start
-  const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==srcEl);
-  const snapshots=items.map(el=>({el,top:el.getBoundingClientRect().top}));
-
-  dragState={cardId:id,clone,placeholder,srcEl,snapshots};
-  // Use mouse events — simple and reliable
+  // Just flag the source and track that a drag started
+  srcEl.classList.add('dragging');
+  dragState={cardId:id,srcIdx:idx,srcEl,startX:e.clientX,startY:e.clientY,active:false};
   document.addEventListener('mousemove',onDragMove);
   document.addEventListener('mouseup',onDragEnd);
 }
 
 function onDragMove(e){
   if(!dragState)return;
-  dragState.clone.style.left=(e.clientX-30)+'px';
-  dragState.clone.style.top=(e.clientY-15)+'px';
-
-  // Find nearest card by vertical distance (use pre-cached positions)
-  let best=null,bestD=Infinity;
-  for(const s of dragState.snapshots){
-    const d=Math.abs(e.clientY-s.top);
-    if(d<bestD){bestD=d;best=s;}
+  // Activate only after moving 8px to distinguish click from drag
+  if(!dragState.active){
+    const dx=e.clientX-dragState.startX,dy=e.clientY-dragState.startY;
+    if(dx*dx+dy*dy<64)return;
+    dragState.active=true;
   }
-  if(!best)return;
+  // No DOM changes during drag — just track which card we're over
   const grid=$('#card-grid');
-  const ph=grid.querySelector('.drag-placeholder');
-  if(!ph)return;
-  if(best.el!==ph.previousElementSibling)grid.insertBefore(ph,best.el);
+  const cards=[...grid.children].filter(el=>el.classList.contains('card')&&el!==dragState.srcEl);
+  let best=null,bestD=Infinity;
+  for(const el of cards){
+    const r=el.getBoundingClientRect();
+    const midY=r.top+r.height/2;
+    const d=Math.abs(e.clientY-midY);
+    if(d<bestD){bestD=d;best=el;}
+  }
+  // Visually indicate drop target by toggling a class
+  if(best){
+    const prev=dragState._targetEl;
+    if(prev&&prev!==best)prev.classList.remove('drop-target');
+    if(!best.classList.contains('drop-target'))best.classList.add('drop-target');
+    dragState._targetEl=best;
+  }
 }
 
 function onDragEnd(e){
   document.removeEventListener('mousemove',onDragMove);
   document.removeEventListener('mouseup',onDragEnd);
   if(!dragState)return;
-  const{cardId,clone,placeholder,srcEl}=dragState;
-  if(clone.parentNode)clone.remove();
-
-  const grid=$('#card-grid');
-  if(placeholder&&placeholder.parentNode===grid){
-    const allEls=[...grid.children];
-    const pi=allEls.indexOf(placeholder);
-    const beforeEl=allEls[pi+1]||null;
-    const beforeId=beforeEl?beforeEl.dataset.cardId:null;
-    placeholder.remove();
-    if(srcEl){srcEl.style.opacity='';}
-
-    const cards=config.cards;
-    const srcIdx=cards.findIndex(c=>c.id===cardId);
-    if(srcIdx<0){renderAll();dragState=null;return;}
-
-    let tgtIdx=cards.length;
-    if(beforeId){const bi=cards.findIndex(c=>c.id===beforeId);if(bi>=0)tgtIdx=bi;}
-
-    if(tgtIdx!==srcIdx&&tgtIdx>=0){
-      const mel=grid.querySelector(`[data-card-id="${cardId}"]`);
-      if(mel){
-        const bd=beforeId?grid.querySelector(`[data-card-id="${beforeId}"]`):null;
-        if(bd)grid.insertBefore(mel,bd);else grid.appendChild(mel);
-      }
-      const [m]=cards.splice(srcIdx,1);
-      cards.splice(srcIdx<tgtIdx?tgtIdx-1:tgtIdx,0,m);
-      saveConfig();
-      setTimeout(()=>renderAll(),200);
-      toast('Card moved');
-    } else {renderAll();}
-  } else {
-    if(srcEl)srcEl.style.opacity='';
-    renderAll();
-  }
+  const{cardId,srcIdx,srcEl,active,_targetEl}=dragState;
+  if(srcEl)srcEl.classList.remove('dragging');
+  if(_targetEl)_targetEl.classList.remove('drop-target');
   dragState=null;
+
+  if(!active)return; // was a click, not a drag
+
+  // Rearrange based on which card was under the cursor
+  if(_targetEl){
+    const targetId=_targetEl.dataset.cardId;
+    const cards=config.cards;
+    const srcIdx2=cards.findIndex(c=>c.id===cardId);
+    const tgtIdx=cards.findIndex(c=>c.id===targetId);
+    if(srcIdx2>=0&&tgtIdx>=0&&srcIdx2!==tgtIdx){
+      const [m]=cards.splice(srcIdx2,1);
+      cards.splice(srcIdx2<tgtIdx?tgtIdx-1:tgtIdx,0,m);
+      saveConfig();
+      renderAll();
+      toast('Card moved');
+      return;
+    }
+  }
+  renderAll();
 }
 
 function addGap(){
