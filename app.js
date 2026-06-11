@@ -152,7 +152,13 @@ function renderCard(card,idx){
 
 function renderIconElement(icon,cls){if(!icon){const s=document.createElement('span');s.className=cls;s.textContent='📦';return s;}if(icon.startsWith('http')||icon.startsWith('data:')||icon.startsWith('/')){const img=document.createElement('img');img.className=cls;img.src=icon;img.alt='';img.loading='lazy';img.onerror=function(){this.outerHTML='<span class="'+cls+'">📦</span>';};return img;}const s=document.createElement('span');s.className=cls;s.textContent=icon;return s;}
 
-function renderCardEditor(card,idx){const div=document.createElement('div');div.className='card card-editing';div.dataset.cardId=card.id;div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;div.style.setProperty('--card-accent',card.color||config.theme.glow);const hdr=document.createElement('div');hdr.className='card-header';const t=document.createElement('div');t.style.cssText='font-size:14px;font-weight:600;';t.textContent='✎ Editing:';const rg=document.createElement('div');rg.style.cssText='display:flex;align-items:center;gap:4px;';const db=document.createElement('button');db.className='btn btn-glass btn-sm';db.textContent='Done';db.addEventListener('click',()=>{editModeCardId=null;saveConfig();renderAll();toast('Card saved');});rg.appendChild(db);hdr.appendChild(t);hdr.appendChild(rg);div.appendChild(hdr);const body=document.createElement('div');body.className='card-body';body.appendChild(inlineField('Title','text',card.title,v=>{card.title=v;saveConfig();}));body.appendChild(iconField(card));body.appendChild(inlineColor('Color',card.color,v=>{card.color=v;saveConfig();applyTheme();div.style.setProperty('--card-accent',v);}));body.appendChild(inlineRange('Width',card.width,1,config.layout.cols,v=>{card.width=parseInt(v);saveConfig();div.dataset.width=Math.min(card.width,config.layout.cols);}));body.appendChild(inlineRange('Height',card.height||1,1,2,v=>{card.height=parseInt(v);saveConfig();if(card.height>1)div.style.gridRow='span '+card.height;else div.style.gridRow='';}));const sl=document.createElement('div');sl.style.cssText='font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-secondary);margin:12px 0 6px;';sl.textContent='Sections';body.appendChild(sl);(card.sections||[]).forEach((sec,si)=>{body.appendChild(renderInlineSection(sec,card,si));});const as=document.createElement('button');as.className='btn btn-glass btn-sm';as.style.marginTop='4px';as.textContent='+ Add Section';as.addEventListener('click',()=>{card.sections=card.sections||[];card.sections.push({id:'sec-'+uid(),type:'links',label:'New Section',links:[{label:'Example',url:'https://example.com',icon:'🔗'}]});saveConfig();renderAll();toast('Section added');});body.appendChild(as);div.appendChild(body);return div;}
+function renderCardEditor(card,idx){const div=document.createElement('div');div.className='card card-editing';div.dataset.cardId=card.id;div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;div.style.setProperty('--card-accent',card.color||config.theme.glow);const hdr=document.createElement('div');hdr.className='card-header';const t=document.createElement('div');t.style.cssText='font-size:14px;font-weight:600;';t.textContent='✎ Editing:';const rg=document.createElement('div');rg.style.cssText='display:flex;align-items:center;gap:4px;';const db=document.createElement('button');db.className='btn btn-glass btn-sm';db.textContent='Done';db.addEventListener('click',()=>{editModeCardId=null;saveConfig();renderAll();toast('Card saved');});rg.appendChild(db);const delBtn=document.createElement('button');delBtn.className='btn btn-glass btn-sm btn-danger';delBtn.textContent='Delete';delBtn.addEventListener('click',()=>{if(!confirm('Delete "'+(card.title||'card')+'"?'))return;config.cards.splice(idx,1);editModeCardId=null;saveConfig();renderAll();toast('Card deleted');});rg.appendChild(delBtn);hdr.appendChild(t);hdr.appendChild(rg);div.appendChild(hdr);const body=document.createElement('div');body.className='card-body';body.appendChild(inlineField('Title','text',card.title,v=>{card.title=v;saveConfig();}));body.appendChild(iconField(card));body.appendChild(inlineColor('Color',card.color,v=>{card.color=v;saveConfig();applyTheme();div.style.setProperty('--card-accent',v);}));
+// Gap toggle
+const gt=document.createElement('div');gt.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;color:var(--text-primary);';
+const gc=document.createElement('input');gc.type='checkbox';gc.checked=!!card._isGap;
+gc.addEventListener('change',()=>{card._isGap=gc.checked;if(gc.checked)card.sections=[];saveConfig();renderAll();});
+gt.appendChild(gc);gt.appendChild(document.createTextNode('Empty gap (no content)'));
+body.appendChild(gt);body.appendChild(inlineRange('Width',card.width,1,config.layout.cols,v=>{card.width=parseInt(v);saveConfig();div.dataset.width=Math.min(card.width,config.layout.cols);}));body.appendChild(inlineRange('Height',card.height||1,1,2,v=>{card.height=parseInt(v);saveConfig();if(card.height>1)div.style.gridRow='span '+card.height;else div.style.gridRow='';}));const sl=document.createElement('div');sl.style.cssText='font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-secondary);margin:12px 0 6px;';sl.textContent='Sections';body.appendChild(sl);(card.sections||[]).forEach((sec,si)=>{body.appendChild(renderInlineSection(sec,card,si));});const as=document.createElement('button');as.className='btn btn-glass btn-sm';as.style.marginTop='4px';as.textContent='+ Add Section';as.addEventListener('click',()=>{card.sections=card.sections||[];card.sections.push({id:'sec-'+uid(),type:'links',label:'New Section',links:[{label:'Example',url:'https://example.com',icon:'🔗'}]});saveConfig();renderAll();toast('Section added');});body.appendChild(as);div.appendChild(body);return div;}
 
 function inlineField(l,t,v,o){const g=document.createElement('div');g.style.cssText='margin-bottom:8px;';const lb=document.createElement('label');lb.style.cssText='display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:2px;';lb.textContent=l;g.appendChild(lb);const i=document.createElement('input');i.type=t;i.value=v;i.style.cssText='width:100%;padding:5px 10px;background:var(--card-input-bg);border:1px solid var(--surface-border);color:var(--text-primary);font-size:12px;outline:none;';i.addEventListener('change',()=>o(i.value));g.appendChild(i);return g;}
 function iconField(card){const g=document.createElement('div');g.style.cssText='margin-bottom:8px;';const l=document.createElement('label');l.style.cssText='display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:2px;';l.textContent='Icon';g.appendChild(l);const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;align-items:center;';const p=document.createElement('span');p.style.cssText='font-size:24px;width:32px;text-align:center;';if(card.icon&&(card.icon.startsWith('http')||card.icon.startsWith('data:'))){const img=document.createElement('img');img.src=card.icon;img.style.cssText='width:28px;height:28px;object-fit:contain;';p.appendChild(img);}else{p.textContent=card.icon||'📦';}row.appendChild(p);const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Change';b.addEventListener('click',()=>openIconPicker(url=>{card.icon=url;saveConfig();renderAll();}));row.appendChild(b);const cb=document.createElement('button');cb.className='btn btn-glass btn-sm';cb.textContent='✕';cb.addEventListener('click',()=>{card.icon='📦';saveConfig();renderAll();});row.appendChild(cb);g.appendChild(row);return g;}
@@ -339,20 +345,45 @@ function onDragEnd(e){
     const srcIdx=cards.findIndex(c=>c.id===cardId);
     const tgtIdx=cards.findIndex(c=>c.id===_beforeCard);
     if(srcIdx>=0&&tgtIdx>=0&&srcIdx!==tgtIdx){
-      // Move DOM element to new position
       const mel=grid.querySelector(`[data-card-id="${cardId}"]`);
       const bdom=grid.querySelector(`[data-card-id="${_beforeCard}"]`);
       if(mel&&bdom){
+        // FLIP animation: record position BEFORE move
+        const first=mel.getBoundingClientRect();
+
+        // Move card to new DOM position
         grid.insertBefore(mel,bdom);
-        // Animate placement — bounce in
-        mel.classList.add('card-placement');
-        setTimeout(()=>mel.classList.remove('card-placement'),400);
+
+        // Record position AFTER move
+        const last=mel.getBoundingClientRect();
+
+        // Calculate delta: invert (move from old to new)
+        const dx=first.left-last.left;
+        const dy=first.top-last.top;
+        const sx=first.width/last.width;
+        const sy=first.height/last.height;
+
+        // Apply inverse transform so card appears at its old position
+        mel.style.transformOrigin='top left';
+        mel.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+        mel.style.transition='none';
+
+        // On next frame, animate to final position
+        requestAnimationFrame(()=>{
+          mel.style.transition='transform 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+          mel.style.transform='translate(0,0) scale(1,1)';
+        });
+
+        // Clean up after animation
+        setTimeout(()=>{
+          mel.style.transition='';
+          mel.style.transform='';
+          mel.style.transformOrigin='';
+        },400);
       }
-      // Update config array
       const[m]=cards.splice(srcIdx,1);
       cards.splice(srcIdx<tgtIdx?tgtIdx-1:tgtIdx,0,m);
       saveConfig();
-      // Update data-index on all cards to match new order (no renderAll flash)
       const allCards=[...grid.children].filter(el=>el.classList.contains('card'));
       allCards.forEach((el,i)=>{el.dataset.index=i;});
       toast('Card moved');
@@ -362,7 +393,6 @@ function onDragEnd(e){
   }
 
   if(srcEl)srcEl.classList.remove('dragging');
-  // If active but no target, just refresh
   if(active)renderAll();
   dragState=null;
 }
@@ -739,7 +769,6 @@ async function init() {
   $('#footer-text').textContent='WarTab v'+WARTAB_VERSION;
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
-  $('#btn-add-gap').addEventListener('click',()=>{addGap();});
   $('#config-close').addEventListener('click',toggleConfigPanel);
   $('#config-overlay').addEventListener('click',toggleConfigPanel);
   $$('.ip-tab').forEach(t=>t.addEventListener('click',()=>buildIconPicker(t.dataset.tab)));
