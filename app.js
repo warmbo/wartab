@@ -213,48 +213,50 @@ config.cards.forEach((c,i)=>{
   groups[g].push(i);
 });
 let renderedAny=false;
+const editingGroup=dragState&&dragState._editingGroup;
 for(const [gName,indices] of Object.entries(groups)){
   if(gName){
     renderedAny=true;
     const isCollapsed=config._groupCollapsed&&config._groupCollapsed[gName];
-    // Group header — rendered as a standalone grid row
     const gh=document.createElement('div');gh.className='card group-header';gh.style.gridColumn='1/-1';
-    const tog=document.createElement('span');tog.className='group-toggle';tog.textContent=isCollapsed?'▶':'▼';
-    tog.addEventListener('click',()=>{if(!config._groupCollapsed)config._groupCollapsed={};config._groupCollapsed[gName]=!isCollapsed;saveConfig();renderAll();});
-    gh.appendChild(tog);
-    const gn=document.createElement('span');gn.className='group-name';gn.textContent=gName;
-    gh.appendChild(gn);
-    // Edit button: rename or ungroup
-    const ge=document.createElement('button');ge.className='card-edit-btn';ge.textContent='✎';ge.title='Edit group';
-    ge.style.cssText='margin-left:auto;opacity:0;transition:opacity 0.15s;';
-    gh.addEventListener('mouseenter',()=>ge.style.opacity='1');
-    gh.addEventListener('mouseleave',()=>ge.style.opacity='0');
-    ge.addEventListener('click',(e)=>{
-      e.stopPropagation();
-      const newName=prompt('Group name:',gName);
-      if(newName!==null&&newName.trim()){
-        indices.forEach(i=>{config.cards[i].group=newName.trim();});
+
+    if(editingGroup===gName){
+      // Inline editor for group name
+      const inp=document.createElement('input');inp.type='text';inp.value=gName;
+      inp.style.cssText='flex:1;padding:5px 8px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:13px;outline:none;';
+      gh.appendChild(inp);
+      const doneBtn=document.createElement('button');doneBtn.className='btn btn-glass btn-sm';doneBtn.textContent='Done';
+      doneBtn.addEventListener('click',()=>{
+        const v=inp.value.trim();
+        if(v&&v!==gName){indices.forEach(i=>{config.cards[i].group=v;});if(config._groupCollapsed)delete config._groupCollapsed[gName];}
+        if(dragState)dragState._editingGroup=null;
+        saveConfig();renderAll();toast('Group updated');
+      });
+      gh.appendChild(doneBtn);
+      const ugBtn=document.createElement('button');ugBtn.className='btn btn-glass btn-sm btn-danger';ugBtn.textContent='Ungroup';
+      ugBtn.addEventListener('click',()=>{
+        indices.forEach(i=>{config.cards[i].group='';});
         if(config._groupCollapsed)delete config._groupCollapsed[gName];
-        saveConfig();renderAll();
-      }
-    });
-    gh.appendChild(ge);
-    // Ungroup button
-    const ug=document.createElement('button');ug.className='card-edit-btn';ug.textContent='⊘';ug.title='Ungroup all';
-    ug.style.cssText='opacity:0;transition:opacity 0.15s;font-size:12px;';
-    gh.addEventListener('mouseenter',()=>ug.style.opacity='1');
-    gh.addEventListener('mouseleave',()=>ug.style.opacity='0');
-    ug.addEventListener('click',(e)=>{
-      e.stopPropagation();
-      if(!confirm('Remove grouping for all cards in "'+gName+'"?'))return;
-      indices.forEach(i=>{config.cards[i].group='';});
-      if(config._groupCollapsed)delete config._groupCollapsed[gName];
-      saveConfig();renderAll();toast('Group removed');
-    });
-    gh.appendChild(ug);
+        if(dragState)dragState._editingGroup=null;
+        saveConfig();renderAll();toast('Group removed');
+      });
+      gh.appendChild(ugBtn);
+    } else {
+      // Normal group header
+      const tog=document.createElement('span');tog.className='group-toggle';tog.textContent=isCollapsed?'▶':'▼';
+      tog.addEventListener('click',()=>{if(!config._groupCollapsed)config._groupCollapsed={};config._groupCollapsed[gName]=!isCollapsed;saveConfig();renderAll();});
+      gh.appendChild(tog);
+      const gn=document.createElement('span');gn.className='group-name';gn.textContent=gName;
+      gh.appendChild(gn);
+      const ge=document.createElement('button');ge.className='card-edit-btn';ge.textContent='✎';ge.title='Edit group';
+      ge.style.cssText='margin-left:auto;opacity:0;transition:opacity 0.15s;';
+      gh.addEventListener('mouseenter',()=>ge.style.opacity='1');
+      gh.addEventListener('mouseleave',()=>ge.style.opacity='0');
+      ge.addEventListener('click',(e)=>{e.stopPropagation();if(!dragState)dragState={};dragState._editingGroup=gName;renderAll();});
+      gh.appendChild(ge);
+    }
     grid.appendChild(gh);
-    // Render cards as direct grid children (NOT inside group container)
-    if(!isCollapsed)indices.forEach(i=>{const c=config.cards[i];grid.appendChild(c.id===editModeCardId?renderCardEditor(c,i):renderCard(c,i));});
+    if(!isCollapsed||editingGroup===gName)indices.forEach(i=>{const c=config.cards[i];grid.appendChild(c.id===editModeCardId?renderCardEditor(c,i):renderCard(c,i));});
   }
 }
 // Ungrouped cards render as normal
