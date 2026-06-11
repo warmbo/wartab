@@ -227,6 +227,8 @@ body {
 .api-widget .api-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--surface-border); }
 .api-widget .api-row:last-child { border-bottom: none; }
 .api-error { color: #cc6666; font-size: 12px; }
+.api-ts { font-size: 9px; color: var(--text-tertiary); margin-top: 3px; text-align: right; }
+.weather-ts { font-size: 9px; color: var(--text-tertiary); margin-top: 2px; text-align: center; }
 
 /* ══════ Config Panel ══════ */
 .config-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }

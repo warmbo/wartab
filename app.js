@@ -3,6 +3,7 @@
    ═══════════════════════════════════════════ */
 
 let WARTAB_VERSION = '0.1.7';
+let bgRotationTimer = null;
 
 function bumpVersion(){
   const p=WARTAB_VERSION.split('.');
@@ -20,6 +21,8 @@ const DEFAULT_CONFIG = {
     bgType:'gradient', bgValue:'#0a0a0a, #1a1a1a, #0d0d0d',
     blur:20, glow:'#888888', fontSize:'medium',
     fontFamily:'Inter', cardBg:'dark',
+    fontColor:'#cccccc', stickyTopBar:false,
+    bgRotation:{enabled:false,interval:300,urls:[]},
   },
   statusBar: {
     enabled: true, source:'local', glancesUrl:'http://localhost:61209',
@@ -114,6 +117,21 @@ function applyTheme(){
   // Sticky top bar
   const tb=$('#top-bar');
   if(tb)tb.classList.toggle('sticky',!!config.theme.stickyTopBar);
+  // Wallpaper rotation
+  startBgRotation();
+}
+function startBgRotation(){
+  clearInterval(bgRotationTimer);bgRotationTimer=null;
+  const r=config.theme.bgRotation;
+  if(!r||!r.enabled||!r.urls||r.urls.length<2)return;
+  let idx=r.urls.indexOf(config.theme.bgValue);
+  if(idx<0)idx=0;
+  bgRotationTimer=setInterval(()=>{
+    idx=(idx+1)%r.urls.length;
+    config.theme.bgType='image';
+    config.theme.bgValue=r.urls[idx];
+    saveConfig();applyTheme();
+  },(r.interval||300)*1000);
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
 function loadGoogleFont(fn){const id='wartab-font',e=document.getElementById(id);if(e&&e.dataset.font===fn)return;if(e)e.remove();const l=document.createElement('link');l.id=id;l.dataset.font=fn;l.rel='stylesheet';l.href=`https://fonts.googleapis.com/css2?family=${fn.replace(/ /g,'+')}:wght@200..700&display=swap`;document.head.appendChild(l);}
@@ -238,9 +256,10 @@ function setupClocks(){if(clockInterval)clearInterval(clockInterval);updateClock
 function updateClocks(){$$('.clock-widget').forEach(el=>{const n=new Date(),f24=el.dataset.format24==='1',sd=el.dataset.showDate==='1';let h=n.getHours();const m=String(n.getMinutes()).padStart(2,'0');el.querySelector('.clock-time').textContent=f24?String(h).padStart(2,'0')+':'+m:(h%12||12)+':'+m+' '+(h>=12?'PM':'AM');if(sd)el.querySelector('.clock-date').textContent=n.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});if(el.dataset.showCalendar==='1'){const cal=el.querySelector('.calendar-widget');if(cal)renderCalendar(cal,n);}});}
 function renderCalendar(el,date){const y=date.getFullYear(),m=date.getMonth();const fd=new Date(y,m,1).getDay();const ld=new Date(y,m+1,0).getDate();const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];let h=`<div class="calendar-month">${mn[m]} ${y}</div><div class="calendar-grid">`;['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{h+=`<div class="calendar-day-header">${d}</div>`;});for(let i=0;i<fd;i++)h+='<div class="calendar-day other-month"></div>';const today=new Date();for(let d=1;d<=ld;d++){const is=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();h+=`<div class="calendar-day${is?' today':''}">${d}</div>`;}h+='</div>';el.innerHTML=h;}
 function setupWeatherWidgets(){weatherIntervals.forEach(clearInterval);weatherIntervals=[];$$('.weather-widget').forEach(fetchWeather);}
-function fetchWeather(el){const k=el.dataset.apiKey,l=el.dataset.location;if(!k||!l){el.querySelector('.weather-detail').textContent='Set API key & location in config';return;}fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(l)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);const e=wEmoji(d.weather[0].id);el.querySelector('.weather-icon').textContent=e;el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;});weatherIntervals.push(setInterval(()=>fetchWeather(el),600000));}
+function fetchWeather(el){const k=el.dataset.apiKey,l=el.dataset.location;if(!k||!l){el.querySelector('.weather-detail').textContent='Set API key & location in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(l)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);const e=wEmoji(d.weather[0].id);el.querySelector('.weather-icon').textContent=e;el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';let tsEl=el.querySelector('.weather-ts');if(!tsEl){tsEl=document.createElement('div');tsEl.className='weather-ts';el.appendChild(tsEl);}tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);el.dataset.lastOk=String(ts);}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;let tsEl=el.querySelector('.weather-ts');if(!tsEl){tsEl=document.createElement('div');tsEl.className='weather-ts';el.appendChild(tsEl);}const lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);});weatherIntervals.push(setInterval(()=>fetchWeather(el),600000));}
 function wEmoji(id){if(id<300)return'⛈';if(id<400)return'🌦';if(id<600)return'🌧';if(id<700)return'❄';if(id<800)return'🌫';if(id===800)return'☀';return'☁';}
-function fetchApiWidget(el){const u=el.dataset.url,jp=el.dataset.jsonPath;if(!u){el.innerHTML='<div class="api-row"><span class="api-label">No API URL set</span></div>';return;}fetch(u).then(r=>r.json()).then(d=>{const v=jp?getNested(d,jp):JSON.stringify(d,null,2);el.innerHTML=`<div class="api-row"><span class="api-label">${escAttr(el.dataset.label)}</span><span class="api-value">${escAttr(String(v))}</span></div>`;const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));}).catch(e=>{el.innerHTML=`<div class="api-row"><span class="api-label">${escAttr(el.dataset.label)}</span><span class="api-value api-error">${escAttr(e.message)}</span></div>`;});}
+function fetchApiWidget(el){const u=el.dataset.url,jp=el.dataset.jsonPath;if(!u){el.innerHTML='<div class="api-row"><span class="api-label">No API URL set</span></div>';return;}const ts=Date.now();fetch(u).then(r=>r.json()).then(d=>{const v=jp?getNested(d,jp):JSON.stringify(d,null,2);el.innerHTML='<div class="api-row"><span class="api-label">'+escAttr(el.dataset.label)+'</span><span class="api-value">'+escAttr(String(v))+'</span></div><div class="api-ts" data-ts="'+ts+'">updated just now</div>';el.dataset.lastOk=String(ts);const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));}).catch(e=>{const lo=el.dataset.lastOk;el.innerHTML='<div class="api-row"><span class="api-label">'+escAttr(el.dataset.label)+'</span><span class="api-value api-error">'+escAttr(e.message)+'</span></div><div class="api-ts" data-ts="'+(lo||ts)+'">'+(lo?'last ok: '+timeAgo(parseInt(lo)):'')+'</div>';const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));});}
+function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
 
 /* ═══════════════════════════════════════════ DRAG & DROP ═══════════════════════════════════════════
@@ -659,6 +678,26 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
 
   body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark Glass'},{value:'light',label:'Light Glass'},{value:'solid-dark',label:'Solid Dark'},{value:'solid-light',label:'Solid Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
 
+  // Wallpaper rotation
+  const rot=config.theme.bgRotation||{};
+  body.appendChild(chk('Wallpaper rotation',rot.enabled,v=>{if(!config.theme.bgRotation)config.theme.bgRotation={enabled:false,interval:300,urls:[]};config.theme.bgRotation.enabled=v;saveConfig();applyTheme();buildConfigPanel();}));
+  if(rot.enabled){
+    body.appendChild(pf('range','','Rotate every (s)',null,rot.interval||300,v=>{if(!config.theme.bgRotation)config.theme.bgRotation={};config.theme.bgRotation.interval=parseInt(v);saveConfig();applyTheme();},{min:10,max:3600}));
+    if(uploadedFiles.length){
+      const rl=el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;margin-top:4px;','Include:');
+      body.appendChild(rl);
+      const rg=el('div','display:flex;flex-direction:column;gap:3px;max-height:140px;overflow-y:auto;');
+      uploadedFiles.forEach(f=>{
+        const cl=el('label','display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;');
+        const cb=document.createElement('input');cb.type='checkbox';cb.checked=(rot.urls||[]).includes(f.url);
+        cb.addEventListener('change',()=>{if(!config.theme.bgRotation)config.theme.bgRotation={};config.theme.bgRotation.urls=config.theme.bgRotation.urls||[];if(cb.checked)config.theme.bgRotation.urls.push(f.url);else config.theme.bgRotation.urls=config.theme.bgRotation.urls.filter(u=>u!==f.url);saveConfig();applyTheme();});
+        cl.appendChild(cb);cl.appendChild(el('span','',f.name.substring(0,20)));
+        rg.appendChild(cl);
+      });
+      body.appendChild(rg);
+    }
+  }
+
   /* ── Appearance ── */
   body.appendChild(ps('Appearance'));
   const fontColor=config.theme.fontColor||'#cccccc';
@@ -821,6 +860,11 @@ async function init() {
     if((e.key==='l'||e.key==='k')&&(e.ctrlKey||e.metaKey)){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
   });
   let rt=null;window.addEventListener('resize',()=>{if(rt)clearTimeout(rt);rt=setTimeout(()=>{scheduleEqualize();},150);});
+  // Periodic timestamp updater
+  setInterval(()=>{
+    $$('.api-ts').forEach(el=>{const t=parseInt(el.dataset.ts);if(t)el.textContent='updated '+timeAgo(t);});
+    $$('.weather-ts').forEach(el=>{const t=parseInt(el.dataset.ts);if(t)el.textContent='updated '+timeAgo(t);});
+  },15000);
   console.log('WarTab initialized');
 }
 document.addEventListener('DOMContentLoaded', init);
