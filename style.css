@@ -26,6 +26,18 @@
   --card-bg-alt: rgba(0, 0, 0, 0.15);
   --card-input-bg: rgba(0, 0, 0, 0.3);
   color-scheme: dark;
+
+/* ── Lucide SVG Icons ──
+   All Lucide SVGs use currentColor, inheriting accent or font color. */
+i[data-lucide] { display: inline-block; vertical-align: middle; }
+.card-icon,i[data-lucide].card-icon { width: 20px; height: 20px; }
+.link-icon,i[data-lucide].link-icon { width: 16px; height: 16px; }
+.brand-icon i[data-lucide] { width: 22px; height: 22px; }
+.stat-icon i[data-lucide] { width: 14px; height: 14px; }
+.search-icon i[data-lucide] { width: 16px; height: 16px; }
+.icon-grid-item i[data-lucide] { width: 24px; height: 24px; stroke-width: 1.5; }
+.icon-grid-item span { display: block; }
+
   font-family: var(--font);
 }
 
