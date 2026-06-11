@@ -134,14 +134,25 @@ function renderCard(card,idx){
     div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;
     div.style.gridColumn='span '+div.dataset.width;
     if(card.height>1)div.style.gridRow='span '+card.height;
-    const h=document.createElement('div');h.className='card-header';h.style.cssText='display:flex;align-items:center;justify-content:flex-end;padding:6px 12px;gap:4px;';
-    const dh=document.createElement('span');dh.className='drag-handle';dh.textContent='⠿';dh.title='Drag';h.appendChild(dh);
+    div.style.background='none !important';
+    div.style.border='none !important';
+    div.style.boxShadow='none !important';
+    div.style.backdropFilter='none !important';
+    div.style.minHeight='20px';
+    const h=document.createElement('div');h.className='card-header';
+    h.style.cssText='display:flex;align-items:center;justify-content:flex-end;padding:2px 4px;gap:2px;opacity:0;transition:opacity 0.15s;min-height:20px;';
+    // Show controls on hover
+    div.addEventListener('mouseenter',()=>h.style.opacity='1');
+    div.addEventListener('mouseleave',()=>h.style.opacity='0');
+    const eb2=document.createElement('button');eb2.className='card-edit-btn';eb2.textContent='✎';eb2.title='Edit gap';
+    eb2.addEventListener('click',e=>{e.stopPropagation();toggleCardEdit(card.id);});
+    h.appendChild(eb2);
+    const dh=document.createElement('span');dh.className='drag-handle';dh.textContent='⠿';dh.title='Drag';
+    h.appendChild(dh);
     div.appendChild(h);
-    const b=document.createElement('div');b.className='card-body';
-    b.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;min-height:60px;color:var(--text-tertiary);font-size:11px;opacity:0.5;">empty</div>';
-    div.appendChild(b);
+    // Ensure the gap has no pseudo-elements (noise texture, accent bar)
+    div.style.setProperty('--card-accent','transparent');
     dh.addEventListener('mousedown',e=>startDrag(e,card.id,idx));
-    // Double-click to delete gap
     div.addEventListener('dblclick',()=>{config.cards.splice(idx,1);saveConfig();renderAll();toast('Gap removed');});
     return div;
   }
@@ -169,7 +180,7 @@ function inlineCheck(l,v,o){const w=document.createElement('div');w.style.cssTex
 function renderInlineSection(sec,card,si){
   const div=document.createElement('div');div.className='section-editor';div.style.borderLeftColor=card.color||config.theme.glow;
   const hdr=document.createElement('div');hdr.className='section-editor-header';
-  hdr.innerHTML=`<span class="section-edit-label">${escAttr(sec.type)}${sec.label?': '+escAttr(sec.label):''}</span>`;
+  hdr.innerHTML=`<span class="section-edit-label">${escAttr(sec.type)}</span>`;
   const acts=document.createElement('div');acts.style.cssText='display:flex;gap:4px;';
   if(si>0){const b=btn('↑','Up');b.addEventListener('click',()=>moveSection(card.id,si,-1));acts.appendChild(b);}
   if(si<(card.sections||[]).length-1){const b=btn('↓','Down');b.addEventListener('click',()=>moveSection(card.id,si,1));acts.appendChild(b);}
