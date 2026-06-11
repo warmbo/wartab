@@ -227,7 +227,44 @@ const EMOJIS = ['\U0001f50d','\U0001f550','\U0001f310','\U0001f5a5\ufe0f','\U000
 const LUCIDE_ICONS = ['search', 'clock', 'globe', 'monitor', 'book-open', 'edit-3', 'sword', 'home', 'film', 'shield', 'bar-chart-3', 'container', 'lock', 'github', 'gitlab', 'package', 'code-2', 'message-circle', 'play', 'gamepad-2', 'twitter', 'book', 'settings', 'plus', 'x', 'link', 'star', 'zap', 'flag', 'compass', 'map-pin', 'server', 'database', 'external-link', 'mail', 'music', 'image', 'cpu', 'hard-drive', 'activity', 'wifi', 'radio', 'smartphone', 'tablet', 'laptop', 'watch', 'camera', 'video', 'headphones', 'volume-2', 'monitor-speaker', 'tv', 'layers', 'grid', 'list', 'columns', 'layout', 'panel-top', 'panel-bottom', 'panel-left', 'panel-right', 'square', 'circle', 'triangle', 'hexagon', 'diamond', 'box', 'archive', 'folder', 'file', 'file-text', 'clipboard', 'check-square', 'check', 'x-square', 'trash-2', 'refresh-cw', 'rotate-cw', 'rotate-ccw', 'download', 'upload', 'cloud', 'cloud-drizzle', 'cloud-snow', 'cloud-lightning', 'sun', 'moon', 'thermometer', 'wind', 'droplets', 'umbrella', 'user', 'users', 'user-plus', 'user-check', 'user-x', 'bell', 'bell-ring', 'bell-off', 'eye', 'eye-off', 'lock', 'unlock', 'key', 'fingerprint', 'shield-off', 'alert-triangle', 'alert-circle', 'alert-octagon', 'info', 'help-circle', 'thumbs-up', 'thumbs-down', 'smile', 'frown', 'meh', 'heart', 'calendar', 'calendar-check', 'calendar-x', 'alarm-clock', 'timer', 'hourglass', 'stopwatch', 'map', 'navigation', 'navigation-2', 'crosshair', 'target', 'locate', 'send', 'inbox', 'mail', 'mail-open', 'at-sign', 'phone', 'message-square', 'message-text', 'chat', 'printer', 'scanner', 'bluetooth', 'battery', 'battery-charging', 'power', 'plug', 'bookmark', 'tag', 'award', 'trending-up', 'trending-down', 'pie-chart', 'sliders', 'filter', 'tool', 'wrench', 'hammer', 'paintbrush', 'palette', 'pen-tool', 'eraser', 'scissors', 'copy', 'paste', 'undo', 'redo', 'bold', 'italic', 'underline', 'type', 'hash', 'percent', 'chevron-up', 'chevron-down', 'chevron-left', 'chevron-right', 'chevrons-up', 'chevrons-down', 'chevrons-left', 'chevrons-right', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'arrow-up-right', 'arrow-down-left', 'external-link', 'maximize', 'minimize', 'expand', 'shrink', 'fullscreen', 'dock', 'sidebar', 'menu', 'more-horizontal', 'more-vertical', 'chrome', 'codepen', 'figma', 'slack', 'trello', 'youtube'];
 
 // Detect if a string is a Lucide icon name (not URL, not emoji)
-function isLucideName(s){if(!s||typeof s!=='string')return false;if(s.startsWith('http')||s.startsWith('data:')||s.startsWith('/'))return false;if(s.length<=2||[...s].some(c=>c>'\ud7ff'&&c<'\ue000'||c>'\uffff'))return false;return LUCIDE_ICONS.includes(s);}
+// Emoji → Lucide name migration map for existing configs
+var EMOJI_TO_LUCIDE={
+'🔍':'search','🕐':'clock','🌐':'globe','🖥️':'monitor','📖':'book-open',
+'📝':'edit-3','📦':'package','🏠':'home','🎬':'film','🛡️':'shield',
+'📊':'bar-chart-3','🐳':'container','🔐':'lock','🐙':'github','🦊':'gitlab',
+'📚':'book','🐍':'code-2','💬':'message-circle','▶️':'play','🎮':'gamepad-2',
+'🐦':'twitter','🌍':'globe','⚛️':'atom','📘':'book','⚔️':'sword','🔗':'link',
+'⚙️':'settings','🌟':'star','🔥':'flame','💡':'lightbulb','🚀':'rocket',
+'⚡':'zap','🎯':'target','🧩':'puzzle','🎨':'palette','📡':'satellite',
+'🔧':'wrench','🗄️':'server','💾':'save','🖨️':'printer','📷':'camera',
+'🎥':'video','🎵':'music','🎙️':'mic','📻':'radio','📺':'tv','💻':'laptop',
+'⌨️':'keyboard','🖱️':'mouse','📱':'smartphone','💽':'disc','💿':'disc',
+'📀':'disc','🔌':'plug','🔋':'battery','💎':'diamond','🧊':'snowflake',
+'⛅':'cloud-sun','☀️':'sun','🌙':'moon','⭐':'star','✨':'sparkles',
+'💫':'star','🎆':'sparkles','🌈':'rainbow','☁️':'cloud','🌊':'waves',
+'🔥':'flame','🍃':'wind','🌱':'sprout','🌿':'sprout','☘️':'sprout',
+'🍀':'sprout','🏆':'trophy','🥇':'award','🥈':'award','🥉':'award',
+'🏅':'award','🎖️':'award','🏁':'flag','🚩':'flag','🎌':'flag',
+'📌':'pin','📍':'map-pin','🎪':'tent','🎭':'theater','🎬':'film',
+'🎤':'mic','🎧':'headphones','🎼':'music','🎹':'piano','🥁':'drum',
+'🎷':'saxophone','🎸':'guitar','🎺':'trumpet','🎻':'violin','🎲':'dice',
+'♟️':'chess','🎳':'bowling','🎮':'gamepad-2','🕹️':'joystick','🎰':'slot',
+'🧩':'puzzle','♠️':'spade','♥️':'heart','♦️':'diamond','♣️':'club',
+'✕':'x','🔄':'refresh-cw','🐍':'code-2'};
+function migrateConfigEmojis(cfg){
+  if(cfg.branding&&cfg.branding.icon&&EMOJI_TO_LUCIDE[cfg.branding.icon])cfg.branding.icon=EMOJI_TO_LUCIDE[cfg.branding.icon];
+  if(cfg.cards)cfg.cards.forEach(function(card){
+    if(card.icon&&EMOJI_TO_LUCIDE[card.icon])card.icon=EMOJI_TO_LUCIDE[card.icon];
+    if(card.sections)card.sections.forEach(function(sec){
+      if(sec.links)sec.links.forEach(function(link){
+        if(link.icon&&EMOJI_TO_LUCIDE[link.icon])link.icon=EMOJI_TO_LUCIDE[link.icon];
+      });
+    });
+  });
+  return cfg;
+}
+
+function isLucideName(s){if(!s||typeof s!=='string')return false;if(s.startsWith('http')||s.startsWith('data:')||s.startsWith('/'))return false;return LUCIDE_ICONS.includes(s);}
 // Render a Lucide icon element (data-lucide attribute for auto-replacement)
 function renderLucideEl(name,cls){var i=document.createElement('i');i.className=cls;i.setAttribute('data-lucide',name);return i;}
 
@@ -242,7 +279,7 @@ function toast(msg,type='info'){const el=document.createElement('div');el.classN
 function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>{if(el.parentNode)el.remove();},6000);}
 
 /* ── Config ── */
-function loadConfig(){try{const s=localStorage.getItem('wartab');if(s)config=deepMerge(cloneObj(DEFAULT_CONFIG),JSON.parse(s));else config=cloneObj(DEFAULT_CONFIG);}catch(e){config=cloneObj(DEFAULT_CONFIG);}}
+function loadConfig(){try{const s=localStorage.getItem('wartab');if(s){var parsed=JSON.parse(s);var before=JSON.stringify(parsed);migrateConfigEmojis(parsed);config=deepMerge(cloneObj(DEFAULT_CONFIG),parsed);if(JSON.stringify(parsed)!==before)localStorage.setItem('wartab',JSON.stringify(parsed));}else config=cloneObj(DEFAULT_CONFIG);}catch(e){config=cloneObj(DEFAULT_CONFIG);}}
 function saveConfig(){try{localStorage.setItem('wartab',JSON.stringify(config));}catch(e){}}
 function deepMerge(t,s){const r=cloneObj(t);for(const k in s){if(s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k]))r[k]=deepMerge(r[k]||{},s[k]);else r[k]=s[k];}return r;}
 
