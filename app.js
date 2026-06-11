@@ -217,67 +217,69 @@ function startDrag(e,id,idx){
   const grid=$('#card-grid');
   const srcEl=grid.querySelector(`[data-card-id="${id}"]`);
   if(!srcEl)return;
-  // Just flag the source and track that a drag started
   srcEl.classList.add('dragging');
-  dragState={cardId:id,srcIdx:idx,srcEl,startX:e.clientX,startY:e.clientY,active:false};
+
+  // Thin insertion marker (single element, no clone)
+  const marker=document.createElement('div');marker.className='drag-marker';
+  marker.style.cssText='height:3px;background:var(--accent);box-shadow:0 0 8px var(--accent-glow);border-radius:0;pointer-events:none;grid-column:1/-1;opacity:0;transition:opacity 0.1s;';
+  marker.style.gridColumn='1/-1';
+  grid.appendChild(marker);
+  requestAnimationFrame(()=>{marker.style.opacity='1';});
+
+  dragState={cardId:id,srcEl,marker,active:false};
   document.addEventListener('mousemove',onDragMove);
   document.addEventListener('mouseup',onDragEnd);
 }
 
 function onDragMove(e){
   if(!dragState)return;
-  // Activate only after moving 8px to distinguish click from drag
-  if(!dragState.active){
-    const dx=e.clientX-dragState.startX,dy=e.clientY-dragState.startY;
-    if(dx*dx+dy*dy<64)return;
+  // Activate after 8px movement
+  if(!dragState.active&&dragState.srcEl){
+    if(!dragState._startX){dragState._startX=e.clientX;dragState._startY=e.clientY;return;}
+    if((e.clientX-dragState._startX)**2+(e.clientY-dragState._startY)**2<64)return;
     dragState.active=true;
   }
-  // No DOM changes during drag — just track which card we're over
+  if(!dragState.active)return;
+
   const grid=$('#card-grid');
+  const marker=dragState.marker;
+  if(!marker||marker.parentNode!==grid)return;
+
+  // Find insertion point: iterate cards, check if cursor is above each midpoint
   const cards=[...grid.children].filter(el=>el.classList.contains('card')&&el!==dragState.srcEl);
-  let best=null,bestD=Infinity;
+  let inserted=false;
   for(const el of cards){
     const r=el.getBoundingClientRect();
     const midY=r.top+r.height/2;
-    const d=Math.abs(e.clientY-midY);
-    if(d<bestD){bestD=d;best=el;}
+    if(e.clientY<midY){
+      if(marker.nextElementSibling!==el)grid.insertBefore(marker,el);
+      dragState._beforeCard=el.dataset.cardId;
+      inserted=true;break;
+    }
   }
-  // Visually indicate drop target by toggling a class
-  if(best){
-    const prev=dragState._targetEl;
-    if(prev&&prev!==best)prev.classList.remove('drop-target');
-    if(!best.classList.contains('drop-target'))best.classList.add('drop-target');
-    dragState._targetEl=best;
-  }
+  if(!inserted){grid.appendChild(marker);dragState._beforeCard=null;}
 }
 
 function onDragEnd(e){
   document.removeEventListener('mousemove',onDragMove);
   document.removeEventListener('mouseup',onDragEnd);
   if(!dragState)return;
-  const{cardId,srcIdx,srcEl,active,_targetEl}=dragState;
+  const{cardId,srcEl,marker,active,_beforeCard}=dragState;
   if(srcEl)srcEl.classList.remove('dragging');
-  if(_targetEl)_targetEl.classList.remove('drop-target');
+  if(marker&&marker.parentNode)marker.remove();
   dragState=null;
+  if(!active)return;
 
-  if(!active)return; // was a click, not a drag
-
-  // Rearrange based on which card was under the cursor
-  if(_targetEl){
-    const targetId=_targetEl.dataset.cardId;
-    const cards=config.cards;
-    const srcIdx2=cards.findIndex(c=>c.id===cardId);
-    const tgtIdx=cards.findIndex(c=>c.id===targetId);
-    if(srcIdx2>=0&&tgtIdx>=0&&srcIdx2!==tgtIdx){
-      const [m]=cards.splice(srcIdx2,1);
-      cards.splice(srcIdx2<tgtIdx?tgtIdx-1:tgtIdx,0,m);
-      saveConfig();
-      renderAll();
-      toast('Card moved');
-      return;
-    }
-  }
-  renderAll();
+  const cards=config.cards;
+  const srcIdx=cards.findIndex(c=>c.id===cardId);
+  if(srcIdx<0){renderAll();return;}
+  let tgtIdx=cards.length;
+  if(_beforeCard){const bi=cards.findIndex(c=>c.id===_beforeCard);if(bi>=0)tgtIdx=bi;}
+  if(tgtIdx!==srcIdx){
+    const[m]=cards.splice(srcIdx,1);
+    cards.splice(srcIdx<tgtIdx?tgtIdx-1:tgtIdx,0,m);
+    saveConfig();renderAll();toast('Card moved');
+  }else{renderAll();}
 }
 
 function addGap(){

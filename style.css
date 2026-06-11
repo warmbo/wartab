@@ -281,7 +281,11 @@ body {
 .drag-handle:hover { color: var(--text-secondary); }
 .drag-handle:active { cursor: grabbing; }
 .card.dragging { opacity: 0.3; transform: scale(0.97); transition: opacity 0.15s, transform 0.15s; }
-.card.drop-target { border-color: var(--accent) !important; box-shadow: 0 0 16px var(--accent-glow), inset 0 0 0 1px var(--accent); transition: border-color 0.1s, box-shadow 0.1s; }
+.drag-marker {
+  height: 3px; background: var(--accent); box-shadow: 0 0 8px var(--accent-glow);
+  pointer-events: none; grid-column: 1 / -1; z-index: 5;
+  transition: opacity 0.1s;
+}
 
 /* ══════ Grid Gap (empty cells) ══════ */
 .grid-gap {
