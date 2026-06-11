@@ -2,7 +2,7 @@
    WarTab — Application Logic
    ═══════════════════════════════════════════ */
 
-let WARTAB_VERSION = '0.1.6';
+let WARTAB_VERSION = '0.1.7';
 
 function bumpVersion(){
   const p=WARTAB_VERSION.split('.');
@@ -123,24 +123,37 @@ function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const i
 function stItem(icon,label,value,pct){const div=document.createElement('span');div.className='stat-item';div.innerHTML=`<span class="stat-icon">${icon}</span>`;if(label){const l=document.createElement('span');l.className='stat-label';l.textContent=label;div.appendChild(l);}if(pct!==null&&pct!==undefined){const b=document.createElement('span');b.className='stat-bar';const f=document.createElement('span');f.className='stat-bar-fill'+(pct>80?' high':pct>60?' mid':'');f.style.width=pct+'%';b.appendChild(f);div.appendChild(b);}const v=document.createElement('span');v.className='stat-value';v.textContent=value;div.appendChild(v);return div;}
 
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
-function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';config.cards.forEach((c,i)=>{if(c.id==='__gap__'){grid.appendChild(renderGap(c,i));}else{grid.appendChild(c.id===editModeCardId?renderCardEditor(c,i):renderCard(c,i));}});setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs&&!document.activeElement?.closest('.card-editing'))fs.focus();}
-function renderGap(card,i){
-  const div=document.createElement('div');div.className='grid-gap';div.dataset.cardId='__gap__';div.dataset.index=i;
-  div.style.gridColumn='span '+(card.width||1);
-  div.style.minHeight='40px';
-  div.innerHTML='<div class="gap-inner"><span class="gap-icon">⊞</span><span class="gap-label">empty cell</span></div>';
-  // Double-click to remove gap
-  div.addEventListener('dblclick',()=>{config.cards.splice(i,1);saveConfig();renderAll();toast('Gap removed');});
-  return div;
-}
+function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';config.cards.forEach((c,i)=>{grid.appendChild(c.id===editModeCardId?renderCardEditor(c,i):renderCard(c,i));});setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs&&!document.activeElement?.closest('.card-editing'))fs.focus();}
 function scheduleEqualize(){if(!_eqPending){_eqPending=true;requestAnimationFrame(()=>{_eqPending=false;equalizeCardHeights();});}}
-function equalizeCardHeights(){const grid=$('#card-grid');const cards=[...grid.children].filter(el=>el.classList.contains('card'));if(!cards.length)return;cards.forEach(c=>c.style.minHeight='');const rows=[];let curRow=[],curTop=-1;cards.forEach(card=>{const r=card.getBoundingClientRect();if(curTop<0||Math.abs(r.top-curTop)>8){if(curRow.length)rows.push(curRow);curRow=[card];curTop=r.top;}else curRow.push(card);});if(curRow.length)rows.push(curRow);rows.forEach(row=>{if(row.length<2)return;const m=Math.max(...row.map(c=>c.offsetHeight));row.forEach(c=>c.style.minHeight=m+'px');});}
+function equalizeCardHeights(){const grid=$('#card-grid');const allCards=[...grid.children].filter(el=>el.classList.contains('card'));if(!allCards.length)return;allCards.forEach(c=>c.style.minHeight='');// Skip cards with height>1 (double-height cards control their own size)
+const cards=allCards.filter(c=>{const idx=parseInt(c.dataset.index);const card=config.cards[idx];return !card||!card.height||card.height<=1;});if(!cards.length)return;const rows=[];let curRow=[],curTop=-1;cards.forEach(card=>{const r=card.getBoundingClientRect();if(curTop<0||Math.abs(r.top-curTop)>8){if(curRow.length)rows.push(curRow);curRow=[card];curTop=r.top;}else curRow.push(card);});if(curRow.length)rows.push(curRow);rows.forEach(row=>{if(row.length<2)return;const m=Math.max(...row.map(c=>c.offsetHeight));row.forEach(c=>c.style.minHeight=m+'px');});}
 
-function renderCard(card,idx){const div=document.createElement('div');div.className='card';div.dataset.cardId=card.id;div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;div.style.setProperty('--card-accent',card.color||config.theme.glow);const hdr=document.createElement('div');hdr.className='card-header';const title=document.createElement('div');title.className='card-title';title.appendChild(renderIconElement(card.icon,'card-icon'));title.appendChild(document.createTextNode(' '+(card.title||'')));hdr.appendChild(title);const rg=document.createElement('div');rg.style.cssText='display:flex;align-items:center;gap:4px;';const eb=document.createElement('button');eb.className='card-edit-btn';eb.textContent='✎';eb.title='Edit';eb.addEventListener('click',e=>{e.stopPropagation();toggleCardEdit(card.id);});rg.appendChild(eb);const h=document.createElement('span');h.className='drag-handle';h.textContent='⠿';h.title='Drag';rg.appendChild(h);hdr.appendChild(rg);div.appendChild(hdr);const body=document.createElement('div');body.className='card-body';(card.sections||[]).forEach(sec=>{const el=renderSection(sec,card);if(el)body.appendChild(el);});div.appendChild(body);h.addEventListener('pointerdown',e=>startDrag(e,card.id,idx));return div;}
+function renderCard(card,idx){
+  if(card._isGap){
+    const div=document.createElement('div');div.className='card grid-gap-card';div.dataset.cardId=card.id;
+    div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;
+    div.style.gridColumn='span '+div.dataset.width;
+    if(card.height>1)div.style.gridRow='span '+card.height;
+    div.draggable=true;
+    const h=document.createElement('div');h.className='card-header';h.style.cssText='display:flex;align-items:center;justify-content:flex-end;padding:6px 12px;gap:4px;';
+    const dh=document.createElement('span');dh.className='drag-handle';dh.textContent='⠿';dh.title='Drag';h.appendChild(dh);
+    div.appendChild(h);
+    const b=document.createElement('div');b.className='card-body';
+    b.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;min-height:60px;color:var(--text-tertiary);font-size:11px;opacity:0.5;">empty</div>';
+    div.appendChild(b);
+    dh.addEventListener('pointerdown',e=>startDrag(e,card.id,idx));
+    // Double-click to delete gap
+    div.addEventListener('dblclick',()=>{config.cards.splice(idx,1);saveConfig();renderAll();toast('Gap removed');});
+    return div;
+  }
+  const div=document.createElement('div');div.className='card';div.dataset.cardId=card.id;div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;div.style.setProperty('--card-accent',card.color||config.theme.glow);
+  if(card.height>1)div.style.gridRow='span '+card.height;
+  const hdr=document.createElement('div');hdr.className='card-header';const title=document.createElement('div');title.className='card-title';title.appendChild(renderIconElement(card.icon,'card-icon'));title.appendChild(document.createTextNode(' '+(card.title||'')));hdr.appendChild(title);const rg=document.createElement('div');rg.style.cssText='display:flex;align-items:center;gap:4px;';const eb=document.createElement('button');eb.className='card-edit-btn';eb.textContent='✎';eb.title='Edit';eb.addEventListener('click',e=>{e.stopPropagation();toggleCardEdit(card.id);});rg.appendChild(eb);const h=document.createElement('span');h.className='drag-handle';h.textContent='⠿';h.title='Drag';rg.appendChild(h);hdr.appendChild(rg);div.appendChild(hdr);const body=document.createElement('div');body.className='card-body';(card.sections||[]).forEach(sec=>{const el=renderSection(sec,card);if(el)body.appendChild(el);});div.appendChild(body);h.addEventListener('pointerdown',e=>startDrag(e,card.id,idx));return div;
+}
 
 function renderIconElement(icon,cls){if(!icon){const s=document.createElement('span');s.className=cls;s.textContent='📦';return s;}if(icon.startsWith('http')||icon.startsWith('data:')||icon.startsWith('/')){const img=document.createElement('img');img.className=cls;img.src=icon;img.alt='';img.loading='lazy';img.onerror=function(){this.outerHTML='<span class="'+cls+'">📦</span>';};return img;}const s=document.createElement('span');s.className=cls;s.textContent=icon;return s;}
 
-function renderCardEditor(card,idx){const div=document.createElement('div');div.className='card card-editing';div.dataset.cardId=card.id;div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;div.style.setProperty('--card-accent',card.color||config.theme.glow);const hdr=document.createElement('div');hdr.className='card-header';const t=document.createElement('div');t.style.cssText='font-size:14px;font-weight:600;';t.textContent='✎ Editing:';const rg=document.createElement('div');rg.style.cssText='display:flex;align-items:center;gap:4px;';const db=document.createElement('button');db.className='btn btn-glass btn-sm';db.textContent='Done';db.addEventListener('click',()=>{editModeCardId=null;saveConfig();renderAll();toast('Card saved');});rg.appendChild(db);hdr.appendChild(t);hdr.appendChild(rg);div.appendChild(hdr);const body=document.createElement('div');body.className='card-body';body.appendChild(inlineField('Title','text',card.title,v=>{card.title=v;saveConfig();}));body.appendChild(iconField(card));body.appendChild(inlineColor('Color',card.color,v=>{card.color=v;saveConfig();applyTheme();div.style.setProperty('--card-accent',v);}));body.appendChild(inlineRange('Width',card.width,1,config.layout.cols,v=>{card.width=parseInt(v);saveConfig();div.dataset.width=Math.min(card.width,config.layout.cols);}));const sl=document.createElement('div');sl.style.cssText='font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-secondary);margin:12px 0 6px;';sl.textContent='Sections';body.appendChild(sl);(card.sections||[]).forEach((sec,si)=>{body.appendChild(renderInlineSection(sec,card,si));});const as=document.createElement('button');as.className='btn btn-glass btn-sm';as.style.marginTop='4px';as.textContent='+ Add Section';as.addEventListener('click',()=>{card.sections=card.sections||[];card.sections.push({id:'sec-'+uid(),type:'links',label:'New Section',links:[{label:'Example',url:'https://example.com',icon:'🔗'}]});saveConfig();renderAll();toast('Section added');});body.appendChild(as);div.appendChild(body);return div;}
+function renderCardEditor(card,idx){const div=document.createElement('div');div.className='card card-editing';div.dataset.cardId=card.id;div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;div.style.setProperty('--card-accent',card.color||config.theme.glow);const hdr=document.createElement('div');hdr.className='card-header';const t=document.createElement('div');t.style.cssText='font-size:14px;font-weight:600;';t.textContent='✎ Editing:';const rg=document.createElement('div');rg.style.cssText='display:flex;align-items:center;gap:4px;';const db=document.createElement('button');db.className='btn btn-glass btn-sm';db.textContent='Done';db.addEventListener('click',()=>{editModeCardId=null;saveConfig();renderAll();toast('Card saved');});rg.appendChild(db);hdr.appendChild(t);hdr.appendChild(rg);div.appendChild(hdr);const body=document.createElement('div');body.className='card-body';body.appendChild(inlineField('Title','text',card.title,v=>{card.title=v;saveConfig();}));body.appendChild(iconField(card));body.appendChild(inlineColor('Color',card.color,v=>{card.color=v;saveConfig();applyTheme();div.style.setProperty('--card-accent',v);}));body.appendChild(inlineRange('Width',card.width,1,config.layout.cols,v=>{card.width=parseInt(v);saveConfig();div.dataset.width=Math.min(card.width,config.layout.cols);}));body.appendChild(inlineRange('Height',card.height||1,1,2,v=>{card.height=parseInt(v);saveConfig();if(card.height>1)div.style.gridRow='span '+card.height;else div.style.gridRow='';}));const sl=document.createElement('div');sl.style.cssText='font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-secondary);margin:12px 0 6px;';sl.textContent='Sections';body.appendChild(sl);(card.sections||[]).forEach((sec,si)=>{body.appendChild(renderInlineSection(sec,card,si));});const as=document.createElement('button');as.className='btn btn-glass btn-sm';as.style.marginTop='4px';as.textContent='+ Add Section';as.addEventListener('click',()=>{card.sections=card.sections||[];card.sections.push({id:'sec-'+uid(),type:'links',label:'New Section',links:[{label:'Example',url:'https://example.com',icon:'🔗'}]});saveConfig();renderAll();toast('Section added');});body.appendChild(as);div.appendChild(body);return div;}
 
 function inlineField(l,t,v,o){const g=document.createElement('div');g.style.cssText='margin-bottom:8px;';const lb=document.createElement('label');lb.style.cssText='display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:2px;';lb.textContent=l;g.appendChild(lb);const i=document.createElement('input');i.type=t;i.value=v;i.style.cssText='width:100%;padding:5px 10px;background:var(--card-input-bg);border:1px solid var(--surface-border);color:var(--text-primary);font-size:12px;outline:none;';i.addEventListener('change',()=>o(i.value));g.appendChild(i);return g;}
 function iconField(card){const g=document.createElement('div');g.style.cssText='margin-bottom:8px;';const l=document.createElement('label');l.style.cssText='display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:2px;';l.textContent='Icon';g.appendChild(l);const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;align-items:center;';const p=document.createElement('span');p.style.cssText='font-size:24px;width:32px;text-align:center;';if(card.icon&&(card.icon.startsWith('http')||card.icon.startsWith('data:'))){const img=document.createElement('img');img.src=card.icon;img.style.cssText='width:28px;height:28px;object-fit:contain;';p.appendChild(img);}else{p.textContent=card.icon||'📦';}row.appendChild(p);const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Change';b.addEventListener('click',()=>openIconPicker(url=>{card.icon=url;saveConfig();renderAll();}));row.appendChild(b);const cb=document.createElement('button');cb.className='btn btn-glass btn-sm';cb.textContent='✕';cb.addEventListener('click',()=>{card.icon='📦';saveConfig();renderAll();});row.appendChild(cb);g.appendChild(row);return g;}
@@ -201,7 +214,7 @@ function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
 function startDrag(e,id,idx){
   if(e.button!==0)return;e.preventDefault();
   const card=config.cards.find(x=>x.id===id);
-  if(!card||card.id==='__gap__')return;
+  if(!card||card._isGap)return;
   const grid=$('#card-grid');
   const allEls=[...grid.children].filter(el=>el.classList.contains('card')||el.classList.contains('grid-gap'));
   // Find the source element
@@ -330,23 +343,8 @@ function onDragEnd(){
     // Count only real cards (not gaps, not placeholder itself)
     const allEls=[...grid.children];
     targetIdx=allEls.indexOf(placeholder);
-    // Adjust for gaps in the count — count only non-gap items
-    let realIdx=0;
-    for(let i=0;i<targetIdx;i++){
-      const el=allEls[i];
-      if(el.classList.contains('card')&&el.dataset.cardId&&el.dataset.cardId!==cardId){
-        // This is a real card, count it
-        const c=config.cards.find(x=>x.id===el.dataset.cardId);
-        if(c&&c.id!=='__gap__')realIdx++;
-      } else if(el.classList.contains('grid-gap')){
-        // Gaps count as separate positions
-        const gapEl=config.cards.findIndex(x=>x.id==='__gap__'&&x._el===el);
-        // Actually, just count them
-        realIdx++;
-      }
-    }
-    // More accurate: find the position in the config array
-    const beforeEl=allEls[targetIdx+1]||null; // element after placeholder
+    // Find target insertion point — use the element after the placeholder
+    const beforeEl=allEls[targetIdx+1]||null;
     let beforeId=null;
     if(beforeEl&&(beforeEl.classList.contains('card')||beforeEl.classList.contains('grid-gap'))){
       beforeId=beforeEl.dataset.cardId||null;
@@ -396,9 +394,8 @@ function onDragEnd(){
   dragState=null;
 }
 
-/* ── Gap helpers ── */
 function addGap(){
-  config.cards.push({id:'__gap__',title:'',icon:'',color:'transparent',width:1,_isGap:true});
+  config.cards.push({id:'gap-'+uid(),title:'',icon:'',color:'transparent',width:1,height:1,_isGap:true});
   saveConfig();renderAll();toast('Gap added');
 }
 function removeGap(idx){

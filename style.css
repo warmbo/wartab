@@ -321,6 +321,19 @@ body {
 .card:hover .card-edit-btn { opacity: 1; }
 .card-edit-btn:hover { color: var(--text-primary); }
 
+/* Gap cards (draggable empty spaces) */
+.grid-gap-card {
+  border: 1px dashed var(--glass-border) !important;
+  background: rgba(0,0,0,0.02) !important;
+  backdrop-filter: none !important;
+  min-height: 60px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.grid-gap-card:hover { border-color: var(--glass-border-hover) !important; background: rgba(255,255,255,0.03) !important; }
+.grid-gap-card::before { display: none !important; }
+.grid-gap-card::after { display: none !important; }
+.grid-gap-card .card-body { padding: 8px 16px; }
+
 /* ══════ Icon Picker ══════ */
 .icon-picker { position: fixed; top: 0; right: 0; bottom: 0; width: 520px; max-width: 100vw; z-index: 102; background: linear-gradient(180deg, rgba(16,16,16,0.97) 0%, rgba(10,10,10,0.97) 100%); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-left: 1px solid var(--glass-border); box-shadow: -8px 0 40px rgba(0,0,0,0.5); transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; overflow: hidden; }
 .icon-picker.open { transform: translateX(0); }
