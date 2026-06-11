@@ -375,33 +375,32 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   /* ── Font ── */
   body.appendChild(ps('Font'));
   const curFont=config.theme.fontFamily||'Inter';
+  const TOP_FONTS = [
+    {name:'Inter',sample:'The quick brown fox jumps'},
+    {name:'Space Grotesk',sample:'The quick brown fox jumps'},
+    {name:'JetBrains Mono',sample:'The quick brown fox jumps'},
+    {name:'Fraunces',sample:'The quick brown fox jumps'},
+    {name:'Plus Jakarta Sans',sample:'The quick brown fox jumps'},
+  ];
+  // Ensure current font is in the list
+  if(!TOP_FONTS.find(f=>f.name===curFont)) TOP_FONTS.push({name:curFont,sample:'The quick brown fox jumps'});
   const fsel=document.createElement('select');fsel.className='font-select';
   fsel.style.fontFamily=`'${curFont}',sans-serif`;
-  const cats=['sans','mono','serif'];
-  const filtered=cats.includes(config.theme.fontCat||'all')?GOOGLE_FONTS.filter(f=>f.category===config.theme.fontCat):GOOGLE_FONTS;
-  // Or show all if no filter
-  const displayFonts = (config.theme.fontCat&&config.theme.fontCat!=='all') ? GOOGLE_FONTS.filter(f=>f.category===config.theme.fontCat) : GOOGLE_FONTS;
-  displayFonts.forEach(f=>{
-    const o=document.createElement('option');o.value=f.name;o.textContent=f.name+' — '+f.sample;
+  TOP_FONTS.forEach(f=>{
+    const o=document.createElement('option');o.value=f.name;
+    o.textContent=f.sample;
     o.style.fontFamily=`'${f.name}',sans-serif`;
+    o.style.fontSize='15px';
     if(f.name===curFont)o.selected=true;fsel.appendChild(o);
   });
   fsel.addEventListener('change',()=>{
     config.theme.fontFamily=fsel.value;
     fsel.style.fontFamily=`'${fsel.value}',sans-serif`;
     saveConfig();applyTheme();renderAll();
-    // Don't rebuild panel — just update
   });
+  const fontLabel=el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;','Preview');
+  body.appendChild(fontLabel);
   body.appendChild(fsel);
-  // Category filter under the select
-  const catRow=el('div','display:flex;gap:4px;margin-top:6px;');
-  ['all','sans','mono','serif'].forEach(cat=>{
-    const cb=el('button','',cat.charAt(0).toUpperCase()+cat.slice(1));cb.className='btn btn-glass btn-sm';
-    cb.style.fontSize='10px';cb.style.opacity=(config.theme.fontCat||'all')===cat?'1':'0.5';
-    cb.addEventListener('click',()=>{config.theme.fontCat=cat;saveConfig();buildConfigPanel();});
-    catRow.appendChild(cb);
-  });
-  body.appendChild(catRow);
 
   /* ── Status Bar ── */
   body.appendChild(ps('Status Bar'));
@@ -486,7 +485,16 @@ function chk(label,value,onChange){
 
 function hexToRgba2(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
 
-function ps(t){return el('div','','',el('h3','font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--glass-border);font-family:var(--font);',t));}
+function ps(t){return el('div','','',el('h3','font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:14px;margin-top:24px;padding-bottom:6px;border-bottom:1px solid var(--glass-border);font-family:var(--font);',t));}
+function addNewCard(){
+  const colMax=config.layout.cols;
+  config.cards.push({
+    id:'card-'+uid(), title:'New Card', icon:'📦', color:'#888888',
+    width:Math.min(1,colMax),
+    sections:[{id:'sec-'+uid(),type:'links',label:'Links',links:[{label:'Example',url:'https://example.com',icon:'🔗'}]}],
+  });
+  saveConfig(); renderAll(); toast('New card added');
+}
 function pf(type,key,label,options,value,onChange,attrs){const g=el('div','margin-bottom:10px;');
   if(type==='select'){g.appendChild(el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;',label));const s=document.createElement('select');s.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:13px;outline:none;cursor:pointer;';(options||[]).forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;if(o.value===value)opt.selected=true;s.appendChild(opt);});s.addEventListener('change',()=>onChange(s.value));g.appendChild(s);}
   else if(type==='range'){g.appendChild(el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;',label));const r=el('div','display:flex;align-items:center;gap:8px;');const i=document.createElement('input');i.type='range';i.min=attrs.min||0;i.max=attrs.max||100;i.value=value;i.style.cssText='flex:1;accent-color:var(--accent);';const s=el('span','font-size:12px;color:var(--text-secondary);min-width:30px;',String(value));i.addEventListener('input',()=>s.textContent=i.value);i.addEventListener('pointerup',()=>onChange(i.value));r.appendChild(i);r.appendChild(s);g.appendChild(r);}
