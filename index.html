@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WarTab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+</head>
+<body>
+  <div id="bg-canvas"></div>
+  <!-- Status Bar -->
+  <div id="status-bar"></div>
+  <div id="app">
+    <!-- Top Bar (brand + config, no search) -->
+    <div id="top-bar">
+      <div class="brand" id="brand-text"><span>⚔️</span><span>WarTab</span></div>
+      <div id="top-actions">
+        <button class="btn btn-glass btn-icon" id="btn-config" title="Configure WarTab">⚙️</button>
+      </div>
+    </div>
+    <div id="card-grid"></div>
+  </div>
+
+  <div class="config-overlay" id="config-overlay"></div>
+  <div class="config-panel" id="config-panel">
+    <div class="config-header">
+      <h2>⚙️ WarTab Config</h2>
+      <button class="btn btn-glass" id="config-close">✕</button>
+    </div>
+    <div class="config-body" id="config-body"></div>
+  </div>
+
+  <div class="config-overlay" id="icon-picker-overlay"></div>
+  <div class="icon-picker" id="icon-picker">
+    <div class="config-header">
+      <h2>🖼️ Choose Icon</h2>
+      <button class="btn btn-glass" id="icon-picker-close">✕</button>
+    </div>
+    <div class="icon-picker-body">
+      <div class="icon-picker-tabs">
+        <button class="ip-tab active" data-tab="library">Library</button>
+        <button class="ip-tab" data-tab="upload">Upload</button>
+        <button class="ip-tab" data-tab="emoji">Emoji</button>
+        <button class="ip-tab" data-tab="url">URL</button>
+      </div>
+      <div id="icon-picker-content"></div>
+    </div>
+  </div>
+
+  <div class="config-overlay" id="bg-picker-overlay"></div>
+  <div class="icon-picker" id="bg-picker">
+    <div class="config-header">
+      <h2>🖼️ Choose Background</h2>
+      <button class="btn btn-glass" id="bg-picker-close">✕</button>
+    </div>
+    <div class="icon-picker-body">
+      <div id="bg-picker-content"></div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script src="app.js"></script>
+</body>
+</html>
