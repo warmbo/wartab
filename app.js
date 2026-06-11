@@ -134,7 +134,6 @@ function renderCard(card,idx){
     div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;
     div.style.gridColumn='span '+div.dataset.width;
     if(card.height>1)div.style.gridRow='span '+card.height;
-    div.draggable=true;
     const h=document.createElement('div');h.className='card-header';h.style.cssText='display:flex;align-items:center;justify-content:flex-end;padding:6px 12px;gap:4px;';
     const dh=document.createElement('span');dh.className='drag-handle';dh.textContent='⠿';dh.title='Drag';h.appendChild(dh);
     div.appendChild(h);
@@ -250,45 +249,46 @@ function startDrag(e,id,idx){
 }
 
 function onDragMove(e){
-  if(!dragState)return;
-  dragState.clone.style.left=(e.clientX-30)+'px';dragState.clone.style.top=(e.clientY-15)+'px';
-  const grid=$('#card-grid');
-  const ph=grid.querySelector('.drag-placeholder');
-  if(!ph)return;
-  const gr=grid.getBoundingClientRect();
-  const cols=config.layout.cols;
+  if(!dragState||dragState._moving)return;
+  dragState._moving=true;
+  requestAnimationFrame(()=>{
+    if(!dragState){dragState._moving=false;return;}
+    dragState.clone.style.left=(e.clientX-30)+'px';dragState.clone.style.top=(e.clientY-15)+'px';
+    const grid=$('#card-grid');
+    const ph=grid.querySelector('.drag-placeholder');
+    if(!ph){dragState._moving=false;return;}
 
-  // Find closest element to insert placeholder before
-  const items=[...grid.children].filter(el=>el!==ph&&el!==dragState.srcEl);
-  let bestBefore=null;
-  let minDist=Infinity;
-  for(const el of items){
-    const r=el.getBoundingClientRect();
-    const midX=r.left+r.width/2,midY=r.top+r.height/2;
-    const dy=Math.abs(e.clientY-midY),dx=Math.abs(e.clientX-midX);
-    // Prefer same-row insertion, fall back to before/after row
-    if(dy<80&&e.clientX<midX){const d=dy+dx;if(d<minDist){minDist=d;bestBefore=el;}}
-    else if(dy<80&&e.clientX>=midX){/* after this element, try next sibling */}
-    else if(e.clientY<r.top&&dy<minDist){minDist=dy;bestBefore=el;}
-  }
-  // Also try placing after the last suitable element
-  let bestAfter=null;minDist=Infinity;
-  for(const el of items){
-    const r=el.getBoundingClientRect();
-    const midX=r.left+r.width/2,midY=r.top+r.height/2;
-    const dy=Math.abs(e.clientY-midY),dx=Math.abs(e.clientX-midX);
-    if(dy<80&&e.clientX>=midX&&(dy+dx)<minDist){minDist=dy+dx;bestAfter=el;}
-  }
-  if(bestBefore)grid.insertBefore(ph,bestBefore);
-  else if(bestAfter&&bestAfter.nextElementSibling)grid.insertBefore(ph,bestAfter.nextElementSibling);
-  else grid.appendChild(ph);
+    // Find closest element to insert placeholder before
+    const items=[...grid.children].filter(el=>el!==ph&&el!==dragState.srcEl);
+    let bestBefore=null,bestAfter=null;
+    let minDist=Infinity;
+    for(const el of items){
+      const r=el.getBoundingClientRect();
+      const midX=r.left+r.width/2,midY=r.top+r.height/2;
+      const dy=Math.abs(e.clientY-midY),dx=Math.abs(e.clientX-midX);
+      if(dy<80&&e.clientX<midX){const d=dy+dx;if(d<minDist){minDist=d;bestBefore=el;}}
+      else if(e.clientY<r.top&&dy<minDist){minDist=dy;bestBefore=el;}
+    }
+    // Also try placing after elements
+    let bMin=Infinity;
+    for(const el of items){
+      const r=el.getBoundingClientRect();
+      const midX=r.left+r.width/2,midY=r.top+r.height/2;
+      const dy=Math.abs(e.clientY-midY),dx=Math.abs(e.clientX-midX);
+      if(dy<80&&e.clientX>=midX&&(dy+dx)<bMin){bMin=dy+dx;bestAfter=el;}
+    }
+    if(bestBefore)grid.insertBefore(ph,bestBefore);
+    else if(bestAfter&&bestAfter.nextElementSibling)grid.insertBefore(ph,bestAfter.nextElementSibling);
+    else grid.appendChild(ph);
 
-  // Size placeholder to match
-  const siblings=[...grid.children].filter(el=>el!==ph&&(el.classList.contains('card')));
-  if(siblings.length){
-    const avgH=Math.round(siblings.reduce((s,el)=>s+el.offsetHeight,0)/siblings.length);
-    ph.style.height=Math.max(60,avgH-10)+'px';
-  }
+    // Size placeholder
+    const siblings=[...grid.children].filter(el=>el!==ph&&el.classList.contains('card'));
+    if(siblings.length){
+      const avgH=Math.round(siblings.reduce((s,el)=>s+el.offsetHeight,0)/siblings.length);
+      ph.style.height=Math.max(60,avgH-10)+'px';
+    }
+    dragState._moving=false;
+  });
 }
 
 function onDragEnd(){
