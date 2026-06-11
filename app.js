@@ -334,11 +334,56 @@ function onDragMove(e){
   const dAfter=Math.abs(e.clientY-gapAfterY);
   if(dAfter<bestDist){bestDist=dAfter;bestGap={before:null,mode:'row',x:lastR.left+lastR.width/2,y:gapAfterY};}
 
+  // Row-end gaps: for each row's last card, allow placing in the empty space at the row's right edge
+  const gridRect=grid.getBoundingClientRect();
+  const gridRight=gridRect.right;
+  // Group items by row
+  const rows=[];
+  for(const el of items){
+    const r=el.getBoundingClientRect();
+    let found=false;
+    for(const row of rows){if(Math.abs(row.top-r.top)<10){row.cards.push(el);row.right=Math.max(row.right,r.right);row.height=r.bottom-r.top;found=true;break;}}
+    if(!found)rows.push({top:r.top,bottom:r.bottom,cards:[el],right:r.right,height:r.bottom-r.top});
+  }
+  // Check each row's empty right space
+  for(const row of rows){
+    const emptyW=gridRight-row.right;
+    if(emptyW<20)continue; // no significant empty space
+    // Find the next row's first card (or null)
+    const rowBottom=row.top+row.height;
+    const nextRow=rows.find(r=>Math.abs(r.top-rowBottom)<20);
+    const beforeCard=nextRow?nextRow.cards[0]:null;
+    // Check if cursor is in the empty zone (to the right of row's last card, vertically within row)
+    if(e.clientX>row.right&&e.clientX<gridRight&&e.clientY>row.top&&e.clientY<row.bottom){
+      const dx=Math.abs(e.clientX-(row.right+emptyW/2));
+      const dy=Math.abs(e.clientY-(row.top+row.height/2));
+      const dist=Math.sqrt(dx*dx+dy*dy)*0.8; // slight bias toward row-end gaps
+      if(dist<bestDist){
+        bestDist=dist;
+        bestGap={before:beforeCard,mode:'col',x:row.right+2,y:row.top+row.height/2};
+      }
+    }
+  }
+
   // Show marker at the best gap position
   const gx=bestGap.x,gy=bestGap.y;
   if(bestGap.mode==='col'){
     const bCard=bestGap.before?items.find(i=>i.dataset.cardId===bestGap.before.dataset.cardId):null;
-    if(!bCard){marker.style.display='none';return;}
+    if(!bCard){
+      // Row-end gap on the last row — show vertical bar at the grid's right edge
+      const gr2=grid.getBoundingClientRect();
+      marker.className='drag-marker drag-marker-v';
+      marker.style.cssText=`
+        position:fixed;pointer-events:none;z-index:999;
+        left:${gr2.right-4}px;top:${gy-60}px;
+        width:6px;height:120px;
+        background:linear-gradient(180deg,var(--accent),rgba(255,255,255,0.4),var(--accent));
+        box-shadow:0 0 16px var(--accent-glow),0 0 4px rgba(255,255,255,0.2);
+        border-radius:3px;
+      `;
+      dragState._beforeCard=null;
+      return;
+    }
     const br=bCard.getBoundingClientRect();
     marker.className='drag-marker drag-marker-v';
     marker.style.cssText=`
