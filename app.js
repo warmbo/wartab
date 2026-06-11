@@ -2,7 +2,19 @@
    WarTab — Application Logic
    ═══════════════════════════════════════════ */
 
+let WARTAB_VERSION = '0.1.6';
+
+function bumpVersion(){
+  const p=WARTAB_VERSION.split('.');
+  p[p.length-1]=String(parseInt(p[p.length-1])+1);
+  WARTAB_VERSION = p.join('.');
+  const ft=$('#footer-text');
+  if(ft)ft.textContent='WarTab v'+WARTAB_VERSION;
+  return WARTAB_VERSION;
+}
+
 const DEFAULT_CONFIG = {
+  version: WARTAB_VERSION,
   branding: { title:'WarTab', icon:'⚔️' },
   theme: {
     bgType:'gradient', bgValue:'#0a0a0a, #1a1a1a, #0d0d0d',
@@ -754,8 +766,7 @@ async function init() {
   await fetchUploads();
   renderAll(); initStatusBar();
   // Footer
-  const ver=config.version||'1.0';
-  $('#footer-text').textContent='WarTab v'+ver;
+  $('#footer-text').textContent='WarTab v'+WARTAB_VERSION;
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
   $('#btn-add-gap').addEventListener('click',()=>{addGap();});
