@@ -249,7 +249,49 @@ function onDragMove(e){
   if(!cards.length){marker.style.display='none';return;}
   marker.style.display='';
 
-  // Find nearest card by vertical distance
+  const relX=e.clientX-gr.left;
+  const colIdx=Math.min(cols-2,Math.max(0,Math.floor(relX/colW)));
+  const boundaryX=gr.left+(colIdx+1)*colW; // right edge of colIdx
+  const distToBoundary=Math.abs(e.clientX-boundaryX);
+
+  // Column mode: cursor near a column boundary (30px buffer)
+  if(distToBoundary<35){
+    // Find the card whose left edge is just past this boundary — that's the card to insert before
+    let beforeCard=null;
+    for(const el of cards){
+      const r=el.getBoundingClientRect();
+      // Card's left edge is just past the boundary (or within 10px)
+      if(r.left>=boundaryX-10){
+        beforeCard=el;break;
+      }
+    }
+    // If no card found to the right, find the one nearest to the boundary's x position
+    if(!beforeCard){
+      let best=null,bestD=Infinity;
+      for(const el of cards){
+        const r=el.getBoundingClientRect();
+        const d=Math.abs(r.left-boundaryX);
+        if(d<bestD){bestD=d;best=el;}
+      }
+      beforeCard=best;
+    }
+
+    if(beforeCard){
+      const br=beforeCard.getBoundingClientRect();
+      // Vertical bar spanning the row height
+      marker.style.cssText=`
+        position:fixed;pointer-events:none;z-index:999;
+        left:${boundaryX-2}px;top:${br.top}px;
+        width:4px;height:${br.bottom-br.top}px;
+        background:var(--accent);box-shadow:0 0 12px var(--accent-glow),inset 0 0 2px rgba(255,255,255,0.3);
+        transition:left 0.06s,top 0.06s,height 0.06s;
+      `;
+      dragState._beforeCard=beforeCard.dataset.cardId;
+    }
+    return;
+  }
+
+  // Row mode: insert before the nearest card by vertical midpoint
   let nearest=null,nearD=Infinity;
   for(const el of cards){
     const r=el.getBoundingClientRect();const midY=r.top+r.height/2;
@@ -259,44 +301,16 @@ function onDragMove(e){
   if(!nearest)return;
   const nr=nearest.getBoundingClientRect();
 
-  // Determine if cursor is in the left/right gap (column insertion) or vertical gap (row insertion)
-  const relX=e.clientX-gr.left;
-  const colIdx=Math.floor(relX/colW);
-  // Column boundary: between colIdx and colIdx+1
-  const boundaryX=gr.left+(colIdx+1)*colW;
-
-  // Check if cursor is near a column boundary (within 15px of it)
-  const distToBoundary=Math.abs(e.clientX-boundaryX);
-  const isColumnMode=distToBoundary<20;
-
-  if(isColumnMode){
-    // Vertical bar at column boundary, spanning the nearest card's vertical space
-    const top=nr.top;
-    const bottom=nr.bottom;
-    marker.style.cssText=`
-      position:fixed;pointer-events:none;z-index:999;
-      left:${boundaryX-1.5}px;top:${top}px;
-      width:3px;height:${bottom-top}px;
-      background:var(--accent);box-shadow:0 0 8px var(--accent-glow);
-      transition:left 0.08s,top 0.08s,height 0.08s;
-    `;
-    // For column insertion, the target is the nearest card itself (insert before it)
-    dragState._beforeCard=nearest.dataset.cardId;
-    dragState._colMode=true;
-  } else {
-    // Horizontal bar: show before the nearest card's top edge
-    const aboveY=nr.top-1;
-    marker.style.cssText=`
-      position:fixed;pointer-events:none;z-index:999;
-      left:${gr.left}px;top:${aboveY}px;
-      width:${gr.width}px;height:3px;
-      background:var(--accent);box-shadow:0 0 8px var(--accent-glow);
-      transition:top 0.08s,left 0.08s,width 0.08s;
-    `;
-    // For row insertion, insert before the nearest card
-    dragState._beforeCard=nearest.dataset.cardId;
-    dragState._colMode=false;
-  }
+  // Horizontal bar above the nearest card
+  const aboveY=nr.top-2;
+  marker.style.cssText=`
+    position:fixed;pointer-events:none;z-index:999;
+    left:${gr.left}px;top:${aboveY}px;
+    width:${gr.width}px;height:4px;
+    background:var(--accent);box-shadow:0 0 12px var(--accent-glow),inset 0 0 2px rgba(255,255,255,0.3);
+    transition:top 0.06s,left 0.06s,width 0.06s;
+  `;
+  dragState._beforeCard=nearest.dataset.cardId;
 }
 
 function onDragEnd(e){
