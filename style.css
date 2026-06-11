@@ -131,15 +131,10 @@ body {
 .section-content.collapsed { max-height: 0; opacity: 0; }
 
 /* Card groups */
-.card-group { margin-bottom: 8px; grid-column: 1 / -1; }
-.group-header {
-  display: flex; align-items: center; gap: 8px; min-height: 32px;
-  cursor: pointer; user-select: none;
-}
+.group-header { display: flex; align-items: center; gap: 8px; min-height: 36px; cursor: pointer; user-select: none; grid-column: 1 / -1; }
 .group-header::before { content: ''; display: block; height: 3px; background: var(--accent); flex-shrink: 0; }
 .group-toggle { font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; }
 .group-name { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-.group-body { display: contents; }
 
 /* ══════ Buttons ══════ */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; font-family: var(--font); color: var(--text-primary); text-shadow: var(--emboss-shadow); transition: all 0.15s ease; position: relative; outline: none; }
