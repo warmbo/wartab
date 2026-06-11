@@ -260,11 +260,15 @@ function startDrag(e,id,idx){
   if(!srcEl)return;
   srcEl.classList.add('dragging');
 
-  // Single absolutely-positioned marker — adapts to row or column mode
-  const marker=document.createElement('div');marker.className='drag-marker';
-  document.body.appendChild(marker); // relative to viewport for simplicity
+  // Ghost box — shows exact target position
+  const ghost=document.createElement('div');ghost.className='drag-ghost';
+  ghost.style.display='none';
+  document.body.appendChild(ghost);
+  // Mini label inside ghost
+  const label=card._isGap?'empty':(card.icon||'📦')+' '+(card.title||'');
+  ghost.innerHTML=`<div style="padding:8px 12px;font-size:12px;font-weight:600;">${label}</div>`;
 
-  dragState={cardId:id,srcEl,marker,active:false};
+  dragState={cardId:id,srcEl,ghost,active:false};
   document.addEventListener('mousemove',onDragMove);
   document.addEventListener('mouseup',onDragEnd);
 }
@@ -279,145 +283,104 @@ function onDragMove(e){
   if(!dragState.active)return;
 
   const grid=$('#card-grid');
-  const marker=dragState.marker;
-  if(!marker)return;
+  const ghost=dragState.ghost;
+  if(!ghost)return;
+  const gr=grid.getBoundingClientRect();
+  const cols=config.layout.cols;
+  const colW=gr.width/cols;
 
-  // Get all other cards in DOM order
+  // Card dimensions for the ghost
+  const card=config.cards.find(c=>c.id===dragState.cardId);
+  if(!card){ghost.style.display='none';return;}
+  const cw=Math.min(card.width||1,cols);
+
+  // Calculate target column (snap card so its center is at cursor)
+  const relX=e.clientX-gr.left;
+  const targetCol=Math.max(0,Math.min(cols-cw,Math.floor((relX-(cw*colW)/2)/colW)+1));
+
+  // Find which row this column position falls in
   const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==dragState.srcEl);
-  if(!items.length){marker.style.display='none';return;}
-  marker.style.display='';
-
-  // Find the gap (between consecutive items, start, or end) closest to cursor
-  let bestGap={before:null,after:null,mode:'row',x:0,y:0}; // before=card to insert before
-  let bestDist=Infinity;
-
-  // Gap before the first item
-  const firstR=items[0].getBoundingClientRect();
-  const gapY=firstR.top-4;
-  const dBefore=Math.abs(e.clientY-gapY);
-  if(dBefore<bestDist){bestDist=dBefore;bestGap={before:items[0],mode:'row',x:firstR.left+firstR.width/2,y:gapY};}
-
-  // Gaps between consecutive items
-  for(let i=0;i<items.length-1;i++){
-    const a=items[i],b=items[i+1];
-    const ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();
-
-    // Check if they're on the same row (vertical overlap within 10px)
-    const sameRow=Math.abs(ar.top-br.top)<10;
-    // Gap center: midpoint between the right edge of A and left edge of B
-    const gapCenterX=(ar.right+br.left)/2;
-    const gapCenterY=(ar.top+ar.bottom)/2;
-
-    if(sameRow){
-      // Same row — use X distance to the gap's horizontal midpoint
-      const dx=Math.abs(e.clientX-gapCenterX);
-      const dy=Math.abs(e.clientY-gapCenterY);
-      const dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<bestDist){
-        bestDist=dist;
-        bestGap={before:b,mode:'col',x:gapCenterX,y:gapCenterY};
-      }
-    } else {
-      // Different rows — use distance to the vertical gap between them
-      const gapY2=(ar.bottom+br.top)/2;
-      const d=Math.abs(e.clientY-gapY2);
-      if(d<bestDist){
-        bestDist=d;
-        bestGap={before:b,mode:'row',x:(ar.left+ar.right)/2,y:gapY2};
-      }
-    }
-  }
-
-  // Gap after the last item
-  const lastR=items[items.length-1].getBoundingClientRect();
-  const gapAfterY=lastR.bottom+4;
-  const dAfter=Math.abs(e.clientY-gapAfterY);
-  if(dAfter<bestDist){bestDist=dAfter;bestGap={before:null,mode:'row',x:lastR.left+lastR.width/2,y:gapAfterY};}
-
-  // Row-end gaps: for each row's last card, allow placing in the empty space at the row's right edge
-  const gridRect=grid.getBoundingClientRect();
-  const gridRight=gridRect.right;
-  // Group items by row
-  const rows=[];
+  const rows=[]; // array of {top,bottom,cards[],right}
   for(const el of items){
     const r=el.getBoundingClientRect();
     let found=false;
-    for(const row of rows){if(Math.abs(row.top-r.top)<10){row.cards.push(el);row.right=Math.max(row.right,r.right);row.height=r.bottom-r.top;found=true;break;}}
-    if(!found)rows.push({top:r.top,bottom:r.bottom,cards:[el],right:r.right,height:r.bottom-r.top});
-  }
-  // Check each row's empty right space
-  for(const row of rows){
-    const emptyW=gridRight-row.right;
-    if(emptyW<20)continue; // no significant empty space
-    // Find the next row's first card (or null)
-    const rowBottom=row.top+row.height;
-    const nextRow=rows.find(r=>Math.abs(r.top-rowBottom)<20);
-    const beforeCard=nextRow?nextRow.cards[0]:null;
-    // Check if cursor is in the empty zone (to the right of row's last card, vertically within row)
-    if(e.clientX>row.right&&e.clientX<gridRight&&e.clientY>row.top&&e.clientY<row.bottom){
-      const dx=Math.abs(e.clientX-(row.right+emptyW/2));
-      const dy=Math.abs(e.clientY-(row.top+row.height/2));
-      const dist=Math.sqrt(dx*dx+dy*dy)*0.8; // slight bias toward row-end gaps
-      if(dist<bestDist){
-        bestDist=dist;
-        bestGap={before:beforeCard,mode:'col',x:row.right+2,y:row.top+row.height/2};
-      }
+    for(const row of rows){
+      if(Math.abs(row.top-r.top)<10){row.cards.push(el);row.right=Math.max(row.right,r.right);row.bottom=r.bottom;found=true;break;}
     }
+    if(!found)rows.push({top:r.top,bottom:r.bottom,cards:[el],right:r.right});
   }
 
-  // Show marker at the best gap position
-  const gx=bestGap.x,gy=bestGap.y;
-  if(bestGap.mode==='col'){
-    const bCard=bestGap.before?items.find(i=>i.dataset.cardId===bestGap.before.dataset.cardId):null;
-    if(!bCard){
-      // Row-end gap on the last row — show vertical bar at the grid's right edge
-      const gr2=grid.getBoundingClientRect();
-      marker.className='drag-marker drag-marker-v';
-      marker.style.cssText=`
-        position:fixed;pointer-events:none;z-index:999;
-        left:${gr2.right-4}px;top:${gy-60}px;
-        width:6px;height:120px;
-        background:linear-gradient(180deg,var(--accent),rgba(255,255,255,0.4),var(--accent));
-        box-shadow:0 0 16px var(--accent-glow),0 0 4px rgba(255,255,255,0.2);
-        border-radius:3px;
-      `;
-      dragState._beforeCard=null;
-      return;
+  // Find which row the cursor is on
+  let targetRow=null;
+  let targetRowIdx=0;
+  for(let i=0;i<rows.length;i++){
+    const row=rows[i];
+    if(e.clientY>=row.top&&e.clientY<=row.bottom){targetRow=row;targetRowIdx=i;break;}
+  }
+  // If between rows, use the nearest
+  if(!targetRow){
+    let best=null,bestD=Infinity;
+    for(let i=0;i<rows.length;i++){
+      const d=Math.abs(e.clientY-rows[i].top);
+      if(d<bestD){bestD=d;best=i;}
     }
-    const br=bCard.getBoundingClientRect();
-    marker.className='drag-marker drag-marker-v';
-    marker.style.cssText=`
-      position:fixed;pointer-events:none;z-index:999;
-      left:${gx-3}px;top:${br.top}px;
-      width:6px;height:${br.bottom-br.top}px;
-      background:linear-gradient(180deg,var(--accent),rgba(255,255,255,0.4),var(--accent));
-      box-shadow:0 0 16px var(--accent-glow),0 0 4px rgba(255,255,255,0.2);
-      border-radius:3px;
-    `;
-  } else {
-    marker.className='drag-marker drag-marker-h';
-    const gr2=grid.getBoundingClientRect();
-    marker.style.cssText=`
-      position:fixed;pointer-events:none;z-index:999;
-      left:${gr2.left}px;top:${gy-3}px;
-      width:${gr2.width}px;height:6px;
-      background:linear-gradient(90deg,transparent,var(--accent),rgba(255,255,255,0.4),var(--accent),transparent);
-      box-shadow:0 0 16px var(--accent-glow),0 0 4px rgba(255,255,255,0.2);
-      border-radius:3px;
-    `;
+    if(best!==null){targetRow=rows[best];targetRowIdx=best;}
   }
 
-  // Store which card to insert before (null = append)
-  dragState._beforeCard=bestGap.before?bestGap.before.dataset.cardId:null;
+  if(!targetRow){
+    // No rows yet — ghost at cursor
+    ghost.style.display='';
+    ghost.style.cssText=`
+      position:fixed;pointer-events:none;z-index:999;
+      left:${gr.left+targetCol*colW}px;top:${e.clientY-30}px;
+      width:${cw*colW-4}px;height:60px;
+      border:2px dashed var(--accent);background:var(--accent-glass);
+      backdrop-filter:blur(4px);border-radius:0;
+    `;
+    dragState._beforeCard=null;
+    return;
+  }
+
+  // The card should go in the target row at targetCol. Snapshot the row cards.
+  // Find the insertion point: the first card in the row whose left edge is past the target column
+  ghost.style.display='';
+  const ghostLeft=gr.left+targetCol*colW;
+  const ghostTop=targetRow.top;
+  const ghostW=cw*colW;
+  const ghostH=targetRow.bottom-targetRow.top;
+
+  ghost.style.cssText=`
+    position:fixed;pointer-events:none;z-index:999;
+    left:${ghostLeft}px;top:${ghostTop}px;
+    width:${ghostW-4}px;height:${ghostH-4}px;
+    border:2px dashed var(--accent);background:var(--accent-glass);
+    backdrop-filter:blur(4px);border-radius:0;
+    display:flex;align-items:center;justify-content:center;
+  `;
+
+  // Determine which card to insert before based on grid position
+  // Find the first card (in DOM order) that starts at or after the target column AND same row
+  let beforeCard=null;
+  for(const el of items){
+    const r=el.getBoundingClientRect();
+    if(Math.abs(r.top-targetRow.top)<10&&r.left>=ghostLeft){
+      beforeCard=el;break;
+    }
+  }
+  // If not found in same row, check the next row's first card
+  if(!beforeCard&&targetRowIdx<rows.length-1){
+    beforeCard=rows[targetRowIdx+1].cards[0];
+  }
+  dragState._beforeCard=beforeCard?beforeCard.dataset.cardId:null;
 }
 
 function onDragEnd(e){
   document.removeEventListener('mousemove',onDragMove);
   document.removeEventListener('mouseup',onDragEnd);
   if(!dragState)return;
-  const{cardId,srcEl,marker,active,_beforeCard}=dragState;
+  const{cardId,srcEl,ghost,active,_beforeCard}=dragState;
   if(srcEl)srcEl.classList.remove('dragging');
-  if(marker&&marker.parentNode)marker.remove();
+  if(ghost&&ghost.parentNode)ghost.remove();
 
   if(active&&_beforeCard){
     const grid=$('#card-grid');

@@ -292,6 +292,7 @@ body {
 .drag-handle:active { cursor: grabbing; }
 .card.dragging { opacity: 0.25; transform: scale(0.96); transition: opacity 0.2s, transform 0.2s; }
 .drag-marker { position: fixed; pointer-events: none; z-index: 999; }
+.drag-ghost { position: fixed; pointer-events: none; z-index: 999; }
 .drag-marker-h {
   border-radius: 3px;
   animation: marker-pulse 1.2s ease-in-out infinite;
