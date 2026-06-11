@@ -111,7 +111,16 @@ function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const i
 function stItem(icon,label,value,pct){const div=document.createElement('span');div.className='stat-item';div.innerHTML=`<span class="stat-icon">${icon}</span>`;if(label){const l=document.createElement('span');l.className='stat-label';l.textContent=label;div.appendChild(l);}if(pct!==null&&pct!==undefined){const b=document.createElement('span');b.className='stat-bar';const f=document.createElement('span');f.className='stat-bar-fill'+(pct>80?' high':pct>60?' mid':'');f.style.width=pct+'%';b.appendChild(f);div.appendChild(b);}const v=document.createElement('span');v.className='stat-value';v.textContent=value;div.appendChild(v);return div;}
 
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
-function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';config.cards.forEach((c,i)=>{grid.appendChild(c.id===editModeCardId?renderCardEditor(c,i):renderCard(c,i));});setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs&&!document.activeElement?.closest('.card-editing'))fs.focus();}
+function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';config.cards.forEach((c,i)=>{if(c.id==='__gap__'){grid.appendChild(renderGap(c,i));}else{grid.appendChild(c.id===editModeCardId?renderCardEditor(c,i):renderCard(c,i));}});setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs&&!document.activeElement?.closest('.card-editing'))fs.focus();}
+function renderGap(card,i){
+  const div=document.createElement('div');div.className='grid-gap';div.dataset.cardId='__gap__';div.dataset.index=i;
+  div.style.gridColumn='span '+(card.width||1);
+  div.style.minHeight='40px';
+  div.innerHTML='<div class="gap-inner"><span class="gap-icon">⊞</span><span class="gap-label">empty cell</span></div>';
+  // Double-click to remove gap
+  div.addEventListener('dblclick',()=>{config.cards.splice(i,1);saveConfig();renderAll();toast('Gap removed');});
+  return div;
+}
 function scheduleEqualize(){if(!_eqPending){_eqPending=true;requestAnimationFrame(()=>{_eqPending=false;equalizeCardHeights();});}}
 function equalizeCardHeights(){const grid=$('#card-grid');const cards=[...grid.children].filter(el=>el.classList.contains('card'));if(!cards.length)return;cards.forEach(c=>c.style.minHeight='');const rows=[];let curRow=[],curTop=-1;cards.forEach(card=>{const r=card.getBoundingClientRect();if(curTop<0||Math.abs(r.top-curTop)>8){if(curRow.length)rows.push(curRow);curRow=[card];curTop=r.top;}else curRow.push(card);});if(curRow.length)rows.push(curRow);rows.forEach(row=>{if(row.length<2)return;const m=Math.max(...row.map(c=>c.offsetHeight));row.forEach(c=>c.style.minHeight=m+'px');});}
 
@@ -173,10 +182,217 @@ function wEmoji(id){if(id<300)return'⛈';if(id<400)return'🌦';if(id<600)retur
 function fetchApiWidget(el){const u=el.dataset.url,jp=el.dataset.jsonPath;if(!u){el.innerHTML='<div class="api-row"><span class="api-label">No API URL set</span></div>';return;}fetch(u).then(r=>r.json()).then(d=>{const v=jp?getNested(d,jp):JSON.stringify(d,null,2);el.innerHTML=`<div class="api-row"><span class="api-label">${escAttr(el.dataset.label)}</span><span class="api-value">${escAttr(String(v))}</span></div>`;const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));}).catch(e=>{el.innerHTML=`<div class="api-row"><span class="api-label">${escAttr(el.dataset.label)}</span><span class="api-value api-error">${escAttr(e.message)}</span></div>`;});}
 function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
 
-/* ═══════════════════════════════════════════ DRAG ═══════════════════════════════════════════ */
-function startDrag(e,id,idx){if(e.button!==0)return;e.preventDefault();const c=config.cards.find(x=>x.id===id);if(!c)return;const g=$('#card-grid'),cel=[...g.children].filter(el=>el.classList.contains('card'));const cl=document.createElement('div');cl.className='card drag-clone';cl.style.cssText=`position:fixed;z-index:999;pointer-events:none;opacity:0.85;width:${cel[0]?.offsetWidth||280}px;transform:rotate(2deg) scale(0.95);`;cl.style.setProperty('--card-accent',c.color||config.theme.glow);cl.innerHTML=`<div style="padding:12px 16px;background:var(--card-bg);backdrop-filter:blur(var(--bg-blur));border:1px solid var(--glass-border);box-shadow:0 12px 48px rgba(0,0,0,.5);"><div style="font-size:13px;font-weight:600;">${c.icon||'📦'} ${escAttr(c.title)}</div></div>`;cl.style.left=(e.clientX-20)+'px';cl.style.top=(e.clientY-10)+'px';document.body.appendChild(cl);const ph=document.createElement('div');ph.className='drag-placeholder';ph.style.height=(cel[idx]?.offsetHeight||120)+'px';g.insertBefore(ph,cel[idx]);cel[idx].style.opacity='0.3';dragState={cardId:id,index:idx,clone:cl,placeholder:ph};document.addEventListener('pointermove',onDragMove);document.addEventListener('pointerup',onDragEnd);document.addEventListener('pointercancel',onDragEnd);}
-function onDragMove(e){if(!dragState)return;dragState.clone.style.left=(e.clientX-20)+'px';dragState.clone.style.top=(e.clientY-10)+'px';const g=$('#card-grid'),ph=g.querySelector('.drag-placeholder');if(!ph)return;document.body.style.pointerEvents='none';const eu=document.elementFromPoint(e.clientX,e.clientY);document.body.style.pointerEvents='';const cu=eu?.closest('.card');if(cu&&cu.dataset.cardId!==dragState.cardId){g.insertBefore(ph,cu);}else if(!cu){const cs=[...g.children].filter(el=>el.classList.contains('card')&&el.dataset.cardId!==dragState.cardId);let ins=false;for(const el of cs){const r=el.getBoundingClientRect();if(e.clientY<r.top+r.height/2){g.insertBefore(ph,el);ins=true;break;}}if(!ins)g.appendChild(ph);}}
-function onDragEnd(){document.removeEventListener('pointermove',onDragMove);document.removeEventListener('pointerup',onDragEnd);document.removeEventListener('pointercancel',onDragEnd);if(!dragState)return;const{cardId,index,clone,placeholder}=dragState;if(clone.parentNode)clone.remove();const g=$('#card-grid');let ti=-1;if(placeholder&&placeholder.parentNode===g){ti=[...g.children].indexOf(placeholder);placeholder.remove();}const o=g.querySelector(`[data-card-id="${cardId}"]`);if(o)o.style.opacity='';if(ti>=0){const cs=config.cards;const si=cs.findIndex(c=>c.id===cardId);if(si>=0&&si!==ti){const[m]=cs.splice(si,1);const ad=si<ti?ti-1:ti;cs.splice(ad,0,m);saveConfig();renderAll();toast('Card reordered');}else renderAll();}else renderAll();dragState=null;}
+/* ═══════════════════════════════════════════ DRAG & DROP ═══════════════════════════════════════════
+   Pointer-based drag with position preview, gap-slot awareness, smooth animation.
+   Cards snap to grid cells; gaps preserve blank spaces for customization.
+*/
+function startDrag(e,id,idx){
+  if(e.button!==0)return;e.preventDefault();
+  const card=config.cards.find(x=>x.id===id);
+  if(!card||card.id==='__gap__')return;
+  const grid=$('#card-grid');
+  const allEls=[...grid.children].filter(el=>el.classList.contains('card')||el.classList.contains('grid-gap'));
+  // Find the source element
+  const srcEl=grid.querySelector(`[data-card-id="${id}"]`);
+  if(!srcEl)return;
+
+  // Build clone
+  const clone=document.createElement('div');clone.className='drag-clone';
+  const cloneW=srcEl.offsetWidth||280;
+  clone.style.cssText=`position:fixed;z-index:999;pointer-events:none;width:${cloneW}px;transform:rotate(1deg) scale(0.92);transition:transform 0.1s;`;
+  clone.style.setProperty('--card-accent',card.color||config.theme.glow);
+  clone.style.background='var(--card-bg)';
+  clone.style.backdropFilter='blur(var(--bg-blur))';
+  clone.style.border='1px solid var(--glass-border)';
+  clone.style.boxShadow='0 16px 48px rgba(0,0,0,0.6)';
+  clone.innerHTML=`<div style="padding:12px 16px;"><div style="font-size:13px;font-weight:600;">${card.icon||'📦'} ${escAttr(card.title)}</div></div>`;
+  clone.style.left=(e.clientX-30)+'px';clone.style.top=(e.clientY-15)+'px';
+  document.body.appendChild(clone);
+
+  // Placeholder — spans the correct columns
+  const ph=document.createElement('div');ph.className='drag-placeholder';
+  ph.style.gridColumn=`span ${card.width||1}`;
+  ph.style.height='60px';
+  ph.style.opacity='0';
+  // Insert placeholder right where the source card is
+  grid.insertBefore(ph,srcEl);
+  // Fade placeholder in
+  requestAnimationFrame(()=>{ph.style.opacity='1';});
+
+  // Dim the source
+  srcEl.style.opacity='0.25';
+  srcEl.style.transform='scale(0.97)';
+
+  dragState={cardId:id,index:idx,clone,placeholder,gridRect:null};
+  document.addEventListener('pointermove',onDragMove);
+  document.addEventListener('pointerup',onDragEnd);
+  document.addEventListener('pointercancel',onDragEnd);
+}
+
+function onDragMove(e){
+  if(!dragState)return;
+  const cl=dragState.clone;
+  cl.style.left=(e.clientX-30)+'px';cl.style.top=(e.clientY-15)+'px';
+
+  const grid=$('#card-grid');
+  const ph=grid.querySelector('.drag-placeholder');
+  if(!ph)return;
+  const gr=grid.getBoundingClientRect();
+  const cols=config.layout.cols;
+
+  // Calculate which grid cell the cursor is in
+  const colW=gr.width/cols;
+  const relX=e.clientX-gr.left;
+  const relY=e.clientY-gr.top;
+  let colIdx=Math.max(0,Math.min(cols-1,Math.floor(relX/colW)));
+
+  // Get the card being dragged's width
+  const card=config.cards.find(c=>c.id===dragState.cardId);
+  const cardW=card?Math.min(card.width||1,cols):1;
+
+  // Find which element to insert the placeholder before
+  const items=[...grid.children].filter(el=>el!==ph&&el!==dragState._srcEl);
+  let bestBefore=null,bestAfter=null;
+  let minDist=Infinity;
+
+  // Find the nearest card/gap element by row position
+  for(const el of items){
+    const r=el.getBoundingClientRect();
+    const elMidX=r.left+r.width/2;
+    const elMidY=r.top+r.height/2;
+    // Distance weighted: vertical distance matters more
+    const dy=Math.abs(e.clientY-elMidY);
+    const dx=Math.abs(e.clientX-elMidX);
+    const dist=dy*2+dx;
+    if(dy<80){ // Same row approximation
+      if(e.clientX<elMidX&&dist<minDist){minDist=dist;bestBefore=el;}
+      else if(dist<minDist){bestAfter=el;minDist=dist;}
+    } else if(e.clientY<r.top&&dy<minDist){
+      // Above this element — insert before it (new row)
+      bestBefore=el;minDist=dy;
+    }
+  }
+
+  // Insert placeholder at the calculated position
+  if(bestBefore){grid.insertBefore(ph,bestBefore);}
+  else if(bestAfter){
+    const next=bestAfter.nextElementSibling;
+    if(next&&next!==ph)grid.insertBefore(ph,next);
+    else grid.appendChild(ph);
+  } else {
+    grid.appendChild(ph);
+  }
+
+  // If near the top or bottom edge of the grid, signal new row
+  const nearBottom=relY>gr.height-60;
+  const nearTop=relY<30;
+  if(nearBottom||nearTop){
+    // Place at end (new row after last item) or beginning
+    if(nearBottom)grid.appendChild(ph);
+    // Placeholder width is already set to card width
+  }
+
+  // Animate placeholder — recalculate height to match existing cards
+  const siblings=[...grid.children].filter(el=>el!==ph&&el.classList.contains('card'));
+  if(siblings.length){
+    const avgH=Math.round(siblings.reduce((s,el)=>s+el.offsetHeight,0)/siblings.length);
+    ph.style.height=Math.max(60,avgH-10)+'px';
+  }
+}
+
+function onDragEnd(){
+  document.removeEventListener('pointermove',onDragMove);
+  document.removeEventListener('pointerup',onDragEnd);
+  document.removeEventListener('pointercancel',onDragEnd);
+  if(!dragState)return;
+  const{cardId,index,clone,placeholder}=dragState;
+
+  // Remove clone
+  if(clone.parentNode)clone.remove();
+
+  const grid=$('#card-grid');
+
+  // Calculate target index
+  let targetIdx=-1;
+  if(placeholder&&placeholder.parentNode===grid){
+    // Count only real cards (not gaps, not placeholder itself)
+    const allEls=[...grid.children];
+    targetIdx=allEls.indexOf(placeholder);
+    // Adjust for gaps in the count — count only non-gap items
+    let realIdx=0;
+    for(let i=0;i<targetIdx;i++){
+      const el=allEls[i];
+      if(el.classList.contains('card')&&el.dataset.cardId&&el.dataset.cardId!==cardId){
+        // This is a real card, count it
+        const c=config.cards.find(x=>x.id===el.dataset.cardId);
+        if(c&&c.id!=='__gap__')realIdx++;
+      } else if(el.classList.contains('grid-gap')){
+        // Gaps count as separate positions
+        const gapEl=config.cards.findIndex(x=>x.id==='__gap__'&&x._el===el);
+        // Actually, just count them
+        realIdx++;
+      }
+    }
+    // More accurate: find the position in the config array
+    const beforeEl=allEls[targetIdx+1]||null; // element after placeholder
+    let beforeId=null;
+    if(beforeEl&&(beforeEl.classList.contains('card')||beforeEl.classList.contains('grid-gap'))){
+      beforeId=beforeEl.dataset.cardId||null;
+    }
+    // Find where this card should go in the config array
+    const cards=config.cards;
+    const srcIdx=cards.findIndex(c=>c.id===cardId);
+    if(srcIdx<0){placeholder.remove();renderAll();dragState=null;return;}
+
+    // Find target insertion point based on DOM position before which card
+    let tgtIdx=cards.length;
+    if(beforeId){
+      const bidx=cards.findIndex(c=>c.id===beforeId);
+      if(bidx>=0)tgtIdx=bidx;
+    }
+
+    // Remove placeholder
+    placeholder.remove();
+
+    // Restore source opacity
+    const srcEl=grid.querySelector(`[data-card-id="${cardId}"]`);
+    if(srcEl){srcEl.style.opacity='';srcEl.style.transform='';}
+
+    if(tgtIdx!==srcIdx&&tgtIdx>=0){
+      const [moved]=cards.splice(srcIdx,1);
+      const adjusted=srcIdx<tgtIdx?tgtIdx-1:tgtIdx;
+      cards.splice(adjusted,0,moved);
+      saveConfig();
+
+      // Smooth animation: move existing DOM elements before re-render
+      const newGrid=$('#card-grid');
+      // Apply a brief animation class
+      newGrid.classList.add('grid-settling');
+      setTimeout(()=>{
+        renderAll();
+        newGrid.classList.remove('grid-settling');
+      },200);
+      toast('Card moved');
+    } else {
+      renderAll();
+    }
+  } else {
+    const srcEl=grid.querySelector(`[data-card-id="${cardId}"]`);
+    if(srcEl){srcEl.style.opacity='';srcEl.style.transform='';}
+    renderAll();
+  }
+  dragState=null;
+}
+
+/* ── Gap helpers ── */
+function addGap(){
+  config.cards.push({id:'__gap__',title:'',icon:'',color:'transparent',width:1,_isGap:true});
+  saveConfig();renderAll();toast('Gap added');
+}
+function removeGap(idx){
+  config.cards.splice(idx,1);
+  saveConfig();renderAll();
+}
 
 /* ═══════════════════════════════════════════ ICON PICKER ═══════════════════════════════════════════ */
 let iconPickerOpen=false;
@@ -542,6 +758,7 @@ async function init() {
   $('#footer-text').textContent='WarTab v'+ver;
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
+  $('#btn-add-gap').addEventListener('click',()=>{addGap();});
   $('#config-close').addEventListener('click',toggleConfigPanel);
   $('#config-overlay').addEventListener('click',toggleConfigPanel);
   $$('.ip-tab').forEach(t=>t.addEventListener('click',()=>buildIconPicker(t.dataset.tab)));
