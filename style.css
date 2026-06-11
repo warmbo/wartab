@@ -433,6 +433,155 @@ body {
 #footer a:hover { color: rgba(255,255,255,0.9); }
 #footer-sep { color: rgba(255,255,255,0.2); }
 
-@media (max-width: 1024px) { #app { padding: 16px 20px 60px; } :root { --grid-cols: 3; } .card[data-width="3"], .card[data-width="4"] { grid-column: span 3; } }
-@media (max-width: 768px) { #app { padding: 12px 12px 40px; } :root { --grid-cols: 2; } .card[data-width="2"], .card[data-width="3"], .card[data-width="4"] { grid-column: span 2; } #top-bar { flex-wrap: wrap; gap: 6px; } #top-stats { order: 10; flex-basis: 100%; justify-content: flex-start; } .config-panel, .icon-picker { width: 100vw; } }
-@media (max-width: 480px) { :root { --grid-cols: 1; } .card[data-width] { grid-column: span 1; } }
+/* ══════ Mobile: separately rendered layout ══════
+   These rules ONLY apply on narrow viewports. Desktop is untouched. */
+@media (max-width: 768px) {
+  /* ── Layout: single column ── */
+  :root { --grid-cols: 1; --grid-gap: 12px; }
+  #card-grid { grid-template-columns: 1fr !important; gap: var(--grid-gap); }
+  .card, .card[data-width] { grid-column: 1 !important; grid-column-end: auto !important; }
+
+  /* ── Top bar: stacked vertically ── */
+  #top-bar {
+    flex-direction: column; gap: 4px;
+    padding: 10px 14px;
+    position: relative;
+  }
+  #top-bar.sticky { position: sticky; }
+  .brand { font-size: 15px; }
+  #top-actions { position: absolute; top: 10px; right: 14px; }
+  #top-stats {
+    order: 10;
+    flex-basis: auto;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 4px 0;
+    font-size: 11px;
+  }
+  #top-stats .stat-item { gap: 3px; }
+  .stat-bar { width: 40px; }
+
+  /* ── Cards: mobile-friendly ── */
+  .card { margin: 0; }
+  .card-header { padding: 10px 14px 6px; }
+  .card-title { font-size: 14px; gap: 6px; }
+  .card-body { padding: 0 14px 12px; }
+  .card-edit-btn, .drag-handle { min-width: 40px; min-height: 40px; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  i[data-lucide].card-icon { width: 18px; height: 18px; }
+  i[data-lucide].link-icon { width: 18px; height: 18px; }
+  .link-item .link-label { font-size: 11px; }
+  .link-grid { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .link-row { padding: 6px 8px; font-size: 12px; }
+
+  /* ── Inline search ── */
+  .inline-search-wrap input { font-size: 14px; padding: 8px 12px 8px 32px; }
+  .search-engine-tag { font-size: 9px; }
+
+  /* ── Section titles ── */
+  .section-title { font-size: 11px; padding: 6px 0; }
+  .section-content { font-size: 13px; }
+  .notes-text { font-size: 13px; min-height: 60px; }
+
+  /* ── Clock widget ── */
+  .clock-time { font-size: 28px; }
+  .clock-date { font-size: 11px; }
+
+  /* ── Weather ── */
+  .weather-widget { gap: 8px; }
+  .weather-icon { font-size: 28px; }
+  .weather-temp { font-size: 22px; }
+
+  /* ── Gap cards: always show controls (no hover on touch) ── */
+  .grid-gap-card > div:first-child { opacity: 1 !important; }
+
+  /* ── Config panel: slides from bottom ── */
+  .config-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    right: auto !important;
+    bottom: 0 !important;
+    top: auto !important;
+    height: auto !important;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+  }
+  .config-panel.open { transform: translateY(0); }
+  .config-body { padding: 8px 16px 40px; }
+  .config-header { padding: 16px; border-radius: 16px 16px 0 0; }
+  .config-panel h3 { font-size: 11px; margin-top: 20px; }
+  .config-panel select, .config-panel input[type="text"], .config-panel input[type="color"] { font-size: 14px; padding: 10px 12px; }
+
+  /* ── Icon picker: full width from bottom ── */
+  .icon-picker {
+    width: 100% !important;
+    max-width: 100% !important;
+    right: auto !important;
+    bottom: 0 !important;
+    top: auto !important;
+    height: auto !important;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .icon-picker.open { transform: translateY(0); }
+  .icon-picker-body { padding: 8px 16px 40px; }
+  .icon-grid { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
+  .icon-grid-item { padding: 8px 4px; min-height: 54px; }
+  .icon-search-bar { font-size: 14px; padding: 10px 14px; }
+
+  /* ── Card editor: touch-friendly ── */
+  .card-editing input[type="text"], .card-editing select, .card-editing textarea { font-size: 14px !important; padding: 8px 10px !important; }
+  .card-editing input[type="checkbox"] { width: 18px; height: 18px; }
+  .section-editor { margin-bottom: 8px; padding: 8px; }
+  .section-editor-header { font-size: 11px; }
+
+  /* ── Dropdown ── */
+  .dropdown-toggle { font-size: 13px; padding: 8px 10px; }
+  .dropdown-content { padding: 4px; }
+
+  /* ── Iframe ── */
+  .card-iframe { height: 200px !important; }
+
+  /* ── Drag ghost: smaller on mobile ── */
+  .drag-ghost { font-size: 11px; }
+
+  /* ── Footer ── */
+  #footer { bottom: 8px; right: 8px; padding: 4px 10px; font-size: 10px; }
+
+  /* ── Toast ── */
+  .toast-container { bottom: 16px; width: calc(100% - 32px); }
+  .toast { font-size: 12px; padding: 10px 14px; text-align: center; }
+
+  /* ── Calendar ── */
+  .calendar-widget { font-size: 10px; }
+  .calendar-day { padding: 5px 0; font-size: 11px; }
+  .calendar-day-header { font-size: 8px; }
+
+  /* ── Status bar stats ── */
+  .stat-sep { margin: 0 2px; }
+  .stat-bar-fill { height: 3px; }
+
+  /* ── Empty state ── */
+  #card-grid > div[style*="grid-column:1/-1"] { padding: 60px 16px !important; }
+  #card-grid > div[style*="grid-column:1/-1"] div[style*="font-size:48px"] { font-size: 36px !important; }
+  #card-grid > div[style*="grid-column:1/-1"] div[style*="font-size:20px"] { font-size: 17px !important; }
+  #card-grid > div[style*="grid-column:1/-1"] div[style*="gap:8px"] { gap: 6px !important; }
+  #card-grid > div[style*="grid-column:1/-1"] button { font-size: 12px !important; padding: 8px 12px !important; }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+  #top-bar { padding: 8px 10px; }
+  .card-header { padding: 8px 10px 4px; }
+  .card-body { padding: 0 10px 10px; }
+  .link-grid { grid-template-columns: repeat(2, 1fr); }
+  .brand { font-size: 13px; }
+  #top-actions { gap: 4px; }
+  .btn-icon { width: 32px; height: 32px; font-size: 16px; }
+}
