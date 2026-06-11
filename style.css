@@ -360,8 +360,8 @@ body {
 .card:hover .card-edit-btn { opacity: 1; }
 .card-edit-btn:hover { color: var(--text-primary); }
 
-/* Gap cards (invisible — only controls show on hover) */
-.grid-gap-card { position: relative; min-height: 20px; }
+/* Gap cards (completely invisible — controls appear on hover) */
+.grid-gap-card { min-height: 0 !important; }
 .grid-gap-card::before, .grid-gap-card::after { display: none !important; }
 
 /* ══════ Icon Picker ══════ */

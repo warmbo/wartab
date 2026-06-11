@@ -158,14 +158,12 @@ function renderCard(card,idx){
     div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;
     div.style.gridColumn='span '+div.dataset.width;
     if(card.height>1)div.style.gridRow='span '+card.height;
-    div.style.background='none !important';
-    div.style.border='none !important';
-    div.style.boxShadow='none !important';
-    div.style.backdropFilter='none !important';
-    div.style.minHeight='20px';
-    const h=document.createElement('div');h.className='card-header';
-    h.style.cssText='display:flex;align-items:center;justify-content:flex-end;padding:2px 4px;gap:2px;opacity:0;transition:opacity 0.15s;min-height:20px;';
-    // Show controls on hover
+    // Strip ALL visual properties — completely invisible card
+    div.style.cssText+=';background:none!important;border:none!important;box-shadow:none!important;outline:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-width:0;min-height:0;display:block;';
+    div.style.setProperty('--card-accent','transparent');
+    div.style.setProperty('--card-bg','transparent');
+    const h=document.createElement('div');
+    h.style.cssText='display:flex;align-items:center;justify-content:flex-end;padding:2px 4px;gap:2px;opacity:0;transition:opacity 0.15s;min-height:0;height:0;overflow:visible;';
     div.addEventListener('mouseenter',()=>h.style.opacity='1');
     div.addEventListener('mouseleave',()=>h.style.opacity='0');
     const eb2=document.createElement('button');eb2.className='card-edit-btn';eb2.textContent='✎';eb2.title='Edit gap';
@@ -174,8 +172,6 @@ function renderCard(card,idx){
     const dh=document.createElement('span');dh.className='drag-handle';dh.textContent='⠿';dh.title='Drag';
     h.appendChild(dh);
     div.appendChild(h);
-    // Ensure the gap has no pseudo-elements (noise texture, accent bar)
-    div.style.setProperty('--card-accent','transparent');
     dh.addEventListener('mousedown',e=>startDrag(e,card.id,idx));
     div.addEventListener('dblclick',()=>{config.cards.splice(idx,1);saveConfig();renderAll();toast('Gap removed');});
     return div;
