@@ -295,29 +295,28 @@ function onDragMove(e){
   // Show marker at the best gap position
   const gx=bestGap.x,gy=bestGap.y;
   if(bestGap.mode==='col'){
-    // Vertical bar at the column boundary between two same-row cards
-    marker.style.cssText=`
-      position:fixed;pointer-events:none;z-index:999;
-      left:${gx-2.5}px;top:${Math.min(items.find(i=>i.dataset.cardId===bestGap.before?.dataset.cardId)?.getBoundingClientRect().top||0)}px;
-      width:5px;height:${items[0]?.getBoundingClientRect().height||40}px;
-      background:var(--accent);box-shadow:0 0 14px var(--accent-glow);
-      border-radius:2px;opacity:0.95;
-    `;
-    // Adjust height to match the row
     const bCard=bestGap.before?items.find(i=>i.dataset.cardId===bestGap.before.dataset.cardId):null;
-    if(bCard){
-      const br=bCard.getBoundingClientRect();
-      marker.style.top=br.top+'px';
-      marker.style.height=(br.bottom-br.top)+'px';
-    }
-  } else {
-    // Horizontal bar at the row boundary
+    if(!bCard){marker.style.display='none';return;}
+    const br=bCard.getBoundingClientRect();
+    marker.className='drag-marker drag-marker-v';
     marker.style.cssText=`
       position:fixed;pointer-events:none;z-index:999;
-      left:${grid.getBoundingClientRect().left}px;top:${gy-2}px;
-      width:${grid.getBoundingClientRect().width}px;height:5px;
-      background:var(--accent);box-shadow:0 0 14px var(--accent-glow);
-      border-radius:2px;opacity:0.95;
+      left:${gx-3}px;top:${br.top}px;
+      width:6px;height:${br.bottom-br.top}px;
+      background:linear-gradient(180deg,var(--accent),rgba(255,255,255,0.4),var(--accent));
+      box-shadow:0 0 16px var(--accent-glow),0 0 4px rgba(255,255,255,0.2);
+      border-radius:3px;
+    `;
+  } else {
+    marker.className='drag-marker drag-marker-h';
+    const gr2=grid.getBoundingClientRect();
+    marker.style.cssText=`
+      position:fixed;pointer-events:none;z-index:999;
+      left:${gr2.left}px;top:${gy-3}px;
+      width:${gr2.width}px;height:6px;
+      background:linear-gradient(90deg,transparent,var(--accent),rgba(255,255,255,0.4),var(--accent),transparent);
+      box-shadow:0 0 16px var(--accent-glow),0 0 4px rgba(255,255,255,0.2);
+      border-radius:3px;
     `;
   }
 
@@ -341,9 +340,25 @@ function onDragEnd(e){
   let tgtIdx=cards.length;
   if(_beforeCard){const bi=cards.findIndex(c=>c.id===_beforeCard);if(bi>=0)tgtIdx=bi;}
   if(tgtIdx!==srcIdx){
+    // Animate: move DOM element to new position, then re-render after animation
+    const grid=$('#card-grid');
+    const mel=grid.querySelector(`[data-card-id="${cardId}"]`);
+    if(mel){
+      // Move to new position in DOM
+      const beforeDom=_beforeCard?grid.querySelector(`[data-card-id="${_beforeCard}"]`):null;
+      if(beforeDom)grid.insertBefore(mel,beforeDom);
+      else grid.appendChild(mel);
+      // Add placement animation
+      mel.classList.add('card-placement');
+      // Remove animation class after it completes
+      setTimeout(()=>mel.classList.remove('card-placement'),400);
+    }
     const[m]=cards.splice(srcIdx,1);
     cards.splice(srcIdx<tgtIdx?tgtIdx-1:tgtIdx,0,m);
-    saveConfig();renderAll();toast('Card moved');
+    saveConfig();
+    // Delay re-render to let animation play
+    setTimeout(()=>renderAll(),350);
+    toast('Card moved');
   }else{renderAll();}
 }
 
