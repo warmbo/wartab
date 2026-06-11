@@ -13,21 +13,28 @@
 <body>
   <div id="bg-canvas"></div>
   <div id="app">
-    <!-- Top Bar: brand + stats + config -->
+    <!-- Top Bar -->
     <div id="top-bar">
       <div class="brand" id="brand-text"><span>⚔️</span><span>WarTab</span></div>
       <div id="top-stats"></div>
       <div id="top-actions">
+        <button class="btn btn-glass btn-icon" id="btn-add-card" title="Add a new card">➕</button>
         <button class="btn btn-glass btn-icon" id="btn-config" title="Configure WarTab">⚙️</button>
       </div>
     </div>
     <div id="card-grid"></div>
   </div>
 
+  <!-- Footer -->
+  <div id="footer">
+    <span id="footer-text">WarTab v1.0</span>
+    <a href="http://10.0.0.253:3000/cody/wartab" target="_blank" rel="noopener" id="footer-repo">source</a>
+  </div>
+
   <div class="config-overlay" id="config-overlay"></div>
   <div class="config-panel" id="config-panel">
     <div class="config-header">
-      <h2>⚙️ WarTab Config</h2>
+      <h2 id="config-header-title">⚙️ WarTab Config</h2>
       <button class="btn btn-glass" id="config-close">✕</button>
     </div>
     <div class="config-body" id="config-body"></div>

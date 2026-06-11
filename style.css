@@ -221,8 +221,23 @@ body {
 .config-body::-webkit-scrollbar { width: 6px; }
 .config-body::-webkit-scrollbar-track { background: transparent; }
 .config-body::-webkit-scrollbar-thumb { background: var(--glass-border); }
+
+/* Section dividers */
 .config-section { margin-bottom: 24px; }
-.config-section h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 12px; text-shadow: var(--emboss-shadow); font-family: var(--font); }
+.config-section h3 {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-secondary); margin-bottom: 12px; text-shadow: var(--emboss-shadow);
+  font-family: var(--font); padding-bottom: 6px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+/* Conditional field (show/hide) */
+.cfg-conditional { overflow: hidden; transition: max-height 0.2s ease, opacity 0.15s ease, margin 0.2s ease; max-height: 200px; opacity: 1; margin-bottom: 10px; }
+.cfg-conditional.hidden { max-height: 0; opacity: 0; margin-bottom: 0; pointer-events: none; }
+
+/* Font picker select */
+.font-select { width: 100%; padding: 7px 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); color: var(--text-primary); font-size: 14px; outline: none; cursor: pointer; }
+.font-select option { background: #1a1a1a; font-size: 14px; padding: 6px 10px; }
 .form-group { margin-bottom: 14px; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; font-family: var(--font); }
 .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); color: var(--text-primary); font-size: 13px; font-family: var(--font); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
@@ -282,7 +297,16 @@ body {
 @keyframes toast-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
 
-/* ══════ Responsive ══════ */
+/* ══════ Footer ══════ */
+#footer {
+  position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 16px 32px 24px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 11px; color: var(--text-tertiary); font-family: var(--font);
+}
+#footer a { color: var(--text-tertiary); text-decoration: none; transition: color 0.15s; }
+#footer a:hover { color: var(--text-secondary); }
+#footer-sep { color: var(--glass-border); }
+
 @media (max-width: 1024px) { #app { padding: 16px 20px 60px; } :root { --grid-cols: 3; } .card[data-width="3"], .card[data-width="4"] { grid-column: span 3; } }
 @media (max-width: 768px) { #app { padding: 12px 12px 40px; } :root { --grid-cols: 2; } .card[data-width="2"], .card[data-width="3"], .card[data-width="4"] { grid-column: span 2; } #top-bar { flex-wrap: wrap; gap: 6px; } #top-stats { order: 10; flex-basis: 100%; justify-content: flex-start; } .config-panel, .icon-picker { width: 100vw; } }
 @media (max-width: 480px) { :root { --grid-cols: 1; } .card[data-width] { grid-column: span 1; } }
