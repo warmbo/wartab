@@ -214,41 +214,36 @@ function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
 function startDrag(e,id,idx){
   if(e.button!==0)return;e.preventDefault();
   const card=config.cards.find(x=>x.id===id);
-  if(!card||card._isGap)return;
+  if(!card)return;
   const grid=$('#card-grid');
-  const allEls=[...grid.children].filter(el=>el.classList.contains('card')||el.classList.contains('grid-gap'));
-  // Find the source element
   const srcEl=grid.querySelector(`[data-card-id="${id}"]`);
   if(!srcEl)return;
 
-  // Build clone
+  // Build floating clone
   const clone=document.createElement('div');clone.className='drag-clone';
   const cloneW=srcEl.offsetWidth||280;
-  clone.style.cssText=`position:fixed;z-index:999;pointer-events:none;width:${cloneW}px;transform:rotate(1deg) scale(0.92);transition:transform 0.1s;`;
+  clone.style.cssText=`position:fixed;z-index:999;pointer-events:none;width:${cloneW}px;transform:rotate(1deg) scale(0.92);`;
   clone.style.setProperty('--card-accent',card.color||config.theme.glow);
   clone.style.background='var(--card-bg)';
   clone.style.backdropFilter='blur(var(--bg-blur))';
   clone.style.border='1px solid var(--glass-border)';
   clone.style.boxShadow='0 16px 48px rgba(0,0,0,0.6)';
-  clone.innerHTML=`<div style="padding:12px 16px;"><div style="font-size:13px;font-weight:600;">${card.icon||'📦'} ${escAttr(card.title)}</div></div>`;
+  const label=card._isGap?'empty':(card.icon||'📦')+' '+escAttr(card.title||'');
+  clone.innerHTML=`<div style="padding:12px 16px;"><div style="font-size:13px;font-weight:600;">${label}</div></div>`;
   clone.style.left=(e.clientX-30)+'px';clone.style.top=(e.clientY-15)+'px';
   document.body.appendChild(clone);
 
-  // Placeholder — spans the correct columns
+  // Placeholder
   const ph=document.createElement('div');ph.className='drag-placeholder';
   ph.style.gridColumn=`span ${card.width||1}`;
-  ph.style.height='60px';
-  ph.style.opacity='0';
-  // Insert placeholder right where the source card is
+  ph.style.height='60px';ph.style.opacity='0';
   grid.insertBefore(ph,srcEl);
-  // Fade placeholder in
   requestAnimationFrame(()=>{ph.style.opacity='1';});
 
-  // Dim the source
-  srcEl.style.opacity='0.25';
-  srcEl.style.transform='scale(0.97)';
+  // Dim source
+  srcEl.style.opacity='0.25';srcEl.style.transform='scale(0.97)';
 
-  dragState={cardId:id,index:idx,clone,placeholder,gridRect:null};
+  dragState={cardId:id,index:idx,clone,placeholder,srcEl};
   document.addEventListener('pointermove',onDragMove);
   document.addEventListener('pointerup',onDragEnd);
   document.addEventListener('pointercancel',onDragEnd);
@@ -256,69 +251,40 @@ function startDrag(e,id,idx){
 
 function onDragMove(e){
   if(!dragState)return;
-  const cl=dragState.clone;
-  cl.style.left=(e.clientX-30)+'px';cl.style.top=(e.clientY-15)+'px';
-
+  dragState.clone.style.left=(e.clientX-30)+'px';dragState.clone.style.top=(e.clientY-15)+'px';
   const grid=$('#card-grid');
   const ph=grid.querySelector('.drag-placeholder');
   if(!ph)return;
   const gr=grid.getBoundingClientRect();
   const cols=config.layout.cols;
 
-  // Calculate which grid cell the cursor is in
-  const colW=gr.width/cols;
-  const relX=e.clientX-gr.left;
-  const relY=e.clientY-gr.top;
-  let colIdx=Math.max(0,Math.min(cols-1,Math.floor(relX/colW)));
-
-  // Get the card being dragged's width
-  const card=config.cards.find(c=>c.id===dragState.cardId);
-  const cardW=card?Math.min(card.width||1,cols):1;
-
-  // Find which element to insert the placeholder before
-  const items=[...grid.children].filter(el=>el!==ph&&el!==dragState._srcEl);
-  let bestBefore=null,bestAfter=null;
+  // Find closest element to insert placeholder before
+  const items=[...grid.children].filter(el=>el!==ph&&el!==dragState.srcEl);
+  let bestBefore=null;
   let minDist=Infinity;
-
-  // Find the nearest card/gap element by row position
   for(const el of items){
     const r=el.getBoundingClientRect();
-    const elMidX=r.left+r.width/2;
-    const elMidY=r.top+r.height/2;
-    // Distance weighted: vertical distance matters more
-    const dy=Math.abs(e.clientY-elMidY);
-    const dx=Math.abs(e.clientX-elMidX);
-    const dist=dy*2+dx;
-    if(dy<80){ // Same row approximation
-      if(e.clientX<elMidX&&dist<minDist){minDist=dist;bestBefore=el;}
-      else if(dist<minDist){bestAfter=el;minDist=dist;}
-    } else if(e.clientY<r.top&&dy<minDist){
-      // Above this element — insert before it (new row)
-      bestBefore=el;minDist=dy;
-    }
+    const midX=r.left+r.width/2,midY=r.top+r.height/2;
+    const dy=Math.abs(e.clientY-midY),dx=Math.abs(e.clientX-midX);
+    // Prefer same-row insertion, fall back to before/after row
+    if(dy<80&&e.clientX<midX){const d=dy+dx;if(d<minDist){minDist=d;bestBefore=el;}}
+    else if(dy<80&&e.clientX>=midX){/* after this element, try next sibling */}
+    else if(e.clientY<r.top&&dy<minDist){minDist=dy;bestBefore=el;}
   }
-
-  // Insert placeholder at the calculated position
-  if(bestBefore){grid.insertBefore(ph,bestBefore);}
-  else if(bestAfter){
-    const next=bestAfter.nextElementSibling;
-    if(next&&next!==ph)grid.insertBefore(ph,next);
-    else grid.appendChild(ph);
-  } else {
-    grid.appendChild(ph);
+  // Also try placing after the last suitable element
+  let bestAfter=null;minDist=Infinity;
+  for(const el of items){
+    const r=el.getBoundingClientRect();
+    const midX=r.left+r.width/2,midY=r.top+r.height/2;
+    const dy=Math.abs(e.clientY-midY),dx=Math.abs(e.clientX-midX);
+    if(dy<80&&e.clientX>=midX&&(dy+dx)<minDist){minDist=dy+dx;bestAfter=el;}
   }
+  if(bestBefore)grid.insertBefore(ph,bestBefore);
+  else if(bestAfter&&bestAfter.nextElementSibling)grid.insertBefore(ph,bestAfter.nextElementSibling);
+  else grid.appendChild(ph);
 
-  // If near the top or bottom edge of the grid, signal new row
-  const nearBottom=relY>gr.height-60;
-  const nearTop=relY<30;
-  if(nearBottom||nearTop){
-    // Place at end (new row after last item) or beginning
-    if(nearBottom)grid.appendChild(ph);
-    // Placeholder width is already set to card width
-  }
-
-  // Animate placeholder — recalculate height to match existing cards
-  const siblings=[...grid.children].filter(el=>el!==ph&&el.classList.contains('card'));
+  // Size placeholder to match
+  const siblings=[...grid.children].filter(el=>el!==ph&&(el.classList.contains('card')));
   if(siblings.length){
     const avgH=Math.round(siblings.reduce((s,el)=>s+el.offsetHeight,0)/siblings.length);
     ph.style.height=Math.max(60,avgH-10)+'px';
@@ -330,64 +296,55 @@ function onDragEnd(){
   document.removeEventListener('pointerup',onDragEnd);
   document.removeEventListener('pointercancel',onDragEnd);
   if(!dragState)return;
-  const{cardId,index,clone,placeholder}=dragState;
+  const{cardId,clone,placeholder,srcEl}=dragState;
 
-  // Remove clone
   if(clone.parentNode)clone.remove();
-
   const grid=$('#card-grid');
 
-  // Calculate target index
-  let targetIdx=-1;
   if(placeholder&&placeholder.parentNode===grid){
-    // Count only real cards (not gaps, not placeholder itself)
     const allEls=[...grid.children];
-    targetIdx=allEls.indexOf(placeholder);
-    // Find target insertion point — use the element after the placeholder
+    const targetIdx=allEls.indexOf(placeholder);
     const beforeEl=allEls[targetIdx+1]||null;
     let beforeId=null;
-    if(beforeEl&&(beforeEl.classList.contains('card')||beforeEl.classList.contains('grid-gap'))){
-      beforeId=beforeEl.dataset.cardId||null;
-    }
-    // Find where this card should go in the config array
+    if(beforeEl&&beforeEl.dataset&&beforeEl.dataset.cardId)beforeId=beforeEl.dataset.cardId;
+
     const cards=config.cards;
     const srcIdx=cards.findIndex(c=>c.id===cardId);
     if(srcIdx<0){placeholder.remove();renderAll();dragState=null;return;}
 
-    // Find target insertion point based on DOM position before which card
     let tgtIdx=cards.length;
-    if(beforeId){
-      const bidx=cards.findIndex(c=>c.id===beforeId);
-      if(bidx>=0)tgtIdx=bidx;
-    }
+    if(beforeId){const bidx=cards.findIndex(c=>c.id===beforeId);if(bidx>=0)tgtIdx=bidx;}
 
     // Remove placeholder
     placeholder.remove();
 
-    // Restore source opacity
-    const srcEl=grid.querySelector(`[data-card-id="${cardId}"]`);
-    if(srcEl){srcEl.style.opacity='';srcEl.style.transform='';}
-
     if(tgtIdx!==srcIdx&&tgtIdx>=0){
+      // Move DOM element directly for instant feedback
+      const movedEl=grid.querySelector(`[data-card-id="${cardId}"]`);
+      if(movedEl){
+        movedEl.style.opacity='';movedEl.style.transform='';
+        movedEl.style.transition='opacity 0.15s ease, transform 0.15s ease';
+        // Find the before-element in the DOM
+        const beforeDom=beforeId?grid.querySelector(`[data-card-id="${beforeId}"]`):null;
+        if(beforeDom)grid.insertBefore(movedEl,beforeDom);
+        else grid.appendChild(movedEl);
+        // Trigger reflow for animation
+        movedEl.style.opacity='0.7';movedEl.style.transform='scale(0.98)';
+        requestAnimationFrame(()=>{movedEl.style.opacity='';movedEl.style.transform='';});
+      }
+      // Update config
       const [moved]=cards.splice(srcIdx,1);
       const adjusted=srcIdx<tgtIdx?tgtIdx-1:tgtIdx;
       cards.splice(adjusted,0,moved);
       saveConfig();
-
-      // Smooth animation: move existing DOM elements before re-render
-      const newGrid=$('#card-grid');
-      // Apply a brief animation class
-      newGrid.classList.add('grid-settling');
-      setTimeout(()=>{
-        renderAll();
-        newGrid.classList.remove('grid-settling');
-      },200);
+      // Re-render after a brief delay for cleanup
+      setTimeout(()=>{renderAll();},300);
       toast('Card moved');
     } else {
+      if(srcEl){srcEl.style.opacity='';srcEl.style.transform='';}
       renderAll();
     }
   } else {
-    const srcEl=grid.querySelector(`[data-card-id="${cardId}"]`);
     if(srcEl){srcEl.style.opacity='';srcEl.style.transform='';}
     renderAll();
   }
@@ -743,7 +700,7 @@ function addNewCard(){
   const colMax=config.layout.cols;
   config.cards.push({
     id:'card-'+uid(), title:'New Card', icon:'📦', color:'#888888',
-    width:Math.min(1,colMax),
+    width:Math.min(1,colMax),height:1,
     sections:[{id:'sec-'+uid(),type:'links',label:'Links',links:[{label:'Example',url:'https://example.com',icon:'🔗'}]}],
   });
   saveConfig(); renderAll(); toast('New card added');

@@ -292,9 +292,7 @@ body {
   0%, 100% { border-color: var(--accent); opacity: 1; }
   50% { border-color: var(--accent-glow); opacity: 0.6; }
 }
-/* Grid settling animation */
-.grid-settling .card { transition: transform 0.2s ease, opacity 0.2s ease; }
-.drag-clone { transition: transform 0.05s; }
+.drag-clone { }
 
 /* ══════ Grid Gap (empty cells) ══════ */
 .grid-gap {
