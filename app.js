@@ -211,134 +211,114 @@ function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
    Cards snap to grid cells; gaps preserve blank spaces for customization.
 */
 function startDrag(e,id,idx){
-  if(e.button!==0)return;e.preventDefault();
+  if(e.button!==0)return;
   const card=config.cards.find(x=>x.id===id);
   if(!card)return;
+  e.preventDefault();
+  // Capture pointer on the handle so all events route here
+  e.target.setPointerCapture(e.pointerId);
+
   const grid=$('#card-grid');
   const srcEl=grid.querySelector(`[data-card-id="${id}"]`);
   if(!srcEl)return;
 
-  // Build floating clone
+  // Floating clone
   const clone=document.createElement('div');clone.className='drag-clone';
-  const cloneW=srcEl.offsetWidth||280;
-  clone.style.cssText=`position:fixed;z-index:999;pointer-events:none;width:${cloneW}px;transform:rotate(1deg) scale(0.92);`;
-  clone.style.setProperty('--card-accent',card.color||config.theme.glow);
+  clone.style.cssText='position:fixed;z-index:999;pointer-events:none;';
+  clone.style.width=(srcEl.offsetWidth||280)+'px';
   clone.style.background='var(--card-bg)';
   clone.style.backdropFilter='blur(var(--bg-blur))';
   clone.style.border='1px solid var(--glass-border)';
   clone.style.boxShadow='0 16px 48px rgba(0,0,0,0.6)';
+  clone.style.transform='rotate(1deg) scale(0.92)';
+  clone.style.left=(e.clientX-30)+'px';clone.style.top=(e.clientY-15)+'px';
   const label=card._isGap?'empty':(card.icon||'📦')+' '+escAttr(card.title||'');
   clone.innerHTML=`<div style="padding:12px 16px;"><div style="font-size:13px;font-weight:600;">${label}</div></div>`;
-  clone.style.left=(e.clientX-30)+'px';clone.style.top=(e.clientY-15)+'px';
   document.body.appendChild(clone);
 
-  // Placeholder
+  // Placeholder where source was
   const ph=document.createElement('div');ph.className='drag-placeholder';
-  ph.style.gridColumn=`span ${card.width||1}`;
-  ph.style.height='60px';ph.style.opacity='0';
-  grid.insertBefore(ph,srcEl);
-  requestAnimationFrame(()=>{ph.style.opacity='1';});
+  ph.style.gridColumn='span '+(card.width||1);
+  ph.style.height=(srcEl.offsetHeight-10)+'px';
+  grid.insertBefore(ph,srcEl.nextSibling);
 
   // Dim source
-  srcEl.style.opacity='0.25';srcEl.style.transform='scale(0.97)';
+  srcEl.style.opacity='0.2';
+  srcEl.style.transform='scale(0.97)';
 
-  dragState={cardId:id,index:idx,clone,placeholder,srcEl};
-  document.addEventListener('pointermove',onDragMove);
-  document.addEventListener('pointerup',onDragEnd);
-  document.addEventListener('pointercancel',onDragEnd);
+  dragState={cardId:id,clone,placeholder,srcEl,gridRect:grid.getBoundingClientRect(),cols:config.layout.cols};
+  // Listen on the captured element (the handle)
+  e.target.addEventListener('pointermove',onDragMove);
+  e.target.addEventListener('pointerup',onDragEnd);
+  e.target.addEventListener('pointercancel',onDragEnd);
 }
 
 function onDragMove(e){
-  if(!dragState||dragState._moving)return;
-  dragState._moving=true;
-  requestAnimationFrame(()=>{
-    if(!dragState){dragState._moving=false;return;}
-    dragState.clone.style.left=(e.clientX-30)+'px';dragState.clone.style.top=(e.clientY-15)+'px';
-    const grid=$('#card-grid');
-    const ph=grid.querySelector('.drag-placeholder');
-    if(!ph){dragState._moving=false;return;}
+  if(!dragState)return;
+  e.preventDefault();
+  const cl=dragState.clone;
+  cl.style.left=(e.clientX-30)+'px';cl.style.top=(e.clientY-15)+'px';
 
-    // Find closest element to insert placeholder before
-    const items=[...grid.children].filter(el=>el!==ph&&el!==dragState.srcEl);
-    let bestBefore=null,bestAfter=null;
-    let minDist=Infinity;
-    for(const el of items){
-      const r=el.getBoundingClientRect();
-      const midX=r.left+r.width/2,midY=r.top+r.height/2;
-      const dy=Math.abs(e.clientY-midY),dx=Math.abs(e.clientX-midX);
-      if(dy<80&&e.clientX<midX){const d=dy+dx;if(d<minDist){minDist=d;bestBefore=el;}}
-      else if(e.clientY<r.top&&dy<minDist){minDist=dy;bestBefore=el;}
-    }
-    // Also try placing after elements
-    let bMin=Infinity;
-    for(const el of items){
-      const r=el.getBoundingClientRect();
-      const midX=r.left+r.width/2,midY=r.top+r.height/2;
-      const dy=Math.abs(e.clientY-midY),dx=Math.abs(e.clientX-midX);
-      if(dy<80&&e.clientX>=midX&&(dy+dx)<bMin){bMin=dy+dx;bestAfter=el;}
-    }
-    if(bestBefore)grid.insertBefore(ph,bestBefore);
-    else if(bestAfter&&bestAfter.nextElementSibling)grid.insertBefore(ph,bestAfter.nextElementSibling);
-    else grid.appendChild(ph);
+  // Only update placeholder position every few ms — getBoundingClientRect is expensive
+  const now=Date.now();
+  if(dragState._lastMove&&now-dragState._lastMove<40)return; // ~25fps for positioning
+  dragState._lastMove=now;
 
-    // Size placeholder
-    const siblings=[...grid.children].filter(el=>el!==ph&&el.classList.contains('card'));
-    if(siblings.length){
-      const avgH=Math.round(siblings.reduce((s,el)=>s+el.offsetHeight,0)/siblings.length);
-      ph.style.height=Math.max(60,avgH-10)+'px';
-    }
-    dragState._moving=false;
-  });
+  const grid=$('#card-grid');
+  const ph=grid.querySelector('.drag-placeholder');
+  if(!ph)return;
+
+  // Find nearest card to insert before
+  const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==ph&&el!==dragState.srcEl);
+  if(!items.length)return;
+  const ey=e.clientY;
+  let bestBefore=null,bestDist=Infinity;
+  for(const el of items){
+    const r=el.getBoundingClientRect();
+    const midY=r.top+r.height/2;
+    const dy=Math.abs(ey-midY);
+    if(dy<bestDist){bestDist=dy;bestBefore=el;}
+  }
+  if(bestBefore&&bestBefore!==ph.previousSibling)grid.insertBefore(ph,bestBefore);
+  else if(!bestBefore)grid.appendChild(ph);
 }
 
-function onDragEnd(){
-  document.removeEventListener('pointermove',onDragMove);
-  document.removeEventListener('pointerup',onDragEnd);
-  document.removeEventListener('pointercancel',onDragEnd);
+function onDragEnd(e){
+  e.target.removeEventListener('pointermove',onDragMove);
+  e.target.removeEventListener('pointerup',onDragEnd);
+  e.target.removeEventListener('pointercancel',onDragEnd);
+  try{e.target.releasePointerCapture(e.pointerId);}catch(ex){}
   if(!dragState)return;
   const{cardId,clone,placeholder,srcEl}=dragState;
-
   if(clone.parentNode)clone.remove();
   const grid=$('#card-grid');
 
   if(placeholder&&placeholder.parentNode===grid){
     const allEls=[...grid.children];
-    const targetIdx=allEls.indexOf(placeholder);
-    const beforeEl=allEls[targetIdx+1]||null;
-    let beforeId=null;
-    if(beforeEl&&beforeEl.dataset&&beforeEl.dataset.cardId)beforeId=beforeEl.dataset.cardId;
+    const pi=allEls.indexOf(placeholder);
+    const beforeEl=allEls[pi+1]||null;
+    const beforeId=beforeEl?beforeEl.dataset.cardId:null;
+    placeholder.remove();
 
     const cards=config.cards;
     const srcIdx=cards.findIndex(c=>c.id===cardId);
-    if(srcIdx<0){placeholder.remove();renderAll();dragState=null;return;}
+    if(srcIdx<0){renderAll();dragState=null;return;}
 
     let tgtIdx=cards.length;
-    if(beforeId){const bidx=cards.findIndex(c=>c.id===beforeId);if(bidx>=0)tgtIdx=bidx;}
-
-    // Remove placeholder
-    placeholder.remove();
+    if(beforeId){const bi=cards.findIndex(c=>c.id===beforeId);if(bi>=0)tgtIdx=bi;}
 
     if(tgtIdx!==srcIdx&&tgtIdx>=0){
-      // Move DOM element directly for instant feedback
-      const movedEl=grid.querySelector(`[data-card-id="${cardId}"]`);
-      if(movedEl){
-        movedEl.style.opacity='';movedEl.style.transform='';
-        movedEl.style.transition='opacity 0.15s ease, transform 0.15s ease';
-        // Find the before-element in the DOM
-        const beforeDom=beforeId?grid.querySelector(`[data-card-id="${beforeId}"]`):null;
-        if(beforeDom)grid.insertBefore(movedEl,beforeDom);
-        else grid.appendChild(movedEl);
-        // Trigger reflow for animation
-        movedEl.style.opacity='0.7';movedEl.style.transform='scale(0.98)';
-        requestAnimationFrame(()=>{movedEl.style.opacity='';movedEl.style.transform='';});
+      // Move DOM element for instant feedback
+      const mel=grid.querySelector(`[data-card-id="${cardId}"]`);
+      if(mel){
+        mel.style.opacity='';mel.style.transform='';
+        const bd=beforeId?grid.querySelector(`[data-card-id="${beforeId}"]`):null;
+        if(bd)grid.insertBefore(mel,bd);else grid.appendChild(mel);
       }
-      // Update config
-      const [moved]=cards.splice(srcIdx,1);
-      const adjusted=srcIdx<tgtIdx?tgtIdx-1:tgtIdx;
-      cards.splice(adjusted,0,moved);
+      const [m]=cards.splice(srcIdx,1);
+      cards.splice(srcIdx<tgtIdx?tgtIdx-1:tgtIdx,0,m);
       saveConfig();
-      // Re-render after a brief delay for cleanup
-      setTimeout(()=>{renderAll();},300);
+      setTimeout(()=>{renderAll();},200);
       toast('Card moved');
     } else {
       if(srcEl){srcEl.style.opacity='';srcEl.style.transform='';}
