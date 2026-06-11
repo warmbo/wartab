@@ -240,77 +240,89 @@ function onDragMove(e){
   const grid=$('#card-grid');
   const marker=dragState.marker;
   if(!marker)return;
-  const gr=grid.getBoundingClientRect();
-  const cols=config.layout.cols;
-  const colW=gr.width/cols;
 
-  // Get all other cards
-  const cards=[...grid.children].filter(el=>el.classList.contains('card')&&el!==dragState.srcEl);
-  if(!cards.length){marker.style.display='none';return;}
+  // Get all other cards in DOM order
+  const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==dragState.srcEl);
+  if(!items.length){marker.style.display='none';return;}
   marker.style.display='';
 
-  const relX=e.clientX-gr.left;
-  const colIdx=Math.min(cols-2,Math.max(0,Math.floor(relX/colW)));
-  const boundaryX=gr.left+(colIdx+1)*colW; // right edge of colIdx
-  const distToBoundary=Math.abs(e.clientX-boundaryX);
+  // Find the gap (between consecutive items, start, or end) closest to cursor
+  let bestGap={before:null,after:null,mode:'row',x:0,y:0}; // before=card to insert before
+  let bestDist=Infinity;
 
-  // Column mode: cursor near a column boundary (30px buffer)
-  if(distToBoundary<35){
-    // Find the card whose left edge is just past this boundary — that's the card to insert before
-    let beforeCard=null;
-    for(const el of cards){
-      const r=el.getBoundingClientRect();
-      // Card's left edge is just past the boundary (or within 10px)
-      if(r.left>=boundaryX-10){
-        beforeCard=el;break;
+  // Gap before the first item
+  const firstR=items[0].getBoundingClientRect();
+  const gapY=firstR.top-4;
+  const dBefore=Math.abs(e.clientY-gapY);
+  if(dBefore<bestDist){bestDist=dBefore;bestGap={before:items[0],mode:'row',x:firstR.left+firstR.width/2,y:gapY};}
+
+  // Gaps between consecutive items
+  for(let i=0;i<items.length-1;i++){
+    const a=items[i],b=items[i+1];
+    const ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();
+
+    // Check if they're on the same row (vertical overlap within 10px)
+    const sameRow=Math.abs(ar.top-br.top)<10;
+    const gapCenterX=Math.max(ar.right,br.left)+(br.left-Math.max(ar.right,br.left))/2;
+    const gapCenterY=(ar.top+ar.bottom)/2;
+
+    if(sameRow){
+      // Same row — use X distance to the gap's horizontal midpoint
+      const dx=Math.abs(e.clientX-gapCenterX);
+      const dy=Math.abs(e.clientY-gapCenterY);
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<bestDist){
+        bestDist=dist;
+        bestGap={before:b,mode:'col',x:gapCenterX,y:gapCenterY};
+      }
+    } else {
+      // Different rows — use distance to the vertical gap between them
+      const gapY2=ar.bottom+(br.top-ar.bottom)/2;
+      const d=Math.abs(e.clientY-gapY2);
+      if(d<bestDist){
+        bestDist=d;
+        bestGap={before:b,mode:'row',x:br.left+br.width/2,y:gapY2};
       }
     }
-    // If no card found to the right, find the one nearest to the boundary's x position
-    if(!beforeCard){
-      let best=null,bestD=Infinity;
-      for(const el of cards){
-        const r=el.getBoundingClientRect();
-        const d=Math.abs(r.left-boundaryX);
-        if(d<bestD){bestD=d;best=el;}
-      }
-      beforeCard=best;
-    }
-
-    if(beforeCard){
-      const br=beforeCard.getBoundingClientRect();
-      // Vertical bar spanning the row height
-      marker.style.cssText=`
-        position:fixed;pointer-events:none;z-index:999;
-        left:${boundaryX-2}px;top:${br.top}px;
-        width:4px;height:${br.bottom-br.top}px;
-        background:var(--accent);box-shadow:0 0 12px var(--accent-glow),inset 0 0 2px rgba(255,255,255,0.3);
-        transition:left 0.06s,top 0.06s,height 0.06s;
-      `;
-      dragState._beforeCard=beforeCard.dataset.cardId;
-    }
-    return;
   }
 
-  // Row mode: insert before the nearest card by vertical midpoint
-  let nearest=null,nearD=Infinity;
-  for(const el of cards){
-    const r=el.getBoundingClientRect();const midY=r.top+r.height/2;
-    const d=Math.abs(e.clientY-midY);
-    if(d<nearD){nearD=d;nearest=el;}
-  }
-  if(!nearest)return;
-  const nr=nearest.getBoundingClientRect();
+  // Gap after the last item
+  const lastR=items[items.length-1].getBoundingClientRect();
+  const gapAfterY=lastR.bottom+4;
+  const dAfter=Math.abs(e.clientY-gapAfterY);
+  if(dAfter<bestDist){bestDist=dAfter;bestGap={before:null,mode:'row',x:lastR.left+lastR.width/2,y:gapAfterY};}
 
-  // Horizontal bar above the nearest card
-  const aboveY=nr.top-2;
-  marker.style.cssText=`
-    position:fixed;pointer-events:none;z-index:999;
-    left:${gr.left}px;top:${aboveY}px;
-    width:${gr.width}px;height:4px;
-    background:var(--accent);box-shadow:0 0 12px var(--accent-glow),inset 0 0 2px rgba(255,255,255,0.3);
-    transition:top 0.06s,left 0.06s,width 0.06s;
-  `;
-  dragState._beforeCard=nearest.dataset.cardId;
+  // Show marker at the best gap position
+  const gx=bestGap.x,gy=bestGap.y;
+  if(bestGap.mode==='col'){
+    // Vertical bar at the column boundary between two same-row cards
+    marker.style.cssText=`
+      position:fixed;pointer-events:none;z-index:999;
+      left:${gx-2.5}px;top:${Math.min(items.find(i=>i.dataset.cardId===bestGap.before?.dataset.cardId)?.getBoundingClientRect().top||0)}px;
+      width:5px;height:${items[0]?.getBoundingClientRect().height||40}px;
+      background:var(--accent);box-shadow:0 0 14px var(--accent-glow);
+      border-radius:2px;opacity:0.95;
+    `;
+    // Adjust height to match the row
+    const bCard=bestGap.before?items.find(i=>i.dataset.cardId===bestGap.before.dataset.cardId):null;
+    if(bCard){
+      const br=bCard.getBoundingClientRect();
+      marker.style.top=br.top+'px';
+      marker.style.height=(br.bottom-br.top)+'px';
+    }
+  } else {
+    // Horizontal bar at the row boundary
+    marker.style.cssText=`
+      position:fixed;pointer-events:none;z-index:999;
+      left:${grid.getBoundingClientRect().left}px;top:${gy-2}px;
+      width:${grid.getBoundingClientRect().width}px;height:5px;
+      background:var(--accent);box-shadow:0 0 14px var(--accent-glow);
+      border-radius:2px;opacity:0.95;
+    `;
+  }
+
+  // Store which card to insert before (null = append)
+  dragState._beforeCard=bestGap.before?bestGap.before.dataset.cardId:null;
 }
 
 function onDragEnd(e){
