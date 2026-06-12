@@ -225,8 +225,8 @@ const DEFAULT_CONFIG = {
     bgType:'gradient', bgValue:'#0a0a0a, #1a1a1a, #0d0d0d',
     blur:20, glow:'#888888', fontSize:'medium',
     fontFamily:'Inter', cardBg:'dark',
-    fontColor:'#cccccc', stickyTopBar:false,
-    bgRotate:false,
+    fontColor:'#cccccc',
+    bgRotate:false,animations:true,showAccentBar:true,
   },
   statusBar: {
     enabled: true, source:'local', glancesUrl:'http://localhost:61209',
@@ -361,9 +361,9 @@ function applyTheme(){
   const brand=$('#brand-text');
   if(brand){const b2=config.branding||DEFAULT_CONFIG.branding;brand.innerHTML=`<span class="brand-icon"><i data-lucide="${b2.icon||'sword'}"></i></span><span>${escAttr(b2.title||'WarTab')}</span>`;}
   document.title=(config.branding||DEFAULT_CONFIG.branding).title||'WarTab';
-  // Sticky top bar
-  const tb=$('#top-bar');
-  if(tb)tb.classList.toggle('sticky',!!config.theme.stickyTopBar);
+  // Toggles
+  document.documentElement.dataset.animations=config.theme.animations!==false?'on':'off';
+  document.documentElement.dataset.accentBar=config.theme.showAccentBar!==false?'on':'off';
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
 function loadGoogleFont(fn,allowReplace){const id='wartab-font-'+fn.replace(/[^a-zA-Z0-9]/g,'').toLowerCase(),e=document.getElementById(id);if(e)return;if(!allowReplace){const l=document.createElement('link');l.id=id;l.dataset.font=fn;l.rel='stylesheet';l.href=`https://fonts.googleapis.com/css2?family=${fn.replace(/ /g,'+')}:wght@200..700&display=swap`;document.head.appendChild(l);}else{const oe=document.getElementById('wartab-font');if(oe&&oe.dataset.font===fn)return;if(oe)oe.remove();const l=document.createElement('link');l.id='wartab-font';l.dataset.font=fn;l.rel='stylesheet';l.href=`https://fonts.googleapis.com/css2?family=${fn.replace(/ /g,'+')}:wght@200..700&display=swap`;document.head.appendChild(l);}}
@@ -954,8 +954,8 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(pf('color','','Font Color',null,fontColor,v=>{config.theme.fontColor=v;applyChanges();document.body.style.setProperty('--text-primary',hexToRgba2(v,0.92));}));
   body.appendChild(pf('range','','Glass Blur (px)',null,config.theme.blur,v=>{config.theme.blur=parseInt(v);applyChanges();},{min:4,max:40}));
   body.appendChild(pf('select','','Font Size',[{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],config.theme.fontSize,v=>{config.theme.fontSize=v;applyChanges();}));
-  body.appendChild(chk('Sticky top bar',config.theme.stickyTopBar,v=>{config.theme.stickyTopBar=v;applyChanges();renderAll();}));
-
+  body.appendChild(chk('Animated transitions',config.theme.animations!==false,v=>{config.theme.animations=v;applyChanges();renderAll();}));
+  body.appendChild(chk('Card accent bar',config.theme.showAccentBar!==false,v=>{config.theme.showAccentBar=v;applyChanges();renderAll();}));
   /* ── Font ── */
   body.appendChild(ps('Font'));
   const curFont=config.theme.fontFamily||'Inter';
