@@ -400,7 +400,7 @@ body {
 
 
 /* Gap cards (completely invisible — controls appear on hover) */
-.grid-gap-card { min-height: 0 !important; }
+.grid-gap-card { min-height: 0; }
 .grid-gap-card::before, .grid-gap-card::after { display: none !important; }
 
 /* ══════ Icon Picker ══════ */
