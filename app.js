@@ -336,6 +336,7 @@ function applyTheme(){
 
   // Font size
   root.style.fontSize=({small:'13px',medium:'14px',large:'16px'})[t.fontSize]||'14px';
+  root.style.setProperty('--font-size',({small:'13px',medium:'14px',large:'16px'})[t.fontSize]||'14px');
   const fn=t.fontFamily||'Inter';
   root.style.setProperty('--font',`'${fn}','Segoe UI',system-ui,-apple-system,sans-serif`);
   loadGoogleFont(fn,true);
@@ -1004,15 +1005,40 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(pf('select','','Font Size',[{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],config.theme.fontSize,v=>{config.theme.fontSize=v;applyChanges();}));
   body.appendChild(chk('Animated transitions',config.theme.animations!==false,v=>{config.theme.animations=v;applyChanges();renderAll();}));
   body.appendChild(chk('Card accent bar',config.theme.showAccentBar!==false,v=>{config.theme.showAccentBar=v;applyChanges();renderAll();}));
-  /* ── Font ── */
-  body.appendChild(ps('Font'));
+  /* ── Font (within Appearance) ── */
+  body.appendChild(el('div','','',el('h3','font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-top:20px;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--glass-border);font-family:var(--font);','Font Family')));
   const curFont=config.theme.fontFamily||'Inter';
   const TOP_FONTS = [
     {name:'Inter',sample:'The quick brown fox jumps'},
     {name:'Space Grotesk',sample:'The quick brown fox jumps'},
-    {name:'JetBrains Mono',sample:'The quick brown fox jumps'},
+    {name:'JetBrains Mono',sample:'console.log(42)'},
     {name:'Fraunces',sample:'The quick brown fox jumps'},
     {name:'Plus Jakarta Sans',sample:'The quick brown fox jumps'},
+    {name:'DM Sans',sample:'The quick brown fox jumps'},
+    {name:'Outfit',sample:'The quick brown fox jumps'},
+    {name:'Sora',sample:'The quick brown fox jumps'},
+    {name:'Manrope',sample:'The quick brown fox jumps'},
+    {name:'Rubik',sample:'The quick brown fox jumps'},
+    {name:'Nunito',sample:'The quick brown fox jumps'},
+    {name:'Poppins',sample:'The quick brown fox jumps'},
+    {name:'Raleway',sample:'The quick brown fox jumps'},
+    {name:'Work Sans',sample:'The quick brown fox jumps'},
+    {name:'Montserrat',sample:'The quick brown fox jumps'},
+    {name:'Fira Sans',sample:'The quick brown fox jumps'},
+    {name:'Barlow',sample:'The quick brown fox jumps'},
+    {name:'Figtree',sample:'The quick brown fox jumps'},
+    {name:'Archivo',sample:'The quick brown fox jumps'},
+    {name:'Chivo',sample:'The quick brown fox jumps'},
+    {name:'Epilogue',sample:'The quick brown fox jumps'},
+    {name:'Josefin Sans',sample:'The quick brown fox jumps'},
+    {name:'Karla',sample:'The quick brown fox jumps'},
+    {name:'Lexend',sample:'The quick brown fox jumps'},
+    {name:'Quicksand',sample:'The quick brown fox jumps'},
+    {name:'Urbanist',sample:'The quick brown fox jumps'},
+    {name:'Onest',sample:'The quick brown fox jumps'},
+    {name:'Be Vietnam Pro',sample:'The quick brown fox jumps'},
+    {name:'IBM Plex Sans',sample:'The quick brown fox jumps'},
+    {name:'DM Mono',sample:'const x = 1;'},
   ];
   // Ensure current font is in the list
   if(!TOP_FONTS.find(f=>f.name===curFont)) TOP_FONTS.push({name:curFont,sample:'The quick brown fox jumps'});
