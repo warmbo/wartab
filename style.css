@@ -195,7 +195,7 @@ body {
 /* ══════ Section Types ══════ */
 .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
 .link-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; background: var(--card-bg-alt); border: 1px solid var(--surface-border); text-decoration: none; color: var(--text-primary); font-size: 11px; text-align: center; transition: all 0.15s ease; cursor: pointer; box-shadow: var(--deboss-shadow); }
-.link-item:hover { background: rgba(255,255,255,0.08); border-color: var(--glass-border-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.link-item:hover { background: rgba(255,255,255,0.08); border-color: var(--glass-border-hover); box-shadow: 0 -1px 0 var(--accent-glass), 0 3px 10px rgba(0,0,0,0.25); }
 .link-item:active { transform: translateY(0); box-shadow: var(--deboss-shadow); }
 .link-item .link-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
 .link-item .link-label { line-height: 1.2; word-break: break-word; overflow-wrap: break-word; hyphens: auto; }

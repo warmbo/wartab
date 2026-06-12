@@ -338,7 +338,7 @@ function applyTheme(){
   root.style.fontSize=({small:'13px',medium:'14px',large:'16px'})[t.fontSize]||'14px';
   const fn=t.fontFamily||'Inter';
   root.style.setProperty('--font',`'${fn}','Segoe UI',system-ui,-apple-system,sans-serif`);
-  loadGoogleFont(fn);
+  loadGoogleFont(fn,true);
 
   // Accent-tinted glass — card background uses accent color at varying opacity
   const h=t.glow.replace('#','');
@@ -366,7 +366,7 @@ function applyTheme(){
   if(tb)tb.classList.toggle('sticky',!!config.theme.stickyTopBar);
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
-function loadGoogleFont(fn){const id='wartab-font',e=document.getElementById(id);if(e&&e.dataset.font===fn)return;if(e)e.remove();const l=document.createElement('link');l.id=id;l.dataset.font=fn;l.rel='stylesheet';l.href=`https://fonts.googleapis.com/css2?family=${fn.replace(/ /g,'+')}:wght@200..700&display=swap`;document.head.appendChild(l);}
+function loadGoogleFont(fn,allowReplace){const id='wartab-font-'+fn.replace(/[^a-zA-Z0-9]/g,'').toLowerCase(),e=document.getElementById(id);if(e)return;if(!allowReplace){const l=document.createElement('link');l.id=id;l.dataset.font=fn;l.rel='stylesheet';l.href=`https://fonts.googleapis.com/css2?family=${fn.replace(/ /g,'+')}:wght@200..700&display=swap`;document.head.appendChild(l);}else{const oe=document.getElementById('wartab-font');if(oe&&oe.dataset.font===fn)return;if(oe)oe.remove();const l=document.createElement('link');l.id='wartab-font';l.dataset.font=fn;l.rel='stylesheet';l.href=`https://fonts.googleapis.com/css2?family=${fn.replace(/ /g,'+')}:wght@200..700&display=swap`;document.head.appendChild(l);}}
 function escAttr(s){if(typeof s!=='string')return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
 /* ── Status Bar ── */
@@ -970,6 +970,8 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   if(!TOP_FONTS.find(f=>f.name===curFont)) TOP_FONTS.push({name:curFont,sample:'The quick brown fox jumps'});
   const fsel=document.createElement('select');fsel.className='font-select';
   fsel.style.fontFamily=`'${curFont}',sans-serif`;
+  // Preload all font options so dropdown renders them correctly
+  TOP_FONTS.forEach(f=>loadGoogleFont(f.name));
   TOP_FONTS.forEach(f=>{
     const o=document.createElement('option');o.value=f.name;
     o.textContent=f.sample;
