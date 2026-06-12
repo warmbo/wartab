@@ -40,6 +40,10 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 .icon-grid-item i[data-lucide] { width: 24px; height: 24px; stroke-width: 1.5; }
 .icon-grid-item span { display: block; }
 
+
+/* ── Font-size scaling: elements that grow/shrink with the Font Size slider ── */
+.card-body, .notes-text, .section-content, .link-item .link-label, .link-row, .api-widget { font-size: 1em; }
+
 /* ── Animations toggle ── */
 [data-animations="off"] *, [data-animations="off"] *::before, [data-animations="off"] *::after { transition-duration: 0s !important; animation-duration: 0s !important; }
 [data-animations="off"] .card:hover { border-color: var(--glass-border); }

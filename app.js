@@ -1,4 +1,37 @@
-/* ═══════════════════════════════════════════
+/*
+registerModule('status-bar', {
+  defaults: { source:'local', glancesUrl:'http://localhost:61209', customUrl:'', refreshInterval:15, items:['cpu','memory','disk','uptime'], hostname:true },
+  render: (sec,card,cw)=>{
+    const w=document.createElement('div');w.className='status-bar-widget';w.style.cssText='display:flex;flex-direction:column;gap:6px;';
+    w.dataset.source=sec.source||'local';w.dataset.glancesUrl=sec.glancesUrl||'';w.dataset.customUrl=sec.customUrl||'';
+    w.dataset.refresh=sec.refreshInterval||15;w.dataset.items=JSON.stringify(sec.items||['cpu','memory','disk','uptime']);
+    w.dataset.hostname=sec.hostname!==false?'1':'0';
+    const content=document.createElement('div');content.className='sw-content';w.appendChild(content);
+    const ts=document.createElement('div');ts.className='sw-ts';ts.style.cssText='font-size:9px;color:var(--text-tertiary);text-align:right;';w.appendChild(ts);
+    cw.appendChild(w);
+    // Fetch on render
+    fetchStatusWidget(w);
+  },
+  editor: (sec,card,bd)=>{
+    bd.appendChild(pf('select','','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],sec.source||'local',v=>{sec.source=v;saveConfig();}));
+    const gl=el('div','','',pf('text','','Glances URL',null,sec.glancesUrl||'',v=>{sec.glancesUrl=v;saveConfig();}));
+    gl.className='cfg-conditional'+(sec.source==='glances'?'':' hidden');
+    bd.appendChild(gl);
+    const cu=el('div','','',pf('text','','Custom URL',null,sec.customUrl||'',v=>{sec.customUrl=v;saveConfig();}));
+    cu.className='cfg-conditional'+(sec.source==='custom'?'':' hidden');
+    bd.appendChild(cu);
+    bd.appendChild(inlineRange('Refresh (s)',sec.refreshInterval||15,5,120,v=>{sec.refreshInterval=parseInt(v);saveConfig();}));
+    bd.appendChild(chk('Show hostname',sec.hostname!==false,v=>{sec.hostname=v;saveConfig();}));
+    const itemsRow=document.createElement('div');itemsRow.style.cssText='display:flex;gap:8px;flex-wrap:wrap;padding:4px 0;';
+    ['cpu','memory','disk','uptime'].forEach(item=>{
+      const cl=document.createElement('label');cl.style.cssText='display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;';
+      const cc=document.createElement('input');cc.type='checkbox';cc.checked=(sec.items||[]).includes(item);
+      cc.addEventListener('change',()=>{sec.items=sec.items||[];if(cc.checked&&!sec.items.includes(item))sec.items.push(item);else if(!cc.checked)sec.items=sec.items.filter(i=>i!==item);saveConfig();});
+      cl.appendChild(cc);cl.appendChild(document.createTextNode(item.charAt(0).toUpperCase()+item.slice(1)));itemsRow.appendChild(cl);
+    });
+    bd.appendChild(itemsRow);
+  },
+}); ═══════════════════════════════════════════
    WarTab — Application Logic
    ═══════════════════════════════════════════ */
 
@@ -315,7 +348,7 @@ function toast(msg,type='info'){const el=document.createElement('div');el.classN
 function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>{if(el.parentNode)el.remove();},6000);}
 
 /* ── Config ── */
-function loadConfig(){try{const s=localStorage.getItem('wartab');if(s){var parsed=JSON.parse(s);var before=JSON.stringify(parsed);migrateConfigEmojis(parsed);config=deepMerge(cloneObj(DEFAULT_CONFIG),parsed);if(JSON.stringify(parsed)!==before)localStorage.setItem('wartab',JSON.stringify(parsed));}else config=cloneObj(DEFAULT_CONFIG);}catch(e){config=cloneObj(DEFAULT_CONFIG);}}
+function loadConfig(){try{const s=localStorage.getItem('wartab');if(s){var parsed=JSON.parse(s);if(!parsed.version||parsed.version<'0.2.0'){migrateConfigEmojis(parsed);parsed.version=WARTAB_VERSION;localStorage.setItem('wartab',JSON.stringify(parsed));}config=deepMerge(cloneObj(DEFAULT_CONFIG),parsed);}else config=cloneObj(DEFAULT_CONFIG);}catch(e){config=cloneObj(DEFAULT_CONFIG);}}
 function saveConfig(){try{localStorage.setItem('wartab',JSON.stringify(config));}catch(e){}}
 function deepMerge(t,s){const r=cloneObj(t);for(const k in s){if(s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k]))r[k]=deepMerge(r[k]||{},s[k]);else r[k]=s[k];}return r;}
 
@@ -555,6 +588,32 @@ function fetchQuote(el){
   var q=LOCAL_QUOTES[Math.floor(Math.random()*LOCAL_QUOTES.length)];
   txt.textContent=q.q;
   auth.textContent='— '+q.a;
+}
+
+
+function fetchStatusWidget(el){
+  var content=el.querySelector('.sw-content'),ts=el.querySelector('.sw-ts');
+  if(!content)return;
+  var src=el.dataset.source,items;
+  try{items=JSON.parse(el.dataset.items||'[]');}catch(e){items=['cpu','memory','disk','uptime'];}
+  function render(d){
+    content.innerHTML='';var parts=[];
+    if(el.dataset.hostname==='1'&&d.hostname)parts.push(stItem('🖥️','',d.hostname,null));
+    if(items.includes('cpu')){var p=typeof d.cpu==='number'?d.cpu:(d.cpu&&d.cpu.total)?d.cpu.total:0;parts.push(stItem('⚡','CPU',p+'%',p));}
+    if(items.includes('memory')){var m=d.memory||{};parts.push(stItem('🧠','RAM',(m.percent||0)+'%',m.percent||0));}
+    if(items.includes('disk')){var disks=d.disks||[],r=disks.find(function(d2){return d2.mount==='/'})||disks[0];if(r)parts.push(stItem('💾',r.mount,r.percent+'%',r.percent));}
+    if(items.includes('uptime')){var u=d.uptime||{};parts.push(stItem('⏱️','Up',u.string||'--'));}
+    parts.forEach(function(el2,i){if(i>0){var sep=document.createElement('span');sep.className='stat-sep';sep.textContent='·';content.appendChild(sep);}content.appendChild(el2);});
+    if(!parts.length)content.innerHTML='<div style="font-size:12px;color:var(--text-tertiary);">No stats</div>';
+    if(ts){ts.textContent='updated';ts.dataset.ts=String(Date.now());}
+  }
+  var url;
+  if(src==='local')url='/api/stats';
+  else if(src==='glances')url=el.dataset.glancesUrl+'/api/4';
+  else if(src==='custom'&&el.dataset.customUrl)url=el.dataset.customUrl;
+  else{content.innerHTML='<div style="font-size:12px;color:var(--text-tertiary);">Configure source</div>';return;}
+  content.innerHTML='<div style="font-size:12px;color:var(--text-tertiary);">Loading...</div>';
+  fetch(url).then(function(r){if(!r.ok)throw Error(r.status);return r.json();}).then(function(d){render(d);}).catch(function(){content.innerHTML='<div style="font-size:12px;color:#cc6666;">Stats offline</div>';});
 }
 
 /* ═══════════════════════════════════════════ DRAG & DROP ═══════════════════════════════════════════
@@ -993,20 +1052,20 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   }
   body.appendChild(el('div','margin-bottom:10px;',null,bgr));
 
-  body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark Glass'},{value:'light',label:'Light Glass'},{value:'solid-dark',label:'Solid Dark'},{value:'solid-light',label:'Solid Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
   body.appendChild(chk('Random background on load',config.theme.bgRotate,v=>{config.theme.bgRotate=v;saveConfig();}));
 
   /* ── Appearance ── */
   body.appendChild(ps('Appearance'));
-  const fontColor=config.theme.fontColor||'#cccccc';
   body.appendChild(pf('color','','Accent Color',null,config.theme.glow,v=>{config.theme.glow=v;applyChanges();}));
-  body.appendChild(pf('color','','Font Color',null,fontColor,v=>{config.theme.fontColor=v;applyChanges();document.body.style.setProperty('--text-primary',hexToRgba2(v,0.92));}));
   body.appendChild(pf('range','','Glass Blur (px)',null,config.theme.blur,v=>{config.theme.blur=parseInt(v);applyChanges();},{min:4,max:40}));
-  body.appendChild(pf('select','','Font Size',[{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],config.theme.fontSize,v=>{config.theme.fontSize=v;applyChanges();}));
+  body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark Glass'},{value:'light',label:'Light Glass'},{value:'solid-dark',label:'Solid Dark'},{value:'solid-light',label:'Solid Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
   body.appendChild(chk('Animated transitions',config.theme.animations!==false,v=>{config.theme.animations=v;applyChanges();renderAll();}));
   body.appendChild(chk('Card accent bar',config.theme.showAccentBar!==false,v=>{config.theme.showAccentBar=v;applyChanges();renderAll();}));
-  /* ── Font (within Appearance) ── */
-  body.appendChild(el('div','','',el('h3','font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-top:20px;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--glass-border);font-family:var(--font);','Font Family')));
+  /* ── Font ── */
+  body.appendChild(ps('Font'));
+  const fontColor=config.theme.fontColor||'#cccccc';
+  body.appendChild(pf('color','','Font Color',null,fontColor,v=>{config.theme.fontColor=v;applyChanges();document.body.style.setProperty('--text-primary',hexToRgba2(v,0.92));}));
+  body.appendChild(pf('select','','Font Size',[{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],config.theme.fontSize,v=>{config.theme.fontSize=v;applyChanges();}));
   const curFont=config.theme.fontFamily||'Inter';
   const TOP_FONTS = [
     {name:'Inter',sample:'The quick brown fox jumps'},
@@ -1044,7 +1103,6 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   if(!TOP_FONTS.find(f=>f.name===curFont)) TOP_FONTS.push({name:curFont,sample:'The quick brown fox jumps'});
   const fsel=document.createElement('select');fsel.className='font-select';
   fsel.style.fontFamily=`'${curFont}',sans-serif`;
-  // Preload all font options so dropdown renders them correctly
   TOP_FONTS.forEach(f=>loadGoogleFont(f.name));
   TOP_FONTS.forEach(f=>{
     const o=document.createElement('option');o.value=f.name;
@@ -1058,11 +1116,7 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
     fsel.style.fontFamily=`'${fsel.value}',sans-serif`;
     saveConfig();applyTheme();renderAll();
   });
-  const fontLabel=el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;','Preview');
-  body.appendChild(fontLabel);
-  body.appendChild(fsel);
-
-  /* ── Status Bar ── */
+  body.appendChild(fsel);  /* ── Status Bar ── */
   body.appendChild(ps('Status Bar'));
   body.appendChild(chk('Show',config.statusBar.enabled,v=>{config.statusBar.enabled=v;saveConfig();applyTheme();initStatusBar();renderAll();buildConfigPanel();}));
   body.appendChild(pf('select','','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],config.statusBar.source,v=>{config.statusBar.source=v;saveConfig();initStatusBar();buildConfigPanel();}));
@@ -1093,12 +1147,6 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(ps('Layout'));
   body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
   body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
-
-  /* ── Search ── */
-  body.appendChild(ps('Search'));
-  const engs=Object.entries(config.search.engines).map(([k])=>({value:k,label:k}));
-  body.appendChild(pf('select','','Default Engine',engs,config.search.selected,v=>{config.search.selected=v;saveConfig();}));
-  body.appendChild(chk('Open in new tab',config.search.openInNewTab,v=>{config.search.openInNewTab=v;saveConfig();}));
 
   /* ── Data ── */
   body.appendChild(ps('Data'));
