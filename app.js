@@ -2,7 +2,7 @@
    WarTab — Application Logic
    ═══════════════════════════════════════════ */
 
-const WARTAB_VERSION = '0.1.9';
+const WARTAB_VERSION = '0.2.0';
 
 /* ══════ Card Type Modules ══════
    Each module defines { render, editor, defaults } for a section type.
@@ -112,7 +112,17 @@ registerModule('weather', {
   defaults: { apiKey:'', location:'', units:'imperial' },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='weather-widget';w.dataset.apiKey=sec.apiKey||'';w.dataset.location=sec.location||'';w.dataset.units=sec.units||'imperial';
-    w.innerHTML='<span class="weather-icon">🌤</span><div><div class="weather-temp">--°</div><div class="weather-detail">Loading...</div></div>';cw.appendChild(w);
+    const iconRow=document.createElement('div');iconRow.className='weather-main';
+    const iconEl=document.createElement('i');iconEl.className='weather-icon';iconEl.setAttribute('data-lucide','cloud');iconRow.appendChild(iconEl);
+    const tempEl=document.createElement('div');tempEl.className='weather-temp';tempEl.textContent='--°';iconRow.appendChild(tempEl);
+    w.appendChild(iconRow);
+    const descEl=document.createElement('div');descEl.className='weather-detail';descEl.textContent='Loading...';w.appendChild(descEl);
+    const windEl=document.createElement('div');windEl.className='weather-wind';windEl.style.cssText='font-size:11px;color:var(--text-tertiary);margin-top:2px;display:flex;align-items:center;gap:4px;';
+    const windIcon=document.createElement('i');windIcon.setAttribute('data-lucide','wind');windIcon.style.cssText='width:12px;height:12px;';windEl.appendChild(windIcon);
+    const windVal=document.createElement('span');windVal.className='weather-wind-val';windVal.textContent='--';windEl.appendChild(windVal);
+    w.appendChild(windEl);
+    const tsEl=document.createElement('div');tsEl.className='weather-ts';tsEl.textContent='';w.appendChild(tsEl);
+    cw.appendChild(w);
   },
   editor: (sec,card,bd)=>{
     ['apiKey','location'].forEach(k=>{const i=document.createElement('input');i.placeholder=k;i.value=sec[k]||'';i.style.cssText='width:100%;padding:4px 8px;background:var(--card-input-bg);border:1px solid var(--surface-border);color:var(--text-primary);font-size:12px;outline:none;';i.addEventListener('change',()=>{sec[k]=i.value;saveConfig();});bd.appendChild(i);});
@@ -173,6 +183,31 @@ registerModule('api-poller', {
   },
 });
 
+registerModule('quotes', {
+  defaults: { category:'inspirational' },
+  render: (sec,card,cw)=>{
+    const q=document.createElement('div');q.className='quotes-widget';
+    q.style.cssText='display:flex;flex-direction:column;gap:6px;padding:4px 0;min-height:80px;';
+    const txt=document.createElement('div');txt.className='quotes-text';
+    txt.style.cssText='font-size:15px;line-height:1.5;font-style:italic;color:var(--text-primary);position:relative;padding-left:20px;';
+    const qm=document.createElement('span');qm.textContent='"';qm.style.cssText='position:absolute;left:0;top:-4px;font-size:24px;color:var(--accent);opacity:0.5;font-style:normal;';txt.appendChild(qm);
+    const cont=document.createElement('span');cont.className='quotes-content';cont.textContent='Click to load';txt.appendChild(cont);
+    q.appendChild(txt);
+    const auth=document.createElement('div');auth.className='quotes-author';
+    auth.style.cssText='font-size:11px;color:var(--text-secondary);text-align:right;padding-right:4px;';
+    const aName=document.createElement('span');aName.className='quotes-author-name';aName.textContent='';auth.appendChild(aName);
+    q.appendChild(auth);
+    // Click to refresh
+    q.addEventListener('click',function(){fetchQuote(q);});
+    q.dataset.secId=sec.id;
+    cw.appendChild(q);
+    // Auto-load on first render
+    setTimeout(function(){fetchQuote(q);},100);
+  },
+  editor: (sec,card,bd)=>{
+    bd.appendChild(inlineCheck('Auto-refresh on click',sec.autoRefresh!==false,function(v){sec.autoRefresh=v;saveConfig();}));
+  },
+});
 function bumpVersion(){
   const p=WARTAB_VERSION.split('.');
   p[p.length-1]=String(parseInt(p[p.length-1])+1);
@@ -462,11 +497,25 @@ function setupClocks(){if(clockInterval)clearInterval(clockInterval);updateClock
 function updateClocks(){$$('.clock-widget').forEach(el=>{const n=new Date(),f24=el.dataset.format24==='1',sd=el.dataset.showDate==='1';let h=n.getHours();const m=String(n.getMinutes()).padStart(2,'0');el.querySelector('.clock-time').textContent=f24?String(h).padStart(2,'0')+':'+m:(h%12||12)+':'+m+' '+(h>=12?'PM':'AM');if(sd)el.querySelector('.clock-date').textContent=n.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});if(el.dataset.showCalendar==='1'){const cal=el.querySelector('.calendar-widget');if(cal)renderCalendar(cal,n);}});}
 function renderCalendar(el,date){const y=date.getFullYear(),m=date.getMonth();const fd=new Date(y,m,1).getDay();const ld=new Date(y,m+1,0).getDate();const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];let h=`<div class="calendar-month">${mn[m]} ${y}</div><div class="calendar-grid">`;['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{h+=`<div class="calendar-day-header">${d}</div>`;});for(let i=0;i<fd;i++)h+='<div class="calendar-day other-month"></div>';const today=new Date();for(let d=1;d<=ld;d++){const is=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();h+=`<div class="calendar-day${is?' today':''}">${d}</div>`;}h+='</div>';el.innerHTML=h;}
 function setupWeatherWidgets(){weatherIntervals.forEach(clearInterval);weatherIntervals=[];$$('.weather-widget').forEach(fetchWeather);}
-function fetchWeather(el){const k=el.dataset.apiKey,l=el.dataset.location;if(!k||!l){el.querySelector('.weather-detail').textContent='Set API key & location in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(l)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);const e=wEmoji(d.weather[0].id);el.querySelector('.weather-icon').textContent=e;el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';let tsEl=el.querySelector('.weather-ts');if(!tsEl){tsEl=document.createElement('div');tsEl.className='weather-ts';el.appendChild(tsEl);}tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);el.dataset.lastOk=String(ts);}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;let tsEl=el.querySelector('.weather-ts');if(!tsEl){tsEl=document.createElement('div');tsEl.className='weather-ts';el.appendChild(tsEl);}const lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);});weatherIntervals.push(setInterval(()=>fetchWeather(el),600000));}
-function wEmoji(id){if(id<300)return'⛈';if(id<400)return'🌦';if(id<600)return'🌧';if(id<700)return'❄';if(id<800)return'🌫';if(id===800)return'☀';return'☁';}
+function fetchWeather(el){const k=el.dataset.apiKey,l=el.dataset.location;if(!k||!l){el.querySelector('.weather-detail').textContent='Set API key & location in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(l)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);var iconEl=el.querySelector('.weather-icon');if(iconEl){var lname=wIcon(d.weather[0].id);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';var windEl=el.querySelector('.weather-wind-val');if(windEl){var ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}var tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);if(typeof lucide!=='undefined')lucide.createIcons();}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;var tsEl=el.querySelector('.weather-ts');if(tsEl){var lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});weatherIntervals.push(setInterval(()=>fetchWeather(el),600000));}
+function wIcon(id){if(id<300)return'cloud-lightning';if(id<400)return'cloud-drizzle';if(id<600)return'cloud-rain';if(id<700)return'cloud-snow';if(id<800)return'cloud-fog';if(id===800)return'sun';return'cloud';}
 function fetchApiWidget(el){const u=el.dataset.url,jp=el.dataset.jsonPath;if(!u){el.innerHTML='<div class="api-row"><span class="api-label">No API URL set</span></div>';return;}const ts=Date.now();fetch(u).then(r=>r.json()).then(d=>{const v=jp?getNested(d,jp):JSON.stringify(d,null,2);el.innerHTML='<div class="api-row"><span class="api-label">'+escAttr(el.dataset.label)+'</span><span class="api-value">'+escAttr(String(v))+'</span></div><div class="api-ts" data-ts="'+ts+'">updated just now</div>';el.dataset.lastOk=String(ts);const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));}).catch(e=>{const lo=el.dataset.lastOk;el.innerHTML='<div class="api-row"><span class="api-label">'+escAttr(el.dataset.label)+'</span><span class="api-value api-error">'+escAttr(e.message)+'</span></div><div class="api-ts" data-ts="'+(lo||ts)+'">'+(lo?'last ok: '+timeAgo(parseInt(lo)):'')+'</div>';const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));});}
 function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
+
+
+function fetchQuote(el){
+  var txt=el.querySelector('.quotes-content'),auth=el.querySelector('.quotes-author-name');
+  if(!txt||!auth)return;
+  txt.textContent='Loading...';auth.textContent='';
+  fetch('https://api.quotable.io/random').then(function(r){return r.json();}).then(function(d){
+    txt.textContent=d.content||'';
+    auth.textContent='— '+(d.author||'Unknown');
+  }).catch(function(e){
+    txt.textContent='Could not load quote';
+    auth.textContent='';
+  });
+}
 
 /* ═══════════════════════════════════════════ DRAG & DROP ═══════════════════════════════════════════
    Pointer-based drag with position preview, gap-slot awareness, smooth animation.

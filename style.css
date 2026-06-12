@@ -31,6 +31,20 @@
    All Lucide SVGs use currentColor, inheriting accent or font color. */
 i[data-lucide] { display: inline-block; vertical-align: middle; }
 .card-icon,i[data-lucide].card-icon { width: 20px; height: 20px; }
+
+/* ── Weather widget ── */
+.weather-widget { display: flex; flex-direction: column; gap: 2px; }
+.weather-main { display: flex; align-items: center; gap: 10px; }
+.weather-icon { width: 36px; height: 36px; stroke-width: 1.5; }
+.weather-temp { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+.weather-detail { font-size: 12px; color: var(--text-secondary); }
+.weather-wind { font-size: 11px; color: var(--text-tertiary); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.weather-ts { font-size: 10px; color: var(--text-tertiary); margin-top: 4px; }
+
+/* ── Quotes widget ── */
+.quotes-widget { cursor: pointer; user-select: none; }
+.quotes-widget:hover .quotes-text { opacity: 0.85; }
+
 .link-icon,i[data-lucide].link-icon { width: 16px; height: 16px; }
 .brand-icon i[data-lucide] { width: 22px; height: 22px; }
 .stat-icon i[data-lucide] { width: 14px; height: 14px; }
