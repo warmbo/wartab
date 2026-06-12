@@ -275,6 +275,10 @@ body {
 .api-ts { color: var(--text-tertiary); margin-top: 3px; text-align: right; }
 .weather-ts { color: var(--text-tertiary); margin-top: 2px; text-align: center; font-size: .75em; }
 
+.drag-handle { cursor: grab; color: var(--text-tertiary); padding: 2px 4px; user-select: none; transition: color 0.15s; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; }
+.drag-handle:hover { color: var(--text-secondary); }
+.drag-handle:active { cursor: grabbing; }
+
 /* ══════ Config Panel ══════ */
 .config-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
 .config-overlay.open { opacity: 1; pointer-events: auto; }
@@ -308,9 +312,10 @@ body {
 
 
 /* ══════ Drag ══════ */
-.drag-handle { cursor: grab; color: var(--text-tertiary); font-size: 14px; padding: 2px 4px; user-select: none; transition: color 0.15s; }
+
+
 .drag-handle:hover { color: var(--text-secondary); }
-.drag-handle:active { cursor: grabbing; }
+
 .card.dragging { opacity: 0.25; transform: scale(0.96); transition: opacity 0.2s, transform 0.2s; }
 .drag-marker { position: fixed; pointer-events: none; z-index: 999; }
 .drag-ghost { position: fixed; pointer-events: none; z-index: 999; }
@@ -486,6 +491,7 @@ body {
   .card-body {
   font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; padding: 0 14px 12px; }
   .card-edit-btn, .drag-handle { min-width: 40px; min-height: 40px; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  
   i[data-lucide].card-icon { width: 18px; height: 18px; }
   i[data-lucide].link-icon { width: 18px; height: 18px; }
   .link-item .link-label { font-size: 11px; }
