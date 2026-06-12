@@ -17,9 +17,12 @@ function registerModule(type, module){
 registerModule('links', {
   defaults: { links:[{label:'Example',url:'https://example.com',icon:'link'}] },
   render: (sec,card,cw)=>{
-    const b=document.createElement('button');b.className='dropdown-toggle';b.innerHTML=escAttr(sec.label||'Links')+' <span class="arrow">▶</span>';
-    const c=document.createElement('div');c.className='dropdown-content';
-    b.addEventListener('click',function(){b.classList.toggle('open');c.classList.toggle('open');});cw.appendChild(b);
+    var open=!sec.collapsed;
+    const b=document.createElement('button');b.className='dropdown-toggle'+(open?' open':'');
+    b.innerHTML=escAttr(sec.label||'Links')+' <span class="arrow">▶</span>';
+    const c=document.createElement('div');c.className='dropdown-content'+(open?' open':'');
+    b.addEventListener('click',function(){sec.collapsed=!sec.collapsed;saveConfig();b.classList.toggle('open');c.classList.toggle('open');});
+    cw.appendChild(b);
     const ig=document.createElement('div');ig.className='link-grid';(sec.links||[]).forEach(link=>{
       const a=document.createElement('a');a.className='link-item';a.href=link.url;a.target='_blank';a.rel='noopener';
       a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label';s.textContent=link.label;
