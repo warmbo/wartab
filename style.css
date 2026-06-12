@@ -347,28 +347,36 @@ body {
 .cp-range-val { font-size: 13px; color: var(--text-secondary); min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .cp-hint { font-size: 11px; color: var(--text-tertiary); font-style: italic; padding: 6px 0; line-height: 1.5; }
 
-/* ── Card settings: 2-column grid ── */
+/* ── Card settings: glass panel ── */
+.cs-panel {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 12px rgba(0,0,0,0.15);
+  padding: 14px; margin-bottom: 14px;
+}
 .cs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .cs-grid .cs-full { grid-column: 1 / -1; }
 .cs-pair { display: flex; flex-direction: column; gap: 4px; }
-.cs-icon-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.cs-icon-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
 .cs-icon-preview { font-size: 26px; width: 40px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); flex-shrink: 0; }
 .cs-icon-preview i[data-lucide] { width: 24px; height: 24px; }
 
-/* ── Section editor ── */
+/* ── Section editor: glass card ── */
 .cp-section { margin-bottom: 10px; }
 .cp-section-box {
-  background: rgba(0,0,0,0.22); padding: 14px; margin-bottom: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
   border-left: 3px solid var(--card-accent, var(--accent));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 12px rgba(0,0,0,0.12);
+  padding: 14px; margin-bottom: 12px;
 }
 .cp-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .me-badge {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 12px; font-size: 10px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.8px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
   color: var(--text-secondary); font-family: var(--font);
 }
 .cp-section-type { display: none; }
@@ -376,11 +384,12 @@ body {
 .se-inline > * { flex: 1; }
 .cp-section-actions { display: flex; gap: 4px; }
 
-/* ── Module field card ── */
+/* ── Module field card: inner glass ── */
 .me-card {
-  background: rgba(0,0,0,0.15); margin-top: 10px; padding: 12px;
+  background: rgba(0,0,0,0.12);
   border: 1px solid rgba(255,255,255,0.04);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(0,0,0,0.08);
+  padding: 12px; margin-top: 12px;
 }
 
 /* ── Links table ── */
@@ -396,10 +405,15 @@ body {
 .me-link-tr {
   display: flex; gap: 8px; align-items: center;
   padding: 7px 8px; margin-bottom: 5px;
-  background: rgba(0,0,0,0.18); transition: background 0.12s, border-color 0.12s;
-  border: 1px solid transparent;
+  background: rgba(0,0,0,0.12);
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  transition: background 0.12s, border-color 0.12s;
 }
-.me-link-tr:hover { background: rgba(0,0,0,0.28); border-color: rgba(255,255,255,0.05); }
+.me-link-tr:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.08);
+}
 .me-link-tr .cp-input { flex: 1; padding: 5px 8px; font-size: 12px; }
 .me-link-tr .cp-input:first-child { flex: 1; }
 .me-link-tr .cp-input:last-of-type { flex: 2; }
@@ -407,11 +421,11 @@ body {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 16px; margin-top: 8px;
   font-size: 11px; font-weight: 600;
-  background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.10);
   color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
   font-family: var(--font);
 }
-.me-link-add:hover { background: rgba(255,255,255,0.08); border-color: var(--accent); color: var(--text-primary); }
+.me-link-add:hover { background: rgba(255,255,255,0.06); border-color: var(--accent); color: var(--text-primary); }
 
 /* Icon button for links */
 .me-icon-btn {
@@ -424,20 +438,20 @@ body {
 .me-icon-btn img { width: 16px; height: 16px; object-fit: contain; }
 .me-icon-btn i[data-lucide] { width: 16px; height: 16px; }
 
-/* ── Checkbox column group ── */
+/* ── Checkbox group ── */
 .me-check-group { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
 .me-check-group .cp-check { padding: 3px 0; }
 
-/* ── Section divider (for card settings / sections) ── */
+/* ── Section divider ── */
 .cp-divider {
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-  color: var(--text-tertiary); margin: 18px 0 12px; padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-tertiary); margin: 18px 0 14px; padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 .cp-divider:first-child { margin-top: 0; }
 
 /* ── Footer ── */
-.cp-footer { display: flex; gap: 10px; padding: 14px 0 4px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 14px; }
+.cp-footer { display: flex; gap: 10px; padding: 14px 0 4px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 14px; }
 .cp-footer .btn { flex: 1; justify-content: center; padding: 9px 16px; font-size: 12px; }
 
 /* ── Gap only panel ── */

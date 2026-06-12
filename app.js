@@ -387,6 +387,8 @@ function buildCardEditPanel(card) {
 
   /* ── Card Settings ── */
   body.appendChild(cpDivider('CARD SETTINGS'));
+  const panel = document.createElement('div');
+  panel.className = 'cs-panel';
   const grid = document.createElement('div');
   grid.className = 'cs-grid';
 
@@ -466,7 +468,8 @@ function buildCardEditPanel(card) {
   }));
   grid.appendChild(gapG);
 
-  body.appendChild(grid);
+  panel.appendChild(grid);
+  body.appendChild(panel);
 
   /* ── Sections ── */
   body.appendChild(cpDivider('SECTIONS'));
