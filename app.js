@@ -17,15 +17,27 @@ function registerModule(type, module){
 registerModule('links', {
   defaults: { links:[{label:'Example',url:'https://example.com',icon:'link'}] },
   render: (sec,card,cw)=>{
-    const g=document.createElement('div');g.className='link-grid';
-    (sec.links||[]).forEach(l=>{
-      const a=document.createElement('a');a.className='link-item';a.href=l.url;a.target='_blank';a.rel='noopener';
-      a.appendChild(renderLinkIcon(l.icon));
-      const s=document.createElement('span');s.className='link-label';s.textContent=l.label;
-      a.appendChild(s);g.appendChild(a);
-    });cw.appendChild(g);
+    if(sec.compact){
+      const b=document.createElement('button');b.className='dropdown-toggle';b.innerHTML=escAttr(sec.label||'More')+' <span class="arrow">▶</span>';
+      const c=document.createElement('div');c.className='dropdown-content';
+      b.addEventListener('click',function(){b.classList.toggle('open');c.classList.toggle('open');});cw.appendChild(b);
+      const ig=document.createElement('div');ig.className='link-grid';(sec.links||[]).forEach(link=>{
+        const a=document.createElement('a');a.className='link-item';a.href=link.url;a.target='_blank';a.rel='noopener';
+        a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label';s.textContent=link.label;
+        a.appendChild(s);ig.appendChild(a);
+      });c.appendChild(ig);cw.appendChild(c);
+    }else{
+      const g=document.createElement('div');g.className='link-grid';
+      (sec.links||[]).forEach(function(l){
+        const a=document.createElement('a');a.className='link-item';a.href=l.url;a.target='_blank';a.rel='noopener';
+        a.appendChild(renderLinkIcon(l.icon));
+        const s=document.createElement('span');s.className='link-label';s.textContent=l.label;
+        a.appendChild(s);g.appendChild(a);
+      });cw.appendChild(g);
+    }
   },
   editor: (sec,card,bd)=>{
+    bd.appendChild(inlineCheck('Compact dropdown',sec.compact,v=>{sec.compact=v;saveConfig();renderAll();}));
     (sec.links||[]).forEach((link,li2)=>{
       const row=document.createElement('div');row.style.cssText='display:flex;gap:4px;align-items:center;margin-bottom:3px;';
       const li2_i=document.createElement('input');li2_i.placeholder='Label';li2_i.value=link.label;
@@ -155,22 +167,7 @@ registerModule('notes', {
     bd.appendChild(hint);
   },
 });
-registerModule('dropdown', {
-  defaults: { label:'More', links:[{label:'Example',url:'https://example.com',icon:'link'}] },
-  render: (sec,card,cw)=>{
-    const b=document.createElement('button');b.className='dropdown-toggle';b.innerHTML=`${escAttr(sec.label||'More')} <span class="arrow">▶</span>`;
-    const c=document.createElement('div');c.className='dropdown-content';
-    b.addEventListener('click',()=>{b.classList.toggle('open');c.classList.toggle('open');});cw.appendChild(b);
-    const ig=document.createElement('div');ig.className='link-grid';(sec.links||[]).forEach(link=>{
-      const a=document.createElement('a');a.className='link-item';a.href=link.url;a.target='_blank';a.rel='noopener';
-      a.appendChild(renderLinkIcon(link.icon));const s=document.createElement('span');s.className='link-label';s.textContent=link.label;
-      a.appendChild(s);ig.appendChild(a);
-    });c.appendChild(ig);cw.appendChild(c);
-  },
-  editor: (sec,card,bd)=>{
-    CARD_MODULES['links'].editor(sec,card,bd);
-  },
-});
+
 registerModule('api-poller', {
   defaults: { url:'', jsonPath:'', label:'API', refreshInterval:60 },
   render: (sec,card,cw)=>{
@@ -543,7 +540,7 @@ function renderInlineSection(sec,card,si){
   const del=btn('✕','Delete',true);del.addEventListener('click',()=>{card.sections.splice(si,1);saveConfig();renderAll();toast('Section deleted');});acts.appendChild(del);hdr.appendChild(acts);div.appendChild(hdr);
   const bd=document.createElement('div');bd.style.cssText='display:flex;flex-direction:column;gap:5px;';
   const sel=document.createElement('select');sel.style.cssText='width:100%;padding:4px 8px;background:var(--card-input-bg);border:1px solid var(--surface-border);color:var(--text-primary);font-size:11px;outline:none;';
-  ['links','link-list','search','clock','weather','iframe','notes','dropdown','api-poller'].forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;if(t===sec.type)o.selected=true;sel.appendChild(o);});sel.addEventListener('change',()=>{sec.type=sel.value;saveConfig();renderAll();});bd.appendChild(sel);
+  ['links','link-list','search','clock','weather','iframe','notes','api-poller'].forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;if(t===sec.type)o.selected=true;sel.appendChild(o);});sel.addEventListener('change',()=>{sec.type=sel.value;saveConfig();renderAll();});bd.appendChild(sel);
   const li=document.createElement('input');li.placeholder='Section label';li.value=sec.label||'';li.style.cssText='width:100%;padding:4px 8px;background:var(--card-input-bg);border:1px solid var(--surface-border);color:var(--text-primary);font-size:12px;outline:none;';li.addEventListener('change',()=>{sec.label=li.value;saveConfig();renderAll();});bd.appendChild(li);
   const mod=CARD_MODULES[sec.type];
   if(mod&&mod.editor)mod.editor(sec,card,bd);
