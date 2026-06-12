@@ -134,6 +134,9 @@ body {
 }
 #top-bar .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-shadow: var(--emboss-shadow); flex-shrink: 0; }
 #top-bar .brand .brand-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: 20px; font-family: 'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',var(--font); }
+/* ── Emoji always render in native color, unaffected by theme ── */
+.emoji-icon { color: unset; }
+
 #top-bar .brand .brand-icon { font-size: 20px; }
 
 /* Stats within top bar */
