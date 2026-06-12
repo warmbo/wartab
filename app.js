@@ -1,6 +1,6 @@
 /*
 registerModule('status-bar', {
-  defaults: { source:'local', glancesUrl:'http://localhost:61209', customUrl:'', refreshInterval:15, items:['cpu','memory','disk','uptime'], hostname:true },
+  defaults: { source:'local', glancesUrl:'http://localhost:61209', customUrl:'', refreshInterval:15, items:['hostname','cpu','memory','disk','uptime'] },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='status-bar-widget';w.style.cssText='display:flex;flex-direction:column;gap:6px;';
     w.dataset.source=sec.source||'local';w.dataset.glancesUrl=sec.glancesUrl||'';w.dataset.customUrl=sec.customUrl||'';
@@ -21,9 +21,8 @@ registerModule('status-bar', {
     cu.className='cfg-conditional'+(sec.source==='custom'?'':' hidden');
     bd.appendChild(cu);
     bd.appendChild(inlineRange('Refresh (s)',sec.refreshInterval||15,5,120,v=>{sec.refreshInterval=parseInt(v);saveConfig();}));
-    bd.appendChild(chk('Show hostname',sec.hostname!==false,v=>{sec.hostname=v;saveConfig();}));
     const itemsRow=document.createElement('div');itemsRow.style.cssText='display:flex;gap:8px;flex-wrap:wrap;padding:4px 0;';
-    ['cpu','memory','disk','uptime'].forEach(item=>{
+    ['hostname','cpu','memory','disk','uptime'].forEach(item=>{
       const cl=document.createElement('label');cl.style.cssText='display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;';
       const cc=document.createElement('input');cc.type='checkbox';cc.checked=(sec.items||[]).includes(item);
       cc.addEventListener('change',()=>{sec.items=sec.items||[];if(cc.checked&&!sec.items.includes(item))sec.items.push(item);else if(!cc.checked)sec.items=sec.items.filter(i=>i!==item);saveConfig();});
@@ -264,9 +263,9 @@ const DEFAULT_CONFIG = {
   statusBar: {
     enabled: true, source:'local', glancesUrl:'http://localhost:61209',
     customUrl:'', refreshInterval:15,
-    items:['cpu','memory','disk','uptime'], hostname:true,
+    items:['cpu','memory','disk','uptime'],
   },
-  layout: { cols:4, gap:16, cardMinWidth:240 },
+  layout: { cols:4, gap:16, cardMinWidth:240, paddingX:24, paddingY:24 },
   search: {
     engine:'https://www.google.com/search?q=',
     engines:{ Google:'https://www.google.com/search?q=', DuckDuckGo:'https://duckduckgo.com/?q=', Brave:'https://search.brave.com/search?q=', Bing:'https://www.bing.com/search?q=', YouTube:'https://www.youtube.com/results?search_query=', Reddit:'https://www.reddit.com/search/?q=', Wikipedia:'https://en.wikipedia.org/wiki/Special:Search?search=' },
@@ -425,11 +424,11 @@ function escAttr(s){if(typeof s!=='string')return'';const d=document.createEleme
 function initStatusBar(){renderStatusBar();clearInterval(statsTimer);const sb=config.statusBar;if(!sb||!sb.enabled)return;const ms=(sb.refreshInterval||15)*1000;statsTimer=setInterval(fetchStats,ms);fetchStats();}
 function renderStatusBar(){const bar=$('#top-stats'),sb=config.statusBar;if(!sb||!sb.enabled){bar.classList.add('hidden');bar.innerHTML='';return;}bar.classList.remove('hidden');bar.innerHTML='<span class="stat-item"><span class="stat-icon">⚡</span><span class="stat-value" id="stat-loading">Connecting...</span></span>';}
 function fetchStats(){const sb=config.statusBar;if(!sb||!sb.enabled)return;let url;if(sb.source==='local')url='/api/stats';else if(sb.source==='glances')url=sb.glancesUrl+'/api/4';else if(sb.source==='custom'&&sb.customUrl)url=sb.customUrl;else return;fetch(url).then(r=>{if(!r.ok)throw Error(r.status);return r.json();}).then(d=>renderStats(d,sb)).catch(()=>{const el=$('#stat-loading');if(el)el.textContent='Stats offline';});}
-function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const items=sb.items||[];const parts=[];if(sb.hostname!==false&&data.hostname)parts.push(stItem('🖥️','',data.hostname,null));if(items.includes('cpu')){let p=typeof data.cpu==='number'?data.cpu:(data.cpu&&data.cpu.total)?data.cpu.total:0;parts.push(stItem('⚡','CPU',p+'%',p));}if(items.includes('memory')){const m=data.memory||{};parts.push(stItem('🧠','RAM',(m.percent||0)+'%',m.percent||0));}if(items.includes('disk')){const d=data.disks||[],r=d.find(d=>d.mount==='/')||d[0];if(r)parts.push(stItem('💾',r.mount,r.percent+'%',r.percent));}if(items.includes('uptime')){const u=data.uptime||{};parts.push(stItem('⏱️','Up',u.string||'--'));}parts.forEach((el,i)=>{if(i>0){const s=document.createElement('span');s.className='stat-sep';s.textContent='·';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';}
+function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const items=sb.items||[];const parts=[];if(items.includes('hostname')&&data.hostname)parts.push(stItem('🖥️','',data.hostname,null));if(items.includes('cpu')){let p=typeof data.cpu==='number'?data.cpu:(data.cpu&&data.cpu.total)?data.cpu.total:0;parts.push(stItem('⚡','CPU',p+'%',p));}if(items.includes('memory')){const m=data.memory||{};parts.push(stItem('🧠','RAM',(m.percent||0)+'%',m.percent||0));}if(items.includes('disk')){const d=data.disks||[],r=d.find(d=>d.mount==='/')||d[0];if(r)parts.push(stItem('💾',r.mount,r.percent+'%',r.percent));}if(items.includes('uptime')){const u=data.uptime||{};parts.push(stItem('⏱️','Up',u.string||'--'));}parts.forEach((el,i)=>{if(i>0){const s=document.createElement('span');s.className='stat-sep';s.textContent='·';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';}
 function stItem(icon,label,value,pct){const div=document.createElement('span');div.className='stat-item';div.innerHTML=`<span class="stat-icon">${icon}</span>`;if(label){const l=document.createElement('span');l.className='stat-label';l.textContent=label;div.appendChild(l);}if(pct!==null&&pct!==undefined){const b=document.createElement('span');b.className='stat-bar';const f=document.createElement('span');f.className='stat-bar-fill'+(pct>80?' high':pct>60?' mid':'');f.style.width=pct+'%';b.appendChild(f);div.appendChild(b);}const v=document.createElement('span');v.className='stat-value';v.textContent=value;div.appendChild(v);return div;}
 
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
-function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';const _scrollY=window.scrollY;
+function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){appEl.style.paddingLeft=config.layout.paddingX+'px';appEl.style.paddingRight=config.layout.paddingX+'px';appEl.style.paddingTop=config.layout.paddingY+'px';appEl.style.paddingBottom='80px';}const _scrollY=window.scrollY;
 if(!config.cards.length){
   grid.innerHTML=`<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;">
     <div style="font-size:48px;margin-bottom:16px;"><i data-lucide="package" style="width:48px;height:48px;"></i></div>
@@ -598,7 +597,7 @@ function fetchStatusWidget(el){
   try{items=JSON.parse(el.dataset.items||'[]');}catch(e){items=['cpu','memory','disk','uptime'];}
   function render(d){
     content.innerHTML='';var parts=[];
-    if(el.dataset.hostname==='1'&&d.hostname)parts.push(stItem('🖥️','',d.hostname,null));
+    if(items.includes('hostname')&&d.hostname)parts.push(stItem('🖥️','',d.hostname,null));
     if(items.includes('cpu')){var p=typeof d.cpu==='number'?d.cpu:(d.cpu&&d.cpu.total)?d.cpu.total:0;parts.push(stItem('⚡','CPU',p+'%',p));}
     if(items.includes('memory')){var m=d.memory||{};parts.push(stItem('🧠','RAM',(m.percent||0)+'%',m.percent||0));}
     if(items.includes('disk')){var disks=d.disks||[],r=disks.find(function(d2){return d2.mount==='/'})||disks[0];if(r)parts.push(stItem('💾',r.mount,r.percent+'%',r.percent));}
@@ -1132,9 +1131,8 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(cu);
 
   body.appendChild(pf('range','','Refresh (s)',null,config.statusBar.refreshInterval,v=>{config.statusBar.refreshInterval=parseInt(v);saveConfig();initStatusBar();},{min:5,max:120}));
-  body.appendChild(chk('Show hostname',config.statusBar.hostname!==false,v=>{config.statusBar.hostname=v;saveConfig();initStatusBar();}));
   const itemsRow=document.createElement('div');itemsRow.style.cssText='display:flex;gap:8px;flex-wrap:wrap;padding:4px 0;';
-  ['cpu','memory','disk','uptime'].forEach(item=>{
+  ['hostname','cpu','memory','disk','uptime'].forEach(item=>{
     const cl=document.createElement('label');cl.style.cssText='display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;';
     const cc=document.createElement('input');cc.type='checkbox';cc.checked=(config.statusBar.items||[]).includes(item);
     cc.addEventListener('change',()=>{config.statusBar.items=config.statusBar.items||[];if(cc.checked&&!config.statusBar.items.includes(item))config.statusBar.items.push(item);else if(!cc.checked)config.statusBar.items=config.statusBar.items.filter(i=>i!==item);saveConfig();initStatusBar();});
@@ -1147,6 +1145,8 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(ps('Layout'));
   body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
   body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
+  body.appendChild(pf('range','','Page Padding X (px)',null,config.layout.paddingX||24,v=>{config.layout.paddingX=parseInt(v)||24;applyChanges();renderAll();},{min:0,max:80}));
+  body.appendChild(pf('range','','Page Padding Y (px)',null,config.layout.paddingY||24,v=>{config.layout.paddingY=parseInt(v)||24;applyChanges();renderAll();},{min:0,max:80}));
 
   /* ── Data ── */
   body.appendChild(ps('Data'));

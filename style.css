@@ -41,8 +41,6 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 .icon-grid-item span { display: block; }
 
 
-/* ── Font-size scaling: elements that grow/shrink with the Font Size slider ── */
-.card-body, .notes-text, .section-content, .link-item .link-label, .link-row, .api-widget { font-size: 1em; }
 
 /* ── Animations toggle ── */
 [data-animations="off"] *, [data-animations="off"] *::before, [data-animations="off"] *::after { transition-duration: 0s !important; animation-duration: 0s !important; }
@@ -99,12 +97,12 @@ html { height: 100%; overflow-x: hidden; }
 
 body {
   font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: var(--font-size, 14px);
   min-height: 100vh;
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: var(--font);
   background-attachment: fixed;
 }
 
@@ -221,7 +219,7 @@ body {
 .link-item .link-custom-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
 
 .link-list { display: flex; flex-direction: column; gap: 2px; }
-.link-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; text-decoration: none; color: var(--text-primary); font-size: 13px; transition: background 0.15s; }
+.link-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; text-decoration: none; color: var(--text-primary); transition: background 0.15s; }
 .link-row:hover { background: rgba(255,255,255,0.06); }
 .link-row .link-icon { font-size: 16px; width: 20px; text-align: center; }
 .link-row .link-custom-icon { width: 20px; height: 20px; object-fit: contain; }
