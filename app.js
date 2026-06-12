@@ -146,12 +146,13 @@ registerModule('notes', {
   render: (sec,card,cw)=>{
     const e=document.createElement('div');e.className='notes-text';e.contentEditable=true;e.textContent=sec.content||'';
     e.addEventListener('blur',()=>{const idx=findSection(sec.id);if(idx>=0){config.cards[idx[0]].sections[idx[1]].content=e.textContent;saveConfig();}});
+    e.addEventListener('keydown',function(ev){if(ev.key==='Escape')e.blur();});
     cw.appendChild(e);
   },
   editor: (sec,card,bd)=>{
-    const ta=document.createElement('textarea');ta.placeholder='Notes...';ta.value=sec.content||'';
-    ta.style.cssText='width:100%;min-height:40px;padding:4px 8px;background:var(--card-input-bg);border:1px solid var(--surface-border);color:var(--text-primary);font-size:12px;outline:none;resize:vertical;';
-    ta.addEventListener('change',()=>{sec.content=ta.value;saveConfig();renderAll();});bd.appendChild(ta);
+    const hint=document.createElement('div');hint.style.cssText='font-size:11px;color:var(--text-tertiary);font-style:italic;padding:4px 0;';
+    hint.textContent='✎ Click the card and type directly to edit notes. Press Esc to finish.';
+    bd.appendChild(hint);
   },
 });
 registerModule('dropdown', {
@@ -1038,7 +1039,17 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(acts);
   const fi2=document.createElement('input');fi2.type='file';fi2.accept='.json';fi2.style.display='none';fi2.id='import-file-input2';
   fi2.addEventListener('change',e=>{if(e.target.files[0]){const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);config=deepMerge(cloneObj(DEFAULT_CONFIG),d);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toast('Imported');}catch(e){toast('Failed: '+e.message,'error');}};r.readAsText(e.target.files[0]);}});
-  body.appendChild(fi2);
+  
+  /* ── API Keys ── */
+  body.appendChild(ps('API Keys'));
+  const apibox=el('div','font-size:12px;line-height:1.7;padding:0 0 8px;');
+  apibox.innerHTML='<div style="margin-bottom:10px;color:var(--text-secondary);">Some modules need a free API key. Get yours here:</div>'+
+    '<div style="display:flex;flex-direction:column;gap:8px;">'+
+    '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:rgba(0,0,0,0.2);"><span style="font-size:16px;">🌤</span><div><div style="font-weight:600;font-size:12px;">Weather (OpenWeatherMap)</div><div style="font-size:10px;color:var(--text-tertiary);">Free tier, 60 calls/min. Sign up at <a href="https://openweathermap.org/api" target="_blank" style="color:var(--accent);">openweathermap.org/api</a></div></div></div>'+
+    '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:rgba(0,0,0,0.2);"><span style="font-size:16px;">💬</span><div><div style="font-weight:600;font-size:12px;">Quotes</div><div style="font-size:10px;color:var(--text-tertiary);">No API key needed. Uses quotable.io (free, no auth).</div></div></div>'+
+    '</div>';
+  body.appendChild(apibox);
+body.appendChild(fi2);
 }
 
 function bgValueRow(body){

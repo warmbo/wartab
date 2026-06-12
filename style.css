@@ -26,11 +26,19 @@
   --card-bg-alt: rgba(0, 0, 0, 0.15);
   --card-input-bg: rgba(0, 0, 0, 0.3);
   color-scheme: dark;
+  font-family: var(--font);
+}
 
 /* ── Lucide SVG Icons ──
    All Lucide SVGs use currentColor, inheriting accent or font color. */
 i[data-lucide] { display: inline-block; vertical-align: middle; }
 .card-icon,i[data-lucide].card-icon { width: 20px; height: 20px; }
+.link-icon,i[data-lucide].link-icon { width: 16px; height: 16px; }
+.brand-icon i[data-lucide] { width: 22px; height: 22px; }
+.stat-icon i[data-lucide] { width: 14px; height: 14px; }
+.search-icon i[data-lucide] { width: 16px; height: 16px; }
+.icon-grid-item i[data-lucide] { width: 24px; height: 24px; stroke-width: 1.5; }
+.icon-grid-item span { display: block; }
 
 /* ── Weather widget ── */
 .weather-widget { display: flex; flex-direction: column; gap: 2px; }
@@ -44,16 +52,6 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 /* ── Quotes widget ── */
 .quotes-widget { cursor: pointer; user-select: none; }
 .quotes-widget:hover .quotes-text { opacity: 0.85; }
-
-.link-icon,i[data-lucide].link-icon { width: 16px; height: 16px; }
-.brand-icon i[data-lucide] { width: 22px; height: 22px; }
-.stat-icon i[data-lucide] { width: 14px; height: 14px; }
-.search-icon i[data-lucide] { width: 16px; height: 16px; }
-.icon-grid-item i[data-lucide] { width: 24px; height: 24px; stroke-width: 1.5; }
-.icon-grid-item span { display: block; }
-
-  font-family: var(--font);
-}
 
 :root[data-card-bg="light"] {
   --card-bg: rgba(255, 255, 255, 0.14);
@@ -182,7 +180,7 @@ body {
 }
 .card:hover { border-color: var(--glass-border-hover); }
 .card::before { content: ''; display: block; height: 3px; background: var(--card-accent, var(--accent)); flex-shrink: 0; }
-.card::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.015; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 128px 128px; }
+.card::after { content: ''; position: absolute; inset: 1px; pointer-events: none; opacity: 0.015; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 128px 128px; }
 .card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 8px; gap: 8px; flex-shrink: 0; min-width: 0; }
 .card-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; text-shadow: var(--emboss-shadow); overflow-wrap: break-word; word-break: break-word; min-width: 0; }
 .card-title .card-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
@@ -230,15 +228,12 @@ body {
 .clock-time { font-size: 36px; font-weight: 200; letter-spacing: 2px; font-variant-numeric: tabular-nums; text-shadow: var(--emboss-shadow); }
 .clock-date { font-size: 12px; color: var(--text-secondary); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
 
-.weather-widget { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 0; }
-.weather-icon { font-size: 36px; }
-.weather-temp { font-size: 28px; font-weight: 300; letter-spacing: 1px; }
-.weather-detail { font-size: 11px; color: var(--text-secondary); }
+
 
 .card-iframe { width: 100%; border: none; background: var(--card-bg-alt); min-height: 200px; }
-.notes-text { font-size: 13px; color: var(--text-primary); line-height: 1.6; white-space: pre-wrap; }
-.notes-text[contenteditable="true"] { outline: none; padding: 4px; transition: background 0.15s; }
-.notes-text[contenteditable="true"]:focus { background: rgba(255,255,255,0.04); }
+.notes-text { font-size: 13px; color: var(--text-primary); line-height: 1.6; white-space: pre-wrap; min-height: 24px; cursor: text; }
+.notes-text[contenteditable="true"] { outline: none; padding: 6px 8px; margin: -6px -8px; transition: background 0.15s, border-color 0.15s; border: 1px solid transparent; }
+.notes-text[contenteditable="true"]:focus { background: rgba(255,255,255,0.05); border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glass); border-radius: 0; }
 
 .dropdown-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 6px 0; border: none; background: none; color: var(--text-secondary); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; cursor: pointer; transition: color 0.15s; text-shadow: var(--emboss-shadow); }
 .dropdown-toggle:hover { color: var(--text-primary); }
@@ -387,6 +382,13 @@ body {
 .card-edit-btn { background: none; border: none; color: var(--text-tertiary); font-size: 13px; cursor: pointer; padding: 2px 6px; transition: color 0.15s; opacity: 0; }
 .card:hover .card-edit-btn { opacity: 1; }
 .card-edit-btn:hover { color: var(--text-primary); }
+
+/* Touch devices: card edit buttons always visible */
+@media (hover: none) and (pointer: coarse) {
+  .card-edit-btn { opacity: 0.6 !important; }
+  .card:hover .card-edit-btn { opacity: 1 !important; }
+}
+
 
 /* Gap cards (completely invisible — controls appear on hover) */
 .grid-gap-card { min-height: 0 !important; }
