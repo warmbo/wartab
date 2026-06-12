@@ -276,7 +276,7 @@ const DEFAULT_CONFIG = {
     { id:'clock-card', title:'Time & Date', icon:'clock', color:'#aaaaaa', width:1, sections:[{ id:'clock-main', type:'clock', format24h:false, showDate:true }] },
     { id:'daily-drivers', title:'Daily Drivers', icon:'globe', color:'#cccccc', width:2, sections:[
       { id:'dev-links', type:'links', label:'Development', links:[ {label:'GitHub',url:'https://github.com',icon:'github'},{label:'GitLab',url:'https://gitlab.com',icon:'gitlab'},{label:'Stack Overflow',url:'https://stackoverflow.com',icon:'message-circle'},{label:'npm',url:'https://www.npmjs.com',icon:'package'},{label:'PyPI',url:'https://pypi.org',icon:'code-2'} ] },
-      { id:'media-links', type:'links', label:'Media & Social', links:[ {label:'Reddit',url:'https://reddit.com',icon:'message-circle'},{label:'YouTube',url:'https://youtube.com',icon:'play'},{label:'Twitch',url:'https://twitch.tv',icon:'gamepad-2'},{label:'X',url:'https://x.com',icon:'twitter'} ] },
+      { id:'media-links', type:'links', label:'Media & Social', links:[ {label:'Reddit',url:'https://reddit.com',icon:'message-circle'},{label:'YouTube',url:'https://youtube.com',icon:'play'},{label:'Twitch',url:'https://twitch.tv',icon:'gamepad-2'},{label:'X',url:'https://x.com',icon:'x'} ] },
     ]},
     { id:'selfhosted', title:'Self-Hosted', icon:'monitor', color:'#777777', width:2, sections:[{ id:'sh-services', type:'links', label:'Services', links:[ {label:'Home Assistant',url:'http://homeassistant.local:8123',icon:'home'},{label:'Jellyfin',url:'http://jellyfin.local:8096',icon:'film'},{label:'Pi-hole',url:'http://pi.hole/admin',icon:'shield'},{label:'Grafana',url:'http://grafana.local:3000',icon:'bar-chart-3'},{label:'Portainer',url:'http://portainer.local:9000',icon:'container'},{label:'Vaultwarden',url:'http://vault.local:8080',icon:'lock'} ] }] },
     { id:'dev-docs', title:'Dev Docs', icon:'book-open', color:'#8a8a8a', width:1, sections:[{ id:'docs-links', type:'link-list', label:'References', links:[ {label:'MDN Web Docs',url:'https://developer.mozilla.org',icon:'globe'},{label:'React Docs',url:'https://react.dev',icon:'code-2'},{label:'Python Docs',url:'https://docs.python.org/3/',icon:'book'},{label:'Docker Docs',url:'https://docs.docker.com',icon:'container'},{label:'Arch Wiki',url:'https://wiki.archlinux.org',icon:'book'} ] }] },
@@ -448,12 +448,24 @@ if(!config.cards.length){
     const c=document.getElementById('empty-add-links');if(c)c.addEventListener('click',()=>{addNewCard();const c2=config.cards[config.cards.length-1];if(c2){c2.title='Links';c2.icon='🔗';c2.color='#999999';c2.width=2;c2.sections=[{id:'sec-'+uid(),type:'links',label:'Links',links:[{label:'Example',url:'https://example.com',icon:'link'}]}];saveConfig();renderAll();}});
     const d=document.getElementById('empty-config');if(d)d.addEventListener('click',toggleConfigPanel);
   },0);
-  if(_scrollY)window.scrollTo(0,_scrollY);if(typeof lucide!=='undefined')lucide.createIcons();
+  if(_scrollY)window.scrollTo(0,_scrollY);
+if(typeof lucide!=='undefined'){
+  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+  lucide.createIcons();
+  console.warn=_lw;
+}
+
   return;
 }
 // Ungrouped cards render as normal
 config.cards.forEach((c,i)=>{grid.appendChild(c.id===editModeCardId?renderCardEditor(c,i):renderCard(c,i));});
-setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs&&!document.activeElement?.closest('.card-editing'))fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));if(typeof lucide!=='undefined')lucide.createIcons();}
+setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs&&!document.activeElement?.closest('.card-editing'))fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
+if(typeof lucide!=='undefined'){
+  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+  lucide.createIcons();
+  console.warn=_lw;
+}
+}
 function scheduleEqualize(){if(!_eqPending){_eqPending=true;requestAnimationFrame(()=>{_eqPending=false;equalizeCardHeights();});}}
 function equalizeCardHeights(){const grid=$('#card-grid');const allCards=[...grid.children].filter(el=>el.classList.contains('card'));if(!allCards.length)return;allCards.forEach(c=>c.style.minHeight='');// Skip cards with height>1 (double-height cards control their own size)
 const cards=allCards.filter(c=>{const idx=parseInt(c.dataset.index);const card=config.cards[idx];return !card||!card.height||card.height<=1;});if(!cards.length)return;const rows=[];let curRow=[],curTop=-1;cards.forEach(card=>{const r=card.getBoundingClientRect();if(curTop<0||Math.abs(r.top-curTop)>8){if(curRow.length)rows.push(curRow);curRow=[card];curTop=r.top;}else curRow.push(card);});if(curRow.length)rows.push(curRow);rows.forEach(row=>{if(row.length<2)return;const m=Math.max(...row.map(c=>c.offsetHeight));row.forEach(c=>c.style.minHeight=m+'px');});}
@@ -552,7 +564,13 @@ function setupClocks(){if(clockInterval)clearInterval(clockInterval);updateClock
 function updateClocks(){$$('.clock-widget').forEach(el=>{const n=new Date(),f24=el.dataset.format24==='1',sd=el.dataset.showDate==='1';let h=n.getHours();const m=String(n.getMinutes()).padStart(2,'0');el.querySelector('.clock-time').textContent=f24?String(h).padStart(2,'0')+':'+m:(h%12||12)+':'+m+' '+(h>=12?'PM':'AM');if(sd)el.querySelector('.clock-date').textContent=n.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});if(el.dataset.showCalendar==='1'){const cal=el.querySelector('.calendar-widget');if(cal)renderCalendar(cal,n);}});}
 function renderCalendar(el,date){const y=date.getFullYear(),m=date.getMonth();const fd=new Date(y,m,1).getDay();const ld=new Date(y,m+1,0).getDate();const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];let h=`<div class="calendar-month">${mn[m]} ${y}</div><div class="calendar-grid">`;['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{h+=`<div class="calendar-day-header">${d}</div>`;});for(let i=0;i<fd;i++)h+='<div class="calendar-day other-month"></div>';const today=new Date();for(let d=1;d<=ld;d++){const is=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();h+=`<div class="calendar-day${is?' today':''}">${d}</div>`;}h+='</div>';el.innerHTML=h;}
 function setupWeatherWidgets(){weatherIntervals.forEach(clearInterval);weatherIntervals=[];$$('.weather-widget').forEach(fetchWeather);}
-function fetchWeather(el){const k=el.dataset.apiKey,l=el.dataset.location;if(!k||!l){el.querySelector('.weather-detail').textContent='Set API key & location in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(l)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);var iconEl=el.querySelector('.weather-icon');if(iconEl){var lname=wIcon(d.weather[0].id);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';var windEl=el.querySelector('.weather-wind-val');if(windEl){var ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}var tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);if(typeof lucide!=='undefined')lucide.createIcons();}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;var tsEl=el.querySelector('.weather-ts');if(tsEl){var lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});weatherIntervals.push(setInterval(()=>fetchWeather(el),600000));}
+function fetchWeather(el){const k=el.dataset.apiKey,l=el.dataset.location;if(!k||!l){el.querySelector('.weather-detail').textContent='Set API key & location in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(l)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);var iconEl=el.querySelector('.weather-icon');if(iconEl){var lname=wIcon(d.weather[0].id);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';var windEl=el.querySelector('.weather-wind-val');if(windEl){var ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}var tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);
+if(typeof lucide!=='undefined'){
+  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+  lucide.createIcons();
+  console.warn=_lw;
+}
+}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;var tsEl=el.querySelector('.weather-ts');if(tsEl){var lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});weatherIntervals.push(setInterval(()=>fetchWeather(el),600000));}
 function wIcon(id){if(id<300)return'cloud-lightning';if(id<400)return'cloud-drizzle';if(id<600)return'cloud-rain';if(id<700)return'cloud-snow';if(id<800)return'cloud-fog';if(id===800)return'sun';return'cloud';}
 function fetchApiWidget(el){const u=el.dataset.url,jp=el.dataset.jsonPath;if(!u){el.innerHTML='<div class="api-row"><span class="api-label">No API URL set</span></div>';return;}const ts=Date.now();fetch(u).then(r=>r.json()).then(d=>{const v=jp?getNested(d,jp):JSON.stringify(d,null,2);el.innerHTML='<div class="api-row"><span class="api-label">'+escAttr(el.dataset.label)+'</span><span class="api-value">'+escAttr(String(v))+'</span></div><div class="api-ts" data-ts="'+ts+'">updated just now</div>';el.dataset.lastOk=String(ts);const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));}).catch(e=>{const lo=el.dataset.lastOk;el.innerHTML='<div class="api-row"><span class="api-label">'+escAttr(el.dataset.label)+'</span><span class="api-value api-error">'+escAttr(e.message)+'</span></div><div class="api-ts" data-ts="'+(lo||ts)+'">'+(lo?'last ok: '+timeAgo(parseInt(lo)):'')+'</div>';const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));});}
 function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
@@ -847,9 +865,21 @@ function buildIconsTab(c){
       items.forEach(emo=>{const d=document.createElement('div');d.className='icon-grid-item';d.innerHTML='<span class="ip-emoji">'+emo+'</span>';d.addEventListener('click',()=>selectIcon(emo));g.appendChild(d);});
       if(!items.length)g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No emoji found</div>';
     }
-  }function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);if(m==='svg')setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},0);}
+  }function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);if(m==='svg')setTimeout(function(){
+if(typeof lucide!=='undefined'){
+  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+  lucide.createIcons();
+  console.warn=_lw;
+}
+},0);}
   btnSvg.addEventListener('click',function(){setMode('svg');});btnEmoji.addEventListener('click',function(){setMode('emoji');});
-  s.addEventListener('input',function(){ri(s.value);});setMode('svg');setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},0);}
+  s.addEventListener('input',function(){ri(s.value);});setMode('svg');setTimeout(function(){
+if(typeof lucide!=='undefined'){
+  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+  lucide.createIcons();
+  console.warn=_lw;
+}
+},0);}
 function buildUrlTab(c){c.innerHTML=`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Enter a direct URL:</div><input class="icon-search-bar" id="icon-url-input" placeholder="https://example.com/icon.png"><button class="btn btn-glass btn-sm" id="icon-url-btn">Use</button><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:12px;" id="icon-url-examples"></div>`;const inp=$('#icon-url-input');['jellyfin','plex','homeassistant','portainer','pihole','grafana','sonarr','radarr'].forEach(n=>{const tag=document.createElement('button');tag.className='btn btn-glass btn-sm';tag.style.fontSize='10px';tag.textContent=n;tag.addEventListener('click',()=>selectIcon(`${ICON_CDN}/${n}.png`));$('#icon-url-examples').appendChild(tag);});inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim())selectIcon(inp.value.trim());});$('#icon-url-btn').addEventListener('click',()=>{if(inp.value.trim())selectIcon(inp.value.trim());});}
 function selectIcon(u){if(iconPickerCallback)iconPickerCallback(u);closeIconPicker();}
 
@@ -1021,7 +1051,13 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   const ir2=el('div','display:flex;gap:4px;align-items:center;');
   const ip=el('span','font-size:22px;width:30px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);');
   const bi=brand.icon||'sword';
-  if(bi.startsWith('http')||bi.startsWith('data:')||bi.startsWith('/')){const img=document.createElement('img');img.src=bi;img.style.cssText='width:22px;height:22px;object-fit:contain;';ip.appendChild(img);}else if(isLucideName(bi)){var li=document.createElement('i');li.setAttribute('data-lucide',bi);li.style.cssText='width:22px;height:22px;';ip.appendChild(li);setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},0);}else{ip.textContent=bi;ip.className+=' emoji-icon';}
+  if(bi.startsWith('http')||bi.startsWith('data:')||bi.startsWith('/')){const img=document.createElement('img');img.src=bi;img.style.cssText='width:22px;height:22px;object-fit:contain;';ip.appendChild(img);}else if(isLucideName(bi)){var li=document.createElement('i');li.setAttribute('data-lucide',bi);li.style.cssText='width:22px;height:22px;';ip.appendChild(li);setTimeout(function(){
+if(typeof lucide!=='undefined'){
+  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+  lucide.createIcons();
+  console.warn=_lw;
+}
+},0);}else{ip.textContent=bi;ip.className+=' emoji-icon';}
   ir2.appendChild(ip);
   const ib=el('button','','Change');ib.className='btn btn-glass btn-sm';
   ib.addEventListener('click',()=>openIconPicker(url=>{if(!config.branding)config.branding={};config.branding.icon=url;applyTheme();saveConfig();buildConfigPanel();}));
