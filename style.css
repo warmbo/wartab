@@ -32,9 +32,9 @@
 /* ── Lucide SVG Icons ──
    All Lucide SVGs use currentColor, inheriting accent or font color. */
 i[data-lucide] { display: inline-block; vertical-align: middle; }
-.card-icon,i[data-lucide].card-icon { width: 20px; height: 20px; }
-.link-icon,i[data-lucide].link-icon { width: 16px; height: 16px; }
-.brand-icon i[data-lucide] { width: 22px; height: 22px; }
+.card-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: 18px; }
+.link-icon { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; font-size: 14px; }
+.brand-icon { display: inline-flex; align-items: center; font-size: 20px; }
 .stat-icon i[data-lucide] { width: 14px; height: 14px; }
 .search-icon i[data-lucide] { width: 16px; height: 16px; }
 .icon-grid-item i[data-lucide] { width: 24px; height: 24px; stroke-width: 1.5; }
@@ -94,6 +94,7 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 html { height: 100%; overflow-x: hidden; }
 
 body {
+  font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
   min-height: 100vh;
   color: var(--text-primary);
   line-height: 1.5;
@@ -192,9 +193,10 @@ body {
 .card::after { content: ''; position: absolute; inset: 1px; pointer-events: none; opacity: 0.015; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 128px 128px; }
 .card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 8px; gap: 8px; flex-shrink: 0; min-width: 0; }
 .card-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; text-shadow: var(--emboss-shadow); overflow-wrap: break-word; word-break: break-word; min-width: 0; }
-.card-title .card-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.card-title .card-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: 18px; flex-shrink: 0; }
 .card-title .card-icon-img { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
-.card-body { padding: 0 16px 16px; flex: 1; overflow-wrap: break-word; word-break: break-word; min-width: 0; }
+.card-body {
+  font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; padding: 0 16px 16px; flex: 1; overflow-wrap: break-word; word-break: break-word; min-width: 0; }
 .card[data-width="1"] { grid-column: span 1; }
 .card[data-width="2"] { grid-column: span 2; }
 .card[data-width="3"] { grid-column: span 3; }
@@ -275,7 +277,8 @@ body {
 .icon-picker select option { background: #1a1a1a !important; }
 .config-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--glass-border); flex-shrink: 0; }
 .config-header h2 { font-size: 18px; font-weight: 700; text-shadow: var(--emboss-shadow); font-family: var(--font); }
-.config-body { flex: 1; overflow-y: auto; padding: 20px 24px 32px; }
+.config-body {
+  font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; flex: 1; overflow-y: auto; padding: 20px 24px 32px; }
 .config-body::-webkit-scrollbar { width: 6px; }
 .config-body::-webkit-scrollbar-track { background: transparent; }
 .config-body::-webkit-scrollbar-thumb { background: var(--glass-border); }
@@ -406,7 +409,8 @@ body {
 /* ══════ Icon Picker ══════ */
 .icon-picker { position: fixed; top: 0; right: 0; bottom: 0; width: 520px; max-width: 100vw; z-index: 102; background: linear-gradient(180deg, rgba(16,16,16,0.97) 0%, rgba(10,10,10,0.97) 100%); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-left: 1px solid var(--glass-border); box-shadow: -8px 0 40px rgba(0,0,0,0.5); transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; overflow: hidden; }
 .icon-picker.open { transform: translateX(0); }
-.icon-picker-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.icon-picker-body {
+  font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; flex: 1; overflow-y: auto; padding: 16px 20px; }
 .icon-picker-tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
 .ip-tab { padding: 6px 14px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; font-family: var(--font); background: none; color: var(--text-tertiary); transition: color 0.15s; }
 .ip-tab.active { color: var(--text-primary); border-bottom: 2px solid var(--accent); }
@@ -491,7 +495,8 @@ body {
   .card { margin: 0; }
   .card-header { padding: 10px 14px 6px; }
   .card-title { font-size: 14px; gap: 6px; }
-  .card-body { padding: 0 14px 12px; }
+  .card-body {
+  font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; padding: 0 14px 12px; }
   .card-edit-btn, .drag-handle { min-width: 40px; min-height: 40px; font-size: 16px; display: flex; align-items: center; justify-content: center; }
   i[data-lucide].card-icon { width: 18px; height: 18px; }
   i[data-lucide].link-icon { width: 18px; height: 18px; }
@@ -535,7 +540,8 @@ body {
     box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
   }
   .config-panel.open { transform: translateY(0); }
-  .config-body { padding: 8px 16px 40px; }
+  .config-body {
+  font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; padding: 8px 16px 40px; }
   .config-header { padding: 16px; border-radius: 16px 16px 0 0; }
   .config-panel h3 { font-size: 11px; margin-top: 20px; }
   .config-panel select, .config-panel input[type="text"], .config-panel input[type="color"] { font-size: 14px; padding: 10px 12px; }
@@ -554,7 +560,8 @@ body {
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .icon-picker.open { transform: translateY(0); }
-  .icon-picker-body { padding: 8px 16px 40px; }
+  .icon-picker-body {
+  font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; padding: 8px 16px 40px; }
   .icon-grid { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
   .icon-grid-item { padding: 8px 4px; min-height: 54px; }
   .icon-search-bar { font-size: 14px; padding: 10px 14px; }
@@ -603,7 +610,8 @@ body {
 @media (max-width: 380px) {
   #top-bar { padding: 8px 10px; }
   .card-header { padding: 8px 10px 4px; }
-  .card-body { padding: 0 10px 10px; }
+  .card-body {
+  font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; padding: 0 10px 10px; }
   .link-grid { grid-template-columns: repeat(2, 1fr); }
   .brand { font-size: 13px; }
   #top-actions { gap: 4px; }

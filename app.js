@@ -359,11 +359,13 @@ function applyTheme(){
 
   // Branding
   const brand=$('#brand-text');
-  if(brand){const b2=config.branding||DEFAULT_CONFIG.branding;brand.innerHTML=`<span class="brand-icon"><i data-lucide="${b2.icon||'sword'}"></i></span><span>${escAttr(b2.title||'WarTab')}</span>`;}
+  if(brand){const b2=config.branding||DEFAULT_CONFIG.branding;var bi=b2.icon||'sword';brand.innerHTML=(isLucideName(bi)?'<span class="brand-icon"><i data-lucide="'+bi+'"></i></span>':'<span class="brand-icon">'+bi+'</span>')+'<span>'+escAttr(b2.title||'WarTab')+'</span>';}
   document.title=(config.branding||DEFAULT_CONFIG.branding).title||'WarTab';
   // Toggles
   document.documentElement.dataset.animations=config.theme.animations!==false?'on':'off';
   document.documentElement.dataset.accentBar=config.theme.showAccentBar!==false?'on':'off';
+  // Re-render Lucide SVGs (brand icon may have changed)
+  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},0);
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
 function loadGoogleFont(fn,allowReplace){
@@ -956,8 +958,8 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   const ig=el('div','flex-shrink:0;');ig.appendChild(el('label','display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;','Icon'));
   const ir2=el('div','display:flex;gap:4px;align-items:center;');
   const ip=el('span','font-size:22px;width:30px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);');
-  const bi=brand.icon||'⚔️';
-  if(bi.startsWith('http')||bi.startsWith('data:')||bi.startsWith('/')){const img=document.createElement('img');img.src=bi;img.style.cssText='width:22px;height:22px;object-fit:contain;';ip.appendChild(img);}else{ip.textContent=bi;}
+  const bi=brand.icon||'sword';
+  if(bi.startsWith('http')||bi.startsWith('data:')||bi.startsWith('/')){const img=document.createElement('img');img.src=bi;img.style.cssText='width:22px;height:22px;object-fit:contain;';ip.appendChild(img);}else if(isLucideName(bi)){var li=document.createElement('i');li.setAttribute('data-lucide',bi);li.style.cssText='width:22px;height:22px;';ip.appendChild(li);setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},0);}else{ip.textContent=bi;}
   ir2.appendChild(ip);
   const ib=el('button','','Change');ib.className='btn btn-glass btn-sm';
   ib.addEventListener('click',()=>openIconPicker(url=>{if(!config.branding)config.branding={};config.branding.icon=url;applyTheme();saveConfig();buildConfigPanel();}));
