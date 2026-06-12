@@ -1048,7 +1048,7 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   TOP_FONTS.forEach(f=>loadGoogleFont(f.name));
   TOP_FONTS.forEach(f=>{
     const o=document.createElement('option');o.value=f.name;
-    o.textContent=f.sample;
+    o.textContent=f.name;
     o.style.fontFamily=`'${f.name}',sans-serif`;
     o.style.fontSize='15px';
     if(f.name===curFont)o.selected=true;fsel.appendChild(o);
