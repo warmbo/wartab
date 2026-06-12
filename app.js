@@ -366,7 +366,23 @@ function applyTheme(){
   document.documentElement.dataset.accentBar=config.theme.showAccentBar!==false?'on':'off';
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
-function loadGoogleFont(fn,allowReplace){/* Local-only: Inter loaded via inter.css, other fonts use system fallback */}
+function loadGoogleFont(fn,allowReplace){
+  if(fn==='Inter')return; // Inter loaded from local inter.css
+  var id='wartab-font-'+fn.replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
+  if(document.getElementById(id))return;
+  if(!allowReplace){
+    var l=document.createElement('link');l.id=id;l.dataset.font=fn;l.rel='stylesheet';
+    l.href='https://fonts.googleapis.com/css2?family='+fn.replace(/ /g,'+')+':wght@200..700&display=swap';
+    document.head.appendChild(l);
+  }else{
+    var oe=document.getElementById('wartab-font');
+    if(oe&&oe.dataset.font===fn)return;
+    if(oe)oe.remove();
+    var l=document.createElement('link');l.id='wartab-font';l.dataset.font=fn;l.rel='stylesheet';
+    l.href='https://fonts.googleapis.com/css2?family='+fn.replace(/ /g,'+')+':wght@200..700&display=swap';
+    document.head.appendChild(l);
+  }
+}
 function escAttr(s){if(typeof s!=='string')return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
 /* ── Status Bar ── */
@@ -767,7 +783,7 @@ function buildIconsTab(c){
       items.forEach(emo=>{const d=document.createElement('div');d.className='icon-grid-item';d.innerHTML='<span class="ip-emoji">'+emo+'</span>';d.addEventListener('click',()=>selectIcon(emo));g.appendChild(d);});
       if(!items.length)g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No emoji found</div>';
     }
-  }function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);}
+  }function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);if(m==='svg')setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},0);}
   btnSvg.addEventListener('click',function(){setMode('svg');});btnEmoji.addEventListener('click',function(){setMode('emoji');});
   s.addEventListener('input',function(){ri(s.value);});setMode('svg');setTimeout(function(){if(typeof lucide!=='undefined')lucide.createIcons();},0);}
 function buildUrlTab(c){c.innerHTML=`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Enter a direct URL:</div><input class="icon-search-bar" id="icon-url-input" placeholder="https://example.com/icon.png"><button class="btn btn-glass btn-sm" id="icon-url-btn">Use</button><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:12px;" id="icon-url-examples"></div>`;const inp=$('#icon-url-input');['jellyfin','plex','homeassistant','portainer','pihole','grafana','sonarr','radarr'].forEach(n=>{const tag=document.createElement('button');tag.className='btn btn-glass btn-sm';tag.style.fontSize='10px';tag.textContent=n;tag.addEventListener('click',()=>selectIcon(`${ICON_CDN}/${n}.png`));$('#icon-url-examples').appendChild(tag);});inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim())selectIcon(inp.value.trim());});$('#icon-url-btn').addEventListener('click',()=>{if(inp.value.trim())selectIcon(inp.value.trim());});}
