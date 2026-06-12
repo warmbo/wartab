@@ -1,36 +1,4 @@
-/*
-registerModule('status-bar', {
-  defaults: { source:'local', glancesUrl:'http://localhost:61209', customUrl:'', refreshInterval:15, items:['hostname','cpu','memory','disk','uptime'] },
-  render: (sec,card,cw)=>{
-    const w=document.createElement('div');w.className='status-bar-widget';w.style.cssText='display:flex;flex-direction:column;gap:6px;';
-    w.dataset.source=sec.source||'local';w.dataset.glancesUrl=sec.glancesUrl||'';w.dataset.customUrl=sec.customUrl||'';
-    w.dataset.refresh=sec.refreshInterval||15;w.dataset.items=JSON.stringify(sec.items||['cpu','memory','disk','uptime']);
-    w.dataset.hostname=sec.hostname!==false?'1':'0';
-    const content=document.createElement('div');content.className='sw-content';w.appendChild(content);
-    const ts=document.createElement('div');ts.className='sw-ts';ts.style.cssText='font-size:9px;color:var(--text-tertiary);text-align:right;';w.appendChild(ts);
-    cw.appendChild(w);
-    // Fetch on render
-    fetchStatusWidget(w);
-  },
-  editor: (sec,card,bd)=>{
-    bd.appendChild(pf('select','','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],sec.source||'local',v=>{sec.source=v;saveConfig();}));
-    const gl=el('div','','',pf('text','','Glances URL',null,sec.glancesUrl||'',v=>{sec.glancesUrl=v;saveConfig();}));
-    gl.className='cfg-conditional'+(sec.source==='glances'?'':' hidden');
-    bd.appendChild(gl);
-    const cu=el('div','','',pf('text','','Custom URL',null,sec.customUrl||'',v=>{sec.customUrl=v;saveConfig();}));
-    cu.className='cfg-conditional'+(sec.source==='custom'?'':' hidden');
-    bd.appendChild(cu);
-    bd.appendChild(inlineRange('Refresh (s)',sec.refreshInterval||15,5,120,v=>{sec.refreshInterval=parseInt(v);saveConfig();}));
-    const itemsRow=document.createElement('div');itemsRow.style.cssText='display:flex;gap:8px;flex-wrap:wrap;padding:4px 0;';
-    ['hostname','cpu','memory','disk','uptime'].forEach(item=>{
-      const cl=document.createElement('label');cl.style.cssText='display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;';
-      const cc=document.createElement('input');cc.type='checkbox';cc.checked=(sec.items||[]).includes(item);
-      cc.addEventListener('change',()=>{sec.items=sec.items||[];if(cc.checked&&!sec.items.includes(item))sec.items.push(item);else if(!cc.checked)sec.items=sec.items.filter(i=>i!==item);saveConfig();});
-      cl.appendChild(cc);cl.appendChild(document.createTextNode(item.charAt(0).toUpperCase()+item.slice(1)));itemsRow.appendChild(cl);
-    });
-    bd.appendChild(itemsRow);
-  },
-}); ═══════════════════════════════════════════
+/* ═══════════════════════════════════════════
    WarTab — Application Logic
    ═══════════════════════════════════════════ */
 
@@ -241,6 +209,38 @@ registerModule('quotes', {
     bd.appendChild(inlineCheck('Auto-refresh on click',sec.autoRefresh!==false,function(v){sec.autoRefresh=v;saveConfig();}));
   },
 });
+
+registerModule('status-bar', {
+  defaults: { source:'local', glancesUrl:'http://localhost:61209', customUrl:'', refreshInterval:15, items:['hostname','cpu','memory','disk','uptime'] },
+  render: (sec,card,cw)=>{
+    const w=document.createElement('div');w.className='status-bar-widget';w.style.cssText='display:flex;flex-direction:column;gap:6px;';
+    w.dataset.source=sec.source||'local';w.dataset.glancesUrl=sec.glancesUrl||'';w.dataset.customUrl=sec.customUrl||'';
+    w.dataset.refresh=sec.refreshInterval||15;w.dataset.items=JSON.stringify(sec.items||['hostname','cpu','memory','disk','uptime']);
+    w.dataset.hostname=sec.hostname!==false?'1':'0';
+    const content=document.createElement('div');content.className='sw-content';w.appendChild(content);
+    const ts=document.createElement('div');ts.className='sw-ts';ts.style.cssText='font-size:9px;color:var(--text-tertiary);text-align:right;';w.appendChild(ts);
+    cw.appendChild(w);
+    fetchStatusWidget(w);
+  },
+  editor: (sec,card,bd)=>{
+    bd.appendChild(pf('select','','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],sec.source||'local',v=>{sec.source=v;saveConfig();}));
+    const gl=el('div','','',pf('text','','Glances URL',null,sec.glancesUrl||'',v=>{sec.glancesUrl=v;saveConfig();}));
+    gl.className='cfg-conditional'+(sec.source==='glances'?'':' hidden');
+    bd.appendChild(gl);
+    const cu=el('div','','',pf('text','','Custom URL',null,sec.customUrl||'',v=>{sec.customUrl=v;saveConfig();}));
+    cu.className='cfg-conditional'+(sec.source==='custom'?'':' hidden');
+    bd.appendChild(cu);
+    bd.appendChild(inlineRange('Refresh (s)',sec.refreshInterval||15,5,120,v=>{sec.refreshInterval=parseInt(v);saveConfig();}));
+    const itemsRow=document.createElement('div');itemsRow.style.cssText='display:flex;gap:8px;flex-wrap:wrap;padding:4px 0;';
+    ['hostname','cpu','memory','disk','uptime'].forEach(item=>{
+      const cl=document.createElement('label');cl.style.cssText='display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;';
+      const cc=document.createElement('input');cc.type='checkbox';cc.checked=(sec.items||[]).includes(item);
+      cc.addEventListener('change',()=>{sec.items=sec.items||[];if(cc.checked&&!sec.items.includes(item))sec.items.push(item);else if(!cc.checked)sec.items=sec.items.filter(i=>i!==item);saveConfig();});
+      cl.appendChild(cc);cl.appendChild(document.createTextNode(item.charAt(0).toUpperCase()+item.slice(1)));itemsRow.appendChild(cl);
+    });
+    bd.appendChild(itemsRow);
+  },
+});
 function bumpVersion(){
   const p=WARTAB_VERSION.split('.');
   p[p.length-1]=String(parseInt(p[p.length-1])+1);
@@ -263,9 +263,9 @@ const DEFAULT_CONFIG = {
   statusBar: {
     enabled: true, source:'local', glancesUrl:'http://localhost:61209',
     customUrl:'', refreshInterval:15,
-    items:['cpu','memory','disk','uptime'],
+    items:['cpu','memory','disk','uptime'], hostname:true,
   },
-  layout: { cols:4, gap:16, cardMinWidth:240, paddingX:24, paddingY:24 },
+  layout: { cols:4, gap:16, cardMinWidth:240 },
   search: {
     engine:'https://www.google.com/search?q=',
     engines:{ Google:'https://www.google.com/search?q=', DuckDuckGo:'https://duckduckgo.com/?q=', Brave:'https://search.brave.com/search?q=', Bing:'https://www.bing.com/search?q=', YouTube:'https://www.youtube.com/results?search_query=', Reddit:'https://www.reddit.com/search/?q=', Wikipedia:'https://en.wikipedia.org/wiki/Special:Search?search=' },
@@ -284,7 +284,9 @@ const DEFAULT_CONFIG = {
   ],
 };
 
-
+const GOOGLE_FONTS = [
+  {name:'Inter',category:'sans',sample:'The quick brown fox'},{name:'Space Grotesk',category:'sans',sample:'The quick brown fox'},{name:'Plus Jakarta Sans',category:'sans',sample:'The quick brown fox'},{name:'DM Sans',category:'sans',sample:'The quick brown fox'},{name:'Outfit',category:'sans',sample:'The quick brown fox'},{name:'Sora',category:'sans',sample:'The quick brown fox'},{name:'Manrope',category:'sans',sample:'The quick brown fox'},{name:'Onest',category:'sans',sample:'The quick brown fox'},{name:'Rubik',category:'sans',sample:'The quick brown fox'},{name:'Urbanist',category:'sans',sample:'The quick brown fox'},{name:'Be Vietnam Pro',category:'sans',sample:'The quick brown fox'},{name:'Epilogue',category:'sans',sample:'The quick brown fox'},{name:'Josefin Sans',category:'sans',sample:'The quick brown fox'},{name:'Karla',category:'sans',sample:'The quick brown fox'},{name:'Lexend',category:'sans',sample:'The quick brown fox'},{name:'Nunito',category:'sans',sample:'The quick brown fox'},{name:'Poppins',category:'sans',sample:'The quick brown fox'},{name:'Quicksand',category:'sans',sample:'The quick brown fox'},{name:'Raleway',category:'sans',sample:'The quick brown fox'},{name:'Work Sans',category:'sans',sample:'The quick brown fox'},{name:'Montserrat',category:'sans',sample:'The quick brown fox'},{name:'Open Sans',category:'sans',sample:'The quick brown fox'},{name:'Fira Sans',category:'sans',sample:'The quick brown fox'},{name:'Dosis',category:'sans',sample:'The quick brown fox'},{name:'Barlow',category:'sans',sample:'The quick brown fox'},{name:'Figtree',category:'sans',sample:'The quick brown fox'},{name:'Syne',category:'sans',sample:'The quick brown fox'},{name:'Archivo',category:'sans',sample:'The quick brown fox'},{name:'Chivo',category:'sans',sample:'The quick brown fox'},{name:'IBM Plex Sans',category:'sans',sample:'The quick brown fox'},{name:'JetBrains Mono',category:'mono',sample:'console.log("hello")'},{name:'DM Mono',category:'mono',sample:'const fn = (x) => x'},{name:'Fira Code',category:'mono',sample:'const fn = (x) => x'},{name:'Fraunces',category:'serif',sample:'The quick brown fox'},{name:'Literata',category:'serif',sample:'The quick brown fox'},{name:'Lora',category:'serif',sample:'The quick brown fox'},{name:'IBM Plex Serif',category:'serif',sample:'The quick brown fox'},
+];
 const ICON_CDN = '/icons';
 const ICON_REPO = [
   {name:'Home Assistant',file:'homeassistant',tags:['home','automation','smarthome']},{name:'Jellyfin',file:'jellyfin',tags:['media','video','streaming']},{name:'Plex',file:'plex',tags:['media','video','streaming']},{name:'Emby',file:'emby',tags:['media','video','streaming']},{name:'Sonarr',file:'sonarr',tags:['media','tv','downloads']},{name:'Radarr',file:'radarr',tags:['media','movies','downloads']},{name:'Lidarr',file:'lidarr',tags:['media','music','downloads']},{name:'Readarr',file:'readarr',tags:['media','books','downloads']},{name:'Prowlarr',file:'prowlarr',tags:['media','indexer','downloads']},{name:'qBittorrent',file:'qbittorrent',tags:['torrent','downloads']},{name:'Deluge',file:'deluge',tags:['torrent','downloads']},{name:'Transmission',file:'transmission',tags:['torrent','downloads']},{name:'SABnzbd',file:'sabnzbd',tags:['usenet','downloads']},{name:'Pihole',file:'pihole',tags:['dns','adblock','network']},{name:'AdGuard',file:'adguard',tags:['dns','adblock','network']},{name:'Grafana',file:'grafana',tags:['monitoring','metrics','dashboard']},{name:'Prometheus',file:'prometheus',tags:['monitoring','metrics']},{name:'Portainer',file:'portainer',tags:['docker','container','management']},{name:'Docker',file:'docker',tags:['container']},{name:'Traefik',file:'traefik',tags:['proxy','reverse-proxy','network']},{name:'Nginx',file:'nginx',tags:['proxy','web-server']},{name:'Caddy',file:'caddy',tags:['proxy','web-server']},{name:'Nextcloud',file:'nextcloud',tags:['cloud','files','sync']},{name:'OwnCloud',file:'owncloud',tags:['cloud','files','sync']},{name:'Vaultwarden',file:'vaultwarden',tags:['password','security']},{name:'Bitwarden',file:'bitwarden',tags:['password','security']},{name:'Authentik',file:'authentik',tags:['auth','sso','security']},{name:'Authelia',file:'authelia',tags:['auth','sso','security']},{name:'Uptime Kuma',file:'uptimekuma',tags:['monitoring','uptime','status']},{name:'GitHub',file:'github',tags:['git','code','dev']},{name:'GitLab',file:'gitlab',tags:['git','code','dev']},{name:'Gitea',file:'gitea',tags:['git','code','dev']},{name:'Jenkins',file:'jenkins',tags:['ci','cd','build']},{name:'n8n',file:'n8n',tags:['automation','workflow']},{name:'Node-RED',file:'nodered',tags:['automation','workflow','iot']},{name:'Homebridge',file:'homebridge',tags:['smarthome','homekit']},{name:'Proxmox',file:'proxmox',tags:['virtualization','hypervisor']},{name:'TrueNAS',file:'truenas',tags:['nas','storage']},{name:'Unraid',file:'unraid',tags:['nas','storage']},{name:'WireGuard',file:'wireguard',tags:['vpn','network']},{name:'Tailscale',file:'tailscale',tags:['vpn','network']},{name:'Speedtest',file:'speedtest',tags:['network','speed']},{name:'Nginx Proxy Manager',file:'nginxproxymanager',tags:['proxy','management']},{name:'Homer',file:'homer',tags:['dashboard']},{name:'Organizr',file:'organizr',tags:['dashboard']},{name:'Dashy',file:'dashy',tags:['dashboard']},{name:'Heimdall',file:'heimdall',tags:['dashboard']},{name:'Netdata',file:'netdata',tags:['monitoring','metrics','system']},{name:'InfluxDB',file:'influxdb',tags:['database','metrics','time-series']},{name:'PostgreSQL',file:'postgresql',tags:['database']},{name:'MySQL',file:'mysql',tags:['database']},{name:'MongoDB',file:'mongodb',tags:['database']},{name:'Redis',file:'redis',tags:['database','cache']},{name:'Python',file:'python',tags:['language','code']},{name:'Node.js',file:'nodejs',tags:['language','runtime']},{name:'Apache',file:'apache',tags:['web-server']},{name:'Syncthing',file:'syncthing',tags:['sync','files']},{name:'Restic',file:'restic',tags:['backup']},{name:'Borg',file:'borg',tags:['backup']},{name:'Duplicati',file:'duplicati',tags:['backup']},{name:'Calibre',file:'calibre',tags:['books','library']},{name:'Tautulli',file:'tautulli',tags:['media','plex','monitoring']},{name:'Ombi',file:'ombi',tags:['media','requests']},{name:'Overseerr',file:'overseerr',tags:['media','requests']},{name:'Jellyseerr',file:'jellyseerr',tags:['media','requests']},{name:'Jackett',file:'jackett',tags:['media','indexer']},{name:'FlareSolverr',file:'flaresolverr',tags:['proxy','captcha']},{name:'Ngrok',file:'ngrok',tags:['tunnel','proxy']},{name:'Cloudflare',file:'cloudflare',tags:['cdn','dns','security']},{name:'OpenVPN',file:'openvpn',tags:['vpn','network']},{name:'Pfsense',file:'pfsense',tags:['firewall','router']},{name:'OPNsense',file:'opnsense',tags:['firewall','router']},{name:'HAProxy',file:'haproxy',tags:['proxy','load-balancer']},{name:'Kubernetes',file:'kubernetes',tags:['container','orchestration']},{name:'Ansible',file:'ansible',tags:['automation','config-management']},{name:'Terraform',file:'terraform',tags:['infrastructure','iac']},{name:'Discord',file:'discord',tags:['chat','social']},{name:'Slack',file:'slack',tags:['chat','social']},{name:'Mattermost',file:'mattermost',tags:['chat','social']},{name:'Matrix',file:'matrix',tags:['chat','social']},{name:'Reddit',file:'reddit',tags:['social','forum']},{name:'YouTube',file:'youtube',tags:['video','social']},{name:'Twitch',file:'twitch',tags:['streaming','social']},{name:'Wikipedia',file:'wikipedia',tags:['reference','wiki']},{name:'Stack Overflow',file:'stackoverflow',tags:['code','reference']},{name:'Arch Linux',file:'archlinux',tags:['linux','os']},{name:'Ubuntu',file:'ubuntu',tags:['linux','os']},{name:'Debian',file:'debian',tags:['linux','os']},{name:'Alpine',file:'alpine',tags:['linux','os','container']},{name:'Git',file:'git',tags:['version-control']},{name:'VS Code',file:'vscode',tags:['editor','code']},{name:'Firefox',file:'firefox',tags:['browser']},{name:'Chrome',file:'chrome',tags:['browser']},{name:'Unifi',file:'unifi',tags:['network','wifi','ubiquiti']},{name:'OpenWRT',file:'openwrt',tags:['router','network']},{name:'Frigate',file:'frigate',tags:['nvr','camera','vision']},{name:'Scrypted',file:'scrypted',tags:['smarthome','camera']},{name:'ESPHome',file:'esphome',tags:['iot','smarthome']},{name:'MQTT',file:'mqtt',tags:['iot','messaging']},{name:'Zigbee2MQTT',file:'zigbee2mqtt',tags:['iot','smarthome','zigbee']},{name:'Mosquitto',file:'mosquitto',tags:['mqtt','iot']},{name:'OpenMediaVault',file:'openmediavault',tags:['nas','storage']},{name:'Filebrowser',file:'filebrowser',tags:['files','management']},{name:'Navidrome',file:'navidrome',tags:['music','streaming']},{name:'Airsonic',file:'airsonic',tags:['music','streaming']},{name:'Audiobookshelf',file:'audiobookshelf',tags:['audiobooks','podcasts']},{name:'Immich',file:'immich',tags:['photos','gallery']},{name:'Photoprism',file:'photoprism',tags:['photos','gallery']},{name:'Paperless-ngx',file:'paperlessngx',tags:['documents','scanning']},{name:'Changedetection',file:'changedetection',tags:['monitoring','alerts']},{name:'Miniflux',file:'miniflux',tags:['rss','feeds']},{name:'FreshRSS',file:'freshrss',tags:['rss','feeds']},{name:'Memos',file:'memos',tags:['notes','memos']},{name:'Outline',file:'outline',tags:['wiki','knowledge-base']},{name:'Bookstack',file:'bookstack',tags:['wiki','documentation']},{name:'Wiki.js',file:'wikijs',tags:['wiki','documentation']},{name:'HedgeDoc',file:'hedgedoc',tags:['notes','collaboration']},{name:'Cockpit',file:'cockpit',tags:['server','management']},{name:'CasaOS',file:'casaos',tags:['homelab','dashboard']},{name:'Dockge',file:'dockge',tags:['docker','compose','management']},{name:'Dozzle',file:'dozzle',tags:['docker','logs']},{name:'Watchtower',file:'watchtower',tags:['docker','updates']},{name:'Komodo',file:'komodo',tags:['monitoring','docker']},{name:'Diun',file:'diun',tags:['docker','notifications']},
@@ -375,7 +377,7 @@ function applyTheme(){
   const h=t.glow.replace('#','');
   const r=parseInt(h[0]+h[1],16),gr=parseInt(h[2]+h[3],16),b=parseInt(h[4]+h[5],16);
   const mode=t.cardBg||'dark';
-  const opts={dark:{c:0.08,a:0.12,i:0.3},light:{c:0.14,a:0.08,i:0.15},'solid-dark':{c:0.85,a:0.9,i:0.4},'solid-light':{c:0.88,a:0.92,i:0.08},neon:{c:0.03,a:0.06,i:0.15}};
+  const opts={dark:{c:0.08,a:0.12,i:0.3},light:{c:0.14,a:0.08,i:0.15},'solid-dark':{c:0.85,a:0.9,i:0.4},'solid-light':{c:0.88,a:0.92,i:0.08}};
   const o=opts[mode]||opts.dark;
   root.style.setProperty('--card-bg',`rgba(${r},${gr},${b},${o.c})`);
   root.style.setProperty('--card-bg-alt',`rgba(${r},${gr},${b},${o.a})`);
@@ -422,11 +424,11 @@ function escAttr(s){if(typeof s!=='string')return'';const d=document.createEleme
 function initStatusBar(){renderStatusBar();clearInterval(statsTimer);const sb=config.statusBar;if(!sb||!sb.enabled)return;const ms=(sb.refreshInterval||15)*1000;statsTimer=setInterval(fetchStats,ms);fetchStats();}
 function renderStatusBar(){const bar=$('#top-stats'),sb=config.statusBar;if(!sb||!sb.enabled){bar.classList.add('hidden');bar.innerHTML='';return;}bar.classList.remove('hidden');bar.innerHTML='<span class="stat-item"><span class="stat-icon">⚡</span><span class="stat-value" id="stat-loading">Connecting...</span></span>';}
 function fetchStats(){const sb=config.statusBar;if(!sb||!sb.enabled)return;let url;if(sb.source==='local')url='/api/stats';else if(sb.source==='glances')url=sb.glancesUrl+'/api/4';else if(sb.source==='custom'&&sb.customUrl)url=sb.customUrl;else return;fetch(url).then(r=>{if(!r.ok)throw Error(r.status);return r.json();}).then(d=>renderStats(d,sb)).catch(()=>{const el=$('#stat-loading');if(el)el.textContent='Stats offline';});}
-function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const items=sb.items||[];const parts=[];if(items.includes('hostname')&&data.hostname)parts.push(stItem('🖥️','',data.hostname,null));if(items.includes('cpu')){let p=typeof data.cpu==='number'?data.cpu:(data.cpu&&data.cpu.total)?data.cpu.total:0;parts.push(stItem('⚡','CPU',p+'%',p));}if(items.includes('memory')){const m=data.memory||{};parts.push(stItem('🧠','RAM',(m.percent||0)+'%',m.percent||0));}if(items.includes('disk')){const d=data.disks||[],r=d.find(d=>d.mount==='/')||d[0];if(r)parts.push(stItem('💾',r.mount,r.percent+'%',r.percent));}if(items.includes('uptime')){const u=data.uptime||{};parts.push(stItem('⏱️','Up',u.string||'--'));}parts.forEach((el,i)=>{if(i>0){const s=document.createElement('span');s.className='stat-sep';s.textContent='·';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';}
+function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const items=sb.items||[];const parts=[];if(sb.hostname!==false&&data.hostname)parts.push(stItem('🖥️','',data.hostname,null));if(items.includes('cpu')){let p=typeof data.cpu==='number'?data.cpu:(data.cpu&&data.cpu.total)?data.cpu.total:0;parts.push(stItem('⚡','CPU',p+'%',p));}if(items.includes('memory')){const m=data.memory||{};parts.push(stItem('🧠','RAM',(m.percent||0)+'%',m.percent||0));}if(items.includes('disk')){const d=data.disks||[],r=d.find(d=>d.mount==='/')||d[0];if(r)parts.push(stItem('💾',r.mount,r.percent+'%',r.percent));}if(items.includes('uptime')){const u=data.uptime||{};parts.push(stItem('⏱️','Up',u.string||'--'));}parts.forEach((el,i)=>{if(i>0){const s=document.createElement('span');s.className='stat-sep';s.textContent='·';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';}
 function stItem(icon,label,value,pct){const div=document.createElement('span');div.className='stat-item';div.innerHTML=`<span class="stat-icon">${icon}</span>`;if(label){const l=document.createElement('span');l.className='stat-label';l.textContent=label;div.appendChild(l);}if(pct!==null&&pct!==undefined){const b=document.createElement('span');b.className='stat-bar';const f=document.createElement('span');f.className='stat-bar-fill'+(pct>80?' high':pct>60?' mid':'');f.style.width=pct+'%';b.appendChild(f);div.appendChild(b);}const v=document.createElement('span');v.className='stat-value';v.textContent=value;div.appendChild(v);return div;}
 
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
-function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){appEl.style.paddingLeft=config.layout.paddingX+'px';appEl.style.paddingRight=config.layout.paddingX+'px';appEl.style.paddingTop=config.layout.paddingY+'px';appEl.style.paddingBottom='80px';}const _scrollY=window.scrollY;
+function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';const _scrollY=window.scrollY;
 if(!config.cards.length){
   grid.innerHTML=`<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;">
     <div style="font-size:48px;margin-bottom:16px;"><i data-lucide="package" style="width:48px;height:48px;"></i></div>
@@ -478,7 +480,7 @@ function renderCard(card,idx){
     const eb2=document.createElement('button');eb2.className='card-edit-btn';eb2.textContent='✎';eb2.title='Edit gap';
     eb2.addEventListener('click',e=>{e.stopPropagation();toggleCardEdit(card.id);});
     h.appendChild(eb2);
-    const dh=document.createElement('i');dh.className='drag-handle';dh.setAttribute('data-lucide','grip-vertical');dh.title='Drag';
+    const dh=document.createElement('span');dh.className='drag-handle';dh.textContent='⠿';dh.title='Drag';
     h.appendChild(dh);
     div.appendChild(h);
     dh.addEventListener('mousedown',e=>startDrag(e,card.id,idx));
@@ -487,7 +489,7 @@ function renderCard(card,idx){
   }
   const div=document.createElement('div');div.className='card';div.dataset.cardId=card.id;div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;div.style.setProperty('--card-accent',card.color||config.theme.glow);
   if(card.height>1)div.style.gridRow='span '+card.height;
-  const hdr=document.createElement('div');hdr.className='card-header';const title=document.createElement('div');title.className='card-title';title.appendChild(renderIconElement(card.icon,'card-icon'));title.appendChild(document.createTextNode(' '+(card.title||'')));hdr.appendChild(title);const rg=document.createElement('div');rg.style.cssText='display:flex;align-items:center;gap:4px;';const eb=document.createElement('button');eb.className='card-edit-btn';eb.textContent='✎';eb.title='Edit';eb.addEventListener('click',e=>{e.stopPropagation();toggleCardEdit(card.id);});rg.appendChild(eb);const hd=document.createElement('i');hd.className='drag-handle';hd.setAttribute('data-lucide','grip-vertical');hd.title='Drag';rg.appendChild(h);hdr.appendChild(rg);div.appendChild(hdr);const body=document.createElement('div');body.className='card-body';(card.sections||[]).forEach(sec=>{const el=renderSection(sec,card);if(el)body.appendChild(el);});div.appendChild(body);hd.addEventListener('mousedown',function(e){startDrag(e,card.id,idx);});return div;
+  const hdr=document.createElement('div');hdr.className='card-header';const title=document.createElement('div');title.className='card-title';title.appendChild(renderIconElement(card.icon,'card-icon'));title.appendChild(document.createTextNode(' '+(card.title||'')));hdr.appendChild(title);const rg=document.createElement('div');rg.style.cssText='display:flex;align-items:center;gap:4px;';const eb=document.createElement('button');eb.className='card-edit-btn';eb.textContent='✎';eb.title='Edit';eb.addEventListener('click',e=>{e.stopPropagation();toggleCardEdit(card.id);});rg.appendChild(eb);const h=document.createElement('span');h.className='drag-handle';h.textContent='⠿';h.title='Drag';rg.appendChild(h);hdr.appendChild(rg);div.appendChild(hdr);const body=document.createElement('div');body.className='card-body';(card.sections||[]).forEach(sec=>{const el=renderSection(sec,card);if(el)body.appendChild(el);});div.appendChild(body);h.addEventListener('mousedown',function(e){startDrag(e,card.id,idx);});return div;
 }
 
 function renderIconElement(icon,cls){if(!icon)return renderLucideEl('package',cls);if(icon.startsWith('http')||icon.startsWith('data:')||icon.startsWith('/')){const img=document.createElement('img');img.className=cls;img.src=icon;img.alt='';img.loading='lazy';img.onerror=function(){var e=renderLucideEl('package',cls);this.parentNode.replaceChild(e,this);};return img;}if(isLucideName(icon))return renderLucideEl(icon,cls);const s=document.createElement('span');s.className=cls+' emoji-icon';s.textContent=icon;return s;}
@@ -819,9 +821,9 @@ function removeGap(idx){
 let iconPickerOpen=false;
 function openIconPicker(cb){iconPickerCallback=cb;iconPickerOpen=true;$('#icon-picker-overlay').classList.add('open');$('#icon-picker').classList.add('open');buildIconPicker('library');}
 function closeIconPicker(){iconPickerOpen=false;iconPickerCallback=null;$('#icon-picker-overlay').classList.remove('open');$('#icon-picker').classList.remove('open');}
-function buildIconPicker(t){const c=$('#icon-picker-content');c.innerHTML='';$$('.ip-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));if(t==='library')buildLibraryTab(c);else if(t==='icons')buildIconsTab(c);else if(t==='url')buildUrlTab(c);}
+function buildIconPicker(t){const c=$('#icon-picker-content');c.innerHTML='';$$('.ip-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));if(t==='library')buildLibraryTab(c);else if(t==='upload')buildUploadTab(c);else if(t==='icons')buildIconsTab(c);else if(t==='url')buildUrlTab(c);}
 function buildLibraryTab(c){const s=document.createElement('input');s.className='icon-search-bar';s.placeholder='Search services...';c.appendChild(s);const g=document.createElement('div');g.className='icon-grid';c.appendChild(g);function ri(f){g.innerHTML='';const fl=(f||'').toLowerCase();const items=fl?ICON_REPO.filter(i=>i.name.toLowerCase().includes(fl)||i.file.toLowerCase().includes(fl)||i.tags.some(t=>t.includes(fl))):ICON_REPO;items.slice(0,120).forEach(item=>{const d=document.createElement('div');d.className='icon-grid-item';const img=document.createElement('img');img.src=`${ICON_CDN}/${item.file}.png`;img.alt=item.name;img.loading='lazy';img.onerror=function(){this.parentElement.style.display='none';};const l=document.createElement('span');l.textContent=item.name;d.appendChild(img);d.appendChild(l);d.addEventListener('click',()=>selectIcon(`${ICON_CDN}/${item.file}.png`));g.appendChild(d);});if(!items.length)g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No icons found</div>';}s.addEventListener('input',()=>ri(s.value));ri('');}
-
+function buildUploadTab(c){const z=document.createElement('div');z.className='upload-zone';z.innerHTML='<div style="font-size:36px;">📁</div><p>Click to upload an icon image</p>';c.appendChild(z);const fi=document.createElement('input');fi.type='file';fi.accept='image/png,image/svg+xml,image/webp,image/jpeg,image/gif';fi.style.display='none';fi.addEventListener('change',e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{selectIcon(ev.target.result);};reader.readAsDataURL(file);});z.addEventListener('click',()=>fi.click());c.appendChild(fi);}
 function buildIconsTab(c){
   const s=document.createElement('input');s.className='icon-search-bar';s.placeholder='Search icons or emoji...';c.appendChild(s);
   const etab=document.createElement('div');etab.style.cssText='display:flex;gap:4px;margin-bottom:8px;';
@@ -1049,20 +1051,20 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   }
   body.appendChild(el('div','margin-bottom:10px;',null,bgr));
 
+  body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark Glass'},{value:'light',label:'Light Glass'},{value:'solid-dark',label:'Solid Dark'},{value:'solid-light',label:'Solid Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
   body.appendChild(chk('Random background on load',config.theme.bgRotate,v=>{config.theme.bgRotate=v;saveConfig();}));
 
   /* ── Appearance ── */
   body.appendChild(ps('Appearance'));
+  const fontColor=config.theme.fontColor||'#cccccc';
   body.appendChild(pf('color','','Accent Color',null,config.theme.glow,v=>{config.theme.glow=v;applyChanges();}));
+  body.appendChild(pf('color','','Font Color',null,fontColor,v=>{config.theme.fontColor=v;applyChanges();document.body.style.setProperty('--text-primary',hexToRgba2(v,0.92));}));
   body.appendChild(pf('range','','Glass Blur (px)',null,config.theme.blur,v=>{config.theme.blur=parseInt(v);applyChanges();},{min:4,max:40}));
-  body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Deep Glass'},{value:'light',label:'Frosted Glass'},{value:'solid-dark',label:'Solid Obsidian'},{value:'solid-light',label:'Solid Pearl'},{value:'neon',label:'Neon Pulse'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
+  body.appendChild(pf('select','','Font Size',[{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],config.theme.fontSize,v=>{config.theme.fontSize=v;applyChanges();}));
   body.appendChild(chk('Animated transitions',config.theme.animations!==false,v=>{config.theme.animations=v;applyChanges();renderAll();}));
   body.appendChild(chk('Card accent bar',config.theme.showAccentBar!==false,v=>{config.theme.showAccentBar=v;applyChanges();renderAll();}));
-  /* ── Font ── */
-  body.appendChild(ps('Font'));
-  const fontColor=config.theme.fontColor||'#cccccc';
-  body.appendChild(pf('color','','Font Color',null,fontColor,v=>{config.theme.fontColor=v;applyChanges();document.body.style.setProperty('--text-primary',hexToRgba2(v,0.92));}));
-  body.appendChild(pf('select','','Font Size',[{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],config.theme.fontSize,v=>{config.theme.fontSize=v;applyChanges();}));
+  /* ── Font (within Appearance) ── */
+  body.appendChild(el('div','','',el('h3','font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-top:20px;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--glass-border);font-family:var(--font);','Font Family')));
   const curFont=config.theme.fontFamily||'Inter';
   const TOP_FONTS = [
     {name:'Inter',sample:'The quick brown fox jumps'},
@@ -1098,11 +1100,9 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   ];
   // Ensure current font is in the list
   if(!TOP_FONTS.find(f=>f.name===curFont)) TOP_FONTS.push({name:curFont,sample:'The quick brown fox jumps'});
-  const fg=document.createElement('div');fg.style.cssText='margin-bottom:10px;';
-  fg.appendChild(el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;','Font'));
-  const fsel=document.createElement('select');
-  fsel.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:13px;outline:none;cursor:pointer;';
+  const fsel=document.createElement('select');fsel.className='font-select';
   fsel.style.fontFamily=`'${curFont}',sans-serif`;
+  // Preload all font options so dropdown renders them correctly
   TOP_FONTS.forEach(f=>loadGoogleFont(f.name));
   TOP_FONTS.forEach(f=>{
     const o=document.createElement('option');o.value=f.name;
@@ -1116,7 +1116,11 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
     fsel.style.fontFamily=`'${fsel.value}',sans-serif`;
     saveConfig();applyTheme();renderAll();
   });
-  fg.appendChild(fsel);body.appendChild(fg);  /* ── Status Bar ── */
+  const fontLabel=el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;','Preview');
+  body.appendChild(fontLabel);
+  body.appendChild(fsel);
+
+  /* ── Status Bar ── */
   body.appendChild(ps('Status Bar'));
   body.appendChild(chk('Show',config.statusBar.enabled,v=>{config.statusBar.enabled=v;saveConfig();applyTheme();initStatusBar();renderAll();buildConfigPanel();}));
   body.appendChild(pf('select','','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],config.statusBar.source,v=>{config.statusBar.source=v;saveConfig();initStatusBar();buildConfigPanel();}));
@@ -1132,8 +1136,9 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(cu);
 
   body.appendChild(pf('range','','Refresh (s)',null,config.statusBar.refreshInterval,v=>{config.statusBar.refreshInterval=parseInt(v);saveConfig();initStatusBar();},{min:5,max:120}));
+  body.appendChild(chk('Show hostname',config.statusBar.hostname!==false,v=>{config.statusBar.hostname=v;saveConfig();initStatusBar();}));
   const itemsRow=document.createElement('div');itemsRow.style.cssText='display:flex;gap:8px;flex-wrap:wrap;padding:4px 0;';
-  ['hostname','cpu','memory','disk','uptime'].forEach(item=>{
+  ['cpu','memory','disk','uptime'].forEach(item=>{
     const cl=document.createElement('label');cl.style.cssText='display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;';
     const cc=document.createElement('input');cc.type='checkbox';cc.checked=(config.statusBar.items||[]).includes(item);
     cc.addEventListener('change',()=>{config.statusBar.items=config.statusBar.items||[];if(cc.checked&&!config.statusBar.items.includes(item))config.statusBar.items.push(item);else if(!cc.checked)config.statusBar.items=config.statusBar.items.filter(i=>i!==item);saveConfig();initStatusBar();});
@@ -1146,8 +1151,12 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(ps('Layout'));
   body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
   body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
-  body.appendChild(pf('range','','Page Padding X (px)',null,config.layout.paddingX||24,v=>{config.layout.paddingX=parseInt(v)||24;applyChanges();renderAll();},{min:0,max:80}));
-  body.appendChild(pf('range','','Page Padding Y (px)',null,config.layout.paddingY||24,v=>{config.layout.paddingY=parseInt(v)||24;applyChanges();renderAll();},{min:0,max:80}));
+
+  /* ── Search ── */
+  body.appendChild(ps('Search'));
+  const engs=Object.entries(config.search.engines).map(([k])=>({value:k,label:k}));
+  body.appendChild(pf('select','','Default Engine',engs,config.search.selected,v=>{config.search.selected=v;saveConfig();}));
+  body.appendChild(chk('Open in new tab',config.search.openInNewTab,v=>{config.search.openInNewTab=v;saveConfig();}));
 
   /* ── Data ── */
   body.appendChild(ps('Data'));
@@ -1226,14 +1235,13 @@ function applyChanges(){saveConfig();applyTheme();}
 /* ═══════════════════════════════════════════ INIT ═══════════════════════════════════════════ */
 async function init() {
   loadConfig(); applyTheme();
+  if(!config.cards||!config.cards.length){console.warn('Config had no cards — restored defaults');config=cloneObj(DEFAULT_CONFIG);saveConfig();}
   await fetchUploads();
   // Random background on load if rotation enabled
   if(config.theme.bgRotate&&uploadedFiles.length>0){
     const pick=uploadedFiles[Math.floor(Math.random()*uploadedFiles.length)];
     if(pick){config.theme.bgType='image';config.theme.bgValue=pick.url;saveConfig();applyTheme();}
   }
-  // Safety net: if cards array is empty or missing, restore defaults
-  if(!config.cards||!config.cards.length){config=cloneObj(DEFAULT_CONFIG);saveConfig();console.warn('Config had no cards — restored defaults');}
   renderAll(); initStatusBar();
   // Footer
   $('#footer-text').textContent='WarTab v'+WARTAB_VERSION;
