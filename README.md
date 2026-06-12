@@ -1,29 +1,82 @@
-# ⚔️ WarTab — New Tab Page
+# ⚔️ WarTab — Self-Hosted New Tab Page
 
-A lean, self-hosted new tab page with **glassmorphic** + **skeuomorphic** styling. Card-based layout, fully customizable from the UI. Serves on your local network so every device on LAN can use it.
+A lean, self-hosted new tab page with **glassmorphic** + **skeuomorphic** styling.
+Card-based layout, fully customizable from the UI. Entirely self-contained — no
+external network required once loaded.
 
 ```
 http://wartab.local:8081   or   http://<your-ip>:8081
 ```
 
+---
+
 ## Features
 
-- **Card grid** — add, remove, reorder cards via drag-and-drop
-- **Section types** per card:
-  - **Links / Link List** — bookmark grids and inline lists with icons
-  - **Search** — inline search box (configurable engine: Google, DuckDuckGo, Brave, etc.)
-  - **Clock** — live clock with 12/24h + date
-  - **Weather** — OpenWeatherMap widget (add your free API key)
-  - **Iframe** — embed any self-hosted app (Home Assistant, Jellyfin, Grafana, etc.)
-  - **Notes** — editable sticky notes (persist to localStorage)
-  - **Dropdown** — collapsible link groups
-  - **API Poller** — hit any local API endpoint and render a JSON value (e.g. system stats, cryptocurrency prices)
-- **Glass + Skeuomorphic** — frosted glass cards, beveled buttons, noise textures, accent glows
-- **Full config UI** — inline drawer panel (⚙️ button or Ctrl+Shift+C)
-- **Export/Import** — share your config across devices via JSON
-- **Global search bar** — search the web or type a URL directly (Ctrl+L / Ctrl+K)
-- **Dark mode** — built-in, always-on dark aesthetic
-- **Local network** — serve on `0.0.0.0` so any device on LAN can set it as their new tab
+### Card Sections (9 types)
+
+| Section | Description |
+|---------|-------------|
+| **Links** | Icon grid — auto-fill columns, searchable service icons |
+| **Link List** | Single-column inline link rows |
+| **Search** | Inline search bar with per-section engine selector |
+| **Clock** | Live time (12/24h) + date + optional calendar |
+| **Weather** | OpenWeatherMap widget (free API key) |
+| **Iframe** | Embed any self-hosted app (Home Assistant, Jellyfin, Grafana) |
+| **Notes** | Inline editing directly on the card |
+| **Dropdown** | Collapsible link group |
+| **API Poller** | Fetch JSON from any endpoint, render a value at a dot-path |
+| **Status Bar** | Live CPU, memory, disk, uptime from local `/api/stats`, Glances, or custom URL |
+
+### Icon System
+
+- **Lucide SVG icons** — 200+ icons, change color with accent/font theme settings
+- **Homarr service icons** — 124 self-hosted app logos (Jellyfin, Home Assistant, Portainer, etc.)
+- **Emoji** — 100+ common emoji, render in native color (unaffected by theme)
+- **Custom URL** — paste any image URL
+- **Upload** — upload custom icon images via the server
+
+### Drag & Drop
+
+- Mouse-based drag with ghost preview and FLIP placement animation
+- Gap cards — invisible spacer cells with hover controls (edit, drag, delete)
+- Configurable gap card width and min-height in pixels
+
+### Config Panel
+
+- **Page** — title, icon
+- **Background** — gradient, solid, image upload, random rotation
+- **Appearance** — accent color, glass blur, card style, animations toggle, accent bar toggle
+- **Font** — font color, font size, font family (30 Google Fonts, all preloaded)
+- **Status Bar** — enable/disable, source selector (local/Glances/custom), refresh interval, items
+- **Layout** — columns, card gap, page padding X/Y
+- **Data** — export, import, reset config
+- **API Keys** — references for where to get API keys
+
+### Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+L` or `Ctrl+K` | Focus first search bar |
+| `Ctrl+Shift+C` | Toggle config panel |
+| `Escape` | Close config panel / icon picker |
+
+### System Stats Endpoint
+
+Built-in `/api/stats` endpoint — CPU, memory, disk, uptime, load — all from `/proc`
+with zero Python dependencies (no psutil). Returns JSON for the status bar widget.
+
+### Fully Offline-Capable
+
+All assets ship with the repo:
+- Lucide icon library (602KB) — `/static/lucide.min.js`
+- Inter font (weights 200–700) — `/static/fonts/`
+- 124 service icons — `/icons/`
+- Quotes — 21 embedded programming quotes, no network call
+
+Only the Font Size slider's non-Inter font options and OpenWeatherMap API
+require internet — and both degrade gracefully (system fonts, error message).
+
+---
 
 ## Quick Start
 
@@ -31,112 +84,57 @@ http://wartab.local:8081   or   http://<your-ip>:8081
 cd /home/cody/Projects/wartab
 python3 server.py
 # Opens on http://localhost:8081
-```
 
-### Custom port
-
-```bash
+# Custom port
 python3 server.py --port 3000
-```
 
-### Open browser automatically
-
-```bash
+# Open browser automatically
 python3 server.py --port 8081 --open
-```
 
-### mDNS / ZeroConf (optional)
-
-Install avahi-utils for `wartab.local` discovery:
-
-```bash
-sudo apt install avahi-utils
+# mDNS / ZeroConf discovery (install avahi-utils first)
 python3 server.py --port 8081 --mdns
 ```
 
-## Auto-start via systemd (user service)
+### Setting as Browser New Tab
+
+**Firefox**: New Tab Override extension → `http://localhost:8081`
+**Chrome/Edge/Brave**: New Tab Redirect extension → `http://localhost:8081`
+
+### Systemd Auto-Start
 
 ```bash
 systemctl --user daemon-reload
 systemctl --user enable --now wartab.service
+journalctl --user -u wartab.service -f    # Logs
 ```
 
-To check logs:
-
-```bash
-journalctl --user -u wartab.service -f
-```
-
-## Setting as Browser New Tab
-
-### Firefox
-1. Install **New Tab Override** extension
-2. Set URL to `http://localhost:8081`
-
-### Chrome / Edge / Brave
-1. Install **New Tab Redirect** or **Custom New Tab** extension
-2. Set URL to `http://localhost:8081`
-
-Or use **Tabliss** or **Infinity New Tab** and point it to the local URL via iframe.
-
-## Configuration
-
-All config lives in `localStorage` in your browser. Access the config panel:
-
-- Click the ⚙️ button in the top bar
-- Or press `Ctrl+Shift+C`
-- Or press `Ctrl+L` / `Ctrl+K` to focus the search bar
-
-From the config panel you can:
-- Change background (gradient, solid color, or image URL)
-- Adjust glass blur intensity
-- Change accent color
-- Add/remove/reorder cards
-- Add/remove/reorder sections within cards
-- Add/remove links in each section
-- Change section types on the fly
-- Export/import your full config as JSON
-
-## Self-Hosted Integration Examples
-
-**Home Assistant** via iframe:
-```
-Type: iframe | URL: http://homeassistant.local:8123
-```
-
-**System stats** via API poller:
-```
-Type: api-poller | URL: http://192.168.1.50:9090/api/status | Path: stats.cpu_usage
-```
-
-**Jellyfin** via iframe:
-```
-Type: iframe | URL: http://jellyfin.local:8096
-```
-
-**Pi-hole summary** via API:
-```
-Type: api-poller | URL: http://pi.hole/admin/api.php?summary | Path: queries_blocked_percentage
-```
-
-## Keyboard Shortcuts
-
-| Key | Action |
-|-----|--------|
-| `Ctrl+L` or `Ctrl+K` | Focus search bar |
-| `Ctrl+Shift+C` | Open/close config panel |
-| `Escape` | Close config panel (when open) |
+---
 
 ## File Structure
 
 ```
 wartab/
-├── index.html    # Main tab page
-├── style.css     # Glass + skeuomorphic styles
-├── app.js        # Everything: render, config, drag-drop, widgets
-├── server.py     # Python HTTP server (no deps needed)
-├── PLAN.md       # Design doc
-└── README.md     # This file
+├── index.html        # App shell
+├── style.css         # Glass + skeuomorphic styles
+├── app.js            # All logic: render, config, drag-drop, widgets
+├── server.py         # Python HTTP server (zero deps)
+├── icons/            # 124 self-hosted service icons (homarr-labs)
+├── static/
+│   ├── lucide.min.js # Lucide icon library (local copy)
+│   └── fonts/        # Inter font files + CSS
+├── uploads/          # User-uploaded background images
+├── PLAN.md           # Design document
+└── README.md         # This file
 ```
 
 Single-page app — no framework, no build step, no node_modules. Just open and go.
+
+---
+
+## Architecture
+
+- **Storage**: `localStorage` — no backend database. Export/import via JSON.
+- **Server**: Python `http.server` — single file, no pip deps.
+- **Icons**: Lucide SVGs (`currentColor`) + homarr dashboard PNGs (brand colors).
+- **Card System**: `CARD_MODULES` registry — each section type owns `{ defaults, render, editor }`.
+- **Theming**: CSS custom properties for accent, glass blur, font, card style — all togglable from UI.
