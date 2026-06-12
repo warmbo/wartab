@@ -220,6 +220,14 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             self.path = "/index.html"
         return super().do_GET()
 
+    def end_headers(self):
+        # Disable caching for CSS/JS so edits appear immediately
+        if self.path.endswith('.css') or self.path.endswith('.js'):
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
+        super().end_headers()
+
     def do_POST(self):
         if self.path == "/api/upload":
             cl = int(self.headers.get("Content-Length", 0))

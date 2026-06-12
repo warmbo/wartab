@@ -306,9 +306,142 @@ body {
 
 /* Font picker select */
 
-.section-editor { background: var(--card-bg-alt); padding: 10px; margin-bottom: 6px; border-left: 2px solid var(--card-accent,var(--accent)); }
-.section-editor-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.section-editor-header .section-edit-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); font-family: var(--font); }
+/* ══════ Card Edit Panel (slide-out) ══════ */
+#edit-panel { z-index: 103; }
+#edit-panel-overlay { z-index: 102; }
+
+/* ── Base form elements ── */
+.cp-group { margin-bottom: 14px; }
+.cp-label {
+  display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.7px; color: var(--text-secondary); margin-bottom: 5px;
+  font-family: var(--font);
+}
+.cp-input, .cp-select {
+  width: 100%; padding: 9px 12px; background: rgba(0,0,0,0.35); border: 1px solid var(--surface-border);
+  color: var(--text-primary); font-size: 13px; outline: none; font-family: var(--font);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cp-input:focus, .cp-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glass), inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+.cp-input::placeholder { color: var(--text-tertiary); font-size: 12px; }
+.cp-select {
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+}
+.cp-select option { background: #1a1a1a; color: var(--text-primary); }
+.cp-row { display: flex; gap: 8px; align-items: center; }
+.cp-check {
+  display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-primary);
+  cursor: pointer; padding: 5px 0; transition: opacity 0.12s;
+}
+.cp-check:hover { opacity: 0.85; }
+.cp-check input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+.cp-range { margin-bottom: 0; }
+.cp-range .cp-label { margin-bottom: 5px; }
+.cp-range-row { display: flex; align-items: center; gap: 10px; }
+.cp-range input[type="range"] { flex: 1; accent-color: var(--accent); height: 4px; cursor: pointer; }
+.cp-range-val { font-size: 13px; color: var(--text-secondary); min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.cp-hint { font-size: 11px; color: var(--text-tertiary); font-style: italic; padding: 6px 0; line-height: 1.5; }
+
+/* ── Card settings: 2-column grid ── */
+.cs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cs-grid .cs-full { grid-column: 1 / -1; }
+.cs-pair { display: flex; flex-direction: column; gap: 4px; }
+.cs-icon-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.cs-icon-preview { font-size: 26px; width: 40px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); flex-shrink: 0; }
+.cs-icon-preview i[data-lucide] { width: 24px; height: 24px; }
+
+/* ── Section editor ── */
+.cp-section { margin-bottom: 10px; }
+.cp-section-box {
+  background: rgba(0,0,0,0.22); padding: 14px; margin-bottom: 12px;
+  border-left: 3px solid var(--card-accent, var(--accent));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.cp-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.me-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 12px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary); font-family: var(--font);
+}
+.cp-section-type { display: none; }
+.se-inline { display: flex; gap: 12px; }
+.se-inline > * { flex: 1; }
+.cp-section-actions { display: flex; gap: 4px; }
+
+/* ── Module field card ── */
+.me-card {
+  background: rgba(0,0,0,0.15); margin-top: 10px; padding: 12px;
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+}
+
+/* ── Links table ── */
+.me-link-th {
+  display: flex; gap: 8px; align-items: center; padding: 0 8px 6px;
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--text-tertiary);
+}
+.me-link-th .mh-label { flex: 1; }
+.me-link-th .mh-url { flex: 2; }
+.me-link-th .mh-icon { width: 28px; text-align: center; flex-shrink: 0; }
+.me-link-th .mh-remove { width: 28px; flex-shrink: 0; }
+.me-link-tr {
+  display: flex; gap: 8px; align-items: center;
+  padding: 7px 8px; margin-bottom: 5px;
+  background: rgba(0,0,0,0.18); transition: background 0.12s, border-color 0.12s;
+  border: 1px solid transparent;
+}
+.me-link-tr:hover { background: rgba(0,0,0,0.28); border-color: rgba(255,255,255,0.05); }
+.me-link-tr .cp-input { flex: 1; padding: 5px 8px; font-size: 12px; }
+.me-link-tr .cp-input:first-child { flex: 1; }
+.me-link-tr .cp-input:last-of-type { flex: 2; }
+.me-link-add {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 16px; margin-top: 8px;
+  font-size: 11px; font-weight: 600;
+  background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.10);
+  color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+  font-family: var(--font);
+}
+.me-link-add:hover { background: rgba(255,255,255,0.08); border-color: var(--accent); color: var(--text-primary); }
+
+/* Icon button for links */
+.me-icon-btn {
+  padding: 3px 5px; font-size: 15px; background: none; border: 1px solid var(--surface-border);
+  cursor: pointer; color: var(--text-primary); width: 28px; height: 26px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.12s, background 0.12s;
+}
+.me-icon-btn:hover { border-color: var(--accent); background: rgba(255,255,255,0.05); }
+.me-icon-btn img { width: 16px; height: 16px; object-fit: contain; }
+.me-icon-btn i[data-lucide] { width: 16px; height: 16px; }
+
+/* ── Checkbox column group ── */
+.me-check-group { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+.me-check-group .cp-check { padding: 3px 0; }
+
+/* ── Section divider (for card settings / sections) ── */
+.cp-divider {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-tertiary); margin: 18px 0 12px; padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.cp-divider:first-child { margin-top: 0; }
+
+/* ── Footer ── */
+.cp-footer { display: flex; gap: 10px; padding: 14px 0 4px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 14px; }
+.cp-footer .btn { flex: 1; justify-content: center; padding: 9px 16px; font-size: 12px; }
+
+/* ── Gap only panel ── */
+.cs-gap { padding: 4px 0; }
 
 
 /* ══════ Drag ══════ */
@@ -524,11 +657,11 @@ body {
   .icon-grid-item { padding: 8px 4px; min-height: 54px; }
   .icon-search-bar { font-size: 14px; padding: 10px 14px; }
 
-  /* ── Card editor: touch-friendly ── */
+  /* ── Card editor panel: touch-friendly ── */
   .card-editing input[type="text"], .card-editing select, .card-editing textarea { font-size: 14px !important; padding: 8px 10px !important; }
   .card-editing input[type="checkbox"] { width: 18px; height: 18px; }
-  .section-editor { margin-bottom: 8px; padding: 8px; }
-  .section-editor-header { font-size: 11px; }
+  .cp-section-box { margin-bottom: 10px; padding: 10px; }
+  .cp-section-header { margin-bottom: 8px; }
 
   /* ── Dropdown ── */
   .dropdown-toggle { font-size: 13px; padding: 8px 10px; }
