@@ -19,7 +19,11 @@ from pathlib import Path
 
 HERE = Path(__file__).parent.resolve()
 UPLOADS = HERE / "uploads"
+ICONS = HERE / "icons"
+STATIC = HERE / "static"
 UPLOADS.mkdir(exist_ok=True)
+ICONS.mkdir(exist_ok=True)
+(STATIC / "fonts").mkdir(parents=True, exist_ok=True)
 
 MIME_TYPES = {
     ".html": "text/html", ".css": "text/css", ".js": "application/javascript",
