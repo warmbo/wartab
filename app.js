@@ -345,7 +345,7 @@ function toast(msg,type='info'){const el=document.createElement('div');el.classN
 function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>{if(el.parentNode)el.remove();},6000);}
 
 /* ── Config ── */
-function loadConfig(){try{const s=localStorage.getItem('wartab');if(s){var parsed=JSON.parse(s);if(!parsed.version||parsed.version<'0.2.0'){migrateConfigEmojis(parsed);parsed.version=WARTAB_VERSION;localStorage.setItem('wartab',JSON.stringify(parsed));}config=deepMerge(cloneObj(DEFAULT_CONFIG),parsed);}else config=cloneObj(DEFAULT_CONFIG);}catch(e){config=cloneObj(DEFAULT_CONFIG);}}
+function loadConfig(){try{const s=localStorage.getItem('wartab');if(s){var parsed=JSON.parse(s);if(!parsed.version||parsed.version<'0.2.0'){migrateConfigEmojis(parsed);parsed.version=WARTAB_VERSION;localStorage.setItem('wartab',JSON.stringify(parsed));}config=deepMerge(cloneObj(DEFAULT_CONFIG),parsed);}else config=cloneObj(DEFAULT_CONFIG);}catch(e){console.error('loadConfig failed:',e);config=cloneObj(DEFAULT_CONFIG);}}
 function saveConfig(){try{localStorage.setItem('wartab',JSON.stringify(config));}catch(e){}}
 function deepMerge(t,s){const r=cloneObj(t);for(const k in s){if(s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k]))r[k]=deepMerge(r[k]||{},s[k]);else r[k]=s[k];}return r;}
 
@@ -1232,6 +1232,8 @@ async function init() {
     const pick=uploadedFiles[Math.floor(Math.random()*uploadedFiles.length)];
     if(pick){config.theme.bgType='image';config.theme.bgValue=pick.url;saveConfig();applyTheme();}
   }
+  // Safety net: if cards array is empty or missing, restore defaults
+  if(!config.cards||!config.cards.length){config=cloneObj(DEFAULT_CONFIG);saveConfig();console.warn('Config had no cards — restored defaults');}
   renderAll(); initStatusBar();
   // Footer
   $('#footer-text').textContent='WarTab v'+WARTAB_VERSION;
