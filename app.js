@@ -375,7 +375,7 @@ function applyTheme(){
   const h=t.glow.replace('#','');
   const r=parseInt(h[0]+h[1],16),gr=parseInt(h[2]+h[3],16),b=parseInt(h[4]+h[5],16);
   const mode=t.cardBg||'dark';
-  const opts={dark:{c:0.08,a:0.12,i:0.3},light:{c:0.14,a:0.08,i:0.15},'solid-dark':{c:0.85,a:0.9,i:0.4},'solid-light':{c:0.88,a:0.92,i:0.08}};
+  const opts={dark:{c:0.08,a:0.12,i:0.3},light:{c:0.14,a:0.08,i:0.15},'solid-dark':{c:0.85,a:0.9,i:0.4},'solid-light':{c:0.88,a:0.92,i:0.08},neon:{c:0.03,a:0.06,i:0.15}};
   const o=opts[mode]||opts.dark;
   root.style.setProperty('--card-bg',`rgba(${r},${gr},${b},${o.c})`);
   root.style.setProperty('--card-bg-alt',`rgba(${r},${gr},${b},${o.a})`);
@@ -1055,7 +1055,7 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(ps('Appearance'));
   body.appendChild(pf('color','','Accent Color',null,config.theme.glow,v=>{config.theme.glow=v;applyChanges();}));
   body.appendChild(pf('range','','Glass Blur (px)',null,config.theme.blur,v=>{config.theme.blur=parseInt(v);applyChanges();},{min:4,max:40}));
-  body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark Glass'},{value:'light',label:'Light Glass'},{value:'solid-dark',label:'Solid Dark'},{value:'solid-light',label:'Solid Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
+  body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Deep Glass'},{value:'light',label:'Frosted Glass'},{value:'solid-dark',label:'Solid Obsidian'},{value:'solid-light',label:'Solid Pearl'},{value:'neon',label:'Neon Pulse'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
   body.appendChild(chk('Animated transitions',config.theme.animations!==false,v=>{config.theme.animations=v;applyChanges();renderAll();}));
   body.appendChild(chk('Card accent bar',config.theme.showAccentBar!==false,v=>{config.theme.showAccentBar=v;applyChanges();renderAll();}));
   /* ── Font ── */
@@ -1098,6 +1098,7 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   ];
   // Ensure current font is in the list
   if(!TOP_FONTS.find(f=>f.name===curFont)) TOP_FONTS.push({name:curFont,sample:'The quick brown fox jumps'});
+  body.appendChild(el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;','Font'));
   const fsel=document.createElement('select');fsel.className='font-select';
   fsel.style.fontFamily=`'${curFont}',sans-serif`;
   TOP_FONTS.forEach(f=>loadGoogleFont(f.name));

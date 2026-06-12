@@ -133,7 +133,9 @@ body {
   padding: 8px 20px; background: var(--card-bg);
   backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur));
   border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+  position: relative;
 }
+#top-bar::before { content: ''; display: block; height: 3px; background: var(--accent); position: absolute; top: 0; left: 0; right: 0; }
 #top-bar .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-shadow: var(--emboss-shadow); flex-shrink: 0; }
 #top-bar .brand .brand-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: 20px; font-family: 'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',var(--font); }
 /* ── Emoji always render in native color, unaffected by theme ── */
@@ -417,6 +419,31 @@ body {
 #footer a { color: rgba(255,255,255,0.6); text-decoration: none; transition: color 0.15s; }
 #footer a:hover { color: rgba(255,255,255,0.9); }
 #footer-sep { color: rgba(255,255,255,0.2); }
+
+
+/* ── Neon Pulse card style ── */
+:root[data-card-bg="neon"] {
+  --card-bg: rgba(0,0,0,0.03);
+  --card-bg-alt: rgba(255,255,255,0.04);
+  --card-input-bg: rgba(0,0,0,0.15);
+  --glass-shadow: 0 0 20px var(--accent-glow), 0 8px 32px rgba(0,0,0,0.4);
+}
+:root[data-card-bg="neon"]::before {
+  content: ''; position: fixed; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse at 50% 0%, var(--accent-glass) 0%, transparent 60%);
+  pointer-events: none;
+}
+:root[data-card-bg="neon"] .card {
+  border-color: var(--accent-glass);
+  box-shadow: 0 0 15px var(--accent-glow), inset 0 0 30px rgba(0,0,0,0.3);
+}
+:root[data-card-bg="neon"] .card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 25px var(--accent-glow), 0 0 60px var(--accent-glow), inset 0 0 30px rgba(0,0,0,0.3);
+}
+:root[data-card-bg="neon"] .link-item:hover {
+  box-shadow: 0 0 12px var(--accent-glow), 0 -1px 0 var(--accent-glass);
+}
 
 /* ══════ Mobile: separately rendered layout ══════
    These rules ONLY apply on narrow viewports. Desktop is untouched. */
