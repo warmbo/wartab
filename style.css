@@ -50,7 +50,8 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 [data-animations="off"] #top-bar, [data-animations="off"] .config-panel, [data-animations="off"] .icon-picker { transition-duration: 0s !important; }
 
 /* ── Accent bar toggle ── */
-[data-accent-bar="off"] .card::before { display: none; }
+[data-accent-bar="off"] .card::before,
+[data-accent-bar="off"] #top-bar::before { display: none; }
 
 
 /* ── Weather widget ── */
@@ -61,6 +62,12 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 .weather-detail { color: var(--text-secondary); }
 .weather-wind { color: var(--text-tertiary); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
 .weather-ts { color: var(--text-tertiary); margin-top: 4px; }
+
+.cfg-conditional { overflow: hidden; transition: max-height 0.2s ease, opacity 0.15s ease, margin 0.2s ease; max-height: 200px; opacity: 1; margin-bottom: 10px; }
+.cfg-conditional.hidden { max-height: 0; opacity: 0; margin-bottom: 0; pointer-events: none; }
+
+.cfg-conditional { overflow: hidden; transition: max-height 0.2s ease, opacity 0.15s ease, margin 0.2s ease; max-height: 200px; opacity: 1; margin-bottom: 10px; }
+.cfg-conditional.hidden { max-height: 0; opacity: 0; margin-bottom: 0; pointer-events: none; }
 
 /* ── Quotes widget ── */
 .quotes-widget { cursor: pointer; user-select: none; }
@@ -291,11 +298,9 @@ body {
 /* Section dividers */
 .config-section h3 {
   font-size: 12px; fg-conditional { overflow: hidden; transition: max-height 0.2s ease, opacity 0.15s ease, margin 0.2s ease; max-height: 200px; opacity: 1; margin-bottom: 10px; }
-.cfg-conditional.hidden { max-height: 0; opacity: 0; margin-bottom: 0; pointer-events: none; }
+
 
 /* Font picker select */
-.font-select { width: 100%; padding: 7px 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); color: var(--text-primary); font-size: 14px; outline: none; cursor: pointer; }
-.font-select option { background: #1a1a1a; font-size: 14px; padding: 6px 10px; }
 
 .section-editor { background: var(--card-bg-alt); padding: 10px; margin-bottom: 6px; border-left: 2px solid var(--card-accent,var(--accent)); }
 .section-editor-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }

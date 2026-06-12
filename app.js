@@ -1098,8 +1098,10 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   ];
   // Ensure current font is in the list
   if(!TOP_FONTS.find(f=>f.name===curFont)) TOP_FONTS.push({name:curFont,sample:'The quick brown fox jumps'});
-  body.appendChild(el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;','Font'));
-  const fsel=document.createElement('select');fsel.className='font-select';
+  const fg=document.createElement('div');fg.style.cssText='margin-bottom:10px;';
+  fg.appendChild(el('label','display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;','Font'));
+  const fsel=document.createElement('select');
+  fsel.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:13px;outline:none;cursor:pointer;';
   fsel.style.fontFamily=`'${curFont}',sans-serif`;
   TOP_FONTS.forEach(f=>loadGoogleFont(f.name));
   TOP_FONTS.forEach(f=>{
@@ -1114,7 +1116,7 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
     fsel.style.fontFamily=`'${fsel.value}',sans-serif`;
     saveConfig();applyTheme();renderAll();
   });
-  body.appendChild(fsel);  /* ── Status Bar ── */
+  fg.appendChild(fsel);body.appendChild(fg);  /* ── Status Bar ── */
   body.appendChild(ps('Status Bar'));
   body.appendChild(chk('Show',config.statusBar.enabled,v=>{config.statusBar.enabled=v;saveConfig();applyTheme();initStatusBar();renderAll();buildConfigPanel();}));
   body.appendChild(pf('select','','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],config.statusBar.source,v=>{config.statusBar.source=v;saveConfig();initStatusBar();buildConfigPanel();}));
