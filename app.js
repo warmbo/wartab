@@ -299,7 +299,7 @@ var EMOJI_TO_LUCIDE={
 '📝':'edit-3','📦':'package','🏠':'home','🎬':'film','🛡️':'shield',
 '📊':'bar-chart-3','🐳':'container','🔐':'lock','🐙':'github','🦊':'gitlab',
 '📚':'book','🐍':'code-2','💬':'message-circle','▶️':'play','🎮':'gamepad-2',
-'🐦':'twitter','🌍':'globe','⚛️':'atom','📘':'book','⚔️':'sword','🔗':'link',
+'🐦':'x','🌍':'globe','⚛️':'atom','📘':'book','⚔️':'sword','🔗':'link',
 '⚙️':'settings','🌟':'star','🔥':'flame','💡':'lightbulb','🚀':'rocket',
 '⚡':'zap','🎯':'target','🧩':'puzzle','🎨':'palette','📡':'satellite',
 '🔧':'wrench','🗄️':'server','💾':'save','🖨️':'printer','📷':'camera',
@@ -318,12 +318,12 @@ var EMOJI_TO_LUCIDE={
 '🧩':'puzzle','♠️':'spade','♥️':'heart','♦️':'diamond','♣️':'club',
 '✕':'x','🔄':'refresh-cw','🐍':'code-2'};
 function migrateConfigEmojis(cfg){
-  if(cfg.branding&&cfg.branding.icon&&EMOJI_TO_LUCIDE[cfg.branding.icon])cfg.branding.icon=EMOJI_TO_LUCIDE[cfg.branding.icon];
+  if(cfg.branding&&cfg.branding.icon&&EMOJI_TO_LUCIDE[cfg.branding.icon])cfg.branding.icon=EMOJI_TO_LUCIDE[cfg.branding.icon];if(cfg.branding&&cfg.branding.icon==='twitter')cfg.branding.icon='x';
   if(cfg.cards)cfg.cards.forEach(function(card){
-    if(card.icon&&EMOJI_TO_LUCIDE[card.icon])card.icon=EMOJI_TO_LUCIDE[card.icon];
+    if(card.icon&&EMOJI_TO_LUCIDE[card.icon])card.icon=EMOJI_TO_LUCIDE[card.icon];if(card.icon==='twitter')card.icon='x';
     if(card.sections)card.sections.forEach(function(sec){
       if(sec.links)sec.links.forEach(function(link){
-        if(link.icon&&EMOJI_TO_LUCIDE[link.icon])link.icon=EMOJI_TO_LUCIDE[link.icon];
+        if(link.icon&&EMOJI_TO_LUCIDE[link.icon])link.icon=EMOJI_TO_LUCIDE[link.icon];if(link.icon==='twitter')link.icon='x';
       });
     });
   });
@@ -398,7 +398,7 @@ function applyTheme(){
   document.documentElement.dataset.animations=config.theme.animations!==false?'on':'off';
   document.documentElement.dataset.accentBar=config.theme.showAccentBar!==false?'on':'off';
   // Re-render Lucide SVGs (brand icon may have changed)
-  if(typeof lucide!=='undefined')setTimeout(function(){lucide.createIcons();},0);
+  if(typeof lucide!=='undefined')setTimeout(function(){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;},0);
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
 function loadGoogleFont(fn,allowReplace){
