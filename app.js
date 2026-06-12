@@ -412,7 +412,7 @@ function renderCard(card,idx){
     div.style.gridColumn='span '+div.dataset.width;
     if(card.height>1)div.style.gridRow='span '+card.height;
     // Strip ALL visual properties — completely invisible card
-    div.style.cssText+=';background:none!important;border:none!important;box-shadow:none!important;outline:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-width:0;min-height:0;display:block;position:relative;';
+    div.style.cssText+=';background:none!important;border:none!important;box-shadow:none!important;outline:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-width:0;display:block;position:relative;';if(card.minHeight)div.style.minHeight=card.minHeight+'px';
     div.style.setProperty('--card-accent','transparent');
     div.style.setProperty('--card-bg','transparent');
     // Header at same position as regular cards (top-right)
@@ -447,6 +447,7 @@ function renderCardEditor(card,idx){const div=document.createElement('div');div.
 // Gap cards: only show width + group + gap toggle
 if(card._isGap){
   body.appendChild(inlineRange('Width',card.width,1,config.layout.cols,v=>{card.width=parseInt(v);saveConfig();div.dataset.width=Math.min(card.width,config.layout.cols);}));
+  body.appendChild(inlineRange('Min Height (px)',card.minHeight||0,0,400,v=>{card.minHeight=parseInt(v)||0;saveConfig();if(card.minHeight)div.style.minHeight=card.minHeight+'px';else div.style.minHeight='';}));
   const gt2=document.createElement('div');gt2.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;';
   const gc2=document.createElement('input');gc2.type='checkbox';gc2.checked=!!card._isGap;
   gc2.addEventListener('change',()=>{card._isGap=gc2.checked;if(!gc2.checked)card.sections=[{id:'sec-'+uid(),type:'links',label:'Links',links:[{label:'Example',url:'https://example.com',icon:'link'}]}];saveConfig();renderAll();});
