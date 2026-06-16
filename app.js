@@ -1059,7 +1059,7 @@ function migrateConfigEmojis(cfg){
    SECTION 5: UTILITIES
    Helper functions for the entire app.
    ═══════════════════════════════════════════ */
-function isLucideName(s){if(!s||typeof s!=='string')return false;if(s.startsWith('http')||s.startsWith('data:')||s.startsWith('/'))return false;return LUCIDE_ICONS.includes(s);}
+function isLucideName(s){if(!s||typeof s!=='string')return false;if(s.startsWith('http')||s.startsWith('data:')||s.startsWith('/'))return false;if(typeof lucide!=='undefined'&&lucide.icons)return lucide.icons.hasOwnProperty(s);return LUCIDE_ICONS.includes(s);}
 // Render a Lucide icon element (data-lucide attribute for auto-replacement by lucide.createIcons())
 function renderLucideEl(name,cls){var i=document.createElement('i');i.className=cls;i.setAttribute('data-lucide',name);return i;}
 
