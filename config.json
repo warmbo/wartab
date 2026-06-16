@@ -1,0 +1,575 @@
+{
+  "version": "0.2.1",
+  "branding": {
+    "title": "WarTab",
+    "icon": "sword"
+  },
+  "theme": {
+    "bgType": "gradient",
+    "bgValue": "#0a0a0a, #1a1a1a, #0d0d0d",
+    "blur": 20,
+    "glow": "#888888",
+    "fontSize": "medium",
+    "fontFamily": "Inter",
+    "cardBg": "dark",
+    "fontColor": "#cccccc",
+    "cardOpacity": 1,
+    "bgRotate": false,
+    "animations": true,
+    "showAccentBar": true
+  },
+  "statusBar": {
+    "enabled": true,
+    "source": "local",
+    "glancesUrl": "http://localhost:61209",
+    "customUrl": "",
+    "refreshInterval": 15,
+    "items": [
+      "cpu",
+      "memory",
+      "disk",
+      "uptime"
+    ],
+    "hostname": true
+  },
+  "layout": {
+    "cols": 4,
+    "gap": 16,
+    "pageWidth": "full",
+    "paddingHeight": "full"
+  },
+  "search": {
+    "engine": "https://www.google.com/search?q=",
+    "engines": {
+      "Google": "https://www.google.com/search?q=",
+      "DuckDuckGo": "https://duckduckgo.com/?q=",
+      "Brave": "https://search.brave.com/search?q=",
+      "Bing": "https://www.bing.com/search?q=",
+      "YouTube": "https://www.youtube.com/results?search_query=",
+      "Reddit": "https://www.reddit.com/search/?q=",
+      "Wikipedia": "https://en.wikipedia.org/w/index.php?search="
+    },
+    "selected": "Bing",
+    "openInNewTab": true
+  },
+  "cards": [
+    {
+      "id": "clock-card",
+      "title": "Time & Date",
+      "icon": "clock",
+      "color": "#aaaaaa",
+      "width": 1,
+      "sections": [
+        {
+          "id": "clock-main",
+          "type": "clock",
+          "format24h": false,
+          "showDate": true
+        }
+      ]
+    },
+    {
+      "id": "search-card",
+      "title": "Quick Search",
+      "icon": "search",
+      "color": "#999999",
+      "width": 2,
+      "sections": [
+        {
+          "id": "search-main",
+          "type": "search",
+          "engine": "Google",
+          "placeholder": "Search anything...",
+          "label": "Web Search",
+          "collapsed": false
+        }
+      ]
+    },
+    {
+      "id": "notes-card",
+      "title": "Quick Notes",
+      "icon": "edit-3",
+      "color": "#bbbbbb",
+      "width": 1,
+      "sections": [
+        {
+          "id": "notes-main",
+          "type": "notes",
+          "label": "Notes",
+          "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards."
+        }
+      ]
+    },
+    {
+      "id": "daily-drivers",
+      "title": "Daily Drivers",
+      "icon": "globe",
+      "color": "#cccccc",
+      "width": 2,
+      "sections": [
+        {
+          "id": "dev-links",
+          "type": "links",
+          "label": "Development",
+          "links": [
+            {
+              "label": "GitHub",
+              "url": "https://github.com",
+              "icon": "/icons/github.svg"
+            },
+            {
+              "label": "GitLab",
+              "url": "https://gitlab.com",
+              "icon": "/icons/gitlab.svg"
+            },
+            {
+              "label": "Stack Overflow",
+              "url": "https://stackoverflow.com",
+              "icon": "/icons/stackoverflow.svg"
+            },
+            {
+              "label": "npm",
+              "url": "https://www.npmjs.com",
+              "icon": "package"
+            },
+            {
+              "label": "PyPI",
+              "url": "https://pypi.org",
+              "icon": "code-2"
+            }
+          ]
+        },
+        {
+          "id": "media-links",
+          "type": "links",
+          "label": "Media & Social",
+          "links": [
+            {
+              "label": "Reddit",
+              "url": "https://reddit.com",
+              "icon": "/icons/reddit.svg"
+            },
+            {
+              "label": "YouTube",
+              "url": "https://youtube.com",
+              "icon": "/icons/youtube.svg"
+            },
+            {
+              "label": "Twitch",
+              "url": "https://twitch.tv",
+              "icon": "/icons/twitch.svg"
+            },
+            {
+              "label": "X",
+              "url": "https://x.com",
+              "icon": "x"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "selfhosted",
+      "title": "Self-Hosted",
+      "icon": "monitor",
+      "color": "#777777",
+      "width": 2,
+      "sections": [
+        {
+          "id": "sh-services",
+          "type": "links",
+          "label": "Services",
+          "links": [
+            {
+              "label": "Home Assistant",
+              "url": "http://homeassistant.local:8123",
+              "icon": "/icons/homeassistant.svg"
+            },
+            {
+              "label": "Jellyfin",
+              "url": "http://jellyfin.local:8096",
+              "icon": "/icons/jellyfin.svg"
+            },
+            {
+              "label": "Pi-hole",
+              "url": "http://pi.hole/admin",
+              "icon": "/icons/pihole.svg"
+            },
+            {
+              "label": "Grafana",
+              "url": "http://grafana.local:3000",
+              "icon": "/icons/grafana.svg"
+            },
+            {
+              "label": "Portainer",
+              "url": "http://portainer.local:9000",
+              "icon": "/icons/portainer.svg"
+            },
+            {
+              "label": "Vaultwarden",
+              "url": "http://vault.local:8080",
+              "icon": "/icons/vaultwarden.svg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dev-docs",
+      "title": "Dev Docs",
+      "icon": "book-open",
+      "color": "#8a8a8a",
+      "width": 1,
+      "sections": [
+        {
+          "id": "docs-links",
+          "type": "link-list",
+          "label": "References",
+          "links": [
+            {
+              "label": "MDN Web Docs",
+              "url": "https://developer.mozilla.org",
+              "icon": "globe"
+            },
+            {
+              "label": "Python Docs",
+              "url": "https://docs.python.org/3/",
+              "icon": "book"
+            },
+            {
+              "label": "Docker Docs",
+              "url": "https://docs.docker.com",
+              "icon": "/icons/docker.svg"
+            },
+            {
+              "label": "Arch Wiki",
+              "url": "https://wiki.archlinux.org",
+              "icon": "book"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "card-q1wcohemqguw4lr",
+      "title": "",
+      "icon": "AsteriskSquare",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-wvp4khimqguw4lr",
+          "type": "timer",
+          "label": "",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "category": "inspirational",
+          "duration": 3600
+        }
+      ]
+    },
+    {
+      "id": "card-e4l1uy4mqgvyqyb",
+      "title": "",
+      "icon": "package",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-8nfcrfdmqgvyqyb",
+          "type": "quotes",
+          "label": "Quotes",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "quotes": [
+            {
+              "q": "I made this",
+              "a": "Cody"
+            },
+            {
+              "q": "Meat scissors",
+              "a": "God"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pages": {
+    "page-fjpy1g4mqguw1x3": {
+      "name": "Page 1",
+      "icon": "layout",
+      "cards": [
+        {
+          "id": "clock-card",
+          "title": "Time & Date",
+          "icon": "clock",
+          "color": "#aaaaaa",
+          "width": 1,
+          "sections": [
+            {
+              "id": "clock-main",
+              "type": "clock",
+              "format24h": false,
+              "showDate": true
+            }
+          ]
+        },
+        {
+          "id": "search-card",
+          "title": "Quick Search",
+          "icon": "search",
+          "color": "#999999",
+          "width": 2,
+          "sections": [
+            {
+              "id": "search-main",
+              "type": "search",
+              "engine": "Google",
+              "placeholder": "Search anything...",
+              "label": "Web Search",
+              "collapsed": false
+            }
+          ]
+        },
+        {
+          "id": "notes-card",
+          "title": "Quick Notes",
+          "icon": "edit-3",
+          "color": "#bbbbbb",
+          "width": 1,
+          "sections": [
+            {
+              "id": "notes-main",
+              "type": "notes",
+              "label": "Notes",
+              "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards."
+            }
+          ]
+        },
+        {
+          "id": "daily-drivers",
+          "title": "Daily Drivers",
+          "icon": "globe",
+          "color": "#cccccc",
+          "width": 2,
+          "sections": [
+            {
+              "id": "dev-links",
+              "type": "links",
+              "label": "Development",
+              "links": [
+                {
+                  "label": "GitHub",
+                  "url": "https://github.com",
+                  "icon": "/icons/github.svg"
+                },
+                {
+                  "label": "GitLab",
+                  "url": "https://gitlab.com",
+                  "icon": "/icons/gitlab.svg"
+                },
+                {
+                  "label": "Stack Overflow",
+                  "url": "https://stackoverflow.com",
+                  "icon": "/icons/stackoverflow.svg"
+                },
+                {
+                  "label": "npm",
+                  "url": "https://www.npmjs.com",
+                  "icon": "package"
+                },
+                {
+                  "label": "PyPI",
+                  "url": "https://pypi.org",
+                  "icon": "code-2"
+                }
+              ]
+            },
+            {
+              "id": "media-links",
+              "type": "links",
+              "label": "Media & Social",
+              "links": [
+                {
+                  "label": "Reddit",
+                  "url": "https://reddit.com",
+                  "icon": "/icons/reddit.svg"
+                },
+                {
+                  "label": "YouTube",
+                  "url": "https://youtube.com",
+                  "icon": "/icons/youtube.svg"
+                },
+                {
+                  "label": "Twitch",
+                  "url": "https://twitch.tv",
+                  "icon": "/icons/twitch.svg"
+                },
+                {
+                  "label": "X",
+                  "url": "https://x.com",
+                  "icon": "x"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "selfhosted",
+          "title": "Self-Hosted",
+          "icon": "monitor",
+          "color": "#777777",
+          "width": 2,
+          "sections": [
+            {
+              "id": "sh-services",
+              "type": "links",
+              "label": "Services",
+              "links": [
+                {
+                  "label": "Home Assistant",
+                  "url": "http://homeassistant.local:8123",
+                  "icon": "/icons/homeassistant.svg"
+                },
+                {
+                  "label": "Jellyfin",
+                  "url": "http://jellyfin.local:8096",
+                  "icon": "/icons/jellyfin.svg"
+                },
+                {
+                  "label": "Pi-hole",
+                  "url": "http://pi.hole/admin",
+                  "icon": "/icons/pihole.svg"
+                },
+                {
+                  "label": "Grafana",
+                  "url": "http://grafana.local:3000",
+                  "icon": "/icons/grafana.svg"
+                },
+                {
+                  "label": "Portainer",
+                  "url": "http://portainer.local:9000",
+                  "icon": "/icons/portainer.svg"
+                },
+                {
+                  "label": "Vaultwarden",
+                  "url": "http://vault.local:8080",
+                  "icon": "/icons/vaultwarden.svg"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "dev-docs",
+          "title": "Dev Docs",
+          "icon": "book-open",
+          "color": "#8a8a8a",
+          "width": 1,
+          "sections": [
+            {
+              "id": "docs-links",
+              "type": "link-list",
+              "label": "References",
+              "links": [
+                {
+                  "label": "MDN Web Docs",
+                  "url": "https://developer.mozilla.org",
+                  "icon": "globe"
+                },
+                {
+                  "label": "Python Docs",
+                  "url": "https://docs.python.org/3/",
+                  "icon": "book"
+                },
+                {
+                  "label": "Docker Docs",
+                  "url": "https://docs.docker.com",
+                  "icon": "/icons/docker.svg"
+                },
+                {
+                  "label": "Arch Wiki",
+                  "url": "https://wiki.archlinux.org",
+                  "icon": "book"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "card-q1wcohemqguw4lr",
+          "title": "",
+          "icon": "AsteriskSquare",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-wvp4khimqguw4lr",
+              "type": "timer",
+              "label": "",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "category": "inspirational",
+              "duration": 3600
+            }
+          ]
+        },
+        {
+          "id": "card-e4l1uy4mqgvyqyb",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-8nfcrfdmqgvyqyb",
+              "type": "quotes",
+              "label": "Quotes",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "quotes": [
+                {
+                  "q": "I made this",
+                  "a": "Cody"
+                },
+                {
+                  "q": "Meat scissors",
+                  "a": "God"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "pageOrder": [
+    "page-fjpy1g4mqguw1x3"
+  ],
+  "currentPage": "page-fjpy1g4mqguw1x3"
+}

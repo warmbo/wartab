@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WarTab</title>
   <link rel="stylesheet" href="/static/fonts/inter.css">
-  <link rel="stylesheet" href="style.css?v=20260612">
+  <link rel="stylesheet" href="style.css?v=20260615-5">
+  <style>button.card-edit-btn,.card .drag-handle{background:none!important;background-color:transparent!important;border:none!important;opacity:.25!important;transition:opacity .15s;cursor:pointer;color:var(--text-tertiary)}.card:hover button.card-edit-btn,.card:hover .drag-handle,.card button.card-edit-btn:hover,.card .drag-handle:hover{opacity:1!important;color:var(--text-primary)!important}</style>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
   <script src="/static/lucide.min.js" defer></script>
-  <script src="app.js?v=20260612"></script>
+  <script src="app.js?v=20260615-4"></script>
 </head>
 <body>
   <div id="bg-canvas"></div>
@@ -18,11 +19,15 @@
       <div class="brand" id="brand-text"><span>⚔️</span><span>WarTab</span></div>
       <div id="top-stats"></div>
       <div id="top-actions">
-        <button class="btn btn-glass btn-icon" id="btn-add-card" title="Add a new card">➕</button>
-        <button class="btn btn-glass btn-icon" id="btn-config" title="Configure WarTab">⚙️</button>
+        <button class="btn btn-glass btn-icon" id="btn-add-card" title="Add a new card"><i data-lucide="plus"></i></button>
+        <button class="btn btn-glass btn-icon" id="btn-config" title="Configure WarTab"><i data-lucide="settings"></i></button>
       </div>
     </div>
     <div id="card-grid"></div>
+    <div id="page-bar">
+      <div id="page-tabs"></div>
+      <button class="btn btn-glass btn-icon btn-sm" id="btn-add-page" title="Add page"><i data-lucide="plus"></i></button>
+    </div>
   </div>
 
   <!-- Footer -->
@@ -34,7 +39,7 @@
   <div class="config-overlay" id="config-overlay"></div>
   <div class="config-panel" id="config-panel">
     <div class="config-header">
-      <h2 id="config-header-title">⚙️ WarTab Config</h2>
+      <h2 id="config-header-title"><i data-lucide="settings"></i> WarTab Config</h2>
       <button class="btn btn-glass" id="config-close">✕</button>
     </div>
     <div class="config-body" id="config-body"></div>
@@ -48,9 +53,9 @@
     </div>
     <div class="icon-picker-body">
       <div class="icon-picker-tabs">
-        <button class="ip-tab active" data-tab="library">Services</button>
-        <button class="ip-tab" data-tab="icons">Icons</button>
-        <button class="ip-tab" data-tab="url">URL</button>
+        <button class="ip-tab active" data-tab="icons">Icons</button>
+        <button class="ip-tab" data-tab="library">Services</button>
+        <button class="ip-tab" data-tab="upload">Upload</button>
       </div>
       <div id="icon-picker-content"></div>
     </div>
@@ -77,5 +82,601 @@
   </div>
 
   <div class="toast-container" id="toast-container"></div>
+<script>
+(function(){
+  function wrapConfigSections(){
+    var body=document.getElementById('config-body');
+    if(!body)return;
+    // Check if already wrapped
+    if(body.querySelector('.cs-panel.cp-config-card')) return;
+    var sections=[], cur=null;
+    Array.from(body.children).forEach(function(el){
+      var h3=el.querySelector('h3');
+      if(h3&&!el.querySelector('input,select,button')){
+        if(cur)sections.push(cur);
+        cur={header:el,fields:[]};
+      }else if(cur){
+        cur.fields.push(el);
+      }
+    });
+    if(cur)sections.push(cur);
+    sections.forEach(function(s){
+      var wrap=document.createElement('div');
+      wrap.className='cs-panel cp-config-card';
+      s.header.parentNode.insertBefore(wrap,s.header);
+      wrap.appendChild(s.header);
+      s.fields.forEach(function(f){wrap.appendChild(f);});
+    });
+  }
+  // Override buildConfigPanel to wrap after each build
+  var origCfg = window.buildConfigPanel;
+  if(origCfg){
+    window.buildConfigPanel = function(){
+      origCfg();
+      wrapConfigSections();
+    };
+  }
+})();
+
+/* ── Edit panel footer: Save / Discard / Delete ── */
+(function(){
+  var orig = window.buildCardEditPanel;
+  if(!orig) return;
+  window.buildCardEditPanel = function(card){
+    orig(card);
+    // Render Lucide icons in the edit panel
+    if(typeof lucide !== 'undefined'){
+      setTimeout(function(){
+        var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+        lucide.createIcons();
+        console.warn=_lw;
+      }, 0);
+    }
+    // Fix ALL icon preview elements: replace text with proper img/Lucide rendering
+    fixIconPreviews(document.getElementById('edit-panel-body'));
+    // Replace footer buttons using card.id from the parameter
+    var cid = card && card.id;
+    var body = document.getElementById('edit-panel-body');
+    if(!body || !cid) return;
+    var foot = body.querySelector('.cp-footer');
+    if(!foot) return;
+    foot.innerHTML = '';
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-glass btn-sm'; saveBtn.textContent = 'Save';
+    saveBtn.style.cssText = 'flex:1;justify-content:center;padding:10px 14px;font-size:11px;background:linear-gradient(180deg,rgba(255,255,255,0.14)0%,rgba(255,255,255,0.07)50%,rgba(0,0,0,0.02)100%);';
+    saveBtn.addEventListener('click', function(){
+      if(window.saveConfig) window.saveConfig();
+      if(window.closeCardEditPanel) window.closeCardEditPanel();
+    });
+    foot.appendChild(saveBtn);
+    var discardBtn = document.createElement('button');
+    discardBtn.className = 'btn btn-glass btn-sm'; discardBtn.textContent = 'Discard';
+    discardBtn.style.cssText = 'flex:1;justify-content:center;padding:10px 14px;font-size:11px;';
+    discardBtn.addEventListener('click', function(){
+      if(window.loadConfig) window.loadConfig();
+      if(window.renderAll) window.renderAll();
+      if(window.closeCardEditPanel) window.closeCardEditPanel();
+    });
+    foot.appendChild(discardBtn);
+    var delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-glass btn-sm btn-danger'; delBtn.textContent = 'Delete';
+    delBtn.style.cssText = 'flex:1;justify-content:center;padding:10px 14px;font-size:11px;';
+    // Store cardId as a property so it survives rebuilds
+    foot.dataset.deleteCardId = cid;
+    delBtn.addEventListener('click', function(){
+      var cid2 = foot.dataset.deleteCardId;
+      var cards = config.cards;
+      if(!cards || !cid2) { alert('No cards or no cardId'); return; }
+      var idx = cards.findIndex(function(c){return c.id===cid2;});
+      if(idx<0) { alert('Card not found: '+cid2); return; }
+      var name = cards[idx].title || 'card';
+      showConfirm('Delete "'+name+'"?' , function(){
+        var snap = JSON.parse(JSON.stringify(cards));
+        cards.splice(idx,1);
+        closeCardEditPanel();
+        saveConfig();
+        renderAll();
+        toastWithUndo('Card deleted', function(){config.cards=snap;saveConfig();renderAll();});
+      });
+    });
+    foot.appendChild(delBtn);
+  };
+})();
+
+/* ── Confirmation modal ── */
+function showConfirm(msg, onConfirm){
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:linear-gradient(180deg,rgba(16,16,16,0.98)0%,rgba(10,10,10,0.98)100%);border:1px solid rgba(255,255,255,0.10);padding:28px 32px;max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.5);';
+  var txt = document.createElement('div');
+  txt.style.cssText = 'font-size:14px;color:rgba(255,255,255,0.92);margin-bottom:24px;line-height:1.6;';
+  txt.textContent = msg;
+  box.appendChild(txt);
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-glass btn-sm';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.style.cssText = 'padding:8px 20px;font-size:12px;';
+  cancelBtn.addEventListener('click', function(){ overlay.remove(); });
+  btnRow.appendChild(cancelBtn);
+  var okBtn = document.createElement('button');
+  okBtn.className = 'btn btn-glass btn-sm btn-danger';
+  okBtn.textContent = 'Delete';
+  okBtn.style.cssText = 'padding:8px 20px;font-size:12px;';
+  okBtn.addEventListener('click', function(){ overlay.remove(); if(onConfirm) onConfirm(); });
+  btnRow.appendChild(okBtn);
+  box.appendChild(btnRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+/* ── Server-side config persistence ── */
+(function(){
+  var origSave = window.saveConfig;
+  var origLoad = window.loadConfig;
+  if(!origSave || !origLoad) return;
+
+  // Load from server first (sync), fall back to localStorage
+  window.loadConfig = function(){
+    var loaded = false;
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/api/config', false);
+      xhr.send();
+      if(xhr.status === 200){
+        var d = JSON.parse(xhr.responseText);
+        if(d && d.cards && d.cards.length > 0){
+          config = deepMerge(cloneObj(DEFAULT_CONFIG), d);
+          loaded = true;
+        }
+      }
+    } catch(e){}
+    if(!loaded) origLoad();
+  };
+
+  window.saveConfig = function(){
+    origSave();
+    try {
+      var x = new XMLHttpRequest();
+      x.open('POST', '/api/config', false);
+      x.setRequestHeader('Content-Type', 'application/json');
+      x.send(JSON.stringify(config));
+    } catch(e){}
+  };
+})();
+
+/* ── Convert section-title to dropdown-toggle (matching links module exactly) ── */
+(function(){
+  function convertSections(){
+    document.querySelectorAll('.section-title').forEach(function(title){
+      if(title._converted) return;
+      title._converted = true;
+      var parent = title.parentNode;
+      if(!parent) return;
+      var content = parent.querySelector('.section-content');
+      if(!content) return;
+      var tog = title.querySelector('.section-toggle');
+      if(!tog) return;
+      
+      var label = (title.textContent || '').replace(/[▶▼\s]+/g,' ').trim();
+      var isOpen = !content.classList.contains('collapsed');
+      
+      var btn = document.createElement('button');
+      btn.className = 'dropdown-toggle' + (isOpen ? ' open' : '');
+      btn.innerHTML = escAttr(label) + ' <span class="arrow">▶</span>';
+      
+      content.className = 'dropdown-content' + (isOpen ? ' open' : '');
+      
+      // Find section config using the section ID embedded in the DOM
+      var secRef = null;
+      var secId = title.dataset.secId || '';
+      if(secId && typeof config !== 'undefined' && config){
+        for(var ci=0; ci<config.cards.length; ci++){
+          var secs = config.cards[ci].sections || [];
+          for(var si=0; si<secs.length; si++){
+            if(secs[si].id === secId){
+              secRef = secs[si]; break;
+            }
+          }
+          if(secRef) break;
+        }
+      }
+      // Store section ID on button for click handler (always set from DOM source)
+      btn.dataset.secId = secId;
+      
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(secRef) secRef.collapsed = !secRef.collapsed;
+        // Fallback: lookup by stored section ID in any card
+        if(!secRef && this.dataset.secId && typeof config !== 'undefined' && config){
+          for(var ci=0; ci<config.cards.length; ci++){
+            var secs = config.cards[ci].sections || [];
+            for(var si=0; si<secs.length; si++){
+              if(secs[si].id === this.dataset.secId){
+                secs[si].collapsed = !secs[si].collapsed; break;
+              }
+            }
+          }
+        }
+        this.classList.toggle('open');
+        var c = this.nextElementSibling;
+        while(c && !c.classList.contains('dropdown-content')) c = c.nextElementSibling;
+        if(c) {
+          var opening = !c.classList.contains('open');
+          if(opening) {
+            c.style.display = '';
+            // Double rAF: wait for layout to register the element, then animate
+            requestAnimationFrame(function(){
+              requestAnimationFrame(function(){ c.classList.add('open'); });
+            });
+          } else {
+            c.classList.remove('open');
+            clearTimeout(c._closeTimer);
+            c._closeTimer = setTimeout(function(){ if(!c.classList.contains('open')) c.style.display = 'none'; }, 300);
+          }
+        }
+        if(window.saveConfig) window.saveConfig();
+      });
+      
+      title.parentNode.replaceChild(btn, title);
+    });
+  }
+  
+  // Poll for unconverted sections and convert them
+  setInterval(function(){
+    var titles = document.querySelectorAll('.section-title:not(._converted)');
+    if(titles.length) convertSections();
+  }, 200);
+  // Run on load too
+  if(document.readyState === 'complete') setTimeout(convertSections, 50);
+  else window.addEventListener('load', function(){ setTimeout(convertSections, 50); });
+})();
+
+/* ── Universal icon preview fixer ── */
+function fixIconPreviews(root){
+  if(!root) return;
+  // Fix .cs-icon-preview elements (edit panel + config panel card settings)
+  root.querySelectorAll('.cs-icon-preview').forEach(function(el){
+    var txt = (el.textContent || '').trim();
+    if(!txt) return;
+    // Has children (already has img or i element) — skip
+    if(el.children.length > 0) return;
+    // Is a path like /icons/xxx.svg — render as img
+    if(txt.match(/^\/icons\//) || txt.match(/^https?:\/\//) || txt.match(/^data:/)){
+      el.textContent = '';
+      var img = document.createElement('img');
+      img.src = txt;
+      img.style.cssText = 'width:20px;height:20px;object-fit:contain;';
+      img.onerror = function(){ this.style.display='none'; };
+      el.appendChild(img);
+      return;
+    }
+    // Is a Lucide icon name — render as i[data-lucide]
+    if(typeof isLucideName !== 'undefined' && isLucideName(txt)){
+      el.textContent = '';
+      var i = document.createElement('i');
+      i.setAttribute('data-lucide', txt);
+      i.style.cssText = 'width:20px;height:20px;';
+      el.appendChild(i);
+      return;
+    }
+    // Is an emoji — keep as text (emoji-icon class handles sizing)
+  });
+  // Fix brand-icon elements (top bar branding)
+  root.querySelectorAll('.brand-icon').forEach(function(el){
+    var txt = (el.textContent || '').trim();
+    if(!txt || el.children.length > 0) return;
+    if(txt.match(/^\/icons\//) || txt.match(/^https?:\/\//) || txt.match(/^data:/)){
+      el.innerHTML = '<img src="'+txt.replace(/"/g,'&quot;')+'" style="width:24px;height:24px;object-fit:contain;">';
+    }
+  });
+}
+
+// Hook into config panel build to fix its icon previews
+(function(){
+  var origCfgPanel = window.buildConfigPanel;
+  if(origCfgPanel){
+    window.buildConfigPanel = function(){
+      origCfgPanel();
+      setTimeout(function(){
+        // Render Lucide icons in config panel
+        if(typeof lucide !== 'undefined'){
+          var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+          lucide.createIcons();
+          console.warn=_lw;
+        }
+        fixIconPreviews(document.getElementById('config-body'));
+      }, 0);
+    };
+  }
+})();
+
+/* ── Fix icon search: call lucide.createIcons after filtering ── */
+(function(){
+  function patchIconSearch(){
+    var s = document.querySelector('#icon-picker-content .icon-search-bar');
+    if(!s) return;
+    // Add a listener after the original ri() rebuilds the grid
+    s.addEventListener('input', function(){
+      setTimeout(function(){
+        if(typeof lucide!=='undefined'){
+          var _lw=console.warn; console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+          lucide.createIcons();
+          console.warn=_lw;
+        }
+      }, 30);
+    });
+  }
+  // Watch the content area for when the Icons/Emoji tab rebuilds the search bar
+  var obs2 = new MutationObserver(function(){
+    if(document.querySelector('#icon-picker-content .icon-search-bar')){
+      setTimeout(patchIconSearch, 50);
+    }
+  });
+  var check2 = setInterval(function(){
+    var c = document.getElementById('icon-picker-content');
+    if(c){ obs2.observe(c, {childList:true, subtree:true}); clearInterval(check2); }
+  }, 100);
+})();
+
+/* ── Icon upload: resize to 256x256 ── */
+(function(){
+  window.buildUploadTab = function(c){
+    var z=document.createElement('div');z.className='upload-zone';
+    z.innerHTML='<div style="font-size:36px;">📁</div><p>Click to upload an icon image<br><span style="font-size:10px;color:var(--text-tertiary);">Auto-resized to 256×256</span></p>';
+    c.appendChild(z);
+    var fi=document.createElement('input');fi.type='file';fi.accept='image/png,image/svg+xml,image/webp,image/jpeg,image/gif';
+    fi.style.display='none';
+    fi.addEventListener('change',function(e){
+      var file=e.target.files[0];if(!file)return;
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        var img=new Image();
+        img.onload=function(){
+          // Resize to 256x256
+          var c2=document.createElement('canvas');c2.width=256;c2.height=256;
+          var ctx=c2.getContext('2d');
+          // Cover fit: scale to fill, center crop
+          var s=Math.max(256/img.width,256/img.height);
+          var dx=(256-img.width*s)/2, dy=(256-img.height*s)/2;
+          ctx.drawImage(img,dx,dy,img.width*s,img.height*s);
+          var dataUrl=c2.toDataURL('image/png');
+          if(window.selectIcon) window.selectIcon(dataUrl);
+        };
+        img.src=ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    z.addEventListener('click',function(){fi.click();});
+    c.appendChild(fi);
+  };
+})();
+
+/* ── Expand emoji list with all system emojis ── */
+(function(){
+  var extraEmojis = [
+    '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','🥰','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐','😯','😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','☹️','🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱','🥵','🥶','😳','🤪','😵','😡','😠','🤬','👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦵','🦶','👂','🦻','👃','🧠','🦷','🦴','👀','👁','👅','👄','💋','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵','🙍','🙎','🙅','🙆','💁','🙋','🧏','🙇','🤦','🤷','👮','🕵','💂','🥷','👷','🤴','👸','👳','👲','🧕','🤵','👰','🤰','🤱','👼','🎅','🤶','🦸','🦹','🧙','🧚','🧛','🧜','🧝','🧞','🧟','🧌','💆','💇','🚶','🧍','🧎','🏃','💃','🕺','🕴','👯','🧖','🧗','🤸','⛹','🏋','🏌','🏄','🚣','🏊','🤽','🤼','🤾','🧘','🛀','🛌','👭','👫','👬','💏','💑','👪','👨‍👩‍👧','👨‍👩‍👧‍👦','👨‍👩‍👦‍👦','👨‍👩‍👧‍👧','👩‍👩‍👦','👩‍👩‍👧','👩‍👩‍👧‍👦','👩‍👩‍👦‍👦','👨‍👨‍👦','👨‍👨‍👧','👨‍👨‍👧‍👦','👨‍👨‍👦‍👦','👩‍👦','👩‍👧','👩‍👧‍👦','👩‍👦‍👦','👩‍👧‍👧','👨‍👦','👨‍👧','👨‍👧‍👦','👨‍👦‍👦','👨‍👧‍👧','🧑‍🧑‍🧒','🧑‍🧑‍🧒‍🧒','🧑‍🧒','🧑‍🧒‍🧒','👓','🕶','🥽','🥼','🦺','👔','👕','👖','🧣','🧤','🧥','🧦','👗','👘','🥻','🩱','🩲','🩳','👙','👚','👛','👜','👝','🎒','🩴','👞','👟','🥾','🥿','👠','👡','🩰','👢','👑','👒','🎩','🎓','🧢','🪖','⛑','📿','💄','💍','💎','🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐒','🐔','🐧','🐦','🐤','🐣','🐥','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🪱','🐛','🦋','🐌','🐞','🐜','🪰','🪲','🪳','🦟','🦗','🕷','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐅','🐆','🦓','🦍','🦧','🐘','🦛','🦏','🐪','🐫','🦒','🦘','🦬','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🦮','🐕‍🦺','🐈','🐈‍⬛','🪶','🐓','🦃','🦤','🦚','🦜','🦢','🦩','🕊','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐁','🐀','🐿','🦔','🐾','🐉','🐲','🌵','🎄','🌲','🌳','🌴','🌱','🌿','☘️','🍀','🎍','🎋','🍃','🍂','🍁','🍄','🐚','🪨','🌾','💐','🌷','🌹','🥀','🌺','🌸','🌼','🌻','🌞','🌝','🌛','🌜','🌚','🌕','🌖','🌗','🌘','🌑','🌒','🌓','🌔','🌙','🌎','🌍','🌏','🪐','💫','⭐','🌟','✨','⚡','☄','💥','🔥','🌪','🌈','☀️','🌤','⛅','🌥','☁️','🌦','🌧','⛈','🌩','🌨','❄️','☃','⛄','🌬','💨','💧','💦','🫧','☔','☂','🌊','🌫','🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶','🫑','🌽','🥕','🫒','🧄','🧅','🥔','🍠','🫘','🥐','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🦴','🌭','🍔','🍟','🍕','🫓','🥪','🥙','🧆','🌮','🌯','🫔','🥗','🥘','🫕','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯','🥛','🍼','🫖','☕','🍵','🧃','🥤','🧋','🍶','🍺','🍻','🥂','🍷','🫗','🥃','🍸','🍹','🧉','🍾','🧊','🥄','🍴','🍽','🥣','🥡','🥢','🧂','⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸','🥌','🎿','⛷','🏂','🪂','🏋','🤼','🤸','🤺','⛹','🤾','🏌','🏄','🏊','🤽','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖','🏵','🎗','🎫','🎟','🎪','🤹','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🪘','🎷','🎺','🪗','🎸','🪕','🎻','🎲','♟','🎯','🎳','🎮','🕹','🎰','🧩','🚗','🚙','🚕','🚌','🚎','🏎','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍','🛵','🛺','🚲','🛴','🛹','🚏','🛣','🛤','⛽','🛞','🚨','🚥','🚦','🛑','🚧','⚓','🛳','⛵','🛶','🚤','🛴','🛸','🚁','🛩','✈','🛫','🛬','🚀','🛰','💺','🚢','🛟','🧳','⌛','⏳','⌚','⏰','⏱','⏲','🕰','🕛','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚','📯','📻','📱','📲','☎','📞','📟','📠','🔋','🪫','🔌','💻','🖥','🖨','⌨','🖱','🖲','💽','💾','💿','📀','🧮','🎥','🎞','📽','🎬','📺','📷','📸','📹','📼','🔍','🔎','🕯','💡','🔦','🏮','🪔','📔','📕','📖','📗','📘','📙','📚','📓','📒','📃','📜','📄','📰','🗞','📑','🔖','🏷','💰','🪙','💴','💵','💶','💷','💸','💳','🧾','✉','📧','📨','📩','📤','📥','📦','📫','📪','📬','📭','📮','🗳','✏','✒','🖋','🖊','🖌','🖍','📝','📁','📂','🗂','📅','📆','🗒','🗓','📇','📈','📉','📊','📋','📌','📍','📎','🖇','📏','📐','✂','🗃','🗄','🗑','🔑','🗝','🔨','🪓','⛏','⚒','🛠','🗡','⚔','💣','🪃','🏹','🛡','🔧','🔩','⚙','🗜','⚖','🦯','🔗','⛓','🪝','🧰','🧲','🪜','⚗','🧪','🧫','🧬','🔬','🔭','📡','💉','🩸','💊','🩹','🩺','🚪','🛗','🪞','🪟','🛏','🛋','🪑','🚽','🪠','🚿','🛁','🪤','🪒','🧴','🧷','🧹','🧺','🧻','🪣','🧼','🫧','🪥','🧽','🧯','🛒','🚬','⚰','🪦','⚱','🗿','🪧','🪪','🏧','🚮','🚰','♿','🚹','🚺','🚻','🚼','🚾','🛂','🛃','🛄','🛅','⚠','🚸','⛔','🚫','🚳','🚭','🚯','🚱','🚵','🔞','☢','☣','⬆','↗','➡','↘','⬇','↙','⬅','↖','↕','↔','↩','↪','⤴','⤵','🔃','🔄','🔙','🔚','🔛','🔜','🔝','🛐','⚛','🕉','✡','☸','☯','✝','☦','☪','☮','🕎','🔯','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','⛎','🔀','🔁','🔂','▶','⏩','⏭','⏯','◀','⏪','⏮','🔼','⏫','🔽','⏬','⏸','⏹','⏺','⏏','🎦','🔅','🔆','📶','📳','📴','♀','♂','⚧','✖','➕','➖','➗','🟰','♾','‼','⁉','❓','❔','❕','❗','〰','💱','💲','⚕','♻','⚜','🔱','📛','🔰','⭕','✅','☑','✔','❌','❎','➰','➿','〽','✳','✴','❇','©','®','™','🔟','🔠','🔡','🔢','🔣','🔤','🅰','🆎','🅱','🆑','🆒','🆓','ℹ','🆔','Ⓜ','🆕','🆖','🅾','🆗','🅿','🆘','🆙','🆚','🈁','🈂','🈷','🈶','🈯','🉐','🈹','🈚','🈲','🉑','🈸','🈴','🈳','㊗','㊙','🈺','🈵','🔴','🟠','🟡','🟢','🔵','🟣','🟤','⚫','⚪','🟥','🟧','🟨','🟩','🟦','🟪','🟫','⬛','⬜','◼','◻','◾','◽','▪','▫','🔶','🔷','🔸','🔹','🔺','🔻','💠','🔘','🔳','🔲','🏁','🚩','🎌','🏴','🏳','🏳️‍🌈','🏳️‍⚧️','🏴‍☠️'
+  ];
+  // Deduplicate and add to EMOJIS
+  if(typeof EMOJIS !== 'undefined'){
+    extraEmojis.forEach(function(e){
+      if(EMOJIS.indexOf(e) === -1) EMOJIS.push(e);
+    });
+  }
+})();
+
+/* ── Fix branding icon render for URL-based icons (services) ── */
+(function(){
+  var origApply = window.applyTheme;
+  if(!origApply) return;
+  window.applyTheme = function(){
+    origApply();
+    var brand = document.getElementById('brand-text');
+    if(!brand) return;
+    var cfg = typeof config !== 'undefined' ? config : null;
+    if(!cfg) return;
+    var b2 = cfg.branding || {title:'WarTab', icon:'sword'};
+    var bi = b2.icon || 'sword';
+    if(!(bi.startsWith('http') || bi.startsWith('data:') || bi.startsWith('/'))) return; // only patch URL icons
+    brand.innerHTML = '<span class="brand-icon"><img src="'+bi.replace(/"/g,'&quot;')+'" style="width:24px;height:24px;object-fit:contain;"></span><span>'+escAttr(b2.title||'WarTab')+'</span>';
+  };
+})();
+
+/* ── Add missing selfhosted icons to the picker ── */
+(function(){
+  if(typeof ICON_REPO === 'undefined') return;
+  var existing = {};
+  ICON_REPO.forEach(function(i){ existing[i.file] = true; });
+  var missing = [
+    {name:'Alpine Linux',file:'alpine',tags:['linux','os','lightweight']},
+    {name:'Ansible',file:'ansible',tags:['automation','config','devops']},
+    {name:'Apache',file:'apache',tags:['web','server','proxy']},
+    {name:'Arch Linux',file:'archlinux',tags:['linux','os','rolling']},
+    {name:'Audiobookshelf',file:'audiobookshelf',tags:['media','books','audio']},
+    {name:'BookStack',file:'bookstack',tags:['wiki','docs','knowledge']},
+    {name:'Borg',file:'borg',tags:['backup','deduplication']},
+    {name:'Calibre',file:'calibre',tags:['books','library','ebooks']},
+    {name:'CasaOS',file:'casaos',tags:['os','home','server']},
+    {name:'Changedetection',file:'changedetection',tags:['monitoring','alerts','web']},
+    {name:'Chrome',file:'chrome',tags:['browser','web','google']},
+    {name:'Cloudflare',file:'cloudflare',tags:['dns','cdn','proxy','security']},
+    {name:'Cockpit',file:'cockpit',tags:['server','admin','management']},
+    {name:'Dashy',file:'dashy',tags:['dashboard','homelab']},
+    {name:'Debian',file:'debian',tags:['linux','os','stable']},
+    {name:'Discord',file:'discord',tags:['chat','social','gaming']},
+    {name:'Diun',file:'diun',tags:['docker','monitoring','updates']},
+    {name:'Dockge',file:'dockge',tags:['docker','compose','management']},
+    {name:'Dozzle',file:'dozzle',tags:['docker','logs','monitoring']},
+    {name:'Duplicati',file:'duplicati',tags:['backup','encryption']},
+    {name:'ESPHome',file:'esphome',tags:['iot','smart home','firmware']},
+    {name:'FileBrowser',file:'filebrowser',tags:['files','web','manager']},
+    {name:'Firefox',file:'firefox',tags:['browser','web','mozilla']},
+    {name:'FlareSolverr',file:'flaresolverr',tags:['proxy','captcha','solver']},
+    {name:'FreshRSS',file:'freshrss',tags:['rss','feeds','news']},
+    {name:'Frigate',file:'frigate',tags:['nvr','camera','ai','object detection']},
+    {name:'Git',file:'git',tags:['vcs','version control','code']},
+    {name:'Gitea',file:'gitea',tags:['git','selfhosted','forge']},
+    {name:'HAProxy',file:'haproxy',tags:['proxy','loadbalancer','network']},
+    {name:'HedgeDoc',file:'hedgedoc',tags:['notes','markdown','collaboration']},
+    {name:'Heimdall',file:'heimdall',tags:['dashboard','homelab','startpage']},
+    {name:'Homebridge',file:'homebridge',tags:['homekit','smart home','bridge']},
+    {name:'Homer',file:'homer',tags:['dashboard','homelab','startpage']},
+    {name:'Immich',file:'immich',tags:['photos','backup','gallery']},
+    {name:'InfluxDB',file:'influxdb',tags:['database','timeseries','metrics']},
+    {name:'Jackett',file:'jackett',tags:['torrent','indexer','media']},
+    {name:'Jellyseerr',file:'jellyseerr',tags:['media','requests','jellyfin']},
+    {name:'Jenkins',file:'jenkins',tags:['ci','cd','automation','devops']},
+    {name:'Komodo',file:'komodo',tags:['ide','editor','code']},
+    {name:'Kubernetes',file:'kubernetes',tags:['container','orchestration','k8s']},
+    {name:'Mattermost',file:'mattermost',tags:['chat','team','communication']},
+    {name:'Matrix',file:'matrix',tags:['chat','federated','communication']},
+    {name:'Memos',file:'memos',tags:['notes','journal','selfhosted']},
+    {name:'Miniflux',file:'miniflux',tags:['rss','feeds','news','minimal']},
+    {name:'MongoDB',file:'mongodb',tags:['database','nosql','document']},
+    {name:'Mosquitto',file:'mosquitto',tags:['mqtt','iot','broker']},
+    {name:'MQTT',file:'mqtt',tags:['iot','protocol','messaging']},
+    {name:'MySQL',file:'mysql',tags:['database','sql','relational']},
+    {name:'N8N',file:'n8n',tags:['automation','workflow','nocode']},
+    {name:'Navidrome',file:'navidrome',tags:['music','streaming','audio']},
+    {name:'Netdata',file:'netdata',tags:['monitoring','metrics','realtime']},
+    {name:'nginxproxymanager',file:'nginxproxymanager',tags:['proxy','ssl','reverse-proxy']},
+    {name:'Node.js',file:'nodejs',tags:['javascript','runtime','server']},
+    {name:'Node-RED',file:'nodered',tags:['automation','iot','flow']},
+    {name:'n8n',file:'n8n',tags:['automation','workflow','nocode']},
+    {name:'Ombi',file:'ombi',tags:['media','requests','plex']},
+    {name:'OpenMediaVault',file:'openmediavault',tags:['nas','storage','linux']},
+    {name:'OpenVPN',file:'openvpn',tags:['vpn','network','security']},
+    {name:'OpenWrt',file:'openwrt',tags:['router','firmware','network']},
+/* ── Selfhst CDN icon search ── */
+(function(){
+  window.buildLibraryTab = function(c){
+    c.innerHTML = '';
+    var s = document.createElement('input');
+    s.className = 'icon-search-bar';
+    s.placeholder = 'Search services...';
+    c.appendChild(s);
+    var g = document.createElement('div');
+    g.className = 'icon-grid';
+    c.appendChild(g);
+    function ri(f){
+      g.innerHTML = '';
+      var fl = (f||'').toLowerCase();
+      var items = fl ? ICON_REPO.filter(function(i){
+        return i.name.toLowerCase().indexOf(fl) >= 0 || i.file.toLowerCase().indexOf(fl) >= 0;
+      }) : ICON_REPO;
+      items = items.slice(0, 300);
+      if(!items.length){
+        g.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No icons found</div>';
+        return;
+      }
+      items.forEach(function(item){
+        var d = document.createElement('div');
+        d.className = 'icon-grid-item';
+        var img = document.createElement('img');
+        img.src = '/icons/' + item.file + '.svg';
+        img.alt = item.name;
+        img.loading = 'lazy';
+        img.onerror = function(){ this.parentElement.style.display = 'none'; };
+        var l = document.createElement('span');
+        l.textContent = item.name;
+        d.appendChild(img);
+        d.appendChild(l);
+        d.addEventListener('click', function(){ selectIcon('/icons/' + item.file + '.svg'); });
+        g.appendChild(d);
+      });
+    }
+    s.addEventListener('input', function(){ ri(s.value); });
+    ri('');
+  };
+})();
+
+    // ── Refresh + re-run build-manifest button ──
+    var refreshRow = document.createElement('div');
+    refreshRow.style.cssText = 'display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap;';
+    var refreshBtn = document.createElement('button');
+    refreshBtn.className = 'btn btn-glass btn-sm';
+    refreshBtn.textContent = '⟳ Refresh';
+    refreshBtn.title = 'Reload manifest.json';
+    refreshBtn.style.cssText = 'padding:5px 10px;font-size:10px;';
+    refreshBtn.addEventListener('click', function(){
+      window._localIcons = null;
+      loadManifest();
+    });
+    refreshRow.appendChild(refreshBtn);
+    var iconCount = document.createElement('span');
+    iconCount.style.cssText = 'font-size:10px;color:var(--text-tertiary);';
+    iconCount.id = 'icon-count';
+    iconCount.textContent = '';
+    refreshRow.appendChild(iconCount);
+    c.appendChild(refreshRow);
+
+    // ── CDN import section (discover + preview only) ──
+    var cdnSep = document.createElement('div');
+    cdnSep.style.cssText = 'margin:18px 0 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-tertiary);border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;';
+    cdnSep.textContent = 'Import from selfh.st/icons';
+    c.appendChild(cdnSep);
+
+    var tip = document.createElement('div');
+    tip.style.cssText = 'font-size:10px;color:var(--text-tertiary);margin-bottom:10px;line-height:1.6;';
+    tip.textContent = 'Find icons from the CDN to add locally. ';
+    var ex = ['home-assistant','qbittorrent','jellyfin','proxmox-ve','immich','paperless-ngx','vaultwarden'];
+    ex.forEach(function(e, i){
+      if(i>0) tip.appendChild(document.createTextNode(', '));
+      var s = document.createElement('span');
+      s.style.cssText = 'color:var(--text-secondary);cursor:pointer;';
+      s.textContent = e;
+      s.addEventListener('click', function(){ cdnInp.value=e; cdnTry(); });
+      tip.appendChild(s);
+    });
+    c.appendChild(tip);
+
+    var cdnRow = document.createElement('div');
+    cdnRow.style.cssText = 'display:flex;gap:6px;align-items:center;';
+    var cdnInp = document.createElement('input');
+    cdnInp.className = 'icon-search-bar';
+    cdnInp.style.cssText = 'flex:1;margin-bottom:0;padding:7px 10px;font-size:12px;';
+    cdnInp.placeholder = 'Type icon name to preview...';
+    cdnRow.appendChild(cdnInp);
+    var cdnBtn = document.createElement('button');
+    cdnBtn.className = 'btn btn-glass btn-sm';
+    cdnBtn.textContent = 'Preview';
+    cdnBtn.style.cssText = 'padding:7px 14px;font-size:11px;font-weight:600;flex-shrink:0;';
+    cdnRow.appendChild(cdnBtn);
+    c.appendChild(cdnRow);
+
+    var cdnStatus = document.createElement('div');
+    cdnStatus.style.cssText = 'font-size:11px;color:var(--text-tertiary);margin-top:8px;min-height:20px;';
+    c.appendChild(cdnStatus);
+
+    var cdnPreview = document.createElement('div');
+    cdnPreview.style.cssText = 'display:none;align-items:center;gap:12px;margin-top:10px;padding:10px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.06);';
+    c.appendChild(cdnPreview);
+
+    function cdnTry(){
+      var n = cdnInp.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');
+      if(!n) return;
+      cdnStatus.textContent = 'Loading...';
+      cdnPreview.style.display = 'none';
+      var url = 'https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/' + n + '.svg';
+      var img = new Image();
+      img.onload = function(){
+        cdnStatus.textContent = '';
+        cdnPreview.style.display = 'flex';
+        cdnPreview.innerHTML =
+          '<img src="'+url+'" style="width:36px;height:36px;object-fit:contain;" alt="">' +
+          '<div style="flex:1;font-size:12px;color:var(--text-primary);font-weight:600;">'+n+'</div>' +
+          '<div style="font-size:10px;color:var(--text-tertiary);">Preview only. Run download script to add locally.</div>';
+      };
+      img.onerror = function(){ cdnStatus.textContent = 'Not found on CDN. Try a different name.'; };
+      img.src = url;
+    }
+
+    cdnInp.addEventListener('keydown', function(e){ if(e.key==='Enter') cdnTry(); });
+    cdnBtn.addEventListener('click', cdnTry);
+  };
+})();
+</script>
 </body>
 </html>

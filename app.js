@@ -1,8 +1,23 @@
 /* ═══════════════════════════════════════════
    WarTab — Application Logic
+   ═══════════════════════════════════════════
+   Sections:
+     1. Card Type Modules  — registerModule() calls for each section type
+     2. Config Panel       — edit panel, form helpers, section editor, section drag
+     3. Default Config     — DEFAULT_CONFIG with field documentation
+     4. Icon Data          — ICON_REPO, EMOJIS, LUCIDE_ICONS, migration maps
+     5. Utilities          — isLucideName, renderLucideEl, uid, $/$$
+     6. Config Load/Save   — loadConfig, saveConfig, applyChanges, renderAll
+     7. Render             — renderCard, renderSection, renderLinkIcon, doSearch
+     8. Widgets            — clocks, weather, API poller, quotes, status bars
+     9. Drag & Drop        — card reorder with simGrid preview + FLIP animation
+    10. Icon Picker        — library/upload/emoji/Lucide tabbed picker
+    11. Background Upload  — image upload + compression
+    12. Config Panel UI    — theme, branding, layout, status bar settings
+    13. Init               — page load sequence
    ═══════════════════════════════════════════ */
 
-const WARTAB_VERSION = '0.2.0';
+const WARTAB_VERSION = '0.2.1';
 
 /* ══════ Card Type Modules ══════
    Each module defines { render, editor, defaults } for a section type.
@@ -17,17 +32,11 @@ function registerModule(type, module){
 registerModule('links', {
   defaults: { links:[{label:'Example',url:'https://example.com',icon:'link'}] },
   render: (sec,card,cw)=>{
-    var open=!sec.collapsed;
-    const b=document.createElement('button');b.className='dropdown-toggle'+(open?' open':'');
-    b.innerHTML=escAttr(sec.label||'Links')+' <span class="arrow">▶</span>';
-    const c=document.createElement('div');c.className='dropdown-content'+(open?' open':'');
-    b.addEventListener('click',function(){sec.collapsed=!sec.collapsed;saveConfig();b.classList.toggle('open');c.classList.toggle('open');});
-    cw.appendChild(b);
     const ig=document.createElement('div');ig.className='link-grid';(sec.links||[]).forEach(link=>{
       const a=document.createElement('a');a.className='link-item';a.href=link.url;a.target='_blank';a.rel='noopener';
       a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label';s.textContent=link.label;
       a.appendChild(s);ig.appendChild(a);
-    });c.appendChild(ig);cw.appendChild(c);
+    });cw.appendChild(ig);
   },
   editor: (sec,card,bd)=>{
     const header=document.createElement('div');header.className='me-link-th';
@@ -38,11 +47,11 @@ registerModule('links', {
       const li2_i=document.createElement('input');li2_i.className='cp-input';li2_i.placeholder='Label';li2_i.value=link.label;
       li2_i.addEventListener('change',()=>{sec.links[li2].label=li2_i.value;saveAndRefresh();});
       const ic=document.createElement('button');ic.className='me-icon-btn';
-      if(link.icon&&(link.icon.startsWith('http')||link.icon.startsWith('data:'))){const img=document.createElement('img');img.src=link.icon;img.alt='';ic.appendChild(img);}else if(isLucideName(link.icon)){const li=document.createElement('i');li.setAttribute('data-lucide',link.icon);li.style.cssText='width:16px;height:16px;';ic.appendChild(li);}else{ic.textContent=link.icon||'🔗';}
+      if(link.icon&&(link.icon.startsWith('http')||link.icon.startsWith('data:')||link.icon.startsWith('/'))){const img=document.createElement('img');img.src=link.icon;img.alt='';ic.appendChild(img);}else if(isLucideName(link.icon)){const li=document.createElement('i');li.setAttribute('data-lucide',link.icon);ic.appendChild(li);}else{ic.textContent=link.icon||'🔗';}
       ic.title='Change icon';ic.addEventListener('click',()=>openIconPicker(url=>{sec.links[li2].icon=url;saveAndRefresh();}));
       const ui=document.createElement('input');ui.className='cp-input';ui.placeholder='https://';ui.value=link.url;
       ui.addEventListener('change',()=>{sec.links[li2].url=ui.value;saveAndRefresh();});
-      const rm=cpBtn('✕',true);rm.title='';rm.style.cssText='padding:2px 5px;font-size:10px;flex-shrink:0;width:26px;';
+      const rm = cpBtn('✕', true); rm.title = '';
       rm.addEventListener('click',()=>{sec.links.splice(li2,1);saveAndRefresh();});
       row.appendChild(li2_i);row.appendChild(ic);row.appendChild(ui);row.appendChild(rm);
       bd.appendChild(row);
@@ -111,9 +120,9 @@ registerModule('clock', {
   },
 });
 registerModule('weather', {
-  defaults: { apiKey:'', location:'', units:'imperial' },
+  defaults: { apiKey:'', zip:'', country:'US', units:'imperial' },
   render: (sec,card,cw)=>{
-    const w=document.createElement('div');w.className='weather-widget';w.dataset.apiKey=sec.apiKey||'';w.dataset.location=sec.location||'';w.dataset.units=sec.units||'imperial';
+    const w=document.createElement('div');w.className='weather-widget';w.style.textAlign='center';w.dataset.apiKey=sec.apiKey||'';w.dataset.zip=sec.zip||'';w.dataset.country=sec.country||'US';w.dataset.units=sec.units||'imperial';
     const iconRow=document.createElement('div');iconRow.className='weather-main';
     const iconEl=document.createElement('i');iconEl.className='weather-icon';iconEl.setAttribute('data-lucide','cloud');iconRow.appendChild(iconEl);
     const tempEl=document.createElement('div');tempEl.className='weather-temp';tempEl.textContent='--°';iconRow.appendChild(tempEl);
@@ -129,8 +138,10 @@ registerModule('weather', {
   editor: (sec,card,bd)=>{
     bd.appendChild(cpLabel('API Key'));
     bd.appendChild(cpInput('OpenWeatherMap API key',sec.apiKey||'',v=>{sec.apiKey=v;saveConfig();}));
-    bd.appendChild(cpLabel('Location'));
-    bd.appendChild(cpInput('City name (e.g. London, UK)',sec.location||'',v=>{sec.location=v;saveConfig();}));
+    bd.appendChild(cpLabel('Zip Code'));
+    bd.appendChild(cpInput('e.g. 90210',sec.zip||'',v=>{sec.zip=v;saveConfig();}));
+    bd.appendChild(cpLabel('Country Code'));
+    bd.appendChild(cpInput('US',sec.country||'US',v=>{sec.country=v;saveConfig();}));
     bd.appendChild(cpLabel('Units'));
     bd.appendChild(cpSelect([{value:'imperial',label:'°F'},{value:'metric',label:'°C'},{value:'standard',label:'K'}],sec.units||'imperial',v=>{sec.units=v;saveConfig();}));
   },
@@ -175,7 +186,7 @@ registerModule('api-poller', {
 });
 
 registerModule('quotes', {
-  defaults: { category:'inspirational' },
+  defaults: { quotes:[] },
   render: (sec,card,cw)=>{
     const q=document.createElement('div');q.className='quotes-widget';
     q.style.cssText='display:flex;flex-direction:column;gap:6px;padding:4px 0;min-height:80px;';
@@ -188,15 +199,78 @@ registerModule('quotes', {
     auth.style.cssText='font-size:11px;color:var(--text-secondary);text-align:right;padding-right:4px;';
     const aName=document.createElement('span');aName.className='quotes-author-name';aName.textContent='';auth.appendChild(aName);
     q.appendChild(auth);
-    // Click to refresh
-    q.addEventListener('click',function(){fetchQuote(q);});
+    q.addEventListener('click',function(){fetchQuote(q,sec);});
     q.dataset.secId=sec.id;
     cw.appendChild(q);
-    // Auto-load on first render
-    setTimeout(function(){fetchQuote(q);},100);
+    setTimeout(function(){fetchQuote(q,sec);},100);
   },
   editor: (sec,card,bd)=>{
-    bd.appendChild(cpCheck('Auto-refresh on click',sec.autoRefresh!==false,function(v){sec.autoRefresh=v;saveAndRefresh();}));
+    bd.appendChild(cpHint('✎ Click the quote to refresh.'));
+    // User-added quotes
+    bd.appendChild(cpLabel('Custom Quotes'));
+    const list=document.createElement('div');list.style.cssText='margin-bottom:8px;';
+    const renderQuotes=()=>{
+      list.innerHTML='';
+      (sec.quotes||[]).forEach((qt,i)=>{
+        const row=document.createElement('div');row.style.cssText='display:flex;gap:4px;align-items:center;margin-bottom:4px;font-size:11px;';
+        row.innerHTML='<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary);">"'+escAttr(qt.q)+'" — '+escAttr(qt.a)+'</span>';
+        const rm=document.createElement('button');rm.className='btn btn-glass btn-sm';rm.textContent='✕';rm.style.cssText='padding:0 4px;font-size:10px;';
+        rm.addEventListener('click',()=>{sec.quotes.splice(i,1);renderQuotes();saveAndRefresh();});
+        row.appendChild(rm);list.appendChild(row);
+      });
+    };
+    renderQuotes();
+    bd.appendChild(list);
+    // Add quote form
+    const addRow=document.createElement('div');addRow.style.cssText='display:flex;gap:4px;margin-bottom:6px;';
+    const qInp=document.createElement('input');qInp.className='cp-input';qInp.placeholder='Quote text';qInp.style.cssText='flex:2;';
+    const aInp=document.createElement('input');aInp.className='cp-input';aInp.placeholder='Author';aInp.style.cssText='flex:1;';
+    const addBtn=document.createElement('button');addBtn.className='btn btn-glass btn-sm';addBtn.textContent='+';
+    addBtn.addEventListener('click',()=>{
+      const t=qInp.value.trim(),au=aInp.value.trim()||'Anonymous';
+      if(!t)return;
+      sec.quotes=sec.quotes||[];sec.quotes.push({q:t,a:au});
+      qInp.value='';aInp.value='';renderQuotes();saveAndRefresh();
+    });
+    addRow.appendChild(qInp);addRow.appendChild(aInp);addRow.appendChild(addBtn);bd.appendChild(addRow);
+  },
+});
+registerModule('timer', {
+  defaults: { duration: 300 },
+  render: (sec,card,cw)=>{
+    const w=document.createElement('div');w.style.cssText='text-align:center;padding:8px 0;';
+    w.dataset.secId=sec.id;
+    const display=document.createElement('div');display.className='timer-display';
+    display.style.cssText='font-size:36px;font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;font-family:var(--font);padding:8px 0;';
+    display.textContent='--:--';
+    w.appendChild(display);
+    const btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:6px;justify-content:center;margin-top:4px;';
+    const startBtn=document.createElement('button');startBtn.className='btn btn-glass btn-sm';startBtn.textContent='▶ Start';
+    const resetBtn=document.createElement('button');resetBtn.className='btn btn-glass btn-sm';resetBtn.textContent='↺ Reset';
+    btnRow.appendChild(startBtn);btnRow.appendChild(resetBtn);w.appendChild(btnRow);
+    let remaining=sec.duration||300;
+    let interval=null;
+    const fmt=s=>{const m=Math.floor(s/60);const s2=s%60;return String(m).padStart(2,'0')+':'+String(s2).padStart(2,'0');};
+    const updateDisplay=()=>{display.textContent=fmt(remaining);if(remaining<=0){display.textContent='★ TIME UP ★';display.style.color='var(--accent)';}};
+    const stop=()=>{if(interval){clearInterval(interval);interval=null;startBtn.textContent='▶ Start';}};
+    const start=()=>{if(interval)return;if(remaining<=0){remaining=sec.duration||300;display.style.color='';}interval=setInterval(()=>{remaining--;updateDisplay();if(remaining<=0)stop();},1000);startBtn.textContent='⏸ Pause';};
+    startBtn.addEventListener('click',()=>{if(interval)stop();else start();});
+    resetBtn.addEventListener('click',()=>{showConfirmModal('Reset timer?',()=>{stop();remaining=sec.duration||300;display.style.color='';updateDisplay();});});
+    updateDisplay();
+    cw.appendChild(w);
+  },
+  editor: (sec,card,bd)=>{
+    const h=Math.floor((sec.duration||300)/3600);
+    const m=Math.floor(((sec.duration||300)%3600)/60);
+    const hSel=document.createElement('select');hSel.style.cssText='width:70px;padding:5px 6px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:13px;outline:none;';
+    for(let i=0;i<24;i++){const o=document.createElement('option');o.value=i;o.textContent=i+'h';if(i===h)o.selected=true;hSel.appendChild(o);}
+    const mSel=document.createElement('select');mSel.style.cssText='width:70px;padding:5px 6px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:13px;outline:none;margin-left:8px;';
+    for(let i=0;i<60;i+=5){const o=document.createElement('option');o.value=i;o.textContent=i+'m';if(i===m)o.selected=true;mSel.appendChild(o);}
+    const sync=()=>{sec.duration=parseInt(hSel.value)*3600+parseInt(mSel.value)*60;saveAndRefresh();};
+    hSel.addEventListener('change',sync);mSel.addEventListener('change',sync);
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:4px;margin-bottom:10px;';
+    row.appendChild(el('label','font-size:11px;font-weight:600;color:var(--text-secondary);margin-right:4px;','Duration'));
+    row.appendChild(hSel);row.appendChild(mSel);bd.appendChild(row);
   },
 });
 
@@ -213,20 +287,56 @@ registerModule('status-bar', {
     fetchStatusWidget(w);
   },
   editor: (sec,card,bd)=>{
-    bd.appendChild(cpLabel('Source'));
-    bd.appendChild(cpSelect([{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],sec.source||'local',v=>{sec.source=v;saveAndRefresh();}));
-    if(sec.source==='glances'){bd.appendChild(cpLabel('Glances URL'));bd.appendChild(cpInput('http://localhost:61209',sec.glancesUrl||'',v=>{sec.glancesUrl=v;saveConfig();}));}
-    if(sec.source==='custom'){bd.appendChild(cpLabel('Custom URL'));bd.appendChild(cpInput('https://',sec.customUrl||'',v=>{sec.customUrl=v;saveConfig();}));}
-    bd.appendChild(cpRange('Refresh (seconds)',sec.refreshInterval||15,5,120,v=>{sec.refreshInterval=parseInt(v);saveAndRefresh();}));
-    bd.appendChild(cpLabel('Show items'));
+    // ── Data Source group ──
+    const srcGroup = document.createElement('div');
+    srcGroup.className = 'se-field-group';
+    const srcTitle = document.createElement('div');
+    srcTitle.className = 'se-field-group-title';
+    srcTitle.textContent = '⧩ Data Source';
+    srcGroup.appendChild(srcTitle);
+    srcGroup.appendChild(cpLabel('Source'));
+    const sel = cpSelect([{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],sec.source||'local',v=>{sec.source=v;saveAndRefresh();});
+    sel.className = 'cp-select';
+    srcGroup.appendChild(sel);
+    const urlWrap = document.createElement('div');
+    urlWrap.id = 'sec-url-'+sec.id;
+    urlWrap.style.cssText = 'max-height:200px;overflow:hidden;transition:max-height 0.2s ease,opacity 0.2s ease;opacity:1;';
+    const renderUrl = function(){
+      urlWrap.innerHTML = '';
+      if(sec.source==='glances'){urlWrap.appendChild(cpLabel('Glances URL'));urlWrap.appendChild(cpInput('http://localhost:61209',sec.glancesUrl||'',v=>{sec.glancesUrl=v;saveConfig();}));}
+      else if(sec.source==='custom'){urlWrap.appendChild(cpLabel('Custom URL'));urlWrap.appendChild(cpInput('https://',sec.customUrl||'',v=>{sec.customUrl=v;saveConfig();}));}
+    };
+    renderUrl();
+    sel.addEventListener('change',function(){setTimeout(renderUrl,0);});
+    srcGroup.appendChild(urlWrap);
+    bd.appendChild(srcGroup);
+
+    // ── Refresh group ──
+    const refGroup = document.createElement('div');
+    refGroup.className = 'se-field-group';
+    const refTitle = document.createElement('div');
+    refTitle.className = 'se-field-group-title';
+    refTitle.textContent = '↻ Refresh';
+    refGroup.appendChild(refTitle);
+    refGroup.appendChild(cpRange('Frequency (seconds)',sec.refreshInterval||15,5,120,v=>{sec.refreshInterval=parseInt(v);saveAndRefresh();}));
+    bd.appendChild(refGroup);
+
+    // ── Display Items group ──
+    const itemGroup = document.createElement('div');
+    itemGroup.className = 'se-field-group';
+    const itemTitle = document.createElement('div');
+    itemTitle.className = 'se-field-group-title';
+    itemTitle.textContent = '☰ Display Items';
+    itemGroup.appendChild(itemTitle);
     const cg=document.createElement('div');cg.className='me-check-group';
     ['hostname','cpu','memory','disk','uptime'].forEach(item=>{
-      const cl=document.createElement('label');cl.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;';
+      const cl=document.createElement('label');cl.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:6px 0;';
       const cc=document.createElement('input');cc.type='checkbox';cc.checked=(sec.items||[]).includes(item);
       cc.addEventListener('change',()=>{sec.items=sec.items||[];if(cc.checked&&!sec.items.includes(item))sec.items.push(item);else if(!cc.checked)sec.items=sec.items.filter(i=>i!==item);saveAndRefresh();});
       cl.appendChild(cc);cl.appendChild(document.createTextNode(item.charAt(0).toUpperCase()+item.slice(1)));cg.appendChild(cl);
     });
-    bd.appendChild(cg);
+    itemGroup.appendChild(cg);
+    bd.appendChild(itemGroup);
   },
 });
 function bumpVersion(){
@@ -408,8 +518,8 @@ function buildCardEditPanel(card) {
   iconRow.className = 'cs-icon-row';
   const ip = document.createElement('span');
   ip.className = 'cs-icon-preview';
-  if (card.icon && (card.icon.startsWith('http') || card.icon.startsWith('data:'))) {
-    const img = document.createElement('img'); img.src = card.icon; img.style.cssText = 'width:24px;height:24px;object-fit:contain;';
+  if (card.icon && (card.icon.startsWith('http') || card.icon.startsWith('data:') || card.icon.startsWith('/'))) {
+    const img = document.createElement('img'); img.src = card.icon; img.style.cssText = 'width:20px;height:20px;object-fit:contain;';
     ip.appendChild(img);
   } else if (isLucideName(card.icon)) {
     ip.appendChild(renderLucideEl(card.icon, ''));
@@ -431,7 +541,7 @@ function buildCardEditPanel(card) {
   colorG.className = 'cs-pair';
   colorG.appendChild(cpLabel('Color'));
   const colorRow = document.createElement('div');
-  colorRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
+  colorRow.className = 'cs-color-row';
   const cp = document.createElement('input');
   cp.type = 'color'; cp.value = card.color || config.theme.glow;
   cp.style.cssText = 'width:40px;height:34px;padding:2px;border:1px solid var(--surface-border);background:rgba(0,0,0,0.3);cursor:pointer;flex-shrink:0;';
@@ -474,13 +584,17 @@ function buildCardEditPanel(card) {
   /* ── Sections ── */
   body.appendChild(cpDivider('SECTIONS'));
   (card.sections || []).forEach((sec, si) => {
-    body.appendChild(buildSectionEditor(sec, card, si));
+    try {
+      body.appendChild(buildSectionEditor(sec, card, si));
+    } catch(e) {
+      console.error('Section editor error', e);
+    }
   });
   const addSecBtn = cpBtn('+ Add Section');
   addSecBtn.style.marginTop = '4px';
   addSecBtn.addEventListener('click', () => {
     card.sections = card.sections || [];
-    card.sections.push({ id: 'sec-' + uid(), type: 'links', label: 'New Section', links: [{ label: 'Example', url: 'https://example.com', icon: 'link' }] });
+    card.sections.push({ id: 'sec-' + uid(), type: 'links', label: 'Links', links: [{ label: 'Example', url: 'https://example.com', icon: 'link' }] });
     saveAndRefresh();
     toast('Section added');
   });
@@ -509,73 +623,111 @@ function buildCardEditPanel(card) {
 }
 
 function buildSectionEditor(sec, card, si) {
-  const box = document.createElement('div');
-  box.className = 'cp-section-box';
-  box.style.borderLeftColor = card.color || config.theme.glow;
+  const cardEl = document.createElement('div');
+  cardEl.className = 'se-card';
+  cardEl.dataset.secIdx = si;
+  cardEl.style.borderLeftColor = card.color || config.theme.glow;
 
+  /* ── Card Header: drag handle | badge | title | actions ── */
   const hdr = document.createElement('div');
-  hdr.className = 'cp-section-header';
-  const typeLabel = document.createElement('span');
-  typeLabel.className = 'me-badge';
-  typeLabel.textContent = sec.type;
-  hdr.appendChild(typeLabel);
+  hdr.className = 'se-card-header';
 
+  // Grab handle
+  const dh = document.createElement('span');
+  dh.className = 'se-drag-handle';
+  dh.textContent = '⠿';
+  dh.title = 'Drag to reorder';
+  hdr.appendChild(dh);
+
+  // Type badge
+  const badge = document.createElement('span');
+  badge.className = 'me-badge';
+  badge.textContent = sec.type;
+  hdr.appendChild(badge);
+
+  // Section heading title
+  const title = document.createElement('span');
+  title.className = 'se-card-title';
+  title.textContent = sec.label || 'Untitled';
+  hdr.appendChild(title);
+
+  // Actions (delete)
   const acts = document.createElement('div');
-  acts.className = 'cp-section-actions';
-  if (si > 0) {
-    const up = cpBtn('↑');
-    up.title = 'Move up';
-    up.addEventListener('click', () => moveSection(card.id, si, -1));
-    acts.appendChild(up);
-  }
-  if (si < (card.sections || []).length - 1) {
-    const dn = cpBtn('↓');
-    dn.title = 'Move down';
-    dn.addEventListener('click', () => moveSection(card.id, si, 1));
-    acts.appendChild(dn);
-  }
+  acts.className = 'se-card-actions';
   const del = cpBtn('✕', true);
   del.title = 'Delete section';
-  del.addEventListener('click', () => {
-    card.sections.splice(si, 1);
+  del.addEventListener('click', e => {
+    e.stopPropagation();
+    const c = config.cards.find(x => x.id === card.id);
+    if (!c) return;
+    c.sections.splice(si, 1);
     saveAndRefresh();
     toast('Section deleted');
   });
   acts.appendChild(del);
   hdr.appendChild(acts);
-  box.appendChild(hdr);
+  cardEl.appendChild(hdr);
 
+  /* ── Card Body ── */
   const bd = document.createElement('div');
-  bd.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+  bd.className = 'se-card-body';
 
   /* Label + Type side by side */
   const row1 = document.createElement('div');
   row1.className = 'se-inline';
   const lg = document.createElement('div');
   lg.appendChild(cpLabel('Label'));
-  const li = cpInput('Section heading', sec.label || '', v => { sec.label = v; saveAndRefresh(); });
+  const li = cpInput('Section heading', sec.label || '', v => {
+    sec.label = v; saveAndRefresh();
+  });
   lg.appendChild(li);
   row1.appendChild(lg);
   const tg = document.createElement('div');
   tg.appendChild(cpLabel('Type'));
   const sel = cpSelect(
-    ['links', 'link-list', 'search', 'clock', 'weather', 'iframe', 'notes', 'api-poller', 'quotes', 'status-bar'].map(t => ({ value: t, label: t })),
+    [
+      {value:'links',label:'Links'},
+      {value:'link-list',label:'Link List'},
+      {value:'search',label:'Search'},
+      {value:'clock',label:'Clock'},
+      {value:'weather',label:'Weather'},
+      {value:'timer',label:'Timer'},
+      {value:'iframe',label:'iFrame'},
+      {value:'notes',label:'Notes'},
+      {value:'api-poller',label:'API Poller'},
+      {value:'quotes',label:'Quotes'},
+      {value:'status-bar',label:'Status Bar'},
+    ],
     sec.type,
-    v => { sec.type = v; saveAndRefresh(); }
+    v => {
+      // Auto-title the section label from the type name
+      if (!sec.label || sec.label === sec.type || sec.label === 'Links') {
+        sec.label = v.charAt(0).toUpperCase() + v.slice(1).replace('-', ' ');
+      }
+      sec.type = v;
+      // Merge defaults for the new type
+      const mod = CARD_MODULES[v];
+      if (mod && mod.defaults) Object.assign(sec, cloneObj(mod.defaults));
+      saveAndRefresh();
+    }
   );
   tg.appendChild(sel);
   row1.appendChild(tg);
   bd.appendChild(row1);
 
-  /* Module editor fields — in a distinct card */
+  /* Module editor fields */
   const mc = document.createElement('div');
   mc.className = 'me-card';
-  const mod = CARD_MODULES[sec.type];
-  if (mod && mod.editor) mod.editor(sec, card, mc);
+  const mod = CARD_MODULES[sec.type];  if (mod && mod.editor) mod.editor(sec, card, mc);
   if (mc.children.length > 0) bd.appendChild(mc);
+  cardEl.appendChild(bd);
 
-  box.appendChild(bd);
-  return box;
+  /* ── Drag setup ── */
+  dh.addEventListener('mousedown', e => {
+    startSectionDrag(e, card.id, si, cardEl);
+  });
+
+  return cardEl;
 }
 
 function moveSection(cid, si, dir) {
@@ -587,41 +739,277 @@ function moveSection(cid, si, dir) {
   saveAndRefresh();
 }
 
+/* ── Section drag-and-drop (vertical reorder in edit panel) ── */
+let secDragState = null;
+
+function startSectionDrag(e, cardId, secIdx, srcEl) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  secDragState = {
+    cardId,
+    secIdx,
+    srcEl,
+    ghost: null,
+    active: false,
+    _startY: e.clientY,
+    _insertAfter: null,
+  };
+  document.addEventListener('mousemove', onSecDragMove);
+  document.addEventListener('mouseup', onSecDragEnd);
+}
+
+function onSecDragMove(e) {
+  if (!secDragState) return;
+  if (!secDragState.active) {
+    if (Math.abs(e.clientY - secDragState._startY) < 8) return;
+    secDragState.active = true;
+    // Create ghost indicator
+    const ghost = document.createElement('div');
+    ghost.className = 'se-ghost';
+    ghost.style.display = 'none';
+    secDragState.srcEl.parentNode.insertBefore(ghost, secDragState.srcEl);
+    secDragState.ghost = ghost;
+    secDragState.srcEl.classList.add('dragging');
+  }
+
+  const { srcEl, ghost } = secDragState;
+  if (!ghost) return;
+
+  const body = srcEl.parentNode;
+  if (!body) return;
+
+  // Gather all section cards (excluding the dragged one)
+  const cards = [...body.querySelectorAll('.se-card')].filter(el => el !== srcEl);
+  let insertBefore = null;
+
+  for (const card of cards) {
+    const rect = card.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    if (e.clientY < midY) {
+      insertBefore = card;
+      break;
+    }
+  }
+
+  // Move ghost to the correct position
+  if (insertBefore) {
+    body.insertBefore(ghost, insertBefore);
+  } else {
+    // Append after last card
+    const lastCard = cards[cards.length - 1];
+    if (lastCard && lastCard.nextSibling) {
+      body.insertBefore(ghost, lastCard.nextSibling);
+    } else {
+      body.appendChild(ghost);
+    }
+  }
+
+  ghost.style.display = '';
+}
+
+function onSecDragEnd(e) {
+  document.removeEventListener('mousemove', onSecDragMove);
+  document.removeEventListener('mouseup', onSecDragEnd);
+  if (!secDragState) return;
+  const { cardId, srcEl, ghost, active } = secDragState;
+  if (srcEl) srcEl.classList.remove('dragging');
+
+  if (active && ghost && ghost.parentNode) {
+    const body = document.getElementById('edit-panel-body');
+    if (body) {
+      // The ghost was moved to the target position — read where it landed
+      const nextCard = ghost.nextElementSibling &&
+        ghost.nextElementSibling.classList.contains('se-card')
+        ? ghost.nextElementSibling : null;
+      ghost.remove();
+
+      const allCards = [...body.querySelectorAll('.se-card')];
+      // If ghost was before a card, insert at that card's index; if at end, use length
+      const newIdx = nextCard ? allCards.indexOf(nextCard) : allCards.length;
+      if (newIdx >= 0) {
+        const c = config.cards.find(x => x.id === cardId);
+        if (c) {
+          const oldIdx = secDragState.secIdx;
+          if (oldIdx !== newIdx) {
+            const secs = c.sections;
+            const [m] = secs.splice(oldIdx, 1);
+            const targetIdx = newIdx > oldIdx ? newIdx - 1 : newIdx;
+            secs.splice(targetIdx, 0, m);
+            saveConfig();
+            renderAll();
+            openCardEditPanel(cardId);
+            toast('Section moved');
+            secDragState = null;
+            return;
+          }
+        }
+      }
+    }
+    renderAll();
+    if (cardId) openCardEditPanel(cardId);
+  } else if (ghost && ghost.parentNode) {
+    ghost.remove();
+  }
+
+  secDragState = null;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION 3: DEFAULT CONFIG
+   Starting config used when no config.json exists yet.
+   Edit this to change the default dashboard layout for new installations.
+
+   Icon paths (/icons/name.svg) reference locally cached selfhst/icons files.
+   ═══════════════════════════════════════════ */
 const DEFAULT_CONFIG = {
   version: WARTAB_VERSION,
-  branding: { title:'WarTab', icon:'sword' },
+
+  /* ── Page branding (title + favicon-style icon) ── */
+  branding: { title: 'WarTab', icon: 'sword' },
+
+  /* ── Theme settings ── */
   theme: {
-    bgType:'gradient', bgValue:'#0a0a0a, #1a1a1a, #0d0d0d',
-    blur:20, glow:'#888888', fontSize:'medium',
-    fontFamily:'Inter', cardBg:'dark',
-    fontColor:'#cccccc',
-    bgRotate:false,animations:true,showAccentBar:true,
+    bgType: 'gradient',           // 'color' | 'gradient' | 'image'
+    bgValue: '#0a0a0a, #1a1a1a, #0d0d0d',  // CSS value: color, gradient(), or image path
+    blur: 20,                     // backdrop-filter blur amount (px)
+    glow: '#888888',              // accent color (grayscale)
+    fontSize: 'medium',           // 'small' | 'medium' | 'large'
+    fontFamily: 'Inter',          // Google Font name (or system font)
+    cardBg: 'dark',               // card background variant
+    fontColor: '#cccccc',         // text color override
+    cardOpacity: 1,               // 0-1 opacity for card backgrounds
+    bgRotate: false,              // rotate background on interval
+    animations: true,             // enable CSS transitions/animations
+    showAccentBar: true,          // show 3px accent bar at top of cards
   },
+
+  /* ── Top-bar status display (CPU, RAM, disk, uptime) ── */
   statusBar: {
-    enabled: true, source:'local', glancesUrl:'http://localhost:61209',
-    customUrl:'', refreshInterval:15,
-    items:['cpu','memory','disk','uptime'], hostname:true,
+    enabled: true,
+    source: 'local',              // 'local' | 'glances' | 'custom'
+    glancesUrl: 'http://localhost:61209',
+    customUrl: '',
+    refreshInterval: 15,          // seconds
+    items: ['cpu', 'memory', 'disk', 'uptime'],  // order/selection of stats
+    hostname: true,
   },
-  layout: { cols:4, gap:16, cardMinWidth:240, paddingX:24, paddingY:24 },
+
+  /* ── Grid layout ── */
+  layout: {
+    cols: 4,                      // number of grid columns
+    gap: 16,                      // gap between cards (px)
+    pageWidth: 'full',            // 'full' | 'three-quarters' | 'half'
+    paddingHeight: 'full',        // 'full' (20px top/bottom) | 'compact' (120px)
+  },
+
+  /* ── Search widget settings ── */
   search: {
-    engine:'https://www.google.com/search?q=',
-    engines:{ Google:'https://www.google.com/search?q=', DuckDuckGo:'https://duckduckgo.com/?q=', Brave:'https://search.brave.com/search?q=', Bing:'https://www.bing.com/search?q=', YouTube:'https://www.youtube.com/results?search_query=', Reddit:'https://www.reddit.com/search/?q=', Wikipedia:'https://en.wikipedia.org/wiki/Special:Search?search=' },
-    selected:'Google', openInNewTab:true,
+    engine: 'https://www.google.com/search?q=',
+    engines: {
+      Google: 'https://www.google.com/search?q=',
+      DuckDuckGo: 'https://duckduckgo.com/?q=',
+      Brave: 'https://search.brave.com/search?q=',
+      Bing: 'https://www.bing.com/search?q=',
+      YouTube: 'https://www.youtube.com/results?search_query=',
+      Reddit: 'https://www.reddit.com/search/?q=',
+      Wikipedia: 'https://en.wikipedia.org/w/index.php?search=',
+    },
+    selected: 'Google',
+    openInNewTab: true,
   },
+
+  /* ── Cards (each card is a dashboard panel with sections) ── */
   cards: [
-    { id:'search-card', title:'Quick Search', icon:'search', color:'#999999', width:2, sections:[{ id:'search-main', type:'search', engine:'Google', placeholder:'Search anything...', label:'Web Search' }] },
-    { id:'clock-card', title:'Time & Date', icon:'clock', color:'#aaaaaa', width:1, sections:[{ id:'clock-main', type:'clock', format24h:false, showDate:true }] },
-    { id:'daily-drivers', title:'Daily Drivers', icon:'globe', color:'#cccccc', width:2, sections:[
-      { id:'dev-links', type:'links', label:'Development', links:[ {label:'GitHub',url:'https://github.com',icon:'github'},{label:'GitLab',url:'https://gitlab.com',icon:'gitlab'},{label:'Stack Overflow',url:'https://stackoverflow.com',icon:'message-circle'},{label:'npm',url:'https://www.npmjs.com',icon:'package'},{label:'PyPI',url:'https://pypi.org',icon:'code-2'} ] },
-      { id:'media-links', type:'links', label:'Media & Social', links:[ {label:'Reddit',url:'https://reddit.com',icon:'message-circle'},{label:'YouTube',url:'https://youtube.com',icon:'play'},{label:'Twitch',url:'https://twitch.tv',icon:'gamepad-2'},{label:'X',url:'https://x.com',icon:'x'} ] },
-    ]},
-    { id:'selfhosted', title:'Self-Hosted', icon:'monitor', color:'#777777', width:2, sections:[{ id:'sh-services', type:'links', label:'Services', links:[ {label:'Home Assistant',url:'http://homeassistant.local:8123',icon:'home'},{label:'Jellyfin',url:'http://jellyfin.local:8096',icon:'film'},{label:'Pi-hole',url:'http://pi.hole/admin',icon:'shield'},{label:'Grafana',url:'http://grafana.local:3000',icon:'bar-chart-3'},{label:'Portainer',url:'http://portainer.local:9000',icon:'container'},{label:'Vaultwarden',url:'http://vault.local:8080',icon:'lock'} ] }] },
-    { id:'dev-docs', title:'Dev Docs', icon:'book-open', color:'#8a8a8a', width:1, sections:[{ id:'docs-links', type:'link-list', label:'References', links:[ {label:'MDN Web Docs',url:'https://developer.mozilla.org',icon:'globe'},{label:'React Docs',url:'https://react.dev',icon:'code-2'},{label:'Python Docs',url:'https://docs.python.org/3/',icon:'book'},{label:'Docker Docs',url:'https://docs.docker.com',icon:'container'},{label:'Arch Wiki',url:'https://wiki.archlinux.org',icon:'book'} ] }] },
-    { id:'notes-card', title:'Quick Notes', icon:'edit-3', color:'#bbbbbb', width:1, sections:[{ id:'notes-main', type:'notes', label:'Notes', content:'• WarTab is running!\n• Click ✎ on any card to edit it inline.\n• Drag ⠿ to reorder cards.' }] },
+    {
+      id: 'search-card', title: 'Quick Search', icon: 'search',
+      color: '#999999', width: 2,
+      sections: [
+        { id: 'search-main', type: 'search', engine: 'Google',
+          placeholder: 'Search anything...', label: 'Web Search' },
+      ],
+    },
+    {
+      id: 'clock-card', title: 'Time & Date', icon: 'clock',
+      color: '#aaaaaa', width: 1,
+      sections: [
+        { id: 'clock-main', type: 'clock', format24h: false, showDate: true },
+      ],
+    },
+    {
+      id: 'daily-drivers', title: 'Daily Drivers', icon: 'globe',
+      color: '#cccccc', width: 2,
+      sections: [
+        {
+          id: 'dev-links', type: 'links', label: 'Development',
+          links: [
+            { label: 'GitHub', url: 'https://github.com', icon: '/icons/github.svg' },
+            { label: 'GitLab', url: 'https://gitlab.com', icon: '/icons/gitlab.svg' },
+            { label: 'Stack Overflow', url: 'https://stackoverflow.com', icon: '/icons/stackoverflow.svg' },
+            { label: 'npm', url: 'https://www.npmjs.com', icon: 'package' },
+            { label: 'PyPI', url: 'https://pypi.org', icon: 'code-2' },
+          ],
+        },
+        {
+          id: 'media-links', type: 'links', label: 'Media & Social',
+          links: [
+            { label: 'Reddit', url: 'https://reddit.com', icon: '/icons/reddit.svg' },
+            { label: 'YouTube', url: 'https://youtube.com', icon: '/icons/youtube.svg' },
+            { label: 'Twitch', url: 'https://twitch.tv', icon: '/icons/twitch.svg' },
+            { label: 'X', url: 'https://x.com', icon: 'x' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'selfhosted', title: 'Self-Hosted', icon: 'monitor',
+      color: '#777777', width: 2,
+      sections: [
+        {
+          id: 'sh-services', type: 'links', label: 'Services',
+          links: [
+            { label: 'Home Assistant', url: 'http://homeassistant.local:8123', icon: '/icons/homeassistant.svg' },
+            { label: 'Jellyfin', url: 'http://jellyfin.local:8096', icon: '/icons/jellyfin.svg' },
+            { label: 'Pi-hole', url: 'http://pi.hole/admin', icon: '/icons/pihole.svg' },
+            { label: 'Grafana', url: 'http://grafana.local:3000', icon: '/icons/grafana.svg' },
+            { label: 'Portainer', url: 'http://portainer.local:9000', icon: '/icons/portainer.svg' },
+            { label: 'Vaultwarden', url: 'http://vault.local:8080', icon: '/icons/vaultwarden.svg' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'dev-docs', title: 'Dev Docs', icon: 'book-open',
+      color: '#8a8a8a', width: 1,
+      sections: [
+        {
+          id: 'docs-links', type: 'link-list', label: 'References',
+          links: [
+            { label: 'MDN Web Docs', url: 'https://developer.mozilla.org', icon: 'globe' },
+            { label: 'Python Docs', url: 'https://docs.python.org/3/', icon: 'book' },
+            { label: 'Docker Docs', url: 'https://docs.docker.com', icon: '/icons/docker.svg' },
+            { label: 'Arch Wiki', url: 'https://wiki.archlinux.org', icon: 'book' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'notes-card', title: 'Quick Notes', icon: 'edit-3',
+      color: '#bbbbbb', width: 1,
+      sections: [
+        {
+          id: 'notes-main', type: 'notes', label: 'Notes',
+          content: '• WarTab is running!\n• Click ✎ on any card to edit it inline.\n• Drag ⠿ to reorder cards.',
+        },
+      ],
+    },
   ],
 };
 
-
+/* ═══════════════════════════════════════════
+   SECTION 4: ICON DATA
+   Icon repository (service icons from selfhst/icons),
+   emoji list, Lucide icon name list, and emoji→Lucide migration map.
+   ═══════════════════════════════════════════ */
 const ICON_CDN = '/icons';
 const ICON_REPO = [
   {name:'Home Assistant',file:'homeassistant',tags:['home','automation','smarthome']},{name:'Jellyfin',file:'jellyfin',tags:['media','video','streaming']},{name:'Plex',file:'plex',tags:['media','video','streaming']},{name:'Emby',file:'emby',tags:['media','video','streaming']},{name:'Sonarr',file:'sonarr',tags:['media','tv','downloads']},{name:'Radarr',file:'radarr',tags:['media','movies','downloads']},{name:'Lidarr',file:'lidarr',tags:['media','music','downloads']},{name:'Readarr',file:'readarr',tags:['media','books','downloads']},{name:'Prowlarr',file:'prowlarr',tags:['media','indexer','downloads']},{name:'qBittorrent',file:'qbittorrent',tags:['torrent','downloads']},{name:'Deluge',file:'deluge',tags:['torrent','downloads']},{name:'Transmission',file:'transmission',tags:['torrent','downloads']},{name:'SABnzbd',file:'sabnzbd',tags:['usenet','downloads']},{name:'Pihole',file:'pihole',tags:['dns','adblock','network']},{name:'AdGuard',file:'adguard',tags:['dns','adblock','network']},{name:'Grafana',file:'grafana',tags:['monitoring','metrics','dashboard']},{name:'Prometheus',file:'prometheus',tags:['monitoring','metrics']},{name:'Portainer',file:'portainer',tags:['docker','container','management']},{name:'Docker',file:'docker',tags:['container']},{name:'Traefik',file:'traefik',tags:['proxy','reverse-proxy','network']},{name:'Nginx',file:'nginx',tags:['proxy','web-server']},{name:'Caddy',file:'caddy',tags:['proxy','web-server']},{name:'Nextcloud',file:'nextcloud',tags:['cloud','files','sync']},{name:'OwnCloud',file:'owncloud',tags:['cloud','files','sync']},{name:'Vaultwarden',file:'vaultwarden',tags:['password','security']},{name:'Bitwarden',file:'bitwarden',tags:['password','security']},{name:'Authentik',file:'authentik',tags:['auth','sso','security']},{name:'Authelia',file:'authelia',tags:['auth','sso','security']},{name:'Uptime Kuma',file:'uptimekuma',tags:['monitoring','uptime','status']},{name:'GitHub',file:'github',tags:['git','code','dev']},{name:'GitLab',file:'gitlab',tags:['git','code','dev']},{name:'Gitea',file:'gitea',tags:['git','code','dev']},{name:'Jenkins',file:'jenkins',tags:['ci','cd','build']},{name:'n8n',file:'n8n',tags:['automation','workflow']},{name:'Node-RED',file:'nodered',tags:['automation','workflow','iot']},{name:'Homebridge',file:'homebridge',tags:['smarthome','homekit']},{name:'Proxmox',file:'proxmox',tags:['virtualization','hypervisor']},{name:'TrueNAS',file:'truenas',tags:['nas','storage']},{name:'Unraid',file:'unraid',tags:['nas','storage']},{name:'WireGuard',file:'wireguard',tags:['vpn','network']},{name:'Tailscale',file:'tailscale',tags:['vpn','network']},{name:'Speedtest',file:'speedtest',tags:['network','speed']},{name:'Nginx Proxy Manager',file:'nginxproxymanager',tags:['proxy','management']},{name:'Homer',file:'homer',tags:['dashboard']},{name:'Organizr',file:'organizr',tags:['dashboard']},{name:'Dashy',file:'dashy',tags:['dashboard']},{name:'Heimdall',file:'heimdall',tags:['dashboard']},{name:'Netdata',file:'netdata',tags:['monitoring','metrics','system']},{name:'InfluxDB',file:'influxdb',tags:['database','metrics','time-series']},{name:'PostgreSQL',file:'postgresql',tags:['database']},{name:'MySQL',file:'mysql',tags:['database']},{name:'MongoDB',file:'mongodb',tags:['database']},{name:'Redis',file:'redis',tags:['database','cache']},{name:'Python',file:'python',tags:['language','code']},{name:'Node.js',file:'nodejs',tags:['language','runtime']},{name:'Apache',file:'apache',tags:['web-server']},{name:'Syncthing',file:'syncthing',tags:['sync','files']},{name:'Restic',file:'restic',tags:['backup']},{name:'Borg',file:'borg',tags:['backup']},{name:'Duplicati',file:'duplicati',tags:['backup']},{name:'Calibre',file:'calibre',tags:['books','library']},{name:'Tautulli',file:'tautulli',tags:['media','plex','monitoring']},{name:'Ombi',file:'ombi',tags:['media','requests']},{name:'Overseerr',file:'overseerr',tags:['media','requests']},{name:'Jellyseerr',file:'jellyseerr',tags:['media','requests']},{name:'Jackett',file:'jackett',tags:['media','indexer']},{name:'FlareSolverr',file:'flaresolverr',tags:['proxy','captcha']},{name:'Ngrok',file:'ngrok',tags:['tunnel','proxy']},{name:'Cloudflare',file:'cloudflare',tags:['cdn','dns','security']},{name:'OpenVPN',file:'openvpn',tags:['vpn','network']},{name:'Pfsense',file:'pfsense',tags:['firewall','router']},{name:'OPNsense',file:'opnsense',tags:['firewall','router']},{name:'HAProxy',file:'haproxy',tags:['proxy','load-balancer']},{name:'Kubernetes',file:'kubernetes',tags:['container','orchestration']},{name:'Ansible',file:'ansible',tags:['automation','config-management']},{name:'Terraform',file:'terraform',tags:['infrastructure','iac']},{name:'Discord',file:'discord',tags:['chat','social']},{name:'Slack',file:'slack',tags:['chat','social']},{name:'Mattermost',file:'mattermost',tags:['chat','social']},{name:'Matrix',file:'matrix',tags:['chat','social']},{name:'Reddit',file:'reddit',tags:['social','forum']},{name:'YouTube',file:'youtube',tags:['video','social']},{name:'Twitch',file:'twitch',tags:['streaming','social']},{name:'Wikipedia',file:'wikipedia',tags:['reference','wiki']},{name:'Stack Overflow',file:'stackoverflow',tags:['code','reference']},{name:'Arch Linux',file:'archlinux',tags:['linux','os']},{name:'Ubuntu',file:'ubuntu',tags:['linux','os']},{name:'Debian',file:'debian',tags:['linux','os']},{name:'Alpine',file:'alpine',tags:['linux','os','container']},{name:'Git',file:'git',tags:['version-control']},{name:'VS Code',file:'vscode',tags:['editor','code']},{name:'Firefox',file:'firefox',tags:['browser']},{name:'Chrome',file:'chrome',tags:['browser']},{name:'Unifi',file:'unifi',tags:['network','wifi','ubiquiti']},{name:'OpenWRT',file:'openwrt',tags:['router','network']},{name:'Frigate',file:'frigate',tags:['nvr','camera','vision']},{name:'Scrypted',file:'scrypted',tags:['smarthome','camera']},{name:'ESPHome',file:'esphome',tags:['iot','smarthome']},{name:'MQTT',file:'mqtt',tags:['iot','messaging']},{name:'Zigbee2MQTT',file:'zigbee2mqtt',tags:['iot','smarthome','zigbee']},{name:'Mosquitto',file:'mosquitto',tags:['mqtt','iot']},{name:'OpenMediaVault',file:'openmediavault',tags:['nas','storage']},{name:'Filebrowser',file:'filebrowser',tags:['files','management']},{name:'Navidrome',file:'navidrome',tags:['music','streaming']},{name:'Airsonic',file:'airsonic',tags:['music','streaming']},{name:'Audiobookshelf',file:'audiobookshelf',tags:['audiobooks','podcasts']},{name:'Immich',file:'immich',tags:['photos','gallery']},{name:'Photoprism',file:'photoprism',tags:['photos','gallery']},{name:'Paperless-ngx',file:'paperlessngx',tags:['documents','scanning']},{name:'Changedetection',file:'changedetection',tags:['monitoring','alerts']},{name:'Miniflux',file:'miniflux',tags:['rss','feeds']},{name:'FreshRSS',file:'freshrss',tags:['rss','feeds']},{name:'Memos',file:'memos',tags:['notes','memos']},{name:'Outline',file:'outline',tags:['wiki','knowledge-base']},{name:'Bookstack',file:'bookstack',tags:['wiki','documentation']},{name:'Wiki.js',file:'wikijs',tags:['wiki','documentation']},{name:'HedgeDoc',file:'hedgedoc',tags:['notes','collaboration']},{name:'Cockpit',file:'cockpit',tags:['server','management']},{name:'CasaOS',file:'casaos',tags:['homelab','dashboard']},{name:'Dockge',file:'dockge',tags:['docker','compose','management']},{name:'Dozzle',file:'dozzle',tags:['docker','logs']},{name:'Watchtower',file:'watchtower',tags:['docker','updates']},{name:'Komodo',file:'komodo',tags:['monitoring','docker']},{name:'Diun',file:'diun',tags:['docker','notifications']},
@@ -667,8 +1055,12 @@ function migrateConfigEmojis(cfg){
   return cfg;
 }
 
+/* ═══════════════════════════════════════════
+   SECTION 5: UTILITIES
+   Helper functions for the entire app.
+   ═══════════════════════════════════════════ */
 function isLucideName(s){if(!s||typeof s!=='string')return false;if(s.startsWith('http')||s.startsWith('data:')||s.startsWith('/'))return false;return LUCIDE_ICONS.includes(s);}
-// Render a Lucide icon element (data-lucide attribute for auto-replacement)
+// Render a Lucide icon element (data-lucide attribute for auto-replacement by lucide.createIcons())
 function renderLucideEl(name,cls){var i=document.createElement('i');i.className=cls;i.setAttribute('data-lucide',name);return i;}
 
 let config = {}, clockInterval = null, weatherIntervals = [], apiPollTimers = [], statsTimer = null;
@@ -679,11 +1071,41 @@ const $$ = s => document.querySelectorAll(s);
 function uid(){return Math.random().toString(36).substring(2,9)+Date.now().toString(36);}
 function cloneObj(o){return JSON.parse(JSON.stringify(o));}
 function toast(msg,type='info'){const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;$('#toast-container').appendChild(el);setTimeout(()=>el.remove(),3000);}
+
+/* ═══════════════════════════════════════════
+   SECTION 6: CONFIG LOAD / SAVE
+   NOTE: Config is currently stored in localStorage (browser-side).
+   The server also has /api/config endpoints for potential server-side syncing.
+   ═══════════════════════════════════════════ */
+// Load config from localStorage, merging over DEFAULT_CONFIG
 function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>{if(el.parentNode)el.remove();},6000);}
 
 /* ── Config ── */
-function loadConfig(){try{const s=localStorage.getItem('wartab');if(s){var parsed=JSON.parse(s);if(!parsed.version||parsed.version<'0.2.0'){migrateConfigEmojis(parsed);parsed.version=WARTAB_VERSION;localStorage.setItem('wartab',JSON.stringify(parsed));}config=deepMerge(cloneObj(DEFAULT_CONFIG),parsed);}else config=cloneObj(DEFAULT_CONFIG);}catch(e){console.error('loadConfig failed:',e);config=cloneObj(DEFAULT_CONFIG);}}
-function saveConfig(){try{localStorage.setItem('wartab',JSON.stringify(config));}catch(e){}}
+// Load config from server — called once on page init
+async function loadConfig() {
+  try {
+    const resp = await fetch('/api/config');
+    if (resp.ok) {
+      var parsed = await resp.json();
+      if (!parsed.version || parsed.version < '0.2.0') { migrateConfigEmojis(parsed); parsed.version = WARTAB_VERSION; }
+      config = deepMerge(cloneObj(DEFAULT_CONFIG), parsed);
+    } else {
+      config = cloneObj(DEFAULT_CONFIG);
+    }
+  } catch (e) {
+    console.error('loadConfig failed:', e);
+    config = cloneObj(DEFAULT_CONFIG);
+  }
+}
+// Save config to server — fire-and-forget POST
+function saveConfig() {
+  try {
+    navigator.sendBeacon('/api/config', JSON.stringify(config));
+  } catch(e) {
+    // fallback: try fetch
+    fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(config), keepalive: true }).catch(()=>{});
+  }
+}
 // Deep-merge stored config over defaults (arrays replaced, objects recursed)
 function deepMerge(t,s){const r=cloneObj(t);for(const k in s){if(s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k]))r[k]=deepMerge(r[k]||{},s[k]);else r[k]=s[k];}return r;}
 
@@ -710,15 +1132,19 @@ function applyTheme(){
   root.style.setProperty('--font',`'${fn}','Segoe UI',system-ui,-apple-system,sans-serif`);
   loadGoogleFont(fn,true);
 
-  // Accent-tinted glass — card background uses accent color at varying opacity
+  // Card background — black for dark, white for light, with accent tint
   const h=t.glow.replace('#','');
   const r=parseInt(h[0]+h[1],16),gr=parseInt(h[2]+h[3],16),b=parseInt(h[4]+h[5],16);
   const mode=t.cardBg||'dark';
-  const opts={dark:{c:0.08,a:0.12,i:0.3},light:{c:0.14,a:0.08,i:0.15},'solid-dark':{c:0.85,a:0.9,i:0.4},'solid-light':{c:0.88,a:0.92,i:0.08},neon:{c:0.03,a:0.06,i:0.15}};
-  const o=opts[mode]||opts.dark;
-  root.style.setProperty('--card-bg',`rgba(${r},${gr},${b},${o.c})`);
-  root.style.setProperty('--card-bg-alt',`rgba(${r},${gr},${b},${o.a})`);
-  root.style.setProperty('--card-input-bg',`rgba(${r},${gr},${b},${o.i})`);
+  const op = t.cardOpacity !== undefined ? t.cardOpacity : 1;
+  const base = mode === 'light' ? [255,255,255] : [0,0,0];
+  const tint = mode === 'light' ? 0.18 : 0.06;
+  // Dark: black + accent blend. Light: white + visible accent blend.
+  root.style.setProperty('--card-bg',`rgba(${Math.round(base[0]*(1-tint)+r*tint)},${Math.round(base[1]*(1-tint)+gr*tint)},${Math.round(base[2]*(1-tint)+b*tint)},${op})`);
+  root.style.setProperty('--card-bg-alt',`rgba(${r},${gr},${b},${mode==='light' ? 0.15 : 0.08})`);
+  root.style.setProperty('--card-input-bg', mode === 'light'
+    ? `rgba(0,0,0,${0.06 * op})`
+    : `rgba(255,255,255,${0.15 * op})`);
   document.documentElement.dataset.cardBg=mode;
 
   // Font color from config
@@ -767,18 +1193,28 @@ function stItem(icon,label,value,pct){const div=document.createElement('span');d
 
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
 // Full page re-render: destroys and rebuilds grid from config
-function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){appEl.style.paddingLeft=config.layout.paddingX+'px';appEl.style.paddingRight=config.layout.paddingX+'px';appEl.style.paddingTop=config.layout.paddingY+'px';appEl.style.paddingBottom='80px';}const _scrollY=window.scrollY;
+function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){
+  // Page width: full=100%+20px pad, 3/4=75%, 1/2=50% (auto-margins center narrower widths)
+  const pctMap={full:'100%','three-quarters':'75%',half:'50%'};
+  appEl.style.maxWidth=pctMap[config.layout.pageWidth]||'100%';
+  const xPad=config.layout.pageWidth==='full'?20:0;
+  appEl.style.paddingLeft=xPad+'px';appEl.style.paddingRight=xPad+'px';
+  // Y padding: Full → 20px, Compact → 120px
+  const yPad=config.layout.paddingHeight==='compact'?120:20;
+  appEl.style.paddingTop=yPad+'px';appEl.style.paddingBottom=yPad+'px';
+}const _scrollY=window.scrollY;
 if(!config.cards.length){
-  grid.innerHTML=`<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;">
-    <div style="font-size:48px;margin-bottom:16px;"><i data-lucide="package" style="width:48px;height:48px;"></i></div>
-    <div style="font-size:20px;font-weight:600;margin-bottom:6px;color:var(--text-primary);">Your dashboard is empty</div>
-    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;">Add your first card to get started</div>
+  grid.innerHTML=`<div class="card" style="grid-column:1/-1;padding:0;"><div class="card-body" style="display:flex;flex-direction:column;align-items:center;padding:40px 24px;text-align:center;">
+    <div style="font-size:36px;margin-bottom:12px;opacity:0.5;"><i data-lucide="layout" style="width:36px;height:36px;"></i></div>
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px;color:var(--text-primary);">This page is empty</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;">Add your first card to get started</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-      <button class="btn btn-glass" id="empty-add-card">➕ Add Card</button>
-      <button class="btn btn-glass" id="empty-add-clock">🕐 Add Clock</button>
-      <button class="btn btn-glass" id="empty-add-links">🔗 Add Links</button>
-      <button class="btn btn-glass" id="empty-config">⚙️ Settings</button>
-    </div></div>`;
+      <button class="btn btn-glass" id="empty-add-card"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add Card</button>
+      <button class="btn btn-glass" id="empty-add-clock"><i data-lucide="clock" style="width:14px;height:14px;"></i> Add Clock</button>
+      <button class="btn btn-glass" id="empty-add-links"><i data-lucide="link" style="width:14px;height:14px;"></i> Add Links</button>
+      <button class="btn btn-glass" id="empty-config"><i data-lucide="settings" style="width:14px;height:14px;"></i> Settings</button>
+    </div>
+  </div></div>`;
   setTimeout(()=>{
     const a=document.getElementById('empty-add-card');if(a)a.addEventListener('click',addNewCard);
     const b=document.getElementById('empty-add-clock');if(b)b.addEventListener('click',()=>{addNewCard();const c=config.cards[config.cards.length-1];if(c){c.title='Clock';c.icon='🕐';c.color='#aaaaaa';c.width=1;c.sections=[{id:'sec-'+uid(),type:'clock',format24h:false,showDate:true}];saveConfig();renderAll();}});
@@ -813,8 +1249,9 @@ function renderCard(card,idx){
     div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;
     div.style.gridColumn='span '+div.dataset.width;
     if(card.height>1)div.style.gridRow='span '+card.height;
-    // Strip ALL visual properties — completely invisible card
-    div.style.cssText+=';background:none!important;border:none!important;box-shadow:none!important;outline:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-width:0;display:block;position:relative;';if(card.minHeight){var sp=document.createElement('div');sp.style.cssText='min-height:'+card.minHeight+'px;pointer-events:none;';div.appendChild(sp);}
+    // Subtle boundary so the gap space is visible
+    div.style.cssText+=';background:none!important;box-shadow:none!important;outline:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-width:0;display:block;position:relative;border:1px dashed rgba(255,255,255,0.12)!important;';
+    if(card.minHeight){var sp=document.createElement('div');sp.style.cssText='min-height:'+card.minHeight+'px;pointer-events:none;';div.appendChild(sp);}
     div.style.setProperty('--card-accent','transparent');
     div.style.setProperty('--card-bg','transparent');
     // Header at same position as regular cards (top-right)
@@ -831,34 +1268,213 @@ function renderCard(card,idx){
     const eb2=document.createElement('button');eb2.className='card-edit-btn';eb2.textContent='✎';eb2.title='Edit gap';
     eb2.addEventListener('click',e=>{e.stopPropagation();openCardEditPanel(card.id);});
     h.appendChild(eb2);
-    const dh=document.createElement('i');dh.className='drag-handle';dh.setAttribute('data-lucide','grip-vertical');dh.title='Drag';
+    const dh=document.createElement('span');dh.className='drag-handle';dh.textContent='⠿';dh.title='Drag';dh.style.touchAction='none';
     h.appendChild(dh);
     div.appendChild(h);
-    dh.addEventListener('mousedown',e=>startDrag(e,card.id,idx));
+    dh.addEventListener('pointerdown',e=>startDrag(e,card.id,idx));
     div.addEventListener('dblclick',()=>{config.cards.splice(idx,1);saveConfig();renderAll();toast('Gap removed');});
     return div;
   }
-  const div=document.createElement('div');div.className='card';div.dataset.cardId=card.id;div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;div.style.setProperty('--card-accent',card.color||config.theme.glow);
-  if(card.height>1)div.style.gridRow='span '+card.height;
-  const hdr=document.createElement('div');hdr.className='card-header';const title=document.createElement('div');title.className='card-title';title.appendChild(renderIconElement(card.icon,'card-icon'));title.appendChild(document.createTextNode(' '+(card.title||'')));hdr.appendChild(title);const rg=document.createElement('div');rg.style.cssText='display:flex;align-items:center;gap:4px;';const eb=document.createElement('button');eb.className='card-edit-btn';eb.textContent='✎';eb.title='Edit';eb.addEventListener('click',e=>{e.stopPropagation();openCardEditPanel(card.id);});rg.appendChild(eb);const h=document.createElement('span');h.className='drag-handle';h.textContent='⠿';h.title='Drag';rg.appendChild(h);hdr.appendChild(rg);div.appendChild(hdr);const body=document.createElement('div');body.className='card-body';(card.sections||[]).forEach(sec=>{const el=renderSection(sec,card);if(el)body.appendChild(el);});div.appendChild(body);h.addEventListener('mousedown',function(e){startDrag(e,card.id,idx);});return div;
+  /* ── Regular card ── */
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.dataset.cardId = card.id;
+  div.dataset.width = Math.min(card.width || 1, config.layout.cols);
+  div.dataset.index = idx;
+  div.style.setProperty('--card-accent', card.color || config.theme.glow);
+  if (card.height > 1) div.style.gridRow = 'span ' + card.height;
+
+  /* Header: title (icon + text) on the left, actions (edit + drag handle) on the right */
+  const hdr = document.createElement('div');
+  hdr.className = 'card-header';
+
+  const title = document.createElement('div');
+  title.className = 'card-title';
+  title.appendChild(renderIconElement(card.icon, 'card-icon'));
+  title.appendChild(document.createTextNode(' ' + (card.title || '')));
+  hdr.appendChild(title);
+
+  const actionGroup = document.createElement('div');
+  actionGroup.style.cssText = 'display:flex;align-items:center;gap:4px;';
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'card-edit-btn';
+  editBtn.textContent = '✎';
+  editBtn.title = 'Edit';
+  editBtn.addEventListener('click', e => { e.stopPropagation(); openCardEditPanel(card.id); });
+  actionGroup.appendChild(editBtn);
+
+  const dragHandle = document.createElement('span');
+  dragHandle.className = 'drag-handle';
+  dragHandle.textContent = '⠿';
+  dragHandle.title = 'Drag';
+  dragHandle.style.touchAction = 'none';
+  actionGroup.appendChild(dragHandle);
+
+  hdr.appendChild(actionGroup);
+  div.appendChild(hdr);
+
+  /* Body: render each section */
+  const body = document.createElement('div');
+  body.className = 'card-body';
+  (card.sections || []).forEach(section => {
+    const el = renderSection(section, card);
+    if (el) body.appendChild(el);
+  });
+  div.appendChild(body);
+
+  dragHandle.addEventListener('pointerdown', function(e) { startDrag(e, card.id, idx); });
+  return div;
 }
 
-function renderIconElement(icon,cls){if(!icon)return renderLucideEl('package',cls);if(icon.startsWith('http')||icon.startsWith('data:')||icon.startsWith('/')){const img=document.createElement('img');img.className=cls;img.src=icon;img.alt='';img.loading='lazy';img.onerror=function(){var e=renderLucideEl('package',cls);this.parentNode.replaceChild(e,this);};return img;}if(isLucideName(icon))return renderLucideEl(icon,cls);const s=document.createElement('span');s.className=cls+' emoji-icon';s.textContent=icon;return s;}
+/**
+ * Render a card/section icon element. Supports three formats:
+ *   1. Lucide icon name  → <i data-lucide="..."> (replaced with SVG at runtime)
+ *   2. URL/image path    → <img> (with Lucide fallback on load error)
+ *   3. Emoji string      → <span class="emoji-icon">
+ * @param {string} icon   Icon identifier
+ * @param {string} cls    CSS class for the element
+ * @returns {HTMLElement}
+ */
+function renderIconElement(icon, cls) {
+  if (!icon) return renderLucideEl('package', cls);
+  if (icon.startsWith('http') || icon.startsWith('data:') || icon.startsWith('/')) {
+    const img = document.createElement('img');
+    img.className = cls; img.src = icon; img.alt = '';
+    img.loading = 'lazy';
+    img.onerror = function() {
+      var fallback = renderLucideEl('package', cls);
+      this.parentNode.replaceChild(fallback, this);
+    };
+    return img;
+  }
+  if (isLucideName(icon)) return renderLucideEl(icon, cls);
+  const span = document.createElement('span');
+  span.className = cls + ' emoji-icon';
+  span.textContent = icon;
+  return span;
+}
 
 
-function doSearch(q,sec){const s=(q||'').trim();if(!s)return;const en=sec.engine||config.search.selected||'Google';window.open((config.search.engines[en]||config.search.engines['Google'])+encodeURIComponent(s),'_blank');}
+function doSearch(query, section) {
+  const s = (query || '').trim();
+  if (!s) return;
+  const engine = section.engine || config.search.selected || 'Google';
+  const url = (config.search.engines[engine] || config.search.engines['Google']) + encodeURIComponent(s);
+  window.open(url, '_blank');
+}
 
-function renderSection(sec,card){const f=document.createDocumentFragment();if(sec.label&&sec.type!=='clock'&&sec.type!=='links'){const l=document.createElement('div');l.className='section-title';const tog=document.createElement('span');tog.className='section-toggle'+(sec.collapsed?' closed':' open');tog.textContent=sec.collapsed?'▶':'▼';tog.addEventListener('click',()=>{sec.collapsed=!sec.collapsed;saveConfig();renderAll();});l.appendChild(tog);l.appendChild(document.createTextNode(sec.label));f.appendChild(l);}const cw=document.createElement('div');cw.className='section-content'+(sec.collapsed&&sec.type!=='links'?' collapsed':'');const mod=CARD_MODULES[sec.type];
-if(mod&&mod.render)mod.render(sec,card,cw);
-else cw.textContent='Unknown type: '+sec.type;f.appendChild(cw);const sl=card.sections||[],is=sl.indexOf(sec)===sl.length-1;if(!is&&sec.type!=='clock'){const hr=document.createElement('hr');hr.className='section-divider';f.appendChild(hr);}return f;}
-function renderLinkIcon(icon){if(!icon){var i=document.createElement('i');i.className='link-icon';i.setAttribute('data-lucide','link');return i;}if(icon.startsWith('http')||icon.startsWith('data:')||icon.startsWith('/')){const img=document.createElement('img');img.className='link-custom-icon';img.src=icon;img.alt='';img.loading='lazy';img.onerror=function(){var e=document.createElement('i');e.className='link-icon';e.setAttribute('data-lucide','link');this.parentNode.replaceChild(e,this);};return img;}if(isLucideName(icon)){var i=document.createElement('i');i.className='link-icon';i.setAttribute('data-lucide',icon);return i;}const s=document.createElement('span');s.className='link-icon emoji-icon';s.textContent=icon;return s;}
-function findSection(sid){for(let ci=0;ci<config.cards.length;ci++)for(let si=0;si<(config.cards[ci].sections||[]).length;si++)if(config.cards[ci].sections[si].id===sid)return[ci,si];return-1;}
+/**
+ * Render a card section (a content block within a card body).
+ * Creates a section-title toggle (if labelled, non-clock) + content area with module render output.
+ * @param {Object} section   The section config object
+ * @param {Object} card      The parent card config
+ * @returns {DocumentFragment}
+ */
+function renderSection(section, card) {
+  const fragment = document.createDocumentFragment();
+
+  /* ── Section title row (label + collapse toggle) ── */
+  if (section.label && section.type !== 'clock') {
+    const titleRow = document.createElement('div');
+    titleRow.className = 'section-title';
+    titleRow.dataset.secId = section.id;
+
+    const toggle = document.createElement('span');
+    toggle.className = 'section-toggle' + (section.collapsed ? ' closed' : ' open');
+    toggle.textContent = section.collapsed ? '▶' : '▼';
+    toggle.addEventListener('click', () => {
+      section.collapsed = !section.collapsed;
+      saveConfig();
+      renderAll();
+    });
+
+    titleRow.appendChild(toggle);
+    titleRow.appendChild(document.createTextNode(section.label));
+    fragment.appendChild(titleRow);
+  }
+
+  /* ── Content area ── */
+  const contentWrap = document.createElement('div');
+  contentWrap.className = 'section-content' + (section.collapsed ? ' collapsed' : '');
+
+  const module = CARD_MODULES[section.type];
+  if (module && module.render) {
+    module.render(section, card, contentWrap);
+  } else {
+    contentWrap.textContent = 'Unknown type: ' + section.type;
+  }
+  fragment.appendChild(contentWrap);
+
+  /* ── Divider (between sections) ── */
+  const sectionList = card.sections || [];
+  const isLast = sectionList.indexOf(section) === sectionList.length - 1;
+  if (!isLast && section.type !== 'clock') {
+    const divider = document.createElement('hr');
+    divider.className = 'section-divider';
+    fragment.appendChild(divider);
+  }
+
+  return fragment;
+}
+
+/**
+ * Render a link icon for bookmark grid/list items. Supports same three formats
+ * as renderIconElement: Lucide name, image URL, or emoji.
+ * @param {string} icon   Icon identifier
+ * @returns {HTMLElement}
+ */
+function renderLinkIcon(icon) {
+  /* Default: Lucide 'link' icon */
+  if (!icon) {
+    var el = document.createElement('i');
+    el.className = 'link-icon'; el.setAttribute('data-lucide', 'link');
+    return el;
+  }
+  /* Image URL */
+  if (icon.startsWith('http') || icon.startsWith('data:') || icon.startsWith('/')) {
+    const img = document.createElement('img');
+    img.className = 'link-custom-icon'; img.src = icon; img.alt = '';
+    img.loading = 'lazy';
+    img.onerror = function() {
+      var fallback = document.createElement('i');
+      fallback.className = 'link-icon'; fallback.setAttribute('data-lucide', 'link');
+      this.parentNode.replaceChild(fallback, this);
+    };
+    return img;
+  }
+  /* Lucide icon name */
+  if (isLucideName(icon)) {
+    var el = document.createElement('i');
+    el.className = 'link-icon'; el.setAttribute('data-lucide', icon);
+    return el;
+  }
+  /* Emoji fallback */
+  const span = document.createElement('span');
+  span.className = 'link-icon emoji-icon';
+  span.textContent = icon;
+  return span;
+}
+/**
+ * Find a section by its ID across all cards.
+ * @param {string} sectionId   The section.id to find
+ * @returns {Array|number} [cardIndex, sectionIndex] or -1 if not found
+ */
+function findSection(sectionId) {
+  for (let ci = 0; ci < config.cards.length; ci++) {
+    const sections = config.cards[ci].sections || [];
+    for (let si = 0; si < sections.length; si++) {
+      if (sections[si].id === sectionId) return [ci, si];
+    }
+  }
+  return -1;
+}
 
 function setupClocks(){if(clockInterval)clearInterval(clockInterval);updateClocks();clockInterval=setInterval(updateClocks,1000);}
 function updateClocks(){$$('.clock-widget').forEach(el=>{const n=new Date(),f24=el.dataset.format24==='1',sd=el.dataset.showDate==='1';let h=n.getHours();const m=String(n.getMinutes()).padStart(2,'0');el.querySelector('.clock-time').textContent=f24?String(h).padStart(2,'0')+':'+m:(h%12||12)+':'+m+' '+(h>=12?'PM':'AM');if(sd)el.querySelector('.clock-date').textContent=n.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});if(el.dataset.showCalendar==='1'){const cal=el.querySelector('.calendar-widget');if(cal)renderCalendar(cal,n);}});}
 function renderCalendar(el,date){const y=date.getFullYear(),m=date.getMonth();const fd=new Date(y,m,1).getDay();const ld=new Date(y,m+1,0).getDate();const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];let h=`<div class="calendar-month">${mn[m]} ${y}</div><div class="calendar-grid">`;['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{h+=`<div class="calendar-day-header">${d}</div>`;});for(let i=0;i<fd;i++)h+='<div class="calendar-day other-month"></div>';const today=new Date();for(let d=1;d<=ld;d++){const is=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();h+=`<div class="calendar-day${is?' today':''}">${d}</div>`;}h+='</div>';el.innerHTML=h;}
 function setupWeatherWidgets(){weatherIntervals.forEach(clearInterval);weatherIntervals=[];$$('.weather-widget').forEach(fetchWeather);}
-function fetchWeather(el){const k=el.dataset.apiKey,l=el.dataset.location;if(!k||!l){el.querySelector('.weather-detail').textContent='Set API key & location in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(l)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);var iconEl=el.querySelector('.weather-icon');if(iconEl){var lname=wIcon(d.weather[0].id);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';var windEl=el.querySelector('.weather-wind-val');if(windEl){var ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}var tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);
+function fetchWeather(el){const k=el.dataset.apiKey,z=el.dataset.zip,c=el.dataset.country||'US';if(!k||!z){el.querySelector('.weather-detail').textContent='Set API key & zip code in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?zip=${encodeURIComponent(z)},${encodeURIComponent(c)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);var iconEl=el.querySelector('.weather-icon');if(iconEl){var lname=wIcon(d.weather[0].id);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';var windEl=el.querySelector('.weather-wind-val');if(windEl){var ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}var tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);
 if(typeof lucide!=='undefined'){
   var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
   lucide.createIcons();
@@ -895,12 +1511,19 @@ var LOCAL_QUOTES=[
   {q:'Make it work, make it right, make it fast.',a:'Kent Beck'},
   {q:'Computers are fast; programmers keep it slow.',a:'Anonymous'},
 ];
-function fetchQuote(el){
-  var txt=el.querySelector('.quotes-content'),auth=el.querySelector('.quotes-author-name');
-  if(!txt||!auth)return;
-  var q=LOCAL_QUOTES[Math.floor(Math.random()*LOCAL_QUOTES.length)];
-  txt.textContent=q.q;
-  auth.textContent='— '+q.a;
+function fetchQuote(el, sec) {
+  var txt = el.querySelector('.quotes-content'),
+      auth = el.querySelector('.quotes-author-name');
+  if (!txt || !auth) return;
+  var pool = sec.quotes || [];
+  if (!pool.length) {
+    txt.textContent = 'Add quotes in settings';
+    auth.textContent = '';
+    return;
+  }
+  var pick = pool[Math.floor(Math.random() * pool.length)];
+  txt.textContent = pick.q;
+  auth.textContent = '— ' + pick.a;
 }
 
 
@@ -931,10 +1554,41 @@ function fetchStatusWidget(el){
 }
 
 /* ═══════════════════════════════════════════ DRAG & DROP ═══════════════════════════════════════════
-   Pointer-based drag with position preview, gap-slot awareness, smooth animation.
-   Cards snap to grid cells; gaps preserve blank spaces for customization.
-*/
-function startDrag(e,id,idx){
+   Pointer-based drag with floating ghost, grid-simulated live preview, and FLIP
+   animation on ALL shifted cards at drop. Touch+mouse via Pointer Events API. */
+
+// Simulate CSS Grid auto-placement (left-to-right, top-to-bottom, multi-row aware)
+// Returns [{row,col}] for each card in same order as input array
+function simGrid(cards, cols) {
+  const occ = []; // occ[row][col] = true
+  const out = [];
+  for (const card of cards) {
+    const w = Math.min(card.width || 1, cols);
+    const h = card.height || 1;
+    let placed = false;
+    for (let row = 0; !placed && row < 100; row++) {
+      if (!occ[row]) occ[row] = [];
+      for (let col = 0; col <= cols - w && !placed; col++) {
+        let free = true;
+        for (let dr = 0; dr < h && free; dr++)
+          for (let dc = 0; dc < w && free; dc++)
+            if (occ[row + dr] && occ[row + dr][col + dc]) free = false;
+        if (free) {
+          for (let dr = 0; dr < h; dr++) {
+            if (!occ[row + dr]) occ[row + dr] = [];
+            for (let dc = 0; dc < w; dc++) occ[row + dr][col + dc] = true;
+          }
+          out.push({ row, col }); placed = true;
+        }
+      }
+    }
+    if (!placed) out.push({ row: 0, col: 0 });
+  }
+  return out;
+}
+
+function startDrag(e, id, idx){
+  if(e.button!==0)return;
   e.preventDefault();
   const card=config.cards.find(x=>x.id===id);
   if(!card)return;
@@ -943,175 +1597,239 @@ function startDrag(e,id,idx){
   if(!srcEl)return;
   srcEl.classList.add('dragging');
 
-  // Ghost box — shows exact target position
   const ghost=document.createElement('div');ghost.className='drag-ghost';
   ghost.style.display='none';
+  const cw=Math.min(card.width||1,config.layout.cols);
+  const ch=card.height||1;
+  ghost.innerHTML='<div class="dgh-label">'+((card._isGap?'␣ empty':(card.icon||'')+' '+(card.title||'')).trim()||'Card')+'</div>';
   document.body.appendChild(ghost);
-  // Mini label inside ghost
-  const label=card._isGap?'empty':(card.icon||'package')+' '+(card.title||'');
-  ghost.innerHTML=`<div style="padding:8px 12px;font-size:12px;font-weight:600;">${label}</div>`;
 
-  dragState={cardId:id,srcEl,ghost,active:false};
-  document.addEventListener('mousemove',onDragMove);
-  document.addEventListener('mouseup',onDragEnd);
+  // Record cursor offset from card's left edge at grab time
+  const srcRect=srcEl.getBoundingClientRect();
+  dragState={cardId:id,srcEl,ghost,active:false,_startX:e.clientX,_startY:e.clientY,_beforeCardId:null,
+    _cardWidth:cw,_cardHeight:ch,_grabOffs:e.clientX-srcRect.left};
+  document.addEventListener('pointermove',onDragMove);
+  document.addEventListener('pointerup',onDragEnd);
+  document.addEventListener('pointercancel',onDragEnd);
+}
+
+function pushClear(){
+  $$('.card.push-preview').forEach(el=>{el.classList.remove('push-preview');el.style.transform='';});
+}
+
+// Group cards by DOM y-position to find rows. Pass excludeEl=null to include all.
+function buildRowMap(grid, excludeEl) {
+  const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==excludeEl);
+  const rows=[];
+  for(const el of items){
+    const r=el.getBoundingClientRect();let found=false;
+    for(const row of rows){if(Math.abs(row.top-r.top)<10){row.cards.push(el);row.right=Math.max(row.right,r.right);row.bottom=Math.max(row.bottom,r.bottom);found=true;break;}}
+    if(!found)rows.push({top:r.top,bottom:r.bottom,cards:[el],right:r.right});
+  }
+  return rows;
 }
 
 function onDragMove(e){
   if(!dragState)return;
-  if(!dragState.active&&dragState.srcEl){
-    if(!dragState._startX){dragState._startX=e.clientX;dragState._startY=e.clientY;return;}
-    if((e.clientX-dragState._startX)**2+(e.clientY-dragState._startY)**2<64)return;
+  if(!dragState.active){
+    const dx=e.clientX-dragState._startX,dy=e.clientY-dragState._startY;
+    if(dx*dx+dy*dy<64)return;
     dragState.active=true;
+    if(dragState.ghost)dragState.ghost.style.display='';
+    // On activation, also refine grab offset from the actual card position
+    if(dragState.srcEl){
+      const sr=dragState.srcEl.getBoundingClientRect();
+      dragState._grabOffs=e.clientX-sr.left;
+    }
   }
   if(!dragState.active)return;
 
-  const grid=$('#card-grid');
-  const ghost=dragState.ghost;
-  if(!ghost)return;
-  const gr=grid.getBoundingClientRect();
-  const cols=config.layout.cols;
-  const colW=gr.width/cols;
+  const grid=$('#card-grid'),ghost=dragState.ghost,dSrc=dragState.srcEl;
+  if(!ghost||!grid)return;
+  const gr=grid.getBoundingClientRect(),cols=config.layout.cols,gap=(config.layout.gap||16);
+  const colW=(gr.width-(cols-1)*gap)/cols,step=colW+gap;
+  const cw=dragState._cardWidth,ch=dragState._cardHeight;
+  const grabOffs=dragState._grabOffs||colW*0.33;
 
-  // Card dimensions for the ghost
-  const card=config.cards.find(c=>c.id===dragState.cardId);
-  if(!card){ghost.style.display='none';return;}
-  const cw=Math.min(card.width||1,cols);
-
-  // Calculate target column (snap card so its center is at cursor)
+  // Snap to column: preserve grab offset so cursor points to the same relative spot on the card
+  // Use step (colW+gap) because column left-edges are step apart in the actual grid
   const relX=e.clientX-gr.left;
-  const targetCol=Math.max(0,Math.min(cols-cw,Math.floor((relX-(cw*colW)/2)/colW)+1));
+  let targetCol=Math.round((relX-grabOffs)/step);
+  targetCol=Math.max(0,Math.min(cols-cw,targetCol));
 
-  // Find which row this column position falls in
-  const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==dragState.srcEl);
-  const rows=[]; // array of {top,bottom,cards[],right}
-  for(const el of items){
-    const r=el.getBoundingClientRect();
-    let found=false;
-    for(const row of rows){
-      if(Math.abs(row.top-r.top)<10){row.cards.push(el);row.right=Math.max(row.right,r.right);row.bottom=r.bottom;found=true;break;}
+  // Build row map (exclude dragged card for cursor/insertion detection)
+  const rows=buildRowMap(grid,dSrc);
+  let targetRow=null,rowIdx=0;
+  for(let i=0;i<rows.length;i++){const row=rows[i];if(e.clientY>=row.top&&e.clientY<=row.bottom){targetRow=row;rowIdx=i;break;}}
+  if(!targetRow&&rows.length){
+    let best=0,bestD=Infinity;
+    for(let i=0;i<rows.length;i++){const d=Math.abs(e.clientY-rows[i].top);if(d<bestD){bestD=d;best=i;}}
+    targetRow=rows[best];rowIdx=best;
+  }
+
+  const ghostLeft=gr.left+targetCol*(colW+gap);
+  const ghostW=cw*colW+(cw-1)*gap;
+  const ghostTop=targetRow?targetRow.top:(e.clientY-30);
+  const ghostH=targetRow?(targetRow.bottom-targetRow.top):60;
+
+  // Find insertion point: first card whose LEFT EDGE is at or past the ghost's left edge
+  let beforeCard=null;
+  if(targetRow){
+    for(const el of targetRow.cards){
+      const r=el.getBoundingClientRect();
+      if(r.left>=ghostLeft-5){beforeCard=el;break;}
     }
-    if(!found)rows.push({top:r.top,bottom:r.bottom,cards:[el],right:r.right});
-  }
-
-  // Find which row the cursor is on
-  let targetRow=null;
-  let targetRowIdx=0;
-  for(let i=0;i<rows.length;i++){
-    const row=rows[i];
-    if(e.clientY>=row.top&&e.clientY<=row.bottom){targetRow=row;targetRowIdx=i;break;}
-  }
-  // If between rows, use the nearest
-  if(!targetRow){
-    let best=null,bestD=Infinity;
-    for(let i=0;i<rows.length;i++){
-      const d=Math.abs(e.clientY-rows[i].top);
-      if(d<bestD){bestD=d;best=i;}
+    // Past all cards in row — use next DOM sibling (next row's first card, or null → append)
+    if(!beforeCard&&targetRow.cards.length){
+      const ns=targetRow.cards[targetRow.cards.length-1].nextElementSibling;
+      beforeCard=(ns&&ns.classList.contains('card'))?ns:null;
     }
-    if(best!==null){targetRow=rows[best];targetRowIdx=best;}
   }
+  dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
 
-  if(!targetRow){
-    // No rows yet — ghost at cursor
-    ghost.style.display='';
-    ghost.style.cssText=`
-      position:fixed;pointer-events:none;z-index:999;
-      left:${gr.left+targetCol*colW}px;top:${e.clientY-30}px;
-      width:${cw*colW-4}px;height:60px;
-      border:2px dashed var(--accent);background:var(--accent-glass);
-      backdrop-filter:blur(4px);border-radius:0;
-    `;
-    dragState._beforeCard=null;
-    return;
-  }
-
-  // The card should go in the target row at targetCol. Snapshot the row cards.
-  // Find the insertion point: the first card in the row whose left edge is past the target column
-  ghost.style.display='';
-  const ghostLeft=gr.left+targetCol*colW;
-  const ghostTop=targetRow.top;
-  const ghostW=cw*colW;
-  const ghostH=targetRow.bottom-targetRow.top;
-
+  // Position ghost
   ghost.style.cssText=`
     position:fixed;pointer-events:none;z-index:999;
     left:${ghostLeft}px;top:${ghostTop}px;
-    width:${ghostW-4}px;height:${ghostH-4}px;
-    border:2px dashed var(--accent);background:var(--accent-glass);
-    backdrop-filter:blur(4px);border-radius:0;
+    width:${ghostW-4}px;min-height:${ghostH-4}px;
     display:flex;align-items:center;justify-content:center;
+    background:var(--accent-glass);border:2px dashed var(--accent);
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   `;
 
-  // Determine which card to insert before based on grid position
-  // Find the first card (in DOM order) that starts at or after the target column AND same row
-  let beforeCard=null;
-  for(const el of items){
-    const r=el.getBoundingClientRect();
-    if(Math.abs(r.top-targetRow.top)<10&&r.left>=ghostLeft){
-      beforeCard=el;break;
+  // ── Exact-final-positions preview ──
+  // Compute simGrid for old and new card order, then apply transforms
+  // so every card renders exactly where it will be on drop.
+  pushClear();
+  const allCards=config.cards;
+  const srcIdx2=allCards.findIndex(c=>c.id===dragState.cardId);
+  if(srcIdx2>=0){
+    const newOrder=[...allCards];
+    const [moved]=newOrder.splice(srcIdx2,1);
+    const beforeIdx=beforeCard?newOrder.findIndex(c=>c.id===beforeCard.dataset.cardId):newOrder.length;
+    newOrder.splice(beforeIdx,0,moved);
+
+    const oldSim=simGrid(allCards,cols);
+    const newSim=simGrid(newOrder,cols);
+
+    // Row height estimate for Y positioning
+    const allRows=buildRowMap(grid,null);
+    const avgRowH=allRows.length
+      ? allRows.reduce((s,r)=>s+(r.bottom-r.top),0)/allRows.length
+      : colW*0.6;
+    const rowStep=avgRowH+gap;
+
+    for(let i=0;i<allCards.length;i++){
+      const c=allCards[i];
+      if(c.id===dragState.cardId)continue;
+      const oldP=oldSim[i];
+      const newIdx2=newOrder.findIndex(nc=>nc.id===c.id);
+      if(newIdx2<0)continue;
+      const newP=newSim[newIdx2];
+
+      const dx=(newP.col-oldP.col)*step;
+      const dy=(newP.row-oldP.row)*rowStep;
+
+      if(dx||dy){
+        const el=grid.querySelector(`[data-card-id="${c.id}"]`);
+        if(el){
+          el.classList.add('push-preview');
+          el.style.transform=`translate(${dx}px,${dy}px)`;
+        }
+      }
     }
   }
-  // If not found in same row, check the next row's first card
-  if(!beforeCard&&targetRowIdx<rows.length-1){
-    beforeCard=rows[targetRowIdx+1].cards[0];
+  // Drop-shift: highlight the card that will be displaced (beforeCard) + cards right of it
+  dropZoneHighlight(beforeCard,targetRow,ghostLeft);
+}
+
+function dropZoneClear(){$$('.card.drop-shift').forEach(el=>el.classList.remove('drop-shift'));}
+
+function dropZoneHighlight(beforeCard,targetRow,ghostLeft){
+  dropZoneClear();
+  if(!targetRow||!beforeCard)return;
+  // Highlight all cards from beforeCard to the end of its row
+  let found=false;
+  for(const el of targetRow.cards){
+    if(el===beforeCard)found=true;
+    if(found)el.classList.add('drop-shift');
   }
-  dragState._beforeCard=beforeCard?beforeCard.dataset.cardId:null;
+  if(!found){
+    // beforeCard is in a different row (next row) — just highlight that card
+    beforeCard.classList.add('drop-shift');
+  }
 }
 
 function onDragEnd(e){
-  document.removeEventListener('mousemove',onDragMove);
-  document.removeEventListener('mouseup',onDragEnd);
+  document.removeEventListener('pointermove',onDragMove);
+  document.removeEventListener('pointerup',onDragEnd);
+  document.removeEventListener('pointercancel',onDragEnd);
+  dropZoneClear();
+  pushClear();
   if(!dragState)return;
-  const{cardId,srcEl,ghost,active,_beforeCard}=dragState;
-  if(srcEl)srcEl.classList.remove('dragging');
+  const{cardId,srcEl,ghost,active,_beforeCardId}=dragState;
   if(ghost&&ghost.parentNode)ghost.remove();
+  if(srcEl)srcEl.classList.remove('dragging');
 
-  if(active&&_beforeCard){
+  if(active){
     const grid=$('#card-grid');
     const cards=config.cards;
     const srcIdx=cards.findIndex(c=>c.id===cardId);
-    const tgtIdx=cards.findIndex(c=>c.id===_beforeCard);
-    if(srcIdx>=0&&tgtIdx>=0&&srcIdx!==tgtIdx){
-      const mel=grid.querySelector(`[data-card-id="${cardId}"]`);
-      const bdom=grid.querySelector(`[data-card-id="${_beforeCard}"]`);
-      if(mel&&bdom){
-        // FLIP animation: record position BEFORE move
-        const first=mel.getBoundingClientRect();
+    if(srcIdx<0){renderAll();dragState=null;return;}
+    let tgtIdx=-1;
 
-        // Move card to new DOM position
-        grid.insertBefore(mel,bdom);
+    if(_beforeCardId){
+      tgtIdx=cards.findIndex(c=>c.id===_beforeCardId);
+    }else{
+      // Append to end
+      tgtIdx=cards.length;
+    }
 
-        // Record position AFTER move
-        const last=mel.getBoundingClientRect();
-
-        // Calculate delta: invert (move from old to new)
-        const dx=first.left-last.left;
-        const dy=first.top-last.top;
-        const sx=first.width/last.width;
-        const sy=first.height/last.height;
-
-        // Apply inverse transform so card appears at its old position
-        mel.style.transformOrigin='top left';
-        mel.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;
-        mel.style.transition='none';
-
-        // On next frame, animate to final position
-        requestAnimationFrame(()=>{
-          mel.style.transition='transform 0.35s cubic-bezier(0.34,1.56,0.64,1)';
-          mel.style.transform='translate(0,0) scale(1,1)';
-        });
-
-        // Clean up after animation
-        setTimeout(()=>{
-          mel.style.transition='';
-          mel.style.transform='';
-          mel.style.transformOrigin='';
-        },400);
-      }
-      const[m]=cards.splice(srcIdx,1);
-      cards.splice(srcIdx<tgtIdx?tgtIdx-1:tgtIdx,0,m);
-      saveConfig();
+    if(tgtIdx>=0&&srcIdx!==tgtIdx){
+      // FLIP ALL shifted cards — snapshot before DOM move
       const allCards=[...grid.children].filter(el=>el.classList.contains('card'));
-      allCards.forEach((el,i)=>{el.dataset.index=i;});
+      const snaps=allCards.map(el=>({el,first:el.getBoundingClientRect()}));
+
+      if(_beforeCardId){
+        const bdom=grid.querySelector(`[data-card-id="${_beforeCardId}"]`);
+        if(bdom)grid.insertBefore(srcEl,bdom);
+        else grid.appendChild(srcEl);
+      }else{
+        grid.appendChild(srcEl);
+      }
+
+      // Capture last positions (forces reflow)
+      const flips=snaps.map(({el,first})=>{
+        const last=el.getBoundingClientRect();
+        return{el,dx:first.left-last.left,dy:first.top-last.top};
+      });
+      const moved=flips.filter(f=>f.dx||f.dy);
+
+      if(moved.length){
+        for(const{el,dx,dy}of moved){
+          el.style.transition='none';
+          el.style.transform=`translate(${dx}px,${dy}px)`;
+        }
+        requestAnimationFrame(()=>{
+          for(const{el,dx,dy}of moved){
+            if(dx||dy){
+              el.style.transition='transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+              el.style.transform='translate(0,0)';
+            }
+          }
+          setTimeout(()=>{
+            for(const{el}of moved){
+              el.style.transition='';el.style.transform='';
+            }
+          },450);
+        });
+      }
+
+      const[m]=cards.splice(srcIdx,1);
+      const insertAt=tgtIdx>(srcIdx)?tgtIdx-1:tgtIdx;
+      cards.splice(insertAt,0,m);
+      saveConfig();
+      [...grid.children].filter(el=>el.classList.contains('card')).forEach((el,i)=>{el.dataset.index=i;});
       toast('Card moved');
       dragState=null;
       return;
@@ -1134,7 +1852,7 @@ function removeGap(idx){
 
 /* ═══════════════════════════════════════════ ICON PICKER ═══════════════════════════════════════════ */
 let iconPickerOpen=false;
-function openIconPicker(cb){iconPickerCallback=cb;iconPickerOpen=true;$('#icon-picker-overlay').classList.add('open');$('#icon-picker').classList.add('open');buildIconPicker('library');}
+function openIconPicker(cb){iconPickerCallback=cb;iconPickerOpen=true;$('#icon-picker-overlay').classList.add('open');$('#icon-picker').classList.add('open');buildIconPicker('icons');}
 function closeIconPicker(){iconPickerOpen=false;iconPickerCallback=null;$('#icon-picker-overlay').classList.remove('open');$('#icon-picker').classList.remove('open');}
 function buildIconPicker(t){const c=$('#icon-picker-content');c.innerHTML='';$$('.ip-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));if(t==='library')buildLibraryTab(c);else if(t==='upload')buildUploadTab(c);else if(t==='icons')buildIconsTab(c);else if(t==='url')buildUrlTab(c);}
 function buildLibraryTab(c){const s=document.createElement('input');s.className='icon-search-bar';s.placeholder='Search services...';c.appendChild(s);const g=document.createElement('div');g.className='icon-grid';c.appendChild(g);function ri(f){g.innerHTML='';const fl=(f||'').toLowerCase();const items=fl?ICON_REPO.filter(i=>i.name.toLowerCase().includes(fl)||i.file.toLowerCase().includes(fl)||i.tags.some(t=>t.includes(fl))):ICON_REPO;items.slice(0,120).forEach(item=>{const d=document.createElement('div');d.className='icon-grid-item';const img=document.createElement('img');img.src=`${ICON_CDN}/${item.file}.png`;img.alt=item.name;img.loading='lazy';img.onerror=function(){this.parentElement.style.display='none';};const l=document.createElement('span');l.textContent=item.name;d.appendChild(img);d.appendChild(l);d.addEventListener('click',()=>selectIcon(`${ICON_CDN}/${item.file}.png`));g.appendChild(d);});if(!items.length)g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No icons found</div>';}s.addEventListener('input',()=>ri(s.value));ri('');}
@@ -1145,21 +1863,47 @@ function buildIconsTab(c){
   const btnSvg=document.createElement('button');btnSvg.className='btn btn-glass btn-sm';btnSvg.textContent='SVG Icons';btnSvg.style.cssText='flex:1;';
   const btnEmoji=document.createElement('button');btnEmoji.className='btn btn-glass btn-sm';btnEmoji.textContent='Emoji';btnEmoji.style.cssText='flex:1;';
   etab.appendChild(btnSvg);etab.appendChild(btnEmoji);c.appendChild(etab);
-  const g=document.createElement('div');g.className='icon-grid';g.style.gridTemplateColumns='repeat(auto-fill,minmax(50px,1fr))';c.appendChild(g);
+  const g=document.createElement('div');g.className='icon-grid';g.style.gridTemplateColumns='repeat(auto-fill,minmax(52px,1fr))';c.appendChild(g);
   var _mode='svg';
-  function ri(f){g.innerHTML='';const fl=(f||'').toLowerCase();
-    if(_mode==='svg'){const items=fl?LUCIDE_ICONS.filter(n=>n.includes(fl)):LUCIDE_ICONS;
-      items.forEach(name=>{const d=document.createElement('div');d.className='icon-grid-item';d.style.cssText='flex-direction:column;gap:2px;padding:6px 2px;';
-      const i=document.createElement('i');i.setAttribute('data-lucide',name);i.style.cssText='width:22px;height:22px;';
-      const l=document.createElement('span');l.style.cssText='font-size:9px;text-align:center;overflow:hidden;text-overflow:ellipsis;max-width:50px;white-space:nowrap;';l.textContent=name;
-      d.appendChild(i);d.appendChild(l);
-      d.addEventListener('click',()=>selectIcon(name));g.appendChild(d);});
-      if(!items.length)g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No icons found</div>';
-    }else{const items=fl?EMOJIS.filter(e=>e.includes(fl)):EMOJIS;
-      items.forEach(emo=>{const d=document.createElement('div');d.className='icon-grid-item';d.innerHTML='<span class="ip-emoji">'+emo+'</span>';d.addEventListener('click',()=>selectIcon(emo));g.appendChild(d);});
-      if(!items.length)g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No emoji found</div>';
+  // Get all available Lucide icon names from the loaded library (dynamic, always complete)
+  function getAllLucideIcons(){
+    if(typeof lucide!=='undefined'&&lucide.icons)return Object.keys(lucide.icons).sort();
+    return LUCIDE_ICONS; // fallback
+  }
+  function ri(f){
+    g.innerHTML='';const fl=(f||'').toLowerCase();
+    if(_mode==='svg'){
+      var allIcons=getAllLucideIcons();
+      var items=fl?allIcons.filter(function(n){return n.includes(fl);}):allIcons;
+      if(!items.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No icons found</div>';return;}
+      // Batch-render icons in chunks for performance (keeps UI responsive with 600+ icons)
+      var batchSize=80;
+      var idx=0;
+      function renderBatch(){
+        var end=Math.min(idx+batchSize,items.length);
+        for(;idx<end;idx++){
+          var name=items[idx];
+          var d=document.createElement('div');d.className='icon-grid-item';d.style.cssText='flex-direction:column;gap:2px;padding:6px 2px;';
+          var i=document.createElement('i');i.setAttribute('data-lucide',name);i.style.cssText='width:20px;height:20px;';
+          var l=document.createElement('span');l.style.cssText='font-size:8px;text-align:center;overflow:hidden;text-overflow:ellipsis;max-width:52px;white-space:nowrap;';l.textContent=name;
+          d.appendChild(i);d.appendChild(l);
+          d.addEventListener('click',function(n){return function(){selectIcon(n);};}(name));g.appendChild(d);
+        }
+        if(idx<items.length)requestAnimationFrame(renderBatch);
+        else if(typeof lucide!=='undefined'){
+          var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+          lucide.createIcons();
+          console.warn=_lw;
+        }
+      }
+      requestAnimationFrame(renderBatch);
+    }else{
+      var items=fl?EMOJIS.filter(function(e){return e.includes(fl);}):EMOJIS;
+      if(!items.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No emoji found</div>';return;}
+      items.forEach(function(emo){var d=document.createElement('div');d.className='icon-grid-item';d.innerHTML='<span class="ip-emoji">'+emo+'</span>';d.addEventListener('click',function(){selectIcon(emo);});g.appendChild(d);});
     }
-  }function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);if(m==='svg')setTimeout(function(){
+  }
+  function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);if(m==='svg')setTimeout(function(){
 if(typeof lucide!=='undefined'){
   var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
   lucide.createIcons();
@@ -1167,13 +1911,8 @@ if(typeof lucide!=='undefined'){
 }
 },0);}
   btnSvg.addEventListener('click',function(){setMode('svg');});btnEmoji.addEventListener('click',function(){setMode('emoji');});
-  s.addEventListener('input',function(){ri(s.value);});setMode('svg');setTimeout(function(){
-if(typeof lucide!=='undefined'){
-  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-  lucide.createIcons();
-  console.warn=_lw;
+  s.addEventListener('input',function(){ri(s.value);});setMode('svg');
 }
-},0);}
 function buildUrlTab(c){c.innerHTML=`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Enter a direct URL:</div><input class="icon-search-bar" id="icon-url-input" placeholder="https://example.com/icon.png"><button class="btn btn-glass btn-sm" id="icon-url-btn">Use</button><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:12px;" id="icon-url-examples"></div>`;const inp=$('#icon-url-input');['jellyfin','plex','homeassistant','portainer','pihole','grafana','sonarr','radarr'].forEach(n=>{const tag=document.createElement('button');tag.className='btn btn-glass btn-sm';tag.style.fontSize='10px';tag.textContent=n;tag.addEventListener('click',()=>selectIcon(`${ICON_CDN}/${n}.png`));$('#icon-url-examples').appendChild(tag);});inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim())selectIcon(inp.value.trim());});$('#icon-url-btn').addEventListener('click',()=>{if(inp.value.trim())selectIcon(inp.value.trim());});}
 function selectIcon(u){if(iconPickerCallback)iconPickerCallback(u);closeIconPicker();}
 
@@ -1327,7 +2066,6 @@ let configPanelOpen=false;
 function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);if(configPanelOpen)buildConfigPanel();}
 function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   const brand=config.branding||{};
-
   // Update header title
   const ht=$('#config-header-title');
   if(ht)ht.textContent='⚙️ '+(brand.title||'WarTab')+' Config';
@@ -1384,20 +2122,22 @@ if(typeof lucide!=='undefined'){
   }
   body.appendChild(el('div','margin-bottom:10px;',null,bgr));
 
-  body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Deep Glass'},{value:'light',label:'Frosted Glass'},{value:'solid-dark',label:'Solid Obsidian'},{value:'solid-light',label:'Solid Pearl'},{value:'neon',label:'Neon Pulse'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
   body.appendChild(chk('Random background on load',config.theme.bgRotate,v=>{config.theme.bgRotate=v;saveConfig();}));
 
   /* ── Appearance ── */
   body.appendChild(ps('Appearance'));
-  const fontColor=config.theme.fontColor||'#cccccc';
+  body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark'},{value:'light',label:'Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
+  body.appendChild(pf('range','','Card Transparency',null,Math.round((1-(config.theme.cardOpacity||1))*100),v=>{config.theme.cardOpacity=1-(parseInt(v)/100);applyChanges();},{min:0,max:100}));
   body.appendChild(pf('color','','Accent Color',null,config.theme.glow,v=>{config.theme.glow=v;applyChanges();}));
-  body.appendChild(pf('color','','Font Color',null,fontColor,v=>{config.theme.fontColor=v;applyChanges();document.body.style.setProperty('--text-primary',hexToRgba2(v,0.92));}));
   body.appendChild(pf('range','','Glass Blur (px)',null,config.theme.blur,v=>{config.theme.blur=parseInt(v);applyChanges();},{min:4,max:40}));
-  body.appendChild(pf('select','','Font Size',[{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],config.theme.fontSize,v=>{config.theme.fontSize=v;applyChanges();}));
   body.appendChild(chk('Animated transitions',config.theme.animations!==false,v=>{config.theme.animations=v;applyChanges();renderAll();}));
   body.appendChild(chk('Card accent bar',config.theme.showAccentBar!==false,v=>{config.theme.showAccentBar=v;applyChanges();renderAll();}));
-  /* ── Font (within Appearance) ── */
-  body.appendChild(el('div','','',el('h3','font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-top:20px;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--glass-border);font-family:var(--font);','Font Family')));
+
+  /* ── Typography ── */
+  body.appendChild(ps('Typography'));
+  body.appendChild(pf('color','','Font Color',null,config.theme.fontColor||'#cccccc',v=>{config.theme.fontColor=v;applyChanges();document.body.style.setProperty('--text-primary',hexToRgba2(v,0.92));}));
+  body.appendChild(pf('select','','Font Size',[{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],config.theme.fontSize,v=>{config.theme.fontSize=v;applyChanges();}));
+  body.appendChild(el('div','font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-top:20px;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--glass-border);font-family:var(--font);','Font Family'));
   const curFont=config.theme.fontFamily||'Inter';
   const TOP_FONTS = [
     {name:'Inter',sample:'The quick brown fox jumps'},
@@ -1484,14 +2224,15 @@ if(typeof lucide!=='undefined'){
   body.appendChild(ps('Layout'));
   body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
   body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
-  body.appendChild(pf('range','','Page Padding X (px)',null,config.layout.paddingX||24,v=>{config.layout.paddingX=parseInt(v)||24;applyChanges();renderAll();},{min:0,max:80}));
-  body.appendChild(pf('range','','Page Padding Y (px)',null,config.layout.paddingY||24,v=>{config.layout.paddingY=parseInt(v)||24;applyChanges();renderAll();},{min:0,max:80}));
-
-  /* ── Search ── */
-  body.appendChild(ps('Search'));
-  const engs=Object.entries(config.search.engines).map(([k])=>({value:k,label:k}));
-  body.appendChild(pf('select','','Default Engine',engs,config.search.selected,v=>{config.search.selected=v;saveConfig();}));
-  body.appendChild(chk('Open in new tab',config.search.openInNewTab,v=>{config.search.openInNewTab=v;saveConfig();}));
+  body.appendChild(pf('select','','Page Width',[
+    {value:'full',label:'Full Width'},
+    {value:'three-quarters',label:'3/4 Width'},
+    {value:'half',label:'1/2 Width'},
+  ],config.layout.pageWidth||'full',v=>{config.layout.pageWidth=v;applyChanges();renderAll();}));
+  body.appendChild(pf('select','','Page Height',[
+    {value:'full',label:'Full (20px padding)'},
+    {value:'compact',label:'Compact (120px padding)'},
+  ],config.layout.paddingHeight||'full',v=>{config.layout.paddingHeight=v;applyChanges();renderAll();}));
 
   /* ── Data ── */
   body.appendChild(ps('Data'));
@@ -1501,7 +2242,7 @@ if(typeof lucide!=='undefined'){
     b.addEventListener('click',()=>{
       if(label==='Export'){const bb=new Blob([JSON.stringify(config,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='wartab-config.json';a.click();URL.revokeObjectURL(a.href);toast('Exported');}
       else if(label==='Import'){$('#import-file-input2').click();}
-      else if(label==='Reset'){if(!confirm('Reset to defaults?'))return;const snap=cloneObj(config);config=cloneObj(DEFAULT_CONFIG);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toastWithUndo('Reset',()=>{config=snap;saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();});}
+      else if(label==='Reset'){showConfirmModal('Reset all settings to defaults? This cannot be undone.',()=>{const snap=cloneObj(config);config=cloneObj(DEFAULT_CONFIG);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toastWithUndo('Reset',()=>{config=snap;saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();});});}
     });
     acts.appendChild(b);
   });
@@ -1548,11 +2289,11 @@ function chk(label,value,onChange){
 
 function hexToRgba2(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
 
-function ps(t){return el('div','','',el('h3','font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:14px;margin-top:24px;padding-bottom:6px;border-bottom:1px solid var(--glass-border);font-family:var(--font);',t));}
+function ps(t){return el('div','','',el('h3','font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:10px;margin-top:12px;padding-bottom:4px;border-bottom:1px solid var(--glass-border);font-family:var(--font);',t));}
 function addNewCard(){
   const colMax=config.layout.cols;
   config.cards.push({
-    id:'card-'+uid(), title:'New Card', icon:'package', color:'#888888',
+    id:'card-'+uid(), title:'', icon:'package', color:'#888888',
     width:Math.min(1,colMax),height:1,
     sections:[{id:'sec-'+uid(),type:'links',label:'Links',links:[{label:'Example',url:'https://example.com',icon:'link'}]}],
   });
@@ -1567,21 +2308,182 @@ function pf(type,key,label,options,value,onChange,attrs){const g=el('div','margi
 }
 function applyChanges(){saveConfig();applyTheme();}
 
+/* ═══════════════════════════════════════════ PAGES ═══════════════════════════════════════════ */
+
+// Migrate a config without pages into the pages format
+function pageInit() {
+  if (!config.pages) {
+    const id = 'page-' + uid();
+    config.pages = {};
+    config.pages[id] = { name: 'Page 1', icon: 'layout', cards: config.cards || [] };
+    config.pageOrder = [id];
+    config.currentPage = id;
+    config.cards = config.pages[id].cards;
+  } else {
+    // Ensure currentPage is valid — fall back to first page if missing/empty
+    if (!config.pages[config.currentPage] || !config.pageOrder.includes(config.currentPage)) {
+      config.currentPage = config.pageOrder[0];
+    }
+    config.cards = config.pages[config.currentPage].cards;
+  }
+}
+
+function renderPageNav() {
+  const tabs = $('#page-tabs');
+  if (!tabs) return;
+  tabs.innerHTML = '';
+  (config.pageOrder || []).forEach(id => {
+    const p = config.pages[id];
+    if (!p) return;
+    const tab = document.createElement('span');
+    tab.className = 'page-tab' + (id === config.currentPage ? ' active' : '');
+
+    // Page icon — click to change via icon picker
+    const iconEl = document.createElement('span');
+    iconEl.className = 'page-tab-icon';
+    iconEl.title = 'Change icon';
+    if (p.icon && isLucideName(p.icon)) {
+      iconEl.appendChild(renderLucideEl(p.icon, ''));
+    } else if (p.icon) {
+      iconEl.textContent = p.icon;
+    } else {
+      iconEl.appendChild(renderLucideEl('layout', ''));
+    }
+    iconEl.addEventListener('click', e => {
+      e.stopPropagation();
+      openIconPicker(url => {
+        p.icon = url;
+        saveConfig();
+        renderPageNav();
+      });
+    });
+    tab.appendChild(iconEl);
+
+    // Page name — click to switch, double-click to rename
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = p.name;
+    let clickTimer = null;
+    nameSpan.addEventListener('click', () => {
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
+      clickTimer = setTimeout(() => { clickTimer = null; switchPage(id); }, 250);
+    });
+    nameSpan.addEventListener('dblclick', e => {
+      e.stopPropagation();
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+      const inp = document.createElement('input');
+      inp.className = 'page-tab-input';
+      inp.value = p.name;
+      inp.style.cssText = 'width:60px;font-size:12px;background:rgba(0,0,0,0.3);border:1px solid var(--accent);color:var(--text-primary);outline:none;padding:1px 4px;';
+      nameSpan.replaceWith(inp);
+      inp.focus();
+      inp.select();
+      const done = () => {
+        const val = inp.value.trim() || p.name;
+        if (val !== p.name) { p.name = val; saveConfig(); renderPageNav(); }
+        else { renderPageNav(); }
+      };
+      inp.addEventListener('blur', done);
+      inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') done(); if (ev.key === 'Escape') renderPageNav(); });
+    });
+    tab.appendChild(nameSpan);
+
+    // Close button (disabled if only 1 page)
+    if (config.pageOrder.length > 1) {
+      const close = document.createElement('span');
+      close.className = 'page-tab-close';
+      close.textContent = '✕';
+      close.addEventListener('click', e => {
+        e.stopPropagation();
+        showConfirmModal('Delete page "' + p.name + '"?', () => deletePage(id));
+      });
+      tab.appendChild(close);
+    }
+    tabs.appendChild(tab);
+  });
+  // Render Lucide SVGs for page tab icons
+  if(typeof lucide!=='undefined'){
+    var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+    lucide.createIcons();
+    console.warn=_lw;
+  }
+}
+
+/** Simple confirmation overlay */
+function showConfirmModal(msg, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px;min-width:280px;text-align:center;';
+  const label = document.createElement('div');
+  label.textContent = msg;
+  label.style.cssText = 'font-size:14px;color:var(--text-primary);margin-bottom:16px;';
+  box.appendChild(label);
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;justify-content:center;';
+  const okBtn = document.createElement('button');
+  okBtn.className = 'btn btn-glass btn-sm';
+  okBtn.textContent = 'Delete';
+  okBtn.style.cssText = 'border-color:#cc4444;color:#cc4444;';
+  okBtn.addEventListener('click', () => { overlay.remove(); onConfirm(); });
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-glass btn-sm';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => overlay.remove());
+  btnRow.appendChild(okBtn);
+  btnRow.appendChild(cancelBtn);
+  box.appendChild(btnRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+function switchPage(pageId) {
+  if (!config.pages[pageId]) return;
+  config.currentPage = pageId;
+  config.cards = config.pages[pageId].cards;
+  saveConfig();
+  renderAll();
+  renderPageNav();
+}
+
+function addPage() {
+  const id = 'page-' + uid();
+  config.pages[id] = { name: 'Page ' + (Object.keys(config.pages).length + 1), icon: 'layout', cards: [] };
+  config.pageOrder.push(id);
+  switchPage(id);
+}
+
+function deletePage(pageId) {
+  if (config.pageOrder.length <= 1) return;
+  const idx = config.pageOrder.indexOf(pageId);
+  if (idx < 0) return;
+  config.pageOrder.splice(idx, 1);
+  delete config.pages[pageId];
+  // Switch to nearest remaining page
+  const next = config.pageOrder[Math.min(idx, config.pageOrder.length - 1)];
+  config.currentPage = next;
+  config.cards = config.pages[next].cards;
+  saveConfig();
+  renderAll();
+  renderPageNav();
+}
+
 /* ═══════════════════════════════════════════ INIT ═══════════════════════════════════════════ */
 async function init() {
-  loadConfig(); applyTheme();
-  if(!config.cards||!config.cards.length){console.warn('Config had no cards — restored defaults');config=cloneObj(DEFAULT_CONFIG);saveConfig();}
+  await loadConfig(); applyTheme();
+  pageInit();  // migrate/init pages
+  if(!config.cards||!config.cards.length){console.warn('Config had no cards — restored defaults');config=cloneObj(DEFAULT_CONFIG);pageInit();saveConfig();}
   await fetchUploads();
   // Random background on load if rotation enabled
   if(config.theme.bgRotate&&uploadedFiles.length>0){
     const pick=uploadedFiles[Math.floor(Math.random()*uploadedFiles.length)];
     if(pick){config.theme.bgType='image';config.theme.bgValue=pick.url;saveConfig();applyTheme();}
   }
-  renderAll(); initStatusBar();
+  renderAll(); renderPageNav(); initStatusBar();
   // Footer
   $('#footer-text').textContent='WarTab v'+WARTAB_VERSION;
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
+  $('#btn-add-page').addEventListener('click',()=>{addPage();});
   $('#config-close').addEventListener('click',toggleConfigPanel);
   $('#config-overlay').addEventListener('click',toggleConfigPanel);
   $$('.ip-tab').forEach(t=>t.addEventListener('click',()=>buildIconPicker(t.dataset.tab)));
@@ -1595,6 +2497,10 @@ async function init() {
     if(e.key==='Escape'&&_editPanelOpen)closeCardEditPanel();
     if(e.key==='C'&&e.ctrlKey&&e.shiftKey){e.preventDefault();toggleConfigPanel();}
     if((e.key==='l'||e.key==='k')&&(e.ctrlKey||e.metaKey)){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
+    // Keyboard shortcuts: Ctrl+N = new card, Ctrl+Shift+N = new page, Ctrl+Tab = next page
+    if(e.key==='n'&&(e.ctrlKey||e.metaKey)&&!e.shiftKey){e.preventDefault();addNewCard();}
+    if(e.key==='n'&&(e.ctrlKey||e.metaKey)&&e.shiftKey){e.preventDefault();addPage();}
+    if(e.key==='Tab'&&(e.ctrlKey||e.metaKey)){e.preventDefault();const order=config.pageOrder||[];if(!order.length)return;const idx=order.indexOf(config.currentPage);const next=order[(idx+1)%order.length];switchPage(next);}
   });
   let rt=null;window.addEventListener('resize',()=>{if(rt)clearTimeout(rt);rt=setTimeout(()=>{scheduleEqualize();},150);});
   // Periodic timestamp updater
