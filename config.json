@@ -272,8 +272,8 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
-          "collapsed": true
+          "_qi": 0,
+          "collapsed": false
         }
       ]
     },
@@ -572,8 +572,8 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
-              "collapsed": true
+              "_qi": 0,
+              "collapsed": false
             }
           ]
         },

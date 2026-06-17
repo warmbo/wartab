@@ -59,7 +59,7 @@ const storage = (function() {
   function getConfig() {
     if (IS_EXTENSION) {
       return new Promise(function(resolve) {
-        chrome.storage.sync.get('wartab-config', function(data) {
+        chrome.storage.local.get('wartab-config', function(data) {
           resolve(data['wartab-config'] || {});
         });
       });
@@ -70,7 +70,10 @@ const storage = (function() {
   function saveConfig(cfg) {
     if (IS_EXTENSION) {
       return new Promise(function(resolve) {
-        chrome.storage.sync.set({ 'wartab-config': cfg }, resolve);
+        chrome.storage.local.set({ 'wartab-config': cfg }, function() {
+          if (chrome.runtime.lastError) console.error('saveConfig error:', chrome.runtime.lastError);
+          resolve();
+        });
       });
     }
     return api('/api/config', 'POST', cfg);
