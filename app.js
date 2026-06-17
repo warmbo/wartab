@@ -1078,6 +1078,8 @@ const DEFAULT_CONFIG = {
   theme: {
     bgType: 'gradient',           // 'color' | 'gradient' | 'image'
     bgValue: '#0a0a0a, #1a1a1a, #0d0d0d',  // CSS value: color, gradient(), or image path
+    bgBlur: 0,                    // blur on background image (0-20px, only when bgType=image)
+    bgDim: 0,                     // darkness overlay 0-100 (only when bgType=image)
     blur: 20,                     // backdrop-filter blur amount (px)
     glow: '#888888',              // accent color (grayscale)
     fontSizeText: 14,              // body text size in px (slider: 10-28)
@@ -1344,6 +1346,9 @@ function applyTheme(){
   }
   const root=document.documentElement;
   root.style.setProperty('--bg-blur',t.blur+'px');
+  // Background image blur + dim (only effective when bgType=image)
+  root.style.setProperty('--bg-img-blur', (t.bgType==='image' ? (parseInt(t.bgBlur)||0) : 0) + 'px');
+  root.style.setProperty('--bg-dim-opacity', (t.bgType==='image' ? Math.min(1, Math.max(0, (parseInt(t.bgDim)||0)/100)) : 0));
   root.style.setProperty('--accent',t.glow);
   root.style.setProperty('--accent-glow',hexToRgba(t.glow,0.3));
   root.style.setProperty('--accent-glass',hexToRgba(t.glow,0.12));
@@ -2503,6 +2508,9 @@ if(typeof lucide!=='undefined'){
     gr.appendChild(p);body.appendChild(gr);
   } else if(bgType==='image'){
     bgValueRow(body);
+    // Background image controls — blur + dim
+    body.appendChild(pf('range','','Image Blur (px)',null,parseInt(config.theme.bgBlur)||0,v=>{config.theme.bgBlur=parseInt(v);applyChanges();},{min:0,max:20}));
+    body.appendChild(pf('range','','Image Dim (%)',null,parseInt(config.theme.bgDim)||0,v=>{config.theme.bgDim=parseInt(v);applyChanges();},{min:0,max:100}));
   }
 
   // Upload + Previous Images buttons

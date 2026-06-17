@@ -6,10 +6,10 @@
   },
   "theme": {
     "bgType": "image",
-    "bgValue": "/uploads/f1958988886f42ccaaf6188ec4ed9db8.png",
+    "bgValue": "/uploads/f09dd3fd38a6453786f20dff3aee32ca.jpg",
     "blur": 18,
     "glow": "#cad3d8",
-    "fontSizeText": 16,
+    "fontSizeText": 14,
     "fontSizeHeading": 18,
     "fontFamily": "Karla",
     "cardBg": "dark",
@@ -75,8 +75,8 @@
     },
     {
       "id": "selfhosted",
-      "title": "Homelab",
-      "icon": "ServerCog",
+      "title": "Self-Hosted",
+      "icon": "AlignVerticalJustifyEnd",
       "color": "#777777",
       "width": 2,
       "sections": [
@@ -359,7 +359,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 0,
+          "_qi": 1,
           "collapsed": false
         }
       ]
@@ -378,6 +378,28 @@
           "placeholder": "Search anything...",
           "label": "Web Search",
           "collapsed": false
+        }
+      ]
+    },
+    {
+      "id": "card-rd6ougmmqiolujl",
+      "title": "",
+      "icon": "package",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-dypatuemqiolujl",
+          "type": "links",
+          "label": "Links",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ]
         }
       ]
     }
@@ -406,8 +428,8 @@
         },
         {
           "id": "selfhosted",
-          "title": "Homelab",
-          "icon": "ServerCog",
+          "title": "Self-Hosted",
+          "icon": "AlignVerticalJustifyEnd",
           "color": "#777777",
           "width": 2,
           "sections": [
@@ -690,7 +712,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 0,
+              "_qi": 1,
               "collapsed": false
             }
           ]
@@ -709,6 +731,28 @@
               "placeholder": "Search anything...",
               "label": "Web Search",
               "collapsed": false
+            }
+          ]
+        },
+        {
+          "id": "card-rd6ougmmqiolujl",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-dypatuemqiolujl",
+              "type": "links",
+              "label": "Links",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ]
             }
           ]
         }

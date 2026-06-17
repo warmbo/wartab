@@ -76,7 +76,7 @@
     {
       "id": "selfhosted",
       "title": "Homelab",
-      "icon": "ServerCog",
+      "icon": "AlignVerticalJustifyEnd",
       "color": "#777777",
       "width": 2,
       "sections": [
@@ -407,7 +407,7 @@
         {
           "id": "selfhosted",
           "title": "Homelab",
-          "icon": "ServerCog",
+          "icon": "AlignVerticalJustifyEnd",
           "color": "#777777",
           "width": 2,
           "sections": [
