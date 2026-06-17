@@ -109,6 +109,36 @@ and OpenWeatherMap API — both degrade gracefully.
 
 ## Quick Start
 
+### Option 1: Install Script (Debian)
+
+```bash
+curl -sL https://raw.githubusercontent.com/nousresearch/wartab/main/setup.sh | bash
+# Or from the repo:
+bash setup.sh
+```
+
+This installs WarTab as a systemd user service, enables linger (keeps running after logout),
+and creates data directories for notes and uploads.
+
+### Option 2: Docker
+
+```bash
+# Build and run
+docker build -t wartab .
+docker run -d \
+  --name wartab \
+  -p 8081:8081 \
+  -v wartab-config:/app/config.json \
+  -v wartab-notes:/app/notes \
+  -v wartab-uploads:/app/uploads \
+  wartab
+
+# Or with Docker Compose
+docker compose up -d
+```
+
+### Option 3: Manual (Python)
+
 ```bash
 cd /home/cody/Projects/wartab
 python3 server.py
@@ -156,12 +186,18 @@ wartab/
 ├── index.html         # App shell
 ├── style.css          # Glass + skeuomorphic styles
 ├── app.js             # All logic: render, pages, config, drag-drop, widgets
+├── storage.js         # Storage adapter (server or browser extension)
 ├── server.py          # Python HTTP server (zero deps)
+├── Dockerfile         # Container build
+├── docker-compose.yml # Container orchestration
+├── setup.sh           # Debian install script
+├── manifest.json      # Chrome extension manifest
 ├── config.json        # Server-side config (auto-managed)
-├── icons/             # 2,363 SVG service icons (selfhst/icons)
+├── icons/             # 2,363 SVG service icons (selfhst/icons) + extension icons
 ├── static/
 │   ├── lucide.min.js  # Lucide icon library (local copy, 602KB)
 │   └── fonts/         # Inter font files + CSS
+├── notes/             # Notes saved as .md files
 ├── uploads/           # User-uploaded background images
 ├── PLAN.md            # Design document
 ├── HIERARCHY.md       # Component tree & class naming reference
