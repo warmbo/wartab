@@ -1642,14 +1642,7 @@ function renderSection(section, card) {
       var c = titleRow.nextElementSibling;
       while (c && !c.classList.contains('section-content') && !c.classList.contains('dropdown-content')) c = c.nextElementSibling;
       if (c) {
-        if (!section.collapsed) {
-          c.style.display = '';
-          requestAnimationFrame(function(){ requestAnimationFrame(function(){ c.classList.add('open'); }); });
-        } else {
-          c.classList.remove('open');
-          clearTimeout(c._closeTimer);
-          c._closeTimer = setTimeout(function(){ if (c.classList.contains('open') === false) c.style.display = 'none'; }, 300);
-        }
+        c.classList.toggle('open');
       }
       saveConfig();
     });
@@ -2898,12 +2891,18 @@ function switchPage(pageId) {
   config.cards = config.pages[pageId].cards;
   saveConfig();
   const grid = $('#card-grid');
-  if (grid) grid.style.opacity = '0';
+  if (grid) {
+    grid.style.transition = 'opacity 0.25s ease';
+    grid.style.opacity = '0';
+  }
   setTimeout(function() {
     renderAll();
     renderPageNav();
-    if (grid) grid.style.opacity = '';
-  }, 60);
+    if (grid) {
+      grid.style.opacity = '';
+      setTimeout(function(){ if (grid) grid.style.transition = ''; }, 300);
+    }
+  }, 250);
 }
 
 function addPage() {

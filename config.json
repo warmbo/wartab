@@ -156,7 +156,8 @@
               "url": "https://",
               "icon": "/icons/nightscout.svg"
             }
-          ]
+          ],
+          "collapsed": false
         },
         {
           "id": "sec-szptl9gmqipct87",
@@ -262,7 +263,7 @@
     },
     {
       "id": "notes-card",
-      "title": "Quick Notes",
+      "title": "Notes",
       "icon": "edit-3",
       "color": "#bbbbbb",
       "width": 1,
@@ -270,7 +271,7 @@
         {
           "id": "notes-main",
           "type": "notes",
-          "label": "Notes",
+          "label": "Reminders",
           "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
           "collapsed": false
         },
@@ -438,7 +439,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         }
       ]
@@ -563,7 +564,8 @@
                   "url": "https://",
                   "icon": "/icons/nightscout.svg"
                 }
-              ]
+              ],
+              "collapsed": false
             },
             {
               "id": "sec-szptl9gmqipct87",
@@ -669,7 +671,7 @@
         },
         {
           "id": "notes-card",
-          "title": "Quick Notes",
+          "title": "Notes",
           "icon": "edit-3",
           "color": "#bbbbbb",
           "width": 1,
@@ -677,7 +679,7 @@
             {
               "id": "notes-main",
               "type": "notes",
-              "label": "Notes",
+              "label": "Reminders",
               "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
               "collapsed": false
             },
@@ -845,7 +847,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]
