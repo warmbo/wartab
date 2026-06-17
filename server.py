@@ -8,6 +8,8 @@ ICONS = HERE / "icons"
 STATIC = HERE / "static"
 UPLOADS.mkdir(exist_ok=True)
 ICONS.mkdir(exist_ok=True)
+NOTES = HERE / "notes"
+NOTES.mkdir(exist_ok=True)
 (STATIC / "fonts").mkdir(parents=True, exist_ok=True)
 MIME_TYPES = {".html":"text/html",".css":"text/css",".js":"application/javascript",".json":"application/json",".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",".gif":"image/gif",".svg":"image/svg+xml",".ico":"image/x-icon",".webp":"image/webp"}
 CORS_HEADERS = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"GET,POST,DELETE,OPTIONS","Access-Control-Allow-Headers":"Content-Type,X-Filename"}
@@ -79,8 +81,18 @@ def get_load():
         with open("/proc/loadavg") as f: p=f.read().strip().split()
         return {"1m":float(p[0]),"5m":float(p[1]),"15m":float(p[2])}
     except: return {"1m":-1,"5m":-1,"15m":-1}
+def get_network():
+    try:
+        with open("/proc/net/dev") as f:
+            for line in f:
+                parts=line.strip().split()
+                if len(parts)>=10 and parts[0].endswith(':') and parts[0]!='lo:':
+                    rx=int(parts[1]); tx=int(parts[9])
+                    return {"rx_bytes":rx,"tx_bytes":tx,"interface":parts[0].rstrip(':')}
+        return {"rx_bytes":0,"tx_bytes":0,"interface":"unknown"}
+    except: return {"rx_bytes":0,"tx_bytes":0,"interface":"unknown"}
 def build_stats():
-    return {"hostname":socket.gethostname(),"cpu":get_cpu_percent(),"memory":get_memory(),"disks":get_disks(),"uptime":get_uptime(),"load":get_load(),"timestamp":time.time()}
+    return {"hostname":socket.gethostname(),"cpu":get_cpu_percent(),"memory":get_memory(),"disks":get_disks(),"uptime":get_uptime(),"load":get_load(),"network":get_network(),"timestamp":time.time()}
 def list_uploads():
     files=[]
     for f in sorted(UPLOADS.iterdir(),key=lambda p:p.stat().st_mtime,reverse=True):
@@ -93,6 +105,12 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path=="/api/stats": return self._json(build_stats())
         if self.path=="/api/uploads": return self._json(list_uploads())
+        if self.path.startswith("/api/notes/"):
+            note_id = self.path.split("/api/notes/")[1].split("?")[0]
+            note_path = NOTES / f"{note_id}.md"
+            if note_path.exists():
+                return self._json({"id": note_id, "content": note_path.read_text()})
+            return self._json({"id": note_id, "content": ""})
         if self.path == "/api/config":
             import json as _json
             cfg_path = HERE / "config.json"
@@ -126,6 +144,16 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
                 return self._json({"status":"saved"})
             except Exception as e:
                 return self._json({"error":str(e)},400)
+        if self.path.startswith("/api/notes/"):
+            note_id = self.path.split("/api/notes/")[1].split("?")[0]
+            if not note_id: return self._json({"error":"missing id"},400)
+            cl = int(self.headers.get("Content-Length",0))
+            body = self.rfile.read(cl).decode() if cl else ""
+            safe = re.sub(r"[^a-zA-Z0-9_-]", "", note_id)
+            if not safe: return self._json({"error":"invalid id"},400)
+            note_path = NOTES / f"{safe}.md"
+            note_path.write_text(body)
+            return self._json({"status":"saved","id":safe})
         import urllib.parse
         if self.path.startswith("/api/save-icon"):
             qs=urllib.parse.urlparse(self.path).query

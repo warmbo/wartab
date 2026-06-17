@@ -113,7 +113,7 @@ body {
 }
 
 /* ══════ Scrolling Content ══════ */
-#app { position: relative; z-index: 1; margin: 0 auto; padding: 24px 0 80px; min-height: 100vh; overflow-y: auto; }
+#app { position: relative; z-index: 1; margin: 0 auto; padding: 24px 0 80px; min-height: 100vh; }
 
 /* ══════ Top Bar ══════ */
 #top-bar {
@@ -124,7 +124,7 @@ body {
   position: relative;
 }
 #top-bar::before { content: ''; display: block; height: 3px; background: var(--accent); position: absolute; top: 0; left: 0; right: 0; }
-#top-bar .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-shadow: var(--emboss-shadow); flex-shrink: 0; }
+#top-bar .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-shadow: var(--emboss-shadow); flex-shrink: 0; cursor: pointer; user-select: none; }
 #top-bar .brand .brand-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: 20px; font-family: 'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',var(--font); }
 /* ── Emoji always render in native color, unaffected by theme ── */
 .emoji-icon { color: unset; }
@@ -142,7 +142,7 @@ body {
   color: var(--text-secondary); font-size: 12px;
 }
 .stat-item .stat-icon { font-size: 12px; width: 14px; text-align: center; flex-shrink: 0; }
-.stat-item .stat-label { font-weight: 500; color: var(--text-tertiary); font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
+.stat-item .stat-label { font-weight: 500; color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
 .stat-item .stat-value { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; min-width: 28px; }
 .stat-item .stat-bar { width: 32px; height: 3px; background: var(--card-input-bg); overflow: hidden; }
 .stat-item .stat-bar-fill { height: 100%; background: var(--accent); transition: width 0.5s ease; }
@@ -168,20 +168,18 @@ body {
 .btn-search { padding: 4px 8px; font-size: 12px; flex-shrink: 0; }
 
 /* ══════ Card Grid ══════ */
-#card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; }
+#card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; transition: opacity 0.15s ease; }
 
 /* ══════ Page Bar ══════ */
 #page-bar { display: flex; align-items: center; gap: 8px; padding: 12px 0; justify-content: center; }
-#page-bar .btn-icon { border-color: var(--accent); color: var(--accent); opacity: 0.7; background: var(--card-bg); backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur)); }
-#page-bar .btn-icon:hover { opacity: 1; background: var(--accent-glass); }
+#page-bar .btn-icon { border-color: var(--accent); color: var(--accent); opacity: 0.5; background: rgba(255,255,255,0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+#page-bar .btn-icon:hover { opacity: 0.9; background: rgba(255,255,255,0.08); }
 #page-tabs { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
-.page-tab { padding: 6px 16px; font-size: 12px; cursor: pointer; border: 1px solid var(--accent); background: var(--card-bg); backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur)); color: var(--text-secondary); transition: all 0.15s; user-select: none; display: inline-flex; align-items: center; gap: 4px; opacity: 0.7; }
-.page-tab:hover { border-color: var(--accent); color: var(--text-primary); opacity: 1; background: var(--accent-glass); }
-.page-tab.active { border-color: var(--accent); color: var(--text-primary); opacity: 1; background: var(--accent-glass); }
-.page-tab .page-tab-close { margin-left: 8px; opacity: 0.3; font-size: 10px; cursor: pointer; }
-.page-tab .page-tab-close:hover { opacity: 1; }
-.page-tab .page-tab-icon { display: inline-flex; align-items: center; margin-right: 4px; opacity: 0.6; cursor: pointer; vertical-align: middle; }
-.page-tab .page-tab-icon:hover { opacity: 1; }
+.page-tab { padding: 6px 16px; font-size: 12px; cursor: pointer; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: var(--text-secondary); transition: all 0.2s; user-select: none; display: inline-flex; align-items: center; gap: 4px; opacity: 0.6; }
+.page-tab:hover { border-color: var(--accent); color: var(--text-primary); opacity: 0.8; background: rgba(255,255,255,0.08); }
+.page-tab.active { border-color: var(--accent); color: var(--text-primary); opacity: 0.6; background: rgba(255,255,255,0.08); }
+.page-tab .page-tab-close { display: none; }
+.page-tab-icon { display: inline-flex; align-items: center; margin-right: 4px; opacity: 0.6; vertical-align: middle; pointer-events: none; }
 .page-tab .page-tab-icon i, .page-tab .page-tab-icon svg { width: 14px; height: 14px; }
 
 /* ══════ Card ══════ */
@@ -263,18 +261,14 @@ body {
 .notes-text[contenteditable="true"] { outline: none; padding: 6px 8px; margin: -6px -8px; transition: background 0.15s, border-color 0.15s; border: 1px solid transparent; }
 .notes-text[contenteditable="true"]:focus { background: rgba(255,255,255,0.05); border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glass); border-radius: 0; }
 
-.dropdown-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 6px 0; border: none; background: none; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; cursor: pointer; transition: color 0.15s; text-shadow: var(--emboss-shadow); }
+.dropdown-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 6px 0; border: none; background: none; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; cursor: pointer; transition: color 0.2s; text-shadow: var(--emboss-shadow); }
 .dropdown-toggle:hover { color: var(--text-primary); }
-.dropdown-toggle .arrow { transition: transform 0.2s; font-size: 10px; }
+.dropdown-toggle .arrow { transition: transform 0.35s ease; font-size: 10px; }
 .dropdown-toggle.open .arrow { transform: rotate(90deg); }
-.dropdown-content { display: none; overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s ease; max-height: 0; opacity: 0; }
-.dropdown-content.open { display: block; max-height: 1000px; opacity: 1; }
+.dropdown-content { display: none; overflow: hidden; transition: max-height 0.4s ease, opacity 0.35s ease; max-height: 0; opacity: 0; }
+.dropdown-content.open { display: block; max-height: 2000px; opacity: 1; }
 /* Unify section toggles with dropdown style */
 /* ── Section toggle: unified with dropdown style ── */
-.section-title { display: none; }
-.section-toggle { display: none; }
-.section-content { }
-.section-content.collapsed { display: none; }
 .api-widget { }
 .api-widget .api-label { color: var(--text-secondary); }
 .api-widget .api-value { font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -554,7 +548,12 @@ body {
 .cs-gap { padding: 4px 0; }
 
 /* Config panel card sections */
-.cp-config-card { margin-bottom: 24px; background: var(--card-bg); backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur)); border: 1px solid var(--glass-border); padding: 16px; }
+.cp-config-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 2px 20px rgba(0,0,0,0.25);
+  padding: 20px 24px 16px; margin-bottom: 20px;
+}
 .cp-config-card h3 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-tertiary); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); font-family: var(--font); margin-top: 0; }
 .cp-config-card > div:not(:first-child) { margin-top: 0; }
 
@@ -577,6 +576,8 @@ body {
 
 /* Source card fades while being dragged */
 .card.dragging { opacity: 0.25; transform: scale(0.96); transition: opacity 0.2s, transform 0.2s; }
+.card-transparent { background: transparent !important; border-color: transparent !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.card-transparent::before { display: none !important; }
 
 /* Cards in their simulated final position during drag preview — instant updates for tight cursor tracking */
 .card.push-preview { }
