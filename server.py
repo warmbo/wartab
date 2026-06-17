@@ -111,6 +111,17 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             if note_path.exists():
                 return self._json({"id": note_id, "content": note_path.read_text()})
             return self._json({"id": note_id, "content": ""})
+        if self.path == "/api/config/backups":
+            import json as _json
+            snap_dir = HERE / "snapshots"
+            snap_dir.mkdir(exist_ok=True)
+            snaps = sorted(snap_dir.glob("config_*.json"), reverse=True)
+            result = []
+            for s in snaps:
+                ts = s.stem.replace("config_", "")
+                size = s.stat().st_size
+                result.append({"name": ts, "size": size, "file": s.name})
+            return self._json(result)
         if self.path == "/api/config":
             import json as _json
             cfg_path = HERE / "config.json"
@@ -139,11 +150,36 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 data = _json.loads(body)
                 cfg_path = HERE / "config.json"
+                # Save a timestamped snapshot before overwriting
+                snap_dir = HERE / "snapshots"
+                snap_dir.mkdir(exist_ok=True)
+                if cfg_path.exists():
+                    from datetime import datetime
+                    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    snap_path = snap_dir / f"config_{ts}.json"
+                    import shutil
+                    shutil.copy2(cfg_path, snap_path)
+                    # Prune to last 20 snapshots
+                    snaps = sorted(snap_dir.glob("config_*.json"), reverse=True)
+                    for old in snaps[20:]:
+                        old.unlink()
                 with open(cfg_path, "w") as f:
                     _json.dump(data, f, indent=2)
                 return self._json({"status":"saved"})
             except Exception as e:
                 return self._json({"error":str(e)},400)
+        if self.path.startswith("/api/config/restore/"):
+            import json as _json
+            name = self.path.split("/api/config/restore/")[1]
+            safe = re.sub(r"[^a-zA-Z0-9_-]", "", name)
+            snap_path = HERE / "snapshots" / f"config_{safe}.json"
+            if not snap_path.exists():
+                return self._json({"error":"snapshot not found"},404)
+            data = _json.loads(snap_path.read_text())
+            cfg_path = HERE / "config.json"
+            with open(cfg_path, "w") as f:
+                _json.dump(data, f, indent=2)
+            return self._json({"status":"restored","snapshot":safe})
         if self.path.startswith("/api/notes/"):
             note_id = self.path.split("/api/notes/")[1].split("?")[0]
             if not note_id: return self._json({"error":"missing id"},400)

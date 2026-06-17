@@ -2638,7 +2638,7 @@ if(typeof lucide!=='undefined'){
   ['Export','Import','Reset'].forEach(label=>{
     const b=el('button','',label);b.className='btn btn-glass btn-sm'+(label==='Reset'?' btn-danger':'');
     b.addEventListener('click',()=>{
-      if(label==='Export'){const bb=new Blob([JSON.stringify(config,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='wartab-config.json';a.click();URL.revokeObjectURL(a.href);toast('Exported');}
+      if(label==='Export'){const d=new Date();const bb=new Blob([JSON.stringify(config,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='wartab-config-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';a.click();URL.revokeObjectURL(a.href);toast('Exported');}
       else if(label==='Import'){$('#import-file-input2').click();}
       else if(label==='Reset'){showConfirmModal('Reset all settings to defaults? This cannot be undone.',()=>{const snap=cloneObj(config);config=cloneObj(DEFAULT_CONFIG);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toastWithUndo('Reset',()=>{config=snap;saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();});});}
     });
@@ -2646,7 +2646,38 @@ if(typeof lucide!=='undefined'){
   });
   body.appendChild(acts);
   const fi2=document.createElement('input');fi2.type='file';fi2.accept='.json';fi2.style.display='none';fi2.id='import-file-input2';
-  fi2.addEventListener('change',e=>{if(e.target.files[0]){const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);config=deepMerge(cloneObj(DEFAULT_CONFIG),d);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toast('Imported');}catch(e){toast('Failed: '+e.message,'error');}};r.readAsText(e.target.files[0]);}});
+  fi2.addEventListener('change',e=>{if(e.target.files[0]){const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);showConfirmModal('Import config from '+e.target.files[0].name+'? This will replace your current configuration.',()=>{config=deepMerge(cloneObj(DEFAULT_CONFIG),d);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toast('Imported');});}catch(e){toast('Failed: '+e.message,'error');}};r.readAsText(e.target.files[0]);}});
+
+  /* ── Snapshots ── */
+  body.appendChild(ps('Snapshots'));
+  const snapHint=el('div','font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:6px;','Auto-saved on every config change. Last 20 kept.');
+  body.appendChild(snapHint);
+  const snapRow=el('div','display:flex;gap:8px;margin-bottom:8px;');
+  const saveSnapBtn=el('button','','Save Snapshot Now');saveSnapBtn.className='btn btn-glass btn-sm';
+  saveSnapBtn.addEventListener('click',async()=>{await storage.snapshots.create();renderSnapshots();});
+  snapRow.appendChild(saveSnapBtn);
+  const snapList=el('div','display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;');
+  snapRow.appendChild(snapList);
+  body.appendChild(snapRow);
+  function renderSnapshots(){
+    snapList.innerHTML='<div style="font-size:var(--text-2xs);color:var(--text-tertiary);padding:4px 0;">Loading...</div>';
+    storage.snapshots.list().then(snaps=>{
+      snapList.innerHTML='';
+      if(!snaps||!snaps.length){snapList.innerHTML='<div style="font-size:var(--text-xs);color:var(--text-tertiary);padding:4px 0;">No snapshots yet</div>';return;}
+      snaps.forEach(s=>{
+        const r=el('div','display:flex;gap:6px;align-items:center;padding:3px 0;');
+        const ts=s.name.replace(/_/g,' ').substring(0,15);
+        const lbl=el('span','flex:1;font-size:var(--text-xs);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;',ts);
+        const sz=el('span','font-size:var(--text-2xs);color:var(--text-tertiary);flex-shrink:0;',fmtSize(s.size));
+        const rst=el('button','','Restore');rst.className='btn btn-glass btn-sm';rst.style.cssText='padding:2px 8px;font-size:var(--text-2xs);';
+        rst.addEventListener('click',()=>{showConfirmModal('Restore snapshot from '+ts+'? Current config will be replaced.',async()=>{await storage.snapshots.restore(s.name);await loadConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toast('Restored: '+ts);});});
+        r.appendChild(lbl);r.appendChild(sz);r.appendChild(rst);
+        snapList.appendChild(r);
+      });
+    }).catch(()=>{snapList.innerHTML='<div style="font-size:var(--text-xs);color:var(--text-tertiary);padding:4px 0;">Server snapshots unavailable</div>';});
+  }
+  renderSnapshots();
+  body.appendChild(snapList);
   
   /* ── API Keys ── */
   body.appendChild(ps('API Keys'));
@@ -2831,6 +2862,33 @@ function showConfirmModal(msg, onConfirm) {
   document.body.appendChild(overlay);
 }
 
+/* ══════════ Keyboard Shortcuts Overlay ══════════ */
+function showShortcutsOverlay() {
+  var existing = document.querySelector('#shortcuts-overlay');
+  if (existing) { existing.remove(); return; }
+  var overlay = document.createElement('div');
+  overlay.id = 'shortcuts-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px 32px;min-width:300px;max-width:420px;';
+  box.innerHTML = '<div style="font-size:var(--heading-size);font-weight:700;color:var(--text-primary);margin-bottom:16px;">Keyboard Shortcuts</div>' +
+    '<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:var(--text-sm);line-height:1.8;">' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">n</kbd><span>Add new card</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">s</kbd><span>Focus search bar</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">?</kbd><span>Toggle this overlay</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Esc</kbd><span>Close panels / overlay</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+<span style="text-decoration:underline">N</span></kbd><span>New card</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">N</span></kbd><span>New page</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Tab</kbd><span>Next page</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+K</kbd><span>Focus search</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">C</span></kbd><span>Toggle config panel</span>' +
+    '</div>' +
+    '<div style="text-align:center;margin-top:16px;font-size:var(--text-2xs);color:var(--text-tertiary);">Press Esc to close</div>';
+  overlay.appendChild(box);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
 function switchPage(pageId) {
   if (!config.pages[pageId]) return;
   config.currentPage = pageId;
@@ -2880,7 +2938,7 @@ async function init() {
   }
   renderAll(); renderPageNav(); initStatusBar();
   // Footer
-  $('#footer-text').textContent='WarTab v'+WARTAB_VERSION;
+  $('#footer-text').textContent='WarTab v'+WARTAB_VERSION+'  [?] shortcuts';
   loadIconRepo();
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
@@ -2897,12 +2955,19 @@ async function init() {
     if(e.key==='Escape'&&configPanelOpen)toggleConfigPanel();
     if(e.key==='Escape'&&iconPickerOpen)closeIconPicker();
     if(e.key==='Escape'&&_editPanelOpen)closeCardEditPanel();
+    if(e.key==='Escape'&&document.querySelector('#shortcuts-overlay'))document.querySelector('#shortcuts-overlay').remove();
     if(e.key==='C'&&e.ctrlKey&&e.shiftKey){e.preventDefault();toggleConfigPanel();}
     if((e.key==='l'||e.key==='k')&&(e.ctrlKey||e.metaKey)){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
     // Keyboard shortcuts: Ctrl+N = new card, Ctrl+Shift+N = new page, Ctrl+Tab = next page
     if(e.key==='n'&&(e.ctrlKey||e.metaKey)&&!e.shiftKey){e.preventDefault();addNewCard();}
     if(e.key==='n'&&(e.ctrlKey||e.metaKey)&&e.shiftKey){e.preventDefault();addPage();}
     if(e.key==='Tab'&&(e.ctrlKey||e.metaKey)){e.preventDefault();const order=config.pageOrder||[];if(!order.length)return;const idx=order.indexOf(config.currentPage);const next=order[(idx+1)%order.length];switchPage(next);}
+    // Single-key shortcuts — only when no panels are open
+    if(!configPanelOpen&&!_editPanelOpen&&!iconPickerOpen){
+      if(e.key==='?'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();showShortcutsOverlay();}
+      if(e.key==='n'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();addNewCard();}
+      if(e.key==='s'&&!e.ctrlKey&&!e.metaKey&&!e.target.closest('input,textarea,select')){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
+    }
   });
   let rt=null;window.addEventListener('resize',()=>{if(rt)clearTimeout(rt);rt=setTimeout(()=>{scheduleEqualize();},150);});
   // Periodic timestamp updater

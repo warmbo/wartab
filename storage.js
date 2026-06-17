@@ -266,7 +266,25 @@ const storage = (function() {
     listUploads: listUploads,
     uploadFile: uploadFile,
     deleteFile: deleteFile,
-    getIconIndex: getIconIndex
+    getIconIndex: getIconIndex,
+    // Config snapshots (server only)
+    snapshots: {
+      list: function() {
+        if (IS_EXTENSION) return Promise.resolve([]);
+        return api('/api/config/backups', 'GET');
+      },
+      create: function() {
+        if (IS_EXTENSION) return Promise.resolve({});
+        // Force a snapshot by saving current config (server auto-snapshots)
+        return getConfig().then(function(cfg) {
+          return saveConfig(cfg);
+        });
+      },
+      restore: function(name) {
+        if (IS_EXTENSION) return Promise.reject(new Error('Not available in extension mode'));
+        return api('/api/config/restore/' + encodeURIComponent(name), 'POST');
+      }
+    }
   };
 
 })();

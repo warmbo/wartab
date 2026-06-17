@@ -5,13 +5,13 @@
     "icon": "Swords"
   },
   "theme": {
-    "bgType": "image",
-    "bgValue": "/uploads/f055b202a35e4de8861ed9f4ba1ae6ad.png",
+    "bgType": "gradient",
+    "bgValue": "/uploads/77ccea6868f34d6991dad8a0aab39e27.jpg",
     "blur": 18,
     "glow": "#cad3d8",
     "fontSizeText": 14,
     "fontSizeHeading": 18,
-    "fontFamily": "Work Sans",
+    "fontFamily": "Karla",
     "cardBg": "dark",
     "fontColor": "#dedede",
     "cardOpacity": 0.6699999999999999,
@@ -70,7 +70,8 @@
           "showDate": false,
           "showCalendar": true
         }
-      ]
+      ],
+      "transparent": false
     },
     {
       "id": "selfhosted",
@@ -400,7 +401,8 @@
               "showDate": false,
               "showCalendar": true
             }
-          ]
+          ],
+          "transparent": false
         },
         {
           "id": "selfhosted",
