@@ -553,6 +553,7 @@ body {
   border-radius: 3px;
 }
 .me-icon-btn i[data-lucide] { width: 18px; height: 18px; }
+.me-icon-btn img { max-width: 18px; max-height: 18px; width: auto; height: auto; object-fit: contain; display: block; }
 
 /* ── Checkbox group ── */
 .me-check-group { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
