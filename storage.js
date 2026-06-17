@@ -99,22 +99,90 @@ const storage = (function() {
   }
 
   // ── Stats ──
+  var _cpuPrev = null;
   function getStats(source, glancesUrl) {
     if (IS_EXTENSION) {
-      // Use Chrome system APIs
       return new Promise(function(resolve) {
-        var result = { hostname: 'extension', cpu: 0, memory: {}, disks: [], network: {}, uptime: {}, timestamp: Date.now() };
+        var result = { hostname: 'Device', cpu: 0, memory: { percent: 0, used: 0, total: 0 }, disks: [], network: {}, uptime: { string: '--' }, timestamp: Date.now() };
+        var pending = 0;
+
+        // Uptime via performance.now() approximation
+        var nav = navigator || {};
+        if (nav.connection && nav.connection.type) {
+          result.network = { type: nav.connection.effectiveType || 'unknown' };
+        }
+        // Estimate uptime from performance.timing
+        try {
+          var perf = performance || {};
+          var nav2 = perf.timing || perf.getEntriesByType ? null : null;
+          if (perf.timeOrigin) {
+            var secs = Math.floor((Date.now() - perf.timeOrigin) / 1000);
+            var d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600), m = Math.floor((secs % 3600) / 60);
+            result.uptime = { string: d + 'd ' + h + 'h ' + m + 'm', seconds: secs };
+          }
+        } catch(e) {}
+
+        // CPU — use logical processor tick deltas
+        pending++;
         try {
           chrome.system.cpu.getInfo(function(info) {
-            if (info) result.cpu = info.archName || 0;
+            if (info && info.logicalProcessors && info.logicalProcessors.length) {
+              var totalUser = 0, totalKernel = 0, totalIdle = 0;
+              info.logicalProcessors.forEach(function(p) {
+                if (p.usage) { totalUser += p.usage.user || 0; totalKernel += p.usage.kernel || 0; totalIdle += p.usage.idle || 0; }
+              });
+              var total = totalUser + totalKernel + totalIdle;
+              if (_cpuPrev) {
+                var dUser = totalUser - _cpuPrev.user, dKernel = totalKernel - _cpuPrev.kernel, dIdle = totalIdle - _cpuPrev.idle, dTotal = dUser + dKernel + dIdle;
+                if (dTotal > 0) result.cpu = Math.round((dUser + dKernel) / dTotal * 1000) / 10;
+              }
+              _cpuPrev = { user: totalUser, kernel: totalKernel, idle: totalIdle };
+              if (!result.cpu && total > 0) result.cpu = Math.round((totalUser + totalKernel) / total * 100);
+            }
+            pending--; if (pending <= 0) resolve(result);
           });
-        } catch(e) {}
+        } catch(e) { pending--; if (pending <= 0) resolve(result); }
+
+        // Memory
+        pending++;
         try {
           chrome.system.memory.getInfo(function(info) {
-            if (info) result.memory = { total: info.capacity, available: info.availableCapacity, percent: ((info.capacity - info.availableCapacity) / info.capacity * 100) };
+            if (info && info.capacity > 0) {
+              var used = info.capacity - (info.availableCapacity || 0);
+              result.memory = {
+                total: info.capacity,
+                available: info.availableCapacity || 0,
+                used: used,
+                percent: Math.round(used / info.capacity * 1000) / 10
+              };
+            }
+            pending--; if (pending <= 0) resolve(result);
           });
-        } catch(e) {}
-        resolve(result);
+        } catch(e) { pending--; if (pending <= 0) resolve(result); }
+
+        // Storage (root-like: use navigator.storage.estimate for origin storage)
+        pending++;
+        try {
+          if (navigator.storage && navigator.storage.estimate) {
+            navigator.storage.estimate().then(function(est) {
+              if (est && est.quota > 0) {
+                var used = est.usage || 0, total = est.quota || 0;
+                result.disks = [{
+                  mount: '/',
+                  percent: Math.round(used / total * 1000) / 10,
+                  used: used,
+                  total: total,
+                  free: total - used
+                }];
+              }
+              pending--; if (pending <= 0) resolve(result);
+            }).catch(function() { pending--; if (pending <= 0) resolve(result); });
+          } else {
+            pending--; if (pending <= 0) resolve(result);
+          }
+        } catch(e) { pending--; if (pending <= 0) resolve(result); }
+
+        if (pending <= 0) resolve(result);
       });
     }
     if (source === 'glances' && glancesUrl) {
