@@ -40,10 +40,14 @@ registerModule('links', {
   },
   editor: (sec,card,bd)=>{
     const header=document.createElement('div');header.className='me-link-th';
-    header.innerHTML='<span class="mh-label">Label</span><span class="mh-icon">Icon</span><span class="mh-url">URL</span><span class="mh-remove"></span>';
+    header.innerHTML='<span class="mh-grab"></span><span class="mh-label">Label</span><span class="mh-icon">Icon</span><span class="mh-url">URL</span><span class="mh-remove"></span>';
     bd.appendChild(header);
+    const container=document.createElement('div');container.style.cssText='position:relative;';
     (sec.links||[]).forEach((link,li2)=>{
-      const row=document.createElement('div');row.className='me-link-tr';
+      const row=document.createElement('div');row.className='me-link-tr';row.dataset.linkIdx=li2;
+      // Grab handle
+      const gh=document.createElement('span');gh.className='me-link-grab';gh.textContent='⠿';gh.title='Drag to reorder';
+      gh.addEventListener('pointerdown',(e)=>startLinkDrag(e,row,sec,li2));
       const li2_i=document.createElement('input');li2_i.className='cp-input';li2_i.placeholder='Label';li2_i.value=link.label;
       li2_i.addEventListener('change',()=>{sec.links[li2].label=li2_i.value;saveAndRefresh();});
       const ic=document.createElement('button');ic.className='me-icon-btn';
@@ -53,9 +57,10 @@ registerModule('links', {
       ui.addEventListener('change',()=>{sec.links[li2].url=ui.value;saveAndRefresh();});
       const rm = cpBtn('✕', true); rm.title = '';
       rm.addEventListener('click',()=>{sec.links.splice(li2,1);saveAndRefresh();});
-      row.appendChild(li2_i);row.appendChild(ic);row.appendChild(ui);row.appendChild(rm);
-      bd.appendChild(row);
+      row.appendChild(gh);row.appendChild(li2_i);row.appendChild(ic);row.appendChild(ui);row.appendChild(rm);
+      container.appendChild(row);
     });
+    bd.appendChild(container);
     const al=document.createElement('button');al.className='me-link-add';al.textContent='+ Add Link';
     al.addEventListener('click',()=>{sec.links=sec.links||[];sec.links.push({label:'New',url:'https://',icon:'link'});saveAndRefresh();});
     bd.appendChild(al);
@@ -1822,6 +1827,134 @@ function simGrid(cards, cols) {
     if (!placed) out.push({ row: 0, col: 0 });
   }
   return out;
+}
+
+/* ══════════ Link drag-reorder (within editor) ══════════ */
+let _linkDrag = null;
+
+function startLinkDrag(e, row, sec, srcIdx) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+
+  row.classList.add('me-link-dragging');
+  const label = (sec.links[srcIdx] || {}).label || 'Link';
+
+  const ghost = document.createElement('div');
+  ghost.className = 'me-link-ghost';
+  ghost.textContent = '⠿ ' + label;
+  ghost.style.display = 'none';
+  document.body.appendChild(ghost);
+
+  _linkDrag = { srcRow: row, srcIdx, sec, ghost, active: false, _startX: e.clientX, _startY: e.clientY };
+
+  document.addEventListener('pointermove', onLinkDragMove);
+  document.addEventListener('pointerup', onLinkDragEnd);
+  document.addEventListener('pointercancel', onLinkDragEnd);
+}
+
+function linkDropClear() {
+  document.querySelectorAll('.me-link-tr.drop-above, .me-link-tr.drop-below').forEach(el => {
+    el.classList.remove('drop-above', 'drop-below');
+  });
+}
+
+function onLinkDragMove(e) {
+  if (!_linkDrag) return;
+  if (!_linkDrag.active) {
+    const dx = e.clientX - _linkDrag._startX, dy = e.clientY - _linkDrag._startY;
+    if (dx * dx + dy * dy < 64) return;
+    _linkDrag.active = true;
+    if (_linkDrag.ghost) _linkDrag.ghost.style.display = '';
+  }
+  if (!_linkDrag.active || !_linkDrag.ghost) return;
+
+  // Move ghost to cursor
+  _linkDrag.ghost.style.cssText = `
+    position:fixed; pointer-events:none; z-index:9999;
+    left:${e.clientX + 10}px; top:${e.clientY - 16}px;
+    display:flex; align-items:center; gap:6px;
+    padding:8px 14px;
+    background:var(--accent-glass);
+    border:2px dashed var(--accent);
+    backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+    font-size:12px; font-weight:600;
+    color:var(--accent); white-space:nowrap;
+  `;
+
+  // Remove previous indicators
+  linkDropClear();
+
+  // Find which row the cursor is over
+  const rows = _linkDrag.srcRow.parentElement.querySelectorAll('.me-link-tr');
+  let targetRow = null;
+  let insertBefore = false;  // true = above, false = below
+
+  for (const r of rows) {
+    if (r === _linkDrag.srcRow) continue;
+    const rect = r.getBoundingClientRect();
+    if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
+      targetRow = r;
+      // Insert above if cursor is in upper half
+      const midY = rect.top + rect.height / 2;
+      insertBefore = e.clientY < midY;
+      break;
+    }
+  }
+
+  // If cursor is below the last row, target the last row as "below"
+  if (!targetRow && rows.length > 0) {
+    const lastRow = rows[rows.length - 1];
+    const rect = lastRow.getBoundingClientRect();
+    if (e.clientY > rect.bottom) {
+      targetRow = lastRow;
+      insertBefore = false;
+    } else if (e.clientY < rows[0].getBoundingClientRect().top) {
+      targetRow = rows[0];
+      insertBefore = true;
+    }
+  }
+
+  if (targetRow) {
+    targetRow.classList.add(insertBefore ? 'drop-above' : 'drop-below');
+    _linkDrag._targetRow = targetRow;
+    _linkDrag._insertBefore = insertBefore;
+  } else {
+    _linkDrag._targetRow = null;
+  }
+}
+
+function onLinkDragEnd(e) {
+  document.removeEventListener('pointermove', onLinkDragMove);
+  document.removeEventListener('pointerup', onLinkDragEnd);
+  document.removeEventListener('pointercancel', onLinkDragEnd);
+
+  if (!_linkDrag) return;
+  const { srcRow, srcIdx, sec, ghost, active, _targetRow, _insertBefore } = _linkDrag;
+
+  // Clean up
+  if (ghost && ghost.parentNode) ghost.remove();
+  if (srcRow) srcRow.classList.remove('me-link-dragging');
+  linkDropClear();
+
+  if (active && _targetRow) {
+    const rows = [...srcRow.parentElement.querySelectorAll('.me-link-tr')];
+    const tgtIdxStr = _targetRow.dataset.linkIdx;
+    const tgtIdx = tgtIdxStr !== undefined ? parseInt(tgtIdxStr, 10) : -1;
+
+    if (tgtIdx >= 0 && tgtIdx !== srcIdx) {
+      const links = sec.links || [];
+      const [moved] = links.splice(srcIdx, 1);
+      // Adjust target index after removal
+      let insertAt = tgtIdx;
+      if (tgtIdx > srcIdx) insertAt = tgtIdx - 1;
+      if (!_insertBefore) insertAt = insertAt + 1;
+      insertAt = Math.min(insertAt, links.length);
+      links.splice(insertAt, 0, moved);
+      saveAndRefresh();
+    }
+  }
+
+  _linkDrag = null;
 }
 
 function startDrag(e, id, idx){

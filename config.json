@@ -1,29 +1,29 @@
 {
   "version": "0.2.1",
   "branding": {
-    "title": "war-tab",
+    "title": "warho.me",
     "icon": "Swords"
   },
   "theme": {
     "bgType": "image",
     "bgValue": "/uploads/f055b202a35e4de8861ed9f4ba1ae6ad.png",
-    "blur": 4,
+    "blur": 18,
     "glow": "#cad3d8",
-    "fontSize": "medium",
-    "fontFamily": "Inter",
+    "fontSize": "small",
+    "fontFamily": "Work Sans",
     "cardBg": "dark",
     "fontColor": "#dedede",
-    "cardOpacity": 0.54,
+    "cardOpacity": 0.6699999999999999,
     "bgRotate": false,
     "animations": true,
     "showAccentBar": true
   },
   "statusBar": {
     "enabled": true,
-    "source": "local",
+    "source": "glances",
     "glancesUrl": "http://localhost:61209",
     "customUrl": "",
-    "refreshInterval": 15,
+    "refreshInterval": 5,
     "items": [
       "cpu",
       "memory",
@@ -290,9 +290,9 @@
           "label": "Development",
           "links": [
             {
-              "label": "GitHub",
-              "url": "https://github.com",
-              "icon": "/icons/github.svg"
+              "label": "npm",
+              "url": "https://www.npmjs.com",
+              "icon": "package"
             },
             {
               "label": "GitLab",
@@ -300,14 +300,14 @@
               "icon": "/icons/gitlab.svg"
             },
             {
+              "label": "GitHub",
+              "url": "https://github.com",
+              "icon": "/icons/github.svg"
+            },
+            {
               "label": "Stack Overflow",
               "url": "https://stackoverflow.com",
               "icon": "/icons/stackoverflow.svg"
-            },
-            {
-              "label": "npm",
-              "url": "https://www.npmjs.com",
-              "icon": "package"
             },
             {
               "label": "PyPI",
@@ -590,9 +590,9 @@
               "label": "Development",
               "links": [
                 {
-                  "label": "GitHub",
-                  "url": "https://github.com",
-                  "icon": "/icons/github.svg"
+                  "label": "npm",
+                  "url": "https://www.npmjs.com",
+                  "icon": "package"
                 },
                 {
                   "label": "GitLab",
@@ -600,14 +600,14 @@
                   "icon": "/icons/gitlab.svg"
                 },
                 {
+                  "label": "GitHub",
+                  "url": "https://github.com",
+                  "icon": "/icons/github.svg"
+                },
+                {
                   "label": "Stack Overflow",
                   "url": "https://stackoverflow.com",
                   "icon": "/icons/stackoverflow.svg"
-                },
-                {
-                  "label": "npm",
-                  "url": "https://www.npmjs.com",
-                  "icon": "package"
                 },
                 {
                   "label": "PyPI",
