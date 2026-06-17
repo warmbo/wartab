@@ -1216,7 +1216,7 @@ const ICON_REPO = [];
 // Load service icons from selfhst index (complete, accurate filenames)
 function loadIconRepo() {
   if (ICON_REPO.length > 0) return;
-  fetch('/icons/selfhst-index.json').then(function(r){return r.json();}).then(function(data){
+  storage.getIconIndex().then(function(data){
     data.forEach(function(item){
       if (item.SVG === 'Yes') {
         ICON_REPO.push({name: item.Name, file: item.Reference, tags: [item.Category || '']});
@@ -1400,7 +1400,7 @@ function escAttr(s){if(typeof s!=='string')return'';const d=document.createEleme
 /* ── Status Bar ── */
 function initStatusBar(){renderStatusBar();clearInterval(statsTimer);const sb=config.statusBar;if(!sb||!sb.enabled)return;const ms=(sb.refreshInterval||15)*1000;statsTimer=setInterval(fetchStats,ms);fetchStats();}
 function renderStatusBar(){const bar=$('#top-stats'),sb=config.statusBar;if(!sb||!sb.enabled){bar.classList.add('hidden');bar.innerHTML='';return;}bar.classList.remove('hidden');bar.innerHTML='<span class="stat-item"><span class="stat-icon">⚡</span><span class="stat-value" id="stat-loading">Connecting...</span></span>';}
-function fetchStats(){const sb=config.statusBar;if(!sb||!sb.enabled)return;let url;if(sb.source==='local')url='/api/stats';else if(sb.source==='glances')url=sb.glancesUrl+'/api/4';else if(sb.source==='custom'&&sb.customUrl)url=sb.customUrl;else return;fetch(url).then(r=>{if(!r.ok)throw Error(r.status);return r.json();}).then(d=>renderStats(d,sb)).catch(()=>{const el=$('#stat-loading');if(el)el.textContent='Stats offline';});}
+function fetchStats(){const sb=config.statusBar;if(!sb||!sb.enabled)return;storage.getStats(sb.source,sb.glancesUrl).then(function(d){renderStats(d,sb);}).catch(function(){const el=$('#stat-loading');if(el)el.textContent='Stats offline';});}
 function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const items=sb.items||[];const parts=[];if(items.includes('hostname')&&data.hostname)parts.push(stItem('🖥️','',data.hostname,null));if(items.includes('cpu')){let p=typeof data.cpu==='number'?data.cpu:(data.cpu&&data.cpu.total)?data.cpu.total:0;parts.push(stItem('⚡','CPU',p+'%',p));}if(items.includes('memory')){const m=data.memory||{};parts.push(stItem('🧠','RAM',(m.percent||0)+'%',m.percent||0));}if(items.includes('disk')){const d=data.disks||[],r=d.find(d=>d.mount==='/')||d[0];if(r)parts.push(stItem('💾',r.mount,r.percent+'%',r.percent));}if(items.includes('uptime')){const u=data.uptime||{};parts.push(stItem('⏱️','Up',u.string||'--'));}parts.forEach((el,i)=>{if(i>0){const s=document.createElement('span');s.className='stat-sep';s.textContent='·';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';}
 // Build a status bar stat element (icon + label + optional progress bar + value)
 function stItem(icon,label,value,pct){const div=document.createElement('span');div.className='stat-item';div.innerHTML=`<span class="stat-icon">${icon}</span>`;if(label){const l=document.createElement('span');l.className='stat-label';l.textContent=label;div.appendChild(l);}if(pct!==null&&pct!==undefined){const b=document.createElement('span');b.className='stat-bar';const f=document.createElement('span');f.className='stat-bar-fill'+(pct>80?' high':pct>60?' mid':'');f.style.width=pct+'%';b.appendChild(f);div.appendChild(b);}const v=document.createElement('span');v.className='stat-value';v.textContent=value;div.appendChild(v);return div;}
