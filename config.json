@@ -20,15 +20,16 @@
   },
   "statusBar": {
     "enabled": true,
-    "source": "glances",
-    "glancesUrl": "http://localhost:61209",
+    "source": "local",
+    "glancesUrl": "http://10.0.0.227:61208",
     "customUrl": "",
     "refreshInterval": 5,
     "items": [
       "cpu",
       "memory",
       "disk",
-      "uptime"
+      "uptime",
+      "hostname"
     ],
     "hostname": true
   },
@@ -65,23 +66,99 @@
           "type": "clock",
           "format24h": false,
           "showDate": false,
-          "showCalendar": false
+          "showCalendar": true
         }
       ]
     },
     {
-      "id": "search-card",
-      "title": "Quick Search",
-      "icon": "search",
-      "color": "#999999",
+      "id": "selfhosted",
+      "title": "Self-Hosted",
+      "icon": "AlignVerticalJustifyEnd",
+      "color": "#777777",
       "width": 2,
       "sections": [
         {
-          "id": "search-main",
-          "type": "search",
-          "engine": "Bing",
-          "placeholder": "Search anything...",
-          "label": "Web Search",
+          "id": "sh-services",
+          "type": "links",
+          "label": "Infrastructure",
+          "links": [
+            {
+              "label": "Home Assistant",
+              "url": "http://homeassistant.local:8123",
+              "icon": "/icons/home-assistant.svg"
+            },
+            {
+              "label": "PVE-GEM",
+              "url": "https://",
+              "icon": "/icons/proxmox.svg"
+            },
+            {
+              "label": "PVE-TAT",
+              "url": "https://",
+              "icon": "/icons/proxmox.svg"
+            },
+            {
+              "label": "PVE-ZEN",
+              "url": "https://",
+              "icon": "/icons/proxmox.svg"
+            },
+            {
+              "label": "OPNSense",
+              "url": "http://10.0.01",
+              "icon": "/icons/opnsense.svg"
+            }
+          ],
+          "collapsed": false
+        },
+        {
+          "id": "sec-j0hnk2ymqin4ljh",
+          "type": "resource-monitor",
+          "label": "Resource monitor",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "source": "local",
+          "glancesUrl": "http://localhost:61209",
+          "refreshInterval": 15
+        }
+      ],
+      "_isGap": false,
+      "_savedSections": [
+        {
+          "id": "sh-services",
+          "type": "links",
+          "label": "Services",
+          "links": [
+            {
+              "label": "Home Assistant",
+              "url": "http://homeassistant.local:8123",
+              "icon": "/icons/home-assistant.svg"
+            },
+            {
+              "label": "Jellyfin",
+              "url": "http://jellyfin.local:8096",
+              "icon": "/icons/jellyfin.svg"
+            },
+            {
+              "label": "Pi-hole",
+              "url": "http://pi.hole/admin",
+              "icon": "/icons/pi-hole.svg"
+            },
+            {
+              "label": "Grafana",
+              "url": "http://grafana.local:3000",
+              "icon": "/icons/grafana.svg"
+            },
+            {
+              "label": "Portainer",
+              "url": "http://portainer.local:9000",
+              "icon": "/icons/portainer-v1.svg"
+            }
+          ],
           "collapsed": false
         }
       ]
@@ -166,118 +243,6 @@
       ]
     },
     {
-      "id": "selfhosted",
-      "title": "Self-Hosted",
-      "icon": "AlignVerticalJustifyEnd",
-      "color": "#777777",
-      "width": 2,
-      "sections": [
-        {
-          "id": "sh-services",
-          "type": "links",
-          "label": "Services",
-          "links": [
-            {
-              "label": "Home Assistant",
-              "url": "http://homeassistant.local:8123",
-              "icon": "/icons/home-assistant.svg"
-            },
-            {
-              "label": "Jellyfin",
-              "url": "http://jellyfin.local:8096",
-              "icon": "/icons/jellyfin.svg"
-            },
-            {
-              "label": "Pi-hole",
-              "url": "http://pi.hole/admin",
-              "icon": "/icons/pi-hole.svg"
-            },
-            {
-              "label": "Grafana",
-              "url": "http://grafana.local:3000",
-              "icon": "/icons/grafana.svg"
-            },
-            {
-              "label": "Portainer",
-              "url": "http://portainer.local:9000",
-              "icon": "/icons/portainer-v1.svg"
-            }
-          ],
-          "collapsed": false
-        }
-      ],
-      "_isGap": false,
-      "_savedSections": [
-        {
-          "id": "sh-services",
-          "type": "links",
-          "label": "Services",
-          "links": [
-            {
-              "label": "Home Assistant",
-              "url": "http://homeassistant.local:8123",
-              "icon": "/icons/home-assistant.svg"
-            },
-            {
-              "label": "Jellyfin",
-              "url": "http://jellyfin.local:8096",
-              "icon": "/icons/jellyfin.svg"
-            },
-            {
-              "label": "Pi-hole",
-              "url": "http://pi.hole/admin",
-              "icon": "/icons/pi-hole.svg"
-            },
-            {
-              "label": "Grafana",
-              "url": "http://grafana.local:3000",
-              "icon": "/icons/grafana.svg"
-            },
-            {
-              "label": "Portainer",
-              "url": "http://portainer.local:9000",
-              "icon": "/icons/portainer-v1.svg"
-            }
-          ],
-          "collapsed": false
-        }
-      ]
-    },
-    {
-      "id": "card-e4l1uy4mqgvyqyb",
-      "title": "",
-      "icon": "AlignVerticalSpaceAround",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-8nfcrfdmqgvyqyb",
-          "type": "quotes",
-          "label": "Quotes",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "quotes": [
-            {
-              "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
-              "a": "Some Weirdo"
-            },
-            {
-              "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
-              "a": "Bob Loblaw"
-            }
-          ],
-          "_qi": 0,
-          "collapsed": false
-        }
-      ]
-    },
-    {
       "id": "daily-drivers",
       "title": "Daily Drivers",
       "icon": "globe",
@@ -346,6 +311,57 @@
           "collapsed": false
         }
       ]
+    },
+    {
+      "id": "card-e4l1uy4mqgvyqyb",
+      "title": "",
+      "icon": "AlignVerticalSpaceAround",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-8nfcrfdmqgvyqyb",
+          "type": "quotes",
+          "label": "Quotes",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "quotes": [
+            {
+              "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
+              "a": "Some Weirdo"
+            },
+            {
+              "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
+              "a": "Bob Loblaw"
+            }
+          ],
+          "_qi": 1,
+          "collapsed": false
+        }
+      ]
+    },
+    {
+      "id": "search-card",
+      "title": "Quick Search",
+      "icon": "search",
+      "color": "#999999",
+      "width": 2,
+      "sections": [
+        {
+          "id": "search-main",
+          "type": "search",
+          "engine": "Bing",
+          "placeholder": "Search anything...",
+          "label": "Web Search",
+          "collapsed": false
+        }
+      ]
     }
   ],
   "pages": {
@@ -365,23 +381,99 @@
               "type": "clock",
               "format24h": false,
               "showDate": false,
-              "showCalendar": false
+              "showCalendar": true
             }
           ]
         },
         {
-          "id": "search-card",
-          "title": "Quick Search",
-          "icon": "search",
-          "color": "#999999",
+          "id": "selfhosted",
+          "title": "Self-Hosted",
+          "icon": "AlignVerticalJustifyEnd",
+          "color": "#777777",
           "width": 2,
           "sections": [
             {
-              "id": "search-main",
-              "type": "search",
-              "engine": "Bing",
-              "placeholder": "Search anything...",
-              "label": "Web Search",
+              "id": "sh-services",
+              "type": "links",
+              "label": "Infrastructure",
+              "links": [
+                {
+                  "label": "Home Assistant",
+                  "url": "http://homeassistant.local:8123",
+                  "icon": "/icons/home-assistant.svg"
+                },
+                {
+                  "label": "PVE-GEM",
+                  "url": "https://",
+                  "icon": "/icons/proxmox.svg"
+                },
+                {
+                  "label": "PVE-TAT",
+                  "url": "https://",
+                  "icon": "/icons/proxmox.svg"
+                },
+                {
+                  "label": "PVE-ZEN",
+                  "url": "https://",
+                  "icon": "/icons/proxmox.svg"
+                },
+                {
+                  "label": "OPNSense",
+                  "url": "http://10.0.01",
+                  "icon": "/icons/opnsense.svg"
+                }
+              ],
+              "collapsed": false
+            },
+            {
+              "id": "sec-j0hnk2ymqin4ljh",
+              "type": "resource-monitor",
+              "label": "Resource monitor",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "source": "local",
+              "glancesUrl": "http://localhost:61209",
+              "refreshInterval": 15
+            }
+          ],
+          "_isGap": false,
+          "_savedSections": [
+            {
+              "id": "sh-services",
+              "type": "links",
+              "label": "Services",
+              "links": [
+                {
+                  "label": "Home Assistant",
+                  "url": "http://homeassistant.local:8123",
+                  "icon": "/icons/home-assistant.svg"
+                },
+                {
+                  "label": "Jellyfin",
+                  "url": "http://jellyfin.local:8096",
+                  "icon": "/icons/jellyfin.svg"
+                },
+                {
+                  "label": "Pi-hole",
+                  "url": "http://pi.hole/admin",
+                  "icon": "/icons/pi-hole.svg"
+                },
+                {
+                  "label": "Grafana",
+                  "url": "http://grafana.local:3000",
+                  "icon": "/icons/grafana.svg"
+                },
+                {
+                  "label": "Portainer",
+                  "url": "http://portainer.local:9000",
+                  "icon": "/icons/portainer-v1.svg"
+                }
+              ],
               "collapsed": false
             }
           ]
@@ -466,118 +558,6 @@
           ]
         },
         {
-          "id": "selfhosted",
-          "title": "Self-Hosted",
-          "icon": "AlignVerticalJustifyEnd",
-          "color": "#777777",
-          "width": 2,
-          "sections": [
-            {
-              "id": "sh-services",
-              "type": "links",
-              "label": "Services",
-              "links": [
-                {
-                  "label": "Home Assistant",
-                  "url": "http://homeassistant.local:8123",
-                  "icon": "/icons/home-assistant.svg"
-                },
-                {
-                  "label": "Jellyfin",
-                  "url": "http://jellyfin.local:8096",
-                  "icon": "/icons/jellyfin.svg"
-                },
-                {
-                  "label": "Pi-hole",
-                  "url": "http://pi.hole/admin",
-                  "icon": "/icons/pi-hole.svg"
-                },
-                {
-                  "label": "Grafana",
-                  "url": "http://grafana.local:3000",
-                  "icon": "/icons/grafana.svg"
-                },
-                {
-                  "label": "Portainer",
-                  "url": "http://portainer.local:9000",
-                  "icon": "/icons/portainer-v1.svg"
-                }
-              ],
-              "collapsed": false
-            }
-          ],
-          "_isGap": false,
-          "_savedSections": [
-            {
-              "id": "sh-services",
-              "type": "links",
-              "label": "Services",
-              "links": [
-                {
-                  "label": "Home Assistant",
-                  "url": "http://homeassistant.local:8123",
-                  "icon": "/icons/home-assistant.svg"
-                },
-                {
-                  "label": "Jellyfin",
-                  "url": "http://jellyfin.local:8096",
-                  "icon": "/icons/jellyfin.svg"
-                },
-                {
-                  "label": "Pi-hole",
-                  "url": "http://pi.hole/admin",
-                  "icon": "/icons/pi-hole.svg"
-                },
-                {
-                  "label": "Grafana",
-                  "url": "http://grafana.local:3000",
-                  "icon": "/icons/grafana.svg"
-                },
-                {
-                  "label": "Portainer",
-                  "url": "http://portainer.local:9000",
-                  "icon": "/icons/portainer-v1.svg"
-                }
-              ],
-              "collapsed": false
-            }
-          ]
-        },
-        {
-          "id": "card-e4l1uy4mqgvyqyb",
-          "title": "",
-          "icon": "AlignVerticalSpaceAround",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-8nfcrfdmqgvyqyb",
-              "type": "quotes",
-              "label": "Quotes",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "quotes": [
-                {
-                  "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
-                  "a": "Some Weirdo"
-                },
-                {
-                  "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
-                  "a": "Bob Loblaw"
-                }
-              ],
-              "_qi": 0,
-              "collapsed": false
-            }
-          ]
-        },
-        {
           "id": "daily-drivers",
           "title": "Daily Drivers",
           "icon": "globe",
@@ -643,6 +623,57 @@
                   "icon": "x"
                 }
               ],
+              "collapsed": false
+            }
+          ]
+        },
+        {
+          "id": "card-e4l1uy4mqgvyqyb",
+          "title": "",
+          "icon": "AlignVerticalSpaceAround",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-8nfcrfdmqgvyqyb",
+              "type": "quotes",
+              "label": "Quotes",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "quotes": [
+                {
+                  "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
+                  "a": "Some Weirdo"
+                },
+                {
+                  "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
+                  "a": "Bob Loblaw"
+                }
+              ],
+              "_qi": 1,
+              "collapsed": false
+            }
+          ]
+        },
+        {
+          "id": "search-card",
+          "title": "Quick Search",
+          "icon": "search",
+          "color": "#999999",
+          "width": 2,
+          "sections": [
+            {
+              "id": "search-main",
+              "type": "search",
+              "engine": "Bing",
+              "placeholder": "Search anything...",
+              "label": "Web Search",
               "collapsed": false
             }
           ]

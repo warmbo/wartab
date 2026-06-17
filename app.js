@@ -233,19 +233,20 @@ registerModule('quotes', {
     const txt=document.createElement('div');txt.className='quotes-text';
     txt.style.cssText='font-size:15px;line-height:1.5;font-style:italic;color:var(--text-primary);position:relative;padding-left:20px;';
     const qm=document.createElement('span');qm.textContent='"';qm.style.cssText='position:absolute;left:0;top:-4px;font-size:24px;color:var(--accent);opacity:0.5;font-style:normal;';txt.appendChild(qm);
-    const cont=document.createElement('span');cont.className='quotes-content';cont.textContent='Click to load';txt.appendChild(cont);
+    const cont=document.createElement('span');cont.className='quotes-content';cont.textContent='Click to load';
+    cont.addEventListener('click',function(e){e.stopPropagation();fetchQuote(q,sec);});
+    txt.appendChild(cont);
     q.appendChild(txt);
     const auth=document.createElement('div');auth.className='quotes-author';
     auth.style.cssText='font-size:11px;color:var(--text-secondary);text-align:right;padding-right:4px;';
     const aName=document.createElement('span');aName.className='quotes-author-name';aName.textContent='';auth.appendChild(aName);
     q.appendChild(auth);
-    q.addEventListener('click',function(){fetchQuote(q,sec);});
     q.dataset.secId=sec.id;
     cw.appendChild(q);
     setTimeout(function(){fetchQuote(q,sec);},100);
   },
   editor: (sec,card,bd)=>{
-    bd.appendChild(cpHint('✎ Click the quote to refresh.'));
+    bd.appendChild(cpHint('✎ Click the quote text to refresh.'));
     // User-added quotes
     bd.appendChild(cpLabel('Custom Quotes'));
     const list=document.createElement('div');list.style.cssText='margin-bottom:8px;';
