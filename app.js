@@ -1080,8 +1080,8 @@ const DEFAULT_CONFIG = {
     bgValue: '#0a0a0a, #1a1a1a, #0d0d0d',  // CSS value: color, gradient(), or image path
     blur: 20,                     // backdrop-filter blur amount (px)
     glow: '#888888',              // accent color (grayscale)
-    fontSizeText: 'medium',        // 'small' | 'medium' | 'large' — body text
-    fontSizeHeading: 'medium',     // 'small' | 'medium' | 'large' — card titles / section headers
+    fontSizeText: 14,              // body text size in px (slider: 10-28)
+    fontSizeHeading: 16,           // heading/card title size in px (slider: 10-28)
     fontFamily: 'Inter',          // Google Font name (or system font)
     cardBg: 'dark',               // card background variant
     fontColor: '#cccccc',         // text color override
@@ -1309,6 +1309,9 @@ async function loadConfig() {
     var parsed = await storage.getConfig();
     if (parsed && Object.keys(parsed).length > 0) {
       if (!parsed.version || parsed.version < '0.2.0') { migrateConfigEmojis(parsed); parsed.version = WARTAB_VERSION; }
+      // Migrate old 'small'/'medium'/'large' string fontSize to numeric px
+      if (typeof parsed.theme?.fontSizeText === 'string') parsed.theme.fontSizeText = ({small:13,medium:14,large:16})[parsed.theme.fontSizeText] || 14;
+      if (typeof parsed.theme?.fontSizeHeading === 'string') parsed.theme.fontSizeHeading = ({small:14,medium:16,large:18})[parsed.theme.fontSizeHeading] || 16;
       config = deepMerge(cloneObj(DEFAULT_CONFIG), parsed);
     } else {
       config = cloneObj(DEFAULT_CONFIG);
@@ -1345,23 +1348,21 @@ function applyTheme(){
   root.style.setProperty('--accent-glow',hexToRgba(t.glow,0.3));
   root.style.setProperty('--accent-glass',hexToRgba(t.glow,0.12));
 
-  // Font size — compute full scale as CSS variables
-  const ts = ({small:'13px',medium:'14px',large:'16px'})[t.fontSizeText]||'14px';
-  const hs = ({small:'14px',medium:'16px',large:'18px'})[t.fontSizeHeading]||'16px';
-  // Base pixel value for scale computation
-  const tbase = t.fontSizeText === 'small' ? 13 : t.fontSizeText === 'large' ? 16 : 14;
-  root.style.fontSize = ts;
-  root.style.setProperty('--text-size', ts);
-  root.style.setProperty('--text-3xs', Math.max(8,tbase-5)+'px');
-  root.style.setProperty('--text-2xs', Math.max(9,tbase-4)+'px');
-  root.style.setProperty('--text-xs',  Math.max(10,tbase-3)+'px');
-  root.style.setProperty('--text-sm',  Math.max(11,tbase-2)+'px');
-  root.style.setProperty('--text-base', ts);
-  root.style.setProperty('--text-lg',  (tbase+2)+'px');
-  root.style.setProperty('--text-xl',  (tbase+8)+'px');
-  root.style.setProperty('--text-2xl', (tbase+18)+'px');
-  root.style.setProperty('--text-3xl', (tbase+26)+'px');
-  root.style.setProperty('--heading-size', hs);
+  // Font size — compute full scale as CSS variables from numeric px values
+  const tSize = parseInt(t.fontSizeText) || 14;
+  const hSize = parseInt(t.fontSizeHeading) || 16;
+  root.style.fontSize = tSize + 'px';
+  root.style.setProperty('--text-size', tSize + 'px');
+  root.style.setProperty('--text-3xs', Math.max(8, tSize - 5) + 'px');
+  root.style.setProperty('--text-2xs', Math.max(9, tSize - 4) + 'px');
+  root.style.setProperty('--text-xs',  Math.max(10, tSize - 3) + 'px');
+  root.style.setProperty('--text-sm',  Math.max(11, tSize - 2) + 'px');
+  root.style.setProperty('--text-base', tSize + 'px');
+  root.style.setProperty('--text-lg',  (tSize + 2) + 'px');
+  root.style.setProperty('--text-xl',  (tSize + 8) + 'px');
+  root.style.setProperty('--text-2xl', (tSize + 18) + 'px');
+  root.style.setProperty('--text-3xl', (tSize + 26) + 'px');
+  root.style.setProperty('--heading-size', hSize + 'px');
   const fn=t.fontFamily||'Inter';
   root.style.setProperty('--font',`'${fn}','Segoe UI',system-ui,-apple-system,sans-serif`);
   loadGoogleFont(fn,true);
@@ -2533,8 +2534,8 @@ if(typeof lucide!=='undefined'){
   /* ── Typography ── */
   body.appendChild(ps('Typography'));
   body.appendChild(pf('color','','Font Color',null,config.theme.fontColor||'#cccccc',v=>{config.theme.fontColor=v;applyChanges();document.body.style.setProperty('--text-primary',hexToRgba2(v,0.92));}));
-  body.appendChild(pf('select','','Body Text Size',[{value:'small',label:'Small (13px)'},{value:'medium',label:'Medium (14px)'},{value:'large',label:'Large (16px)'}],config.theme.fontSizeText,v=>{config.theme.fontSizeText=v;applyChanges();}));
-  body.appendChild(pf('select','','Heading Size',[{value:'small',label:'Small (14px)'},{value:'medium',label:'Medium (16px)'},{value:'large',label:'Large (18px)'}],config.theme.fontSizeHeading,v=>{config.theme.fontSizeHeading=v;applyChanges();}));
+  body.appendChild(pf('range','','Body Text Size (px)',null,config.theme.fontSizeText,v=>{config.theme.fontSizeText=parseInt(v);applyChanges();},{min:10,max:28}));
+  body.appendChild(pf('range','','Heading Size (px)',null,config.theme.fontSizeHeading,v=>{config.theme.fontSizeHeading=parseInt(v);applyChanges();},{min:10,max:28}));
   const curFont=config.theme.fontFamily||'Inter';
   const TOP_FONTS = [
     {name:'Inter',sample:'The quick brown fox jumps'},

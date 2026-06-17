@@ -9,8 +9,8 @@
     "bgValue": "/uploads/f055b202a35e4de8861ed9f4ba1ae6ad.png",
     "blur": 18,
     "glow": "#cad3d8",
-    "fontSizeText": "medium",
-    "fontSizeHeading": "large",
+    "fontSizeText": 14,
+    "fontSizeHeading": 18,
     "fontFamily": "Work Sans",
     "cardBg": "dark",
     "fontColor": "#dedede",
@@ -139,8 +139,8 @@
             }
           ],
           "source": "local",
-          "glancesUrl": "http://localhost:61209",
-          "refreshInterval": 15
+          "glancesUrl": "http://localhost:61208",
+          "refreshInterval": 5
         }
       ],
       "_isGap": false,
@@ -358,7 +358,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         }
       ]
@@ -469,8 +469,8 @@
                 }
               ],
               "source": "local",
-              "glancesUrl": "http://localhost:61209",
-              "refreshInterval": 15
+              "glancesUrl": "http://localhost:61208",
+              "refreshInterval": 5
             }
           ],
           "_isGap": false,
@@ -688,7 +688,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]
