@@ -1108,8 +1108,8 @@ const DEFAULT_CONFIG = {
   layout: {
     cols: 4,                      // number of grid columns
     gap: 16,                      // gap between cards (px)
-    pageWidth: 'full',            // 'full' | 'three-quarters' | 'half'
-    paddingHeight: 'full',        // 'full' (20px top/bottom) | 'compact' (120px)
+    pageWidth: 100,               // page width as percentage (slider: 50-100)
+    pagePadding: 20,              // top/bottom padding in px (slider: 20-200)
   },
 
   /* ── Search widget settings ── */
@@ -1314,6 +1314,9 @@ async function loadConfig() {
       // Migrate old 'small'/'medium'/'large' string fontSize to numeric px
       if (typeof parsed.theme?.fontSizeText === 'string') parsed.theme.fontSizeText = ({small:13,medium:14,large:16})[parsed.theme.fontSizeText] || 14;
       if (typeof parsed.theme?.fontSizeHeading === 'string') parsed.theme.fontSizeHeading = ({small:14,medium:16,large:18})[parsed.theme.fontSizeHeading] || 16;
+      // Migrate old string pageWidth/paddingHeight to numeric
+      if (typeof parsed.layout?.pageWidth === 'string') parsed.layout.pageWidth = ({full:100,'three-quarters':75,half:50})[parsed.layout.pageWidth] || 100;
+      if (typeof parsed.layout?.paddingHeight === 'string') parsed.layout.pagePadding = ({full:20,compact:120})[parsed.layout.paddingHeight] || 20;
       config = deepMerge(cloneObj(DEFAULT_CONFIG), parsed);
     } else {
       config = cloneObj(DEFAULT_CONFIG);
@@ -1434,13 +1437,12 @@ function stItem(icon,label,value,pct){const div=document.createElement('span');d
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
 // Full page re-render: destroys and rebuilds grid from config
 function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){
-  // Page width: full=100%+20px pad, 3/4=75%, 1/2=50% (auto-margins center narrower widths)
-  const pctMap={full:'100%','three-quarters':'75%',half:'50%'};
-  appEl.style.maxWidth=pctMap[config.layout.pageWidth]||'100%';
-  const xPad=config.layout.pageWidth==='full'?20:0;
+  // Page width: slider percentage (50-100), side padding only at full width
+  appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
+  const xPad=config.layout.pageWidth>=100?20:0;
   appEl.style.paddingLeft=xPad+'px';appEl.style.paddingRight=xPad+'px';
-  // Y padding: Full → 20px, Compact → 120px
-  const yPad=config.layout.paddingHeight==='compact'?120:20;
+  // Top/bottom padding: slider (20-200px)
+  const yPad=parseInt(config.layout.pagePadding)||20;
   appEl.style.paddingTop=yPad+'px';appEl.style.paddingBottom=yPad+'px';
 }const _scrollY=window.scrollY;
 if(!config.cards.length){
@@ -2630,15 +2632,8 @@ if(typeof lucide!=='undefined'){
   body.appendChild(ps('Layout'));
   body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
   body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
-  body.appendChild(pf('select','','Page Width',[
-    {value:'full',label:'Full Width'},
-    {value:'three-quarters',label:'3/4 Width'},
-    {value:'half',label:'1/2 Width'},
-  ],config.layout.pageWidth||'full',v=>{config.layout.pageWidth=v;applyChanges();renderAll();}));
-  body.appendChild(pf('select','','Page Height',[
-    {value:'full',label:'Full (20px padding)'},
-    {value:'compact',label:'Compact (120px padding)'},
-  ],config.layout.paddingHeight||'full',v=>{config.layout.paddingHeight=v;applyChanges();renderAll();}));
+  body.appendChild(pf('range','','Page Width (%)',null,config.layout.pageWidth,v=>{config.layout.pageWidth=parseInt(v);applyChanges();renderAll();},{min:50,max:100}));
+  body.appendChild(pf('range','','Page Padding (px)',null,config.layout.pagePadding||20,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:20,max:200}));
 
   /* ── Data ── */
   body.appendChild(ps('Data'));

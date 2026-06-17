@@ -7,6 +7,8 @@
   "theme": {
     "bgType": "image",
     "bgValue": "/uploads/f1958988886f42ccaaf6188ec4ed9db8.png",
+    "bgBlur": 4,
+    "bgDim": 77,
     "blur": 18,
     "glow": "#cad3d8",
     "fontSizeText": 16,
@@ -38,8 +40,8 @@
   "layout": {
     "cols": 4,
     "gap": 16,
-    "pageWidth": "full",
-    "paddingHeight": "full"
+    "pageWidth": "three-quarters",
+    "paddingHeight": "compact"
   },
   "search": {
     "engine": "https://www.google.com/search?q=",
@@ -67,7 +69,7 @@
           "id": "clock-main",
           "type": "clock",
           "format24h": false,
-          "showDate": false,
+          "showDate": true,
           "showCalendar": true
         }
       ],
@@ -179,7 +181,8 @@
           ],
           "collapsed": false
         }
-      ]
+      ],
+      "transparent": false
     },
     {
       "id": "notes-card",
@@ -398,7 +401,7 @@
               "id": "clock-main",
               "type": "clock",
               "format24h": false,
-              "showDate": false,
+              "showDate": true,
               "showCalendar": true
             }
           ],
@@ -510,7 +513,8 @@
               ],
               "collapsed": false
             }
-          ]
+          ],
+          "transparent": false
         },
         {
           "id": "notes-card",
