@@ -1019,6 +1019,7 @@ function buildSectionEditor(sec, card, si) {
       {value:'quotes',label:'Quotes'},
       {value:'resource-monitor',label:'Resource Monitor'},
       {value:'image',label:'Image'},
+      {value:'lan-scan',label:'LAN Scan'},
     ],
     sec.type,
     v => {
