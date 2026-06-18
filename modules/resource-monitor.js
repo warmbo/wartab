@@ -186,9 +186,9 @@ registerModule('resource-monitor', {
         rows.disk.val.textContent=du+'/'+dt+'GB';pushGraph('disk',diskPct);
         var gpuPct=typeof gpu.percent==='number'?gpu.percent:0;
         rows.gpu.fill.style.width=Math.min(gpuPct,100)+'%';
-        var vu=gpu.vram_used?Math.round(gpu.vram_used/1024/1024):0;
-        var vt=gpu.vram_total?Math.round(gpu.vram_total/1024/1024):0;
-        rows.gpu.val.innerHTML=vu+'/'+vt+'MB <span style="opacity:0.5">'+(gpu.temp_c||0)+'°C</span>';
+        var vu=gpu.vram_used?Math.round(gpu.vram_used/1024/1024/1024*100)/100:0;
+        var vt=gpu.vram_total?Math.round(gpu.vram_total/1024/1024/1024*100)/100:0;
+        rows.gpu.val.innerHTML=vu+'/'+vt+'GB <span style="opacity:0.5">'+(gpu.temp_c||0)+'°C</span>';
         pushGraph('gpu',gpuPct);
         var rx=net.rx_bytes||0,tx=net.tx_bytes||0;
         var now=Date.now()/1000;
