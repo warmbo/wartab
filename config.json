@@ -41,7 +41,7 @@
     "cols": 4,
     "gap": 16,
     "pageWidth": 85,
-    "pagePadding": 120,
+    "pagePadding": 20,
     "paddingHeight": "compact"
   },
   "search": {
@@ -190,24 +190,24 @@
               "icon": "/icons/prowlarr.svg"
             },
             {
-              "label": "Bazarr",
-              "url": "https://",
-              "icon": "/icons/bazarr.svg"
-            },
-            {
               "label": "qBittorrent",
               "url": "https://",
               "icon": "/icons/qbittorrent.svg"
             },
             {
-              "label": "Overseerr",
-              "url": "https://",
-              "icon": "/icons/overseerr.svg"
-            },
-            {
               "label": "SabNZBD",
               "url": "https://",
               "icon": "/icons/sabnzbd.svg"
+            },
+            {
+              "label": "Bazarr",
+              "url": "https://",
+              "icon": "/icons/bazarr.svg"
+            },
+            {
+              "label": "Overseerr",
+              "url": "https://",
+              "icon": "/icons/overseerr.svg"
             },
             {
               "label": "Tdarr",
@@ -342,25 +342,25 @@
     },
     {
       "id": "daily-drivers",
-      "title": "Daily Drivers",
-      "icon": "globe",
+      "title": "Favorites",
+      "icon": "Star",
       "color": "#cccccc",
       "width": 2,
       "sections": [
         {
           "id": "dev-links",
           "type": "links",
-          "label": "Development",
+          "label": "Frequent",
           "links": [
             {
-              "label": "npm",
-              "url": "https://www.npmjs.com",
-              "icon": "package"
+              "label": "reddit",
+              "url": "https://reddit.com",
+              "icon": "/icons/reddit.svg"
             },
             {
-              "label": "GitLab",
-              "url": "https://gitlab.com",
-              "icon": "/icons/gitlab.svg"
+              "label": "YouTube",
+              "url": "https://youtube.com",
+              "icon": "/icons/youtube.svg"
             },
             {
               "label": "GitHub",
@@ -368,14 +368,14 @@
               "icon": "/icons/github.svg"
             },
             {
-              "label": "Stack Overflow",
-              "url": "https://stackoverflow.com",
-              "icon": "/icons/stackoverflow.svg"
+              "label": "Twitch",
+              "url": "https://twitch.com",
+              "icon": "/icons/twitch.svg"
             },
             {
-              "label": "PyPI",
+              "label": "Wallhaven",
               "url": "https://pypi.org",
-              "icon": "code-2"
+              "icon": "BrickWall"
             }
           ],
           "collapsed": false
@@ -406,7 +406,7 @@
               "icon": "x"
             }
           ],
-          "collapsed": false
+          "collapsed": true
         }
       ]
     },
@@ -439,7 +439,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         }
       ]
@@ -598,24 +598,24 @@
                   "icon": "/icons/prowlarr.svg"
                 },
                 {
-                  "label": "Bazarr",
-                  "url": "https://",
-                  "icon": "/icons/bazarr.svg"
-                },
-                {
                   "label": "qBittorrent",
                   "url": "https://",
                   "icon": "/icons/qbittorrent.svg"
                 },
                 {
-                  "label": "Overseerr",
-                  "url": "https://",
-                  "icon": "/icons/overseerr.svg"
-                },
-                {
                   "label": "SabNZBD",
                   "url": "https://",
                   "icon": "/icons/sabnzbd.svg"
+                },
+                {
+                  "label": "Bazarr",
+                  "url": "https://",
+                  "icon": "/icons/bazarr.svg"
+                },
+                {
+                  "label": "Overseerr",
+                  "url": "https://",
+                  "icon": "/icons/overseerr.svg"
                 },
                 {
                   "label": "Tdarr",
@@ -750,25 +750,25 @@
         },
         {
           "id": "daily-drivers",
-          "title": "Daily Drivers",
-          "icon": "globe",
+          "title": "Favorites",
+          "icon": "Star",
           "color": "#cccccc",
           "width": 2,
           "sections": [
             {
               "id": "dev-links",
               "type": "links",
-              "label": "Development",
+              "label": "Frequent",
               "links": [
                 {
-                  "label": "npm",
-                  "url": "https://www.npmjs.com",
-                  "icon": "package"
+                  "label": "reddit",
+                  "url": "https://reddit.com",
+                  "icon": "/icons/reddit.svg"
                 },
                 {
-                  "label": "GitLab",
-                  "url": "https://gitlab.com",
-                  "icon": "/icons/gitlab.svg"
+                  "label": "YouTube",
+                  "url": "https://youtube.com",
+                  "icon": "/icons/youtube.svg"
                 },
                 {
                   "label": "GitHub",
@@ -776,14 +776,14 @@
                   "icon": "/icons/github.svg"
                 },
                 {
-                  "label": "Stack Overflow",
-                  "url": "https://stackoverflow.com",
-                  "icon": "/icons/stackoverflow.svg"
+                  "label": "Twitch",
+                  "url": "https://twitch.com",
+                  "icon": "/icons/twitch.svg"
                 },
                 {
-                  "label": "PyPI",
+                  "label": "Wallhaven",
                   "url": "https://pypi.org",
-                  "icon": "code-2"
+                  "icon": "BrickWall"
                 }
               ],
               "collapsed": false
@@ -814,7 +814,7 @@
                   "icon": "x"
                 }
               ],
-              "collapsed": false
+              "collapsed": true
             }
           ]
         },
@@ -847,7 +847,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]

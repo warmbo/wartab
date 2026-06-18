@@ -225,7 +225,7 @@ body {
 .link-item:hover { background: rgba(255,255,255,0.08); border-color: var(--glass-border-hover); box-shadow: 0 -1px 0 var(--accent-glass), 0 3px 10px rgba(0,0,0,0.25); }
 .link-item:active { transform: translateY(0); box-shadow: var(--deboss-shadow); }
 .link-item .link-icon { 
-  width: 24px; height: 24px; 
+  width: 28px; height: 28px; 
   display: inline-flex; align-items: center; justify-content: center;
   flex-shrink: 0; 
   font-size: var(--text-xl); line-height: 1;
@@ -238,9 +238,9 @@ body {
   overflow: hidden;
   text-align: center;
 }
-.link-item .link-custom-icon { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; }
+.link-item .link-custom-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
 /* Lucide SVGs replace <i> elements — ensure they match our fixed icon box */
-.link-item svg { width: 24px; height: 24px; }
+.link-item svg { width: 28px; height: 28px; }
 
 .link-list { display: flex; flex-direction: column; gap: 2px; }
 .link-row { display: flex; align-items: center; gap: 6px; padding: 5px 8px; text-decoration: none; color: var(--text-primary); transition: background 0.15s; font-size: var(--text-base); }
