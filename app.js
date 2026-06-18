@@ -2899,7 +2899,12 @@ function showShortcutsOverlay() {
     '<div style="text-align:center;margin-top:16px;font-size:var(--text-2xs);color:var(--text-tertiary);">Esc to close · Ctrl+K to search anytime</div>';
   overlay.appendChild(box);
   overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
-  overlay.addEventListener('keydown', function(e) {
+  document.body.appendChild(overlay);
+  // Focus the overlay so keydown events fire
+  overlay.setAttribute('tabindex', '-1');
+  overlay.focus();
+  // Listen for single-key commands on the overlay itself
+  function onShortcutKey(e) {
     var key = e.key.toLowerCase();
     if (key === 'n') { e.preventDefault(); overlay.remove(); addNewCard(); }
     else if (key === 's') { e.preventDefault(); overlay.remove(); var fs=$('#card-grid .inline-search-wrap input'); if(fs)fs.focus(); }
@@ -2907,11 +2912,16 @@ function showShortcutsOverlay() {
     else if (key === 'c') { e.preventDefault(); overlay.remove(); toggleConfigPanel(); }
     else if (e.key === '?') { e.preventDefault(); overlay.remove(); }
     else if (e.key === 'Escape') { overlay.remove(); }
-  });
-  // Focus the overlay so keydown events fire (needs tabindex)
-  overlay.setAttribute('tabindex', '-1');
-  overlay.focus();
-  document.body.appendChild(overlay);
+  }
+  overlay.addEventListener('keydown', onShortcutKey);
+  // Also capture keys globally while overlay is visible (in case focus shifts)
+  document.addEventListener('keydown', onShortcutKey);
+  // Clean up global listener when overlay closes
+  var origRemove = overlay.remove.bind(overlay);
+  overlay.remove = function() {
+    document.removeEventListener('keydown', onShortcutKey);
+    origRemove();
+  };
 }
 
 function switchPage(pageId) {

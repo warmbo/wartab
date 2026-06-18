@@ -368,7 +368,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 0,
+          "_qi": 1,
           "collapsed": false
         }
       ]
@@ -387,6 +387,30 @@
           "placeholder": "Search anything...",
           "label": "Web Search",
           "collapsed": false
+        }
+      ]
+    },
+    {
+      "id": "card-zyd3egwmqissnod",
+      "title": "",
+      "icon": "package",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [],
+      "_isGap": true,
+      "_savedSections": [
+        {
+          "id": "sec-46bgm8wmqissnod",
+          "type": "links",
+          "label": "Links",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ]
         }
       ]
     }
@@ -707,7 +731,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 0,
+              "_qi": 1,
               "collapsed": false
             }
           ]
@@ -726,6 +750,30 @@
               "placeholder": "Search anything...",
               "label": "Web Search",
               "collapsed": false
+            }
+          ]
+        },
+        {
+          "id": "card-zyd3egwmqissnod",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [],
+          "_isGap": true,
+          "_savedSections": [
+            {
+              "id": "sec-46bgm8wmqissnod",
+              "type": "links",
+              "label": "Links",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ]
             }
           ]
         }
@@ -1112,7 +1160,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 0
+              "_qi": 1
             }
           ]
         },
