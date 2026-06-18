@@ -2537,7 +2537,8 @@ function renderPageNav() {
     tab.appendChild(nameSpan);
     tabs.appendChild(tab);
   });
-  // Render Lucide SVGs for page tab icons (auto via MutationObserver)
+  // Render Lucide SVGs for page tab icons
+  if(typeof lucide!=='undefined'){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;}
 }
 
 /** Simple confirmation overlay */
