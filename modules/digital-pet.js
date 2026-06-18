@@ -12,9 +12,9 @@ registerModule('digital-pet', {
     // Sitting cat — right-facing (tail left) and left-facing (tail right)
     // Tail wraps from back to front: \(__)| for right-facing, |(__)/ for left
     var Cr='\\    /\\  \n )  ( ,) \n(  /  )\\~\n \\(__)/  ';
-    var Cl='  /\\    /\n (  , )  \n~\\  (  ) \n /(__)\\  ';
+    var Cl='  /\\    /\n (, )  ( \n~/(  \\  )\n  \\(__)/ ';
     var eyes={idle:',',blink:'-',happy:'*',love:'♥',curious:'O',hungry:'o',sad:';',dead:'x',angry:'#'};
-    var _mood='idle',_walking=false,_lastX=50,_direction='right';
+    var _mood='idle',_walking=false,_lastX=50,_direction='right',_wiggle=false;
     // Top bar
     const top=document.createElement('div');top.className='dp-top';
     const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'cat';top.appendChild(nameEl);
@@ -111,10 +111,17 @@ registerModule('digital-pet', {
       door.style.left=(4+(1-pct)*10)+'px';
       door.style.opacity=(0.3+(1-pct)*0.5)+'';
     }
-    // Render the cat facing the current direction with current mood
+    // Render the cat facing the current direction with current mood and tail wiggle
     function setFrame(){
       var base=_direction==='right'?Cr:Cl;
-      creature.textContent=base.replace(',',eyes[_mood]||',');
+      var txt=base.replace(',',eyes[_mood]||',');
+      if(_wiggle){
+        var l=txt.split('\n');
+        // Swap ( and ) on line 4 (tail wrap) for wag effect
+        l[3]=l[3].replace('(','\x00').replace(')','(').replace('\x00',')');
+        txt=l.join('\n');
+      }
+      creature.textContent=txt;
     }
     // Glide to a new position (cat sits, CSS transition slides it)
     function startWalk(){
@@ -154,10 +161,16 @@ registerModule('digital-pet', {
     var walkTimer=setInterval(function(){
       if(!_walking)startWalk();
     },4500+Math.random()*2500);
+    // Tail wiggle — swap ( and ) on line 4 every 600ms
+    var wiggleTimer=setInterval(function(){
+      _wiggle=!_wiggle;
+      if(!_walking)setFrame();
+    },600);
     card._dpCleanup=function(){
       if(walkTimer)clearInterval(walkTimer);
       if(_walkTimer)clearTimeout(_walkTimer);
       if(_sayTimer)clearInterval(_sayTimer);
+      if(wiggleTimer)clearInterval(wiggleTimer);
     };
   },
   editor: (sec,card,bd)=>{
