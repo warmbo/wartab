@@ -15,7 +15,7 @@ MIME_TYPES = {".html":"text/html",".css":"text/css",".js":"application/javascrip
 CORS_HEADERS = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"GET,POST,DELETE,OPTIONS","Access-Control-Allow-Headers":"Content-Type,X-Filename"}
 try: from PIL import Image, ImageOps; HAVE_PIL=True
 except ImportError: HAVE_PIL=False
-MAX_W,MAX_H,MAX_BYTES=1920,1080,5*1024*1024
+MAX_W,MAX_H,MAX_BYTES=1024,1024,5*1024*1024
 def process_image(raw_bytes,filename):
     if not raw_bytes: return {"error":"Empty file"}
     if len(raw_bytes)>MAX_BYTES: return {"error":f"File too large ({len(raw_bytes)//1024}KB, max {MAX_BYTES//1024}KB)"}
@@ -33,7 +33,7 @@ def process_image(raw_bytes,filename):
             try: img=ImageOps.exif_transpose(img) or img
             except: pass
             kw={"format":fmt}
-            if fmt=="JPEG": kw["quality"]=85; kw["optimize"]=True
+            if fmt=="JPEG": kw["quality"]=80; kw["optimize"]=True
             elif fmt=="PNG": kw["optimize"]=True
             elif fmt=="WEBP": kw["quality"]=85
             img.save(out_path,**kw)
