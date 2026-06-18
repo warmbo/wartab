@@ -278,7 +278,66 @@ registerModule('api-poller', {
     renderFields();
     bd.appendChild(fieldContainer);
   },
+  });  // end api-poller
+
+/* ── LAN Scan — terminal-style ARP table viewer ── */
+registerModule('lan-scan', {
+  defaults: { label:'Network Scan', refreshInterval:60 },
+  render: (sec,card,cw)=>{
+    const w=document.createElement('div');w.className='lan-scan-widget';
+    w.dataset.refresh=sec.refreshInterval||60;
+    const hdr=document.createElement('div');hdr.className='lan-scan-hdr';
+    hdr.innerHTML='<span class="lan-scan-dot"></span><span class="lan-scan-title">LAN SCAN</span><span class="lan-scan-count"></span>';
+    w.appendChild(hdr);
+    const body=document.createElement('div');body.className='lan-scan-body';
+    body.innerHTML='<div class="lan-scan-line lan-scan-muted">[ --:--:-- ] scanning...</div>';
+    w.appendChild(body);
+    cw.appendChild(w);
+    fetchLanScan(w);
+  },
+  editor: (sec,card,bd)=>{
+    bd.appendChild(cpLabel('Label'));
+    const li=cpInput('Network Scan',sec.label||'',v=>{sec.label=v;saveConfig();});bd.appendChild(li);
+    bd.appendChild(cpRange('Refresh (seconds)',sec.refreshInterval||60,10,600,v=>{sec.refreshInterval=parseInt(v);saveConfig();}));
+  },
 });
+
+function fetchLanScan(el){
+  var body=el.querySelector('.lan-scan-body');
+  if(!body)return;
+  var dot=el.querySelector('.lan-scan-dot');
+  if(dot)dot.style.background='var(--accent)';
+  fetch('/api/arp').then(function(r){return r.json();}).then(function(d){
+    if(dot){dot.style.background='';}
+    var seenKey='wartab_lan_seen';
+    var known={};
+    try{known=JSON.parse(localStorage.getItem(seenKey)||'{}');}catch(e){}
+    var now=Date.now(),ts=new Date();
+    var timeStr=String(ts.getHours()).padStart(2,'0')+':'+String(ts.getMinutes()).padStart(2,'0')+':'+String(ts.getSeconds()).padStart(2,'0');
+    var countEl=el.querySelector('.lan-scan-count');
+    if(countEl)countEl.textContent=d.count+' hosts';
+    var html='';
+    html+='<div class="lan-scan-line lan-scan-ts">['+timeStr+'] scan complete \u2014 '+d.count+' device'+(d.count!==1?'s':'')+' on network</div>';
+    (d.devices||[]).forEach(function(dev){
+      var isNew=!known[dev.mac];
+      var cls=isNew?'lan-scan-new':'lan-scan-line';
+      var tag=isNew?' \u25c2 NEW':'';
+      known[dev.mac]=now;
+      html+='<div class="'+cls+'">['+timeStr+'] <span class="lan-scan-ip">'+dev.ip+'</span> \u2192 '+dev.mac+'  <span class="lan-scan-vendor">'+escAttr(dev.vendor)+'</span>'+tag+'</div>';
+    });
+    var cutoff=now-7*86400000;
+    Object.keys(known).forEach(function(k){if(known[k]<cutoff)delete known[k];});
+    try{localStorage.setItem(seenKey,JSON.stringify(known));}catch(e){}
+    body.innerHTML=html;
+    var iv=parseInt(el.dataset.refresh)*1000;
+    if(iv>0)setTimeout(function(){fetchLanScan(el);},iv);
+  }).catch(function(e){
+    if(dot){dot.style.background='';}
+    body.innerHTML='<div class="lan-scan-line lan-scan-err">[ --:--:-- ] error: '+escAttr(e.message)+'</div>';
+    var iv=parseInt(el.dataset.refresh)*1000;
+    if(iv>0)setTimeout(function(){fetchLanScan(el);},iv);
+  });
+}
 
 registerModule('quotes', {
   defaults: { quotes:[] },
@@ -2888,6 +2947,7 @@ function addNewCard(){
     {type:'timer', label:'Timer', icon:'timer'},
     {type:'resource-monitor', label:'Resources', icon:'bar-chart-3'},
     {type:'link-list', label:'Link List', icon:'list'},
+    {type:'lan-scan', label:'LAN Scan', icon:'radio'},
   ];
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';

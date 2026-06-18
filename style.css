@@ -517,6 +517,44 @@ body {
   border-color: var(--accent);
 }
 
+/* ── LAN Scan — terminal-style widget ── */
+.lan-scan-widget { display:flex;flex-direction:column; }
+.lan-scan-hdr {
+  display:flex;align-items:center;gap:8px;
+  padding:4px 0 8px;border-bottom:1px solid var(--surface-border);
+  margin-bottom:6px;
+}
+.lan-scan-dot {
+  width:8px;height:8px;border-radius:0;
+  background:var(--text-tertiary);
+  transition:background 0.3s;
+}
+.lan-scan-title {
+  font-size:var(--text-xs);font-weight:700;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--text-secondary);
+  font-family:var(--font);
+}
+.lan-scan-count {
+  margin-left:auto;font-size:var(--text-2xs);
+  color:var(--text-tertiary);font-variant-numeric:tabular-nums;
+}
+.lan-scan-body {
+  font-family:'JetBrains Mono','Cascadia Code','Fira Code','Consolas',monospace;
+  font-size:var(--text-xs);line-height:1.7;
+  max-height:320px;overflow-y:auto;
+  background:rgba(0,0,0,0.25);
+  padding:8px 10px;
+}
+.lan-scan-body::-webkit-scrollbar { width:4px; }
+.lan-scan-body::-webkit-scrollbar-thumb { background:var(--surface-border); }
+.lan-scan-line { color:var(--text-secondary); word-break:break-all; }
+.lan-scan-ts { color:var(--text-tertiary); font-style:italic; padding-bottom:4px; margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.04); }
+.lan-scan-muted { color:var(--text-tertiary); }
+.lan-scan-err { color:#cc6666; }
+.lan-scan-new { color:var(--accent); }
+.lan-scan-ip { color:var(--text-primary); font-weight:600; }
+.lan-scan-vendor { color:var(--text-tertiary); font-size:var(--text-2xs); }
+
 /* ── Links table ── */
 .me-link-th {
   display: flex; gap: 8px; align-items: center; padding: 0 10px 10px;
