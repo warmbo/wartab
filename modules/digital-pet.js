@@ -184,7 +184,7 @@ registerModule('digital-pet', {
       _wag=!_wag;
       if(!_walking)setFrame();
     },600);
-    card._dpCleanup=function(){
+    card._cleanup=function(){
       if(walkTimer)clearInterval(walkTimer);
       if(_walkTimer)clearTimeout(_walkTimer);
       if(_sayTimer)clearInterval(_sayTimer);

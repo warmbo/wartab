@@ -17,7 +17,7 @@
     13. Init               — page load sequence
    ═══════════════════════════════════════════ */
 
-const WARTAB_VERSION = '0.2.1';
+let WARTAB_VERSION = '';
 
 /* ══════ Card Type Modules ══════
    Each module defines { render, editor, defaults } for a section type.
@@ -1083,7 +1083,8 @@ function stItem(icon,label,value,pct){const div=document.createElement('span');d
 
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
 // Full page re-render: destroys and rebuilds grid from config
-function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];weatherIntervals.forEach(clearInterval);weatherIntervals=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){
+function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];weatherIntervals.forEach(clearInterval);weatherIntervals=[];const grid=$('#card-grid');// Cleanup old card modules before destroying DOM
+var oldCards=grid.querySelectorAll('.card');oldCards.forEach(function(c){if(c._cleanup)c._cleanup();});grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width
   appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
   const xPad=parseInt(config.layout.pageWidthPadding)||2;
@@ -2669,8 +2670,9 @@ async function init() {
     if(pick){config.theme.bgType='image';config.theme.bgValue=pick.url;saveConfig();applyTheme();}
   }
   renderAll(); renderPageNav(); initStatusBar();
-  // Footer
-  $('#footer-text').textContent='WarTab v'+WARTAB_VERSION+'  [?] shortcuts';
+  // Footer — git version from config, or "dev" if not available
+  WARTAB_VERSION = config._version || 'dev';
+  $('#footer-text').textContent='WarTab '+WARTAB_VERSION+'  [?] shortcuts';
   loadIconRepo();
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});

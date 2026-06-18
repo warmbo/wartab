@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """WarTab Server — new tab page + /api/stats + image upload + icon save."""
-import argparse, http.server, io, json, os, re, socket, subprocess, sys, time, threading, uuid, webbrowser
+import argparse, http.server, io, json, os, re, socket, subprocess, sys, time, uuid, webbrowser
 from pathlib import Path
+from threading import Lock
 HERE = Path(__file__).parent.resolve()
 UPLOADS = HERE / "uploads"
 ICONS = HERE / "icons"
@@ -153,7 +154,15 @@ def list_uploads():
     return files
 _arp_cache = None
 _arp_cache_ts = 0
-_arp_lock = threading.Lock()
+_arp_lock = Lock()
+
+GIT_VERSION = ""
+try:
+    out = subprocess.run(["git","describe","--always","--tags","--dirty"],
+        capture_output=True,text=True,timeout=2,cwd=HERE)
+    if out.returncode==0:
+        GIT_VERSION = out.stdout.strip()
+except: pass
 
 def scan_arp():
     import csv, io, socket, subprocess
@@ -269,7 +278,9 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             cfg_path = HERE / "config.json"
             if cfg_path.exists():
                 with open(cfg_path) as f:
-                    return self._json(_json.load(f))
+                    data = _json.load(f)
+                    data["_version"] = GIT_VERSION
+                    return self._json(data)
             return self._json({})
         if self.path == "/api/arp":
             return self._json(scan_arp())

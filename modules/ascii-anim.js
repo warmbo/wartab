@@ -230,7 +230,7 @@ registerModule('ascii-anim', {
     setTimeout(startAnim,50);
 
     // Cleanup
-    card._asciiCleanup=function(){
+    card._cleanup=function(){
       running=false;
       if(_timer){cancelAnimationFrame(_timer);_timer=null;}
       if(ro)ro.disconnect();
