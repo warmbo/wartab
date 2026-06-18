@@ -107,7 +107,6 @@ def get_gpu():
             temp_str = card.get("Temperature (Sensor edge) (C)","0")
             result["temp_c"] = float(temp_str) if temp_str else 0
     except:
-        # Fallback: try sysfs for AMD
         try:
             with open("/sys/class/drm/card0/device/gpu_busy_percent") as f:
                 result["percent"] = int(f.read().strip())
@@ -117,8 +116,25 @@ def get_gpu():
                 result["vram_total"] = int(f.read().strip())
         except: pass
     return result
+def get_cpu_temp():
+    try:
+        out = subprocess.run(["sensors","-u"],capture_output=True,text=True,timeout=3)
+        if out.returncode==0:
+            temps = re.findall(r"temp(\d+)_input:\s+([\d.]+)", out.stdout)
+            if temps:
+                vals = [float(v) for _,v in temps]
+                return {"celsius":round(sum(vals)/len(vals),1),"max":round(max(vals),1)}
+        return {"celsius":0,"max":0}
+    except: return {"celsius":0,"max":0}
+def get_process_count():
+    try:
+        with open("/proc/loadavg") as f:
+            return int(f.read().strip().split("/")[1].split()[0])
+    except: return 0
 def build_stats():
-    return {"hostname":socket.gethostname(),"cpu":get_cpu_percent(),"memory":get_memory(),"disks":get_disks(),"uptime":get_uptime(),"load":get_load(),"network":get_network(),"gpu":get_gpu(),"timestamp":time.time()}
+    return {"hostname":socket.gethostname(),"cpu":get_cpu_percent(),"memory":get_memory(),"disks":get_disks(),
+            "uptime":get_uptime(),"load":get_load(),"network":get_network(),"gpu":get_gpu(),
+            "cpu_temp":get_cpu_temp(),"processes":get_process_count(),"timestamp":time.time()}
 def list_uploads():
     files=[]
     for f in sorted(UPLOADS.iterdir(),key=lambda p:p.stat().st_mtime,reverse=True):

@@ -58,7 +58,7 @@
   },
   "cards": [
     {
-      "id": "card-726s1tvmqh466sx",
+      "id": "card-0ew9ucqmqjk5g90",
       "title": "",
       "icon": "package",
       "color": "#888888",
@@ -66,137 +66,21 @@
       "height": 1,
       "sections": [
         {
-          "id": "sec-9fz8qzpmqh466sx",
-          "type": "links",
-          "label": "Links",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            }
-          ],
-          "collapsed": false
+          "id": "sec-gaju5snmqjk5g90",
+          "type": "digital-pet",
+          "label": "My Cat",
+          "lastFed": 1781796734407,
+          "hunger": 100,
+          "happiness": 100,
+          "waste": 0,
+          "lastCleaned": 1781796738544,
+          "petName": "Dog",
+          "lastPetted": 1781796736902
         }
       ]
     },
     {
-      "id": "card-fo02ycwmqis6fzq",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 2,
-      "sections": [
-        {
-          "id": "sec-i2y3cdrmqis6fzq",
-          "type": "image",
-          "label": "Image",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "url": "https://i.imgflip.com/7nbymt.png",
-          "alt": "Fat Pikachu",
-          "collapsed": false
-        }
-      ]
-    },
-    {
-      "id": "card-02p38iimqis68md",
+      "id": "card-0wfkopemqjl5my9",
       "title": "",
       "icon": "package",
       "color": "#888888",
@@ -204,7 +88,7 @@
       "height": 1,
       "sections": [
         {
-          "id": "sec-vgwqswsmqis68md",
+          "id": "sec-k9zzug9mqjl5my9",
           "type": "resource-monitor",
           "label": "Resource monitor",
           "links": [
@@ -216,69 +100,13 @@
           ],
           "source": "local",
           "glancesUrl": "http://localhost:61209",
-          "refreshInterval": 15
+          "refreshInterval": 15,
+          "graphMode": true
         }
       ]
     },
     {
-      "id": "card-islcfjdmqiry3w4",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-ffllpb1mqiry3w4",
-          "type": "clock",
-          "label": "Clock",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "format24h": false,
-          "showDate": true,
-          "showCalendar": true
-        }
-      ]
-    },
-    {
-      "id": "card-ds23fs6mqirvsc2",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-6rjldpgmqirvsc2",
-          "type": "link-list",
-          "label": "Link list",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "card-3k57h8umqirvzad",
+      "id": "card-68kmkgnmqjl5a29",
       "title": "",
       "icon": "package",
       "color": "#888888",
@@ -286,238 +114,14 @@
       "height": 1,
       "sections": [
         {
-          "id": "sec-ff5wt15mqirvzad",
-          "type": "search",
-          "label": "Search",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "placeholder": "Search...",
-          "engine": "DuckDuckGo"
-        }
-      ]
-    },
-    {
-      "id": "card-2kt2asqmqiry8y1",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-6ulxduxmqiry8y1",
-          "type": "weather",
-          "label": "Weather",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "apiKey": "",
-          "zip": "",
-          "country": "US",
-          "units": "imperial",
-          "collapsed": false
-        }
-      ]
-    },
-    {
-      "id": "card-ikh1e6vmqirysg9",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-vxpfugzmqirysg9",
-          "type": "timer",
-          "label": "Poop day",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "mode": "countdown",
-          "duration": 300,
-          "targetDate": "2026-06-27T21:19"
-        }
-      ]
-    },
-    {
-      "id": "card-8t4ultimqirzc1s",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-msh3vj3mqirzc1s",
-          "type": "notes",
-          "label": "Notes",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "content": "You read it here! Right here!\n\nOkay bye!\n\n"
-        }
-      ]
-    },
-    {
-      "id": "card-am9fj58mqirzky5",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-lkolzr0mqiulael",
-          "type": "api-poller",
-          "label": "API Poller",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "url": "https://ipapi.co/json/",
-          "jsonPath": "",
-          "refreshInterval": 60,
-          "collapsed": false,
-          "fields": [
-            {
-              "label": "IP",
-              "path": "ip"
-            },
-            {
-              "label": "City",
-              "path": "city"
-            },
-            {
-              "label": "Country",
-              "path": "country_name"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "card-lw5zg3vmqirznam",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-3ypukm0mqirznam",
-          "type": "quotes",
-          "label": "Quotes",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "quotes": [
-            {
-              "q": "Here's an example quote!",
-              "a": "Bob Loblaw"
-            },
-            {
-              "q": "You can't believe everything you read on the internet.",
-              "a": "Abraham Lincoln"
-            },
-            {
-              "q": "Bleu cheese is better than ranch.",
-              "a": "God"
-            }
-          ],
-          "_qi": 0
-        }
-      ]
-    },
-    {
-      "id": "card-4s9xr5jmqisl9j0",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [],
-      "_isGap": true,
-      "_savedSections": [
-        {
-          "id": "sec-c7fkbn6mqisl9j0",
-          "type": "links",
-          "label": "Links",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "card-bxxeekjmqiryy6i",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 2,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-b1al9btmqiryy6i",
-          "type": "iframe",
-          "label": "Iframe",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "url": "https://example.com",
-          "height": 300
-        }
-      ]
-    },
-    {
-      "id": "card-dt9l0gomqiw5glb",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-m1b8qovmqiw5glb",
+          "id": "sec-zwfhcolmqjl5a29",
           "type": "lan-scan",
           "label": "LAN Scan"
         }
       ]
     },
     {
-      "id": "card-ypbqsfymqjnvlbw",
+      "id": "card-dc8hc4tmqjg36kq",
       "title": "",
       "icon": "package",
       "color": "#888888",
@@ -525,9 +129,64 @@
       "height": 1,
       "sections": [
         {
-          "id": "sec-g7n3beomqjnvlbw",
-          "type": "digital-pet",
-          "label": "Digital Pet"
+          "id": "sec-ud2j3ramqjg36kq",
+          "type": "api-poller",
+          "label": "API Poller",
+          "url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+          "fields": [
+            {
+              "label": "BTC/USD",
+              "path": "data.amount"
+            }
+          ],
+          "refreshInterval": 5,
+          "collapsed": false
+        },
+        {
+          "id": "sec-y8ybgpvmqjnen69",
+          "type": "api-poller",
+          "label": "Joke",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "url": "https://v2.jokeapi.dev/joke/Any?type=single",
+          "jsonPath": "",
+          "refreshInterval": 60,
+          "fields": [
+            {
+              "label": "",
+              "path": "joke"
+            }
+          ]
+        },
+        {
+          "id": "sec-hfr87romqjnflxd",
+          "type": "api-poller",
+          "label": "ISS Location",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "url": "http://api.open-notify.org/iss-now.json",
+          "jsonPath": "",
+          "refreshInterval": 60,
+          "fields": [
+            {
+              "label": "Lat",
+              "path": "iss_position.latitude"
+            },
+            {
+              "label": "Lon",
+              "path": "iss_position.longitude"
+            }
+          ]
         }
       ]
     }
@@ -848,7 +507,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]
@@ -1295,7 +954,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 0
+              "_qi": 1
             }
           ]
         },
@@ -1426,7 +1085,8 @@
               ],
               "source": "local",
               "glancesUrl": "http://localhost:61209",
-              "refreshInterval": 15
+              "refreshInterval": 15,
+              "graphMode": true
             }
           ]
         },
@@ -1523,5 +1183,5 @@
     "page-19gesa9mqh2t3u2",
     "page-tf789wmmqiw5bln"
   ],
-  "currentPage": "page-19gesa9mqh2t3u2"
+  "currentPage": "page-tf789wmmqiw5bln"
 }
