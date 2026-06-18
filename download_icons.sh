@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Batch download all selfhst SVG icons locally."""
+"""Batch download all selfhst SVG icons locally + generate index."""
 import json, os, sys, time, urllib.request, urllib.error
 from pathlib import Path
 
 HERE = Path(__file__).parent.resolve()
 ICONS = HERE / "icons"
 ICONS.mkdir(exist_ok=True)
+
 MANIFEST_URL = "https://raw.githubusercontent.com/selfhst/icons/main/index.json"
 CDN_BASE = "https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg"
 
@@ -19,20 +20,41 @@ except Exception as e:
     sys.exit(1)
 
 print(f"Manifest has {len(data)} entries")
-# Filter to entries with SVG available
+
+# Save manifest locally
+with open(ICONS / "manifest.json", "w") as f:
+    json.dump(data, f, indent=2)
+print("Saved manifest.json")
+
+# Build and save selfhst-index.json (same format app.js expects)
+index = []
+for item in data:
+    ref = item.get("Reference", "").strip()
+    name = item.get("Name", ref)
+    tagsRaw = item.get("Tags", "")
+    tags = [t.strip().lower() for t in tagsRaw.split(",") if t.strip()] if isinstance(tagsRaw, str) else (tagsRaw or [])
+    if ref:
+        safe = "".join(c for c in ref if c.isalnum() or c in "-_.").lower().rstrip(".") or ref
+        index.append({"name": name, "file": safe, "tags": tags})
+
+with open(ICONS / "selfhst-index.json", "w") as f:
+    json.dump(index, f, indent=2)
+print(f"Saved selfhst-index.json ({len(index)} entries)")
+
+# Filter to SVG-capable entries
 svgs = [item for item in data if item.get("SVG") == "Yes"]
 print(f"{len(svgs)} icons have SVG format")
 
 downloaded = 0
 skipped = 0
 failed = 0
+start_time = time.time()
 
 for item in svgs:
     ref = item.get("Reference", "").strip()
     if not ref:
         skipped += 1
         continue
-    # Sanitize filename
     safe = "".join(c for c in ref if c.isalnum() or c in "-_.").lower()
     if not safe:
         skipped += 1
@@ -51,12 +73,13 @@ for item in svgs:
             f.write(svg_data)
         downloaded += 1
         if downloaded % 50 == 0:
-            print(f"  ... {downloaded} downloaded")
+            elapsed = time.time() - start_time
+            print(f"  ... {downloaded} downloaded ({elapsed:.0f}s)")
     except Exception as e:
         failed += 1
         if failed <= 5:
             print(f"  FAILED {ref}: {e}")
-    # Small delay to be friendly to CDN
-    time.sleep(0.05)
+    time.sleep(0.03)
 
-print(f"\nDone! {downloaded} downloaded, {skipped} skipped, {failed} failed")
+elapsed = time.time() - start_time
+print(f"\nDone! {downloaded} downloaded, {skipped} skipped, {failed} failed ({elapsed:.0f}s)")

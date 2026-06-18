@@ -150,6 +150,14 @@ cd "${INSTALL_DIR}"
 mkdir -p notes uploads snapshots
 ok "Data directories: notes/ uploads/ snapshots/"
 
+# ── Download icons ──
+if [ ! -f "${INSTALL_DIR}/icons/selfhst-index.json" ]; then
+  info "Downloading service icons (selfh.st)..."
+  python3 "${INSTALL_DIR}/download_icons.sh" && ok "Icons downloaded" || warn "Icon download failed — run download_icons.sh manually"
+else
+  ok "Icons already present (${INSTALL_DIR}/icons/)"
+fi
+
 # ── Install Pillow if needed ──
 if [ "$HAS_PIL" = false ] && command -v pip3 &>/dev/null; then
   info "Attempting to install Pillow..."

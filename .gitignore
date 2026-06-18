@@ -1,2 +1,8 @@
 __pycache__/
 snapshots/
+icons/
+uploads/*.svg
+uploads/*.png
+uploads/*.jpg
+uploads/*.webp
+uploads/*.gif
