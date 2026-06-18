@@ -31,14 +31,13 @@
       "cpu",
       "memory",
       "disk",
-      "uptime",
-      "hostname"
+      "uptime"
     ],
     "hostname": true
   },
   "layout": {
     "cols": 4,
-    "gap": 40,
+    "gap": 4,
     "pageWidth": 92,
     "pagePadding": 78
   },
@@ -368,7 +367,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         }
       ]
@@ -397,7 +396,9 @@
       "color": "#888888",
       "width": 1,
       "height": 1,
-      "sections": [
+      "sections": [],
+      "_isGap": true,
+      "_savedSections": [
         {
           "id": "sec-46bgm8wmqissnod",
           "type": "lan-scan",
@@ -411,21 +412,6 @@
           ],
           "refreshInterval": 10,
           "collapsed": false
-        }
-      ],
-      "_isGap": false,
-      "_savedSections": [
-        {
-          "id": "sec-46bgm8wmqissnod",
-          "type": "links",
-          "label": "Links",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ]
         }
       ]
     }
@@ -746,7 +732,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]
@@ -775,7 +761,9 @@
           "color": "#888888",
           "width": 1,
           "height": 1,
-          "sections": [
+          "sections": [],
+          "_isGap": true,
+          "_savedSections": [
             {
               "id": "sec-46bgm8wmqissnod",
               "type": "lan-scan",
@@ -789,21 +777,6 @@
               ],
               "refreshInterval": 10,
               "collapsed": false
-            }
-          ],
-          "_isGap": false,
-          "_savedSections": [
-            {
-              "id": "sec-46bgm8wmqissnod",
-              "type": "links",
-              "label": "Links",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ]
             }
           ]
         }
@@ -1256,13 +1229,34 @@
               "height": 300
             }
           ]
+        },
+        {
+          "id": "card-dt9l0gomqiw5glb",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-m1b8qovmqiw5glb",
+              "type": "lan-scan",
+              "label": "LAN Scan"
+            }
+          ]
         }
       ]
+    },
+    "page-tf789wmmqiw5bln": {
+      "name": "Page 3",
+      "icon": "layout",
+      "cards": []
     }
   },
   "pageOrder": [
     "page-fjpy1g4mqguw1x3",
-    "page-19gesa9mqh2t3u2"
+    "page-19gesa9mqh2t3u2",
+    "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-fjpy1g4mqguw1x3"
 }
