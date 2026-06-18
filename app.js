@@ -1642,7 +1642,28 @@ function renderSection(section, card) {
       var c = titleRow.nextElementSibling;
       while (c && !c.classList.contains('section-content') && !c.classList.contains('dropdown-content')) c = c.nextElementSibling;
       if (c) {
-        c.classList.toggle('open');
+        if (section.collapsed) {
+          // Collapse: measure actual height first, then animate to 0
+          var h = c.scrollHeight;
+          c.style.maxHeight = h + 'px';
+          requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+              c.classList.remove('open');
+              c.style.maxHeight = '';
+            });
+          });
+        } else {
+          // Expand: set max-height large so content grows into it
+          c.classList.add('open');
+          c.style.maxHeight = '';
+          var h2 = c.scrollHeight;
+          c.style.maxHeight = '0px';
+          requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+              c.style.maxHeight = h2 + 'px';
+            });
+          });
+        }
       }
       saveConfig();
     });
@@ -2891,18 +2912,12 @@ function switchPage(pageId) {
   config.cards = config.pages[pageId].cards;
   saveConfig();
   const grid = $('#card-grid');
-  if (grid) {
-    grid.style.transition = 'opacity 0.25s ease';
-    grid.style.opacity = '0';
-  }
+  if (grid) grid.classList.add('page-switching');
   setTimeout(function() {
     renderAll();
     renderPageNav();
-    if (grid) {
-      grid.style.opacity = '';
-      setTimeout(function(){ if (grid) grid.style.transition = ''; }, 300);
-    }
-  }, 250);
+    if (grid) grid.classList.remove('page-switching');
+  }, 200);
 }
 
 function addPage() {
