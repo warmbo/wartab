@@ -381,6 +381,7 @@ def main():
     ap=argparse.ArgumentParser(description="WarTab Server")
     ap.add_argument("--port","-p",type=int,default=8080); ap.add_argument("--bind","-b",default="0.0.0.0"); ap.add_argument("--open","-o",action="store_true"); ap.add_argument("--mdns",action="store_true")
     a=ap.parse_args()
+    http.server.HTTPServer.allow_reuse_address=True
     server=http.server.HTTPServer((a.bind,a.port),WarTabHandler); server.server_name="WarTab"
     print(f"\n  WarTab Server\n  ----")
     print(f"  Local:    http://localhost:{a.port}")
