@@ -489,29 +489,31 @@ registerModule('digital-pet', {
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // Cat ASCII frames — based on user's design, padded to 12×5
+    // Cat frames — 7×4 walking cat with leg animation
     var C={
-      idle:['    /\\    \n   )  (\')\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~',
-            '    /\\    \n   )  ( -)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
-      happy:['    /\\    \n   )  (*)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
-      hungry:['    /\\    \n   )  (o)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
-      sad:['    /\\    \n   )  (;;)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
-      dead:['    /\\    \n   )  (x)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
-      angry:['    /\\    \n   )  (#)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
+      idle:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| '],
+      blink:[' /\\_/\\ \n( - o )\n | Y | \n |_|_| '],
+      walk:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| ',' /\\_/\\ \n( o o )\n | Y | \n| |_|  ',' /\\_/\\ \n( o o )\n | Y | \n |_|_| ',' /\\_/\\ \n( o o )\n | Y | \n  |_|  '],
+      happy:[' /\\_/\\ \n( * * )\n | Y | \n |_|_| '],
+      hungry:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| '],
+      sad:[' /\\_/\\ \n( ;; )\n | Y | \n |_|_| '],
+      dead:[' /\\_/\\ \n( x x )\n | Y | \n |_|_| '],
+      angry:[' /\\_/\\ \n( # # )\n | Y | \n |_|_| '],
     };
-    var _mood='idle',_frame=0;
+    var _mood='idle',_frame=0,_walking=false;
     // Top bar
     const top=document.createElement('div');top.className='dp-top';
-    const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'Digital Pet';top.appendChild(nameEl);
+    const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'cat';top.appendChild(nameEl);
     const moodLabel=document.createElement('span');moodLabel.className='dp-mood-label';top.appendChild(moodLabel);
     w.appendChild(top);
-    // Terminal enclosure
+    // Room — walls + floor frame the cat's world
     const pen=document.createElement('div');pen.className='dp-pen';
-    const scanlines=document.createElement('div');scanlines.className='dp-scanlines';pen.appendChild(scanlines);
+    const floor=document.createElement('div');floor.className='dp-floor';pen.appendChild(floor);
+    const windowEl=document.createElement('div');windowEl.className='dp-window';pen.appendChild(windowEl);
     const speech=document.createElement('div');speech.className='dp-speech';pen.appendChild(speech);
     const creature=document.createElement('pre');creature.className='dp-creature';pen.appendChild(creature);
     w.appendChild(pen);
-    // Stats with terminal coloring
+    // Stats
     const stats=document.createElement('div');stats.className='dp-stats';
     function makeStat(label,getVal){
       const row=document.createElement('div');row.className='dp-stat-row';
@@ -519,27 +521,27 @@ registerModule('digital-pet', {
       const bar=document.createElement('div');bar.className='dp-bar';
       const fill=document.createElement('div');fill.className='dp-fill';bar.appendChild(fill);row.appendChild(bar);
       const valEl=document.createElement('span');valEl.className='dp-val';row.appendChild(valEl);
-      const upd=()=>{const v=Math.max(0,Math.min(100,getVal()));fill.style.width=v+'%';fill.style.background=v>50?'rgba(51,255,51,0.4)':'rgba(255,80,80,0.5)';valEl.textContent=Math.round(v);};
+      const upd=()=>{const v=Math.max(0,Math.min(100,getVal()));fill.style.width=v+'%';fill.style.background=v>50?'var(--accent)':'rgba(200,80,80,0.5)';valEl.textContent=Math.round(v);};
       return {row,upd};
     }
     function elapsed(ts){return(Date.now()-(ts||Date.now()))/60000;}
     function curHunger(){return(sec.hunger||80)-elapsed(sec.lastFed)*2;}
     function curHappy(){return(sec.happiness||80)-elapsed(sec.lastPetted)*1;}
     function curWaste(){return(sec.waste||10)+elapsed(sec.lastCleaned)*0.5;}
-    const hS=makeStat('HUNGER',curHunger);stats.appendChild(hS.row);
-    const haS=makeStat('MOOD',curHappy);stats.appendChild(haS.row);
-    const wS=makeStat('DIRT',curWaste);stats.appendChild(wS.row);
+    const hS=makeStat('Hunger',curHunger);stats.appendChild(hS.row);
+    const haS=makeStat('Mood',curHappy);stats.appendChild(haS.row);
+    const wS=makeStat('Dirt',curWaste);stats.appendChild(wS.row);
     w.appendChild(stats);
     // Actions
     const acts=document.createElement('div');acts.className='dp-actions';
     function mkBtn(label,onClick){const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent=label;b.addEventListener('click',function(e){e.stopPropagation();onClick();});acts.appendChild(b);}
-    mkBtn('FEED',()=>{sec.lastFed=Date.now();sec.hunger=Math.min(100,(sec.hunger||80)+30);sec.happiness=Math.min(100,(sec.happiness||80)+5);sec.waste=Math.min(100,(sec.waste||10)+10);saveConfig();updateAll();});
-    mkBtn('PET',()=>{sec.lastPetted=Date.now();sec.happiness=Math.min(100,(sec.happiness||80)+20);saveConfig();updateAll();});
-    mkBtn('CLEAN',()=>{sec.lastCleaned=Date.now();sec.waste=Math.max(0,(sec.waste||10)-40);saveConfig();updateAll();});
+    mkBtn('Feed',()=>{sec.lastFed=Date.now();sec.hunger=Math.min(100,(sec.hunger||80)+30);sec.happiness=Math.min(100,(sec.happiness||80)+5);sec.waste=Math.min(100,(sec.waste||10)+10);saveConfig();updateAll();});
+    mkBtn('Pet',()=>{sec.lastPetted=Date.now();sec.happiness=Math.min(100,(sec.happiness||80)+20);saveConfig();updateAll();});
+    mkBtn('Clean',()=>{sec.lastCleaned=Date.now();sec.waste=Math.max(0,(sec.waste||10)-40);saveConfig();updateAll();});
     w.appendChild(acts);
     cw.appendChild(w);
     // Network speech
-    var _sayTimer;
+    var _sayTimer,_frameTimer,_walkTimer;
     function fetchNetFact(){
       fetch('/api/stats').then(function(r){return r.json();}).then(function(d){
         var facts=[];
@@ -577,37 +579,66 @@ registerModule('digital-pet', {
     }
     _sayTimer=setInterval(fetchNetFact,18000+Math.random()*12000);
     setTimeout(fetchNetFact,3000+Math.random()*4000);
-    // Walk — move cat around enclosure with frame alternation
-    var roamTimer,_dir=1;
-    function walk(){
-      var pw=pen.offsetWidth||280,ph=pen.offsetHeight||120;
+    // Walk cycle — frame animation while moving
+    function startWalk(){
+      if(_walking)return;_walking=true;
+      var pw=pen.offsetWidth||260,ph=pen.offsetHeight||140;
       var nx=Math.random()*(pw-80),ny=Math.random()*(ph-70);
-      _dir=nx>parseInt(creature.style.left||0)?1:-1;
       creature.style.left=nx+'px';creature.style.top=ny+'px';
+      // Animate walk frames every 500ms during movement
+      var wf=0;
+      if(_frameTimer)clearInterval(_frameTimer);
+      _frameTimer=setInterval(function(){
+        wf=(wf+1)%C.walk.length;
+        creature.textContent=C.walk[wf];
+      },550);
+      // After CSS transition completes, stop walking
+      clearTimeout(_walkTimer);
+      _walkTimer=setTimeout(function(){
+        _walking=false;
+        if(_frameTimer){clearInterval(_frameTimer);_frameTimer=null;}
+        setFrame();
+      },2600);
+    }
+    function setFrame(){
+      if(_walking)return;
+      var moodKey=_mood;
+      var frames=C[moodKey]||C.idle;
+      if(moodKey==='idle'&&frames.length===1&&C.blink){
+        // Occasional blink: idle frame most of the time
+        creature.textContent=Math.random()<0.15?C.blink[0]:frames[0];
+      }else{
+        creature.textContent=frames[_frame%frames.length]||frames[0];
+      }
     }
     // Update display
     function updateAll(){
       hS.upd();haS.upd();wS.upd();
       const h=Math.max(0,curHunger()),ha=Math.max(0,curHappy()),wa=Math.max(0,curWaste());
       var moodKey,moodTxt;
-      if(h<=0||ha<=0){moodKey='dead';moodTxt='[DEAD]';}
-      else if(h<20&&ha<20){moodKey='angry';moodTxt='[ANGRY]';}
-      else if(h<30){moodKey='hungry';moodTxt='[HUNGRY]';}
-      else if(wa>70){moodKey='sad';moodTxt='[DIRTY]';}
-      else if(ha<30){moodKey='sad';moodTxt='[SAD]';}
-      else if(ha>65&&h>50&&wa<30){moodKey='happy';moodTxt='[HAPPY]';}
-      else{moodKey='idle';moodTxt='$ cat '+sec.petName.toLowerCase()||'$ cat pet';}
+      if(h<=0||ha<=0){moodKey='dead';moodTxt='Dead';}
+      else if(h<20&&ha<20){moodKey='angry';moodTxt='Angry';}
+      else if(h<30){moodKey='hungry';moodTxt='Hungry';}
+      else if(wa>70){moodKey='sad';moodTxt='Dirty';}
+      else if(ha<30){moodKey='sad';moodTxt='Sad';}
+      else if(ha>65&&h>50&&wa<30){moodKey='happy';moodTxt='Happy';}
+      else{moodKey='idle';moodTxt=(sec.petName||'cat');}
       if(moodKey!==_mood){_mood=moodKey;_frame=0;}
-      var frames=C[moodKey]||C.idle;
-      if(frames.length>1)_frame=(_frame+1)%frames.length;
-      creature.textContent=frames[_frame]||frames[0];
       moodLabel.textContent=moodTxt;
+      setFrame();
     }
     updateAll();
     setInterval(updateAll,5000);
-    walk();
-    roamTimer=setInterval(walk,4500+Math.random()*2000);
-    card._dpCleanup=function(){if(roamTimer)clearInterval(roamTimer);if(_sayTimer)clearInterval(_sayTimer);};
+    startWalk();
+    var walkTimer=setInterval(function(){
+      if(!_walking)startWalk();
+    },4500+Math.random()*2500);
+    card._dpCleanup=function(){
+      if(walkTimer)clearInterval(walkTimer);
+      if(_frameTimer)clearInterval(_frameTimer);
+      if(_walkTimer)clearTimeout(_walkTimer);
+      if(_sayTimer)clearInterval(_sayTimer);
+    };
   },
   editor: (sec,card,bd)=>{
     const nr=document.createElement('div');nr.style.cssText='margin-bottom:10px;';
@@ -615,7 +646,7 @@ registerModule('digital-pet', {
     const ni=document.createElement('input');ni.type='text';ni.value=sec.petName||'';ni.placeholder='cat';ni.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';
     ni.addEventListener('change',()=>{sec.petName=ni.value;saveAndRefresh();});nr.appendChild(ni);bd.appendChild(nr);
     const rr=document.createElement('div');rr.style.cssText='margin-bottom:10px;';
-    const rb=document.createElement('button');rb.className='btn btn-glass btn-sm btn-danger';rb.textContent='RESET PET';
+    const rb=document.createElement('button');rb.className='btn btn-glass btn-sm btn-danger';rb.textContent='Reset Pet';
     rb.addEventListener('click',function(e){e.stopPropagation();const d=Date.now();sec.hunger=80;sec.happiness=80;sec.waste=10;sec.lastFed=d;sec.lastPetted=d;sec.lastCleaned=d;saveAndRefresh();});
     rr.appendChild(rb);bd.appendChild(rr);
   },
