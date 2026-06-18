@@ -1114,6 +1114,8 @@ if(!config.cards.length){
 // Ungrouped cards render as normal
 config.cards.forEach((c,i)=>{grid.appendChild(renderCard(c,i));});
 setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs)fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
+  // Render Lucide icons for any newly created data-lucide elements
+  if(typeof lucide!=='undefined'){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;}
 }
 function scheduleEqualize(){if(!_eqPending){_eqPending=true;requestAnimationFrame(()=>{_eqPending=false;equalizeCardHeights();});}}
 function equalizeCardHeights(){const grid=$('#card-grid');const allCards=[...grid.children].filter(el=>el.classList.contains('card'));if(!allCards.length)return;allCards.forEach(c=>c.style.minHeight='');// Skip cards with height>1 (double-height cards control their own size)
