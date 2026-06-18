@@ -31,15 +31,14 @@ registerModule('resource-monitor', {
       if(!canvas||!data||!data.length)return;
       var ctx=canvas.getContext('2d');
       var W=canvas.width,H=canvas.height,pad=2;
-      var min=Infinity,max=-Infinity;
-      for(var i=0;i<data.length;i++){if(data[i]<min)min=data[i];if(data[i]>max)max=data[i];}
-      if(max-min<1)max=min+1;
+      var max=0;
+      for(var i=0;i<data.length;i++)if(data[i]>max)max=data[i];
+      if(max<1)max=1;
       var plotH=H-pad*2,plotW=W-pad*2,plotBot=H-pad;
       ctx.clearRect(0,0,W,H);
-      // Build points array
       var pts=[];
       for(var i=0;i<data.length;i++){
-        pts.push({x:pad+(i/(data.length-1||1))*plotW,y:pad+plotH-((data[i]-min)/(max-min))*plotH});
+        pts.push({x:pad+(i/(data.length-1||1))*plotW,y:pad+plotH-(data[i]/max)*plotH});
       }
       // Smooth quadratic bezier through points (caller must moveTo first)
       function smoothCurve(ctx,pts){
@@ -72,15 +71,15 @@ registerModule('resource-monitor', {
       if(!canvas||!rxData||!rxData.length)return;
       var ctx=canvas.getContext('2d');
       var W=canvas.width,H=canvas.height,pad=2;
-      var all=rxData.concat(txData);
-      var min=Infinity,max=-Infinity;
-      for(var i=0;i<all.length;i++){if(all[i]<min)min=all[i];if(all[i]>max)max=all[i];}
-      if(max-min<1)max=min+1;
+      var max=0;
+      for(var i=0;i<rxData.length;i++)if(rxData[i]>max)max=rxData[i];
+      for(var i=0;i<txData.length;i++)if(txData[i]>max)max=txData[i];
+      if(max<1)max=1;
       var plotH=H-pad*2,plotW=W-pad*2,plotBot=H-pad;
       ctx.clearRect(0,0,W,H);
       function buildPts(data){
         var p=[];
-        for(var i=0;i<data.length;i++)p.push({x:pad+(i/(data.length-1||1))*plotW,y:pad+plotH-((data[i]-min)/(max-min))*plotH});
+        for(var i=0;i<data.length;i++)p.push({x:pad+(i/(data.length-1||1))*plotW,y:pad+plotH-(data[i]/max)*plotH});
         return p;
       }
       function drawFilledCurve(pts,fillColor,strokeColor,lineW){
