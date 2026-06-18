@@ -91,8 +91,34 @@ def get_network():
                     return {"rx_bytes":rx,"tx_bytes":tx,"interface":parts[0].rstrip(':')}
         return {"rx_bytes":0,"tx_bytes":0,"interface":"unknown"}
     except: return {"rx_bytes":0,"tx_bytes":0,"interface":"unknown"}
+def get_gpu():
+    import subprocess, json as _json
+    result = {"percent":0,"vram_total":0,"vram_used":0,"temp_c":0}
+    try:
+        out = subprocess.run(["rocm-smi","--showuse","--showtemp","--showpower","--showmeminfo","vram","--json"],
+                             capture_output=True,text=True,timeout=5)
+        if out.returncode==0:
+            data = _json.loads(out.stdout)
+            card = data.get("card0",{})
+            pct_str = card.get("GPU use (%)","0").replace("%","").strip()
+            result["percent"] = float(pct_str) if pct_str else 0
+            result["vram_total"] = int(card.get("VRAM Total Memory (B)","0"))
+            result["vram_used"] = int(card.get("VRAM Total Used Memory (B)","0"))
+            temp_str = card.get("Temperature (Sensor edge) (C)","0")
+            result["temp_c"] = float(temp_str) if temp_str else 0
+    except:
+        # Fallback: try sysfs for AMD
+        try:
+            with open("/sys/class/drm/card0/device/gpu_busy_percent") as f:
+                result["percent"] = int(f.read().strip())
+        except: pass
+        try:
+            with open("/sys/class/drm/card0/device/mem_info_vram_total") as f:
+                result["vram_total"] = int(f.read().strip())
+        except: pass
+    return result
 def build_stats():
-    return {"hostname":socket.gethostname(),"cpu":get_cpu_percent(),"memory":get_memory(),"disks":get_disks(),"uptime":get_uptime(),"load":get_load(),"network":get_network(),"timestamp":time.time()}
+    return {"hostname":socket.gethostname(),"cpu":get_cpu_percent(),"memory":get_memory(),"disks":get_disks(),"uptime":get_uptime(),"load":get_load(),"network":get_network(),"gpu":get_gpu(),"timestamp":time.time()}
 def list_uploads():
     files=[]
     for f in sorted(UPLOADS.iterdir(),key=lambda p:p.stat().st_mtime,reverse=True):
