@@ -82,13 +82,9 @@
             {
               "label": "Country",
               "path": "country_name"
-            },
-            {
-              "label": "ISP",
-              "path": "org"
             }
           ],
-          "refreshInterval": 120,
+          "refreshInterval": 5,
           "collapsed": false
         }
       ]
@@ -105,13 +101,13 @@
           "id": "sec-gaju5snmqjk5g90",
           "type": "digital-pet",
           "label": "My Cat",
-          "lastFed": 1781791020798,
-          "hunger": 80,
-          "happiness": 80,
-          "waste": 10,
-          "lastCleaned": 1781791020798,
+          "lastFed": 1781791716695,
+          "hunger": 100,
+          "happiness": 100,
+          "waste": 0,
+          "lastCleaned": 1781791720307,
           "petName": "Dog",
-          "lastPetted": 1781791020798
+          "lastPetted": 1781791721893
         }
       ]
     }
@@ -977,13 +973,9 @@
                 {
                   "label": "Country",
                   "path": "country_name"
-                },
-                {
-                  "label": "ISP",
-                  "path": "org"
                 }
               ],
-              "refreshInterval": 120,
+              "refreshInterval": 5,
               "collapsed": false
             }
           ]
@@ -1000,13 +992,13 @@
               "id": "sec-gaju5snmqjk5g90",
               "type": "digital-pet",
               "label": "My Cat",
-              "lastFed": 1781791020798,
-              "hunger": 80,
-              "happiness": 80,
-              "waste": 10,
-              "lastCleaned": 1781791020798,
+              "lastFed": 1781791716695,
+              "hunger": 100,
+              "happiness": 100,
+              "waste": 0,
+              "lastCleaned": 1781791720307,
               "petName": "Dog",
-              "lastPetted": 1781791020798
+              "lastPetted": 1781791721893
             }
           ]
         }

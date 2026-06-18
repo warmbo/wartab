@@ -944,8 +944,11 @@ body {
 .dp-pen { position: relative; height: 140px; background: var(--card-bg); border: 2px solid var(--surface-border); margin-bottom: 4px; overflow: hidden; }
 /* Floor boards at the bottom */
 .dp-floor { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 14px, rgba(255,255,255,0.06) 14px, rgba(255,255,255,0.06) 15px); border-top: 1px solid var(--surface-border); pointer-events: none; z-index: 0; }
-/* Window on the wall */
-.dp-window { position: absolute; right: 10px; top: 12px; width: 28px; height: 36px; border: 1px solid var(--surface-border); background: rgba(255,255,255,0.03); z-index: 0; pointer-events: none; opacity: 0.5; }
+/* Door on left wall — moves with perspective */
+.dp-door { position: absolute; top: 18px; left: 4px; width: 16px; height: 42px; border: 1px solid var(--surface-border); background: rgba(255,255,255,0.04); z-index: 0; pointer-events: none; transition: left 2.5s ease, opacity 2.5s ease; }
+.dp-door::before { content: ''; position: absolute; right: 3px; top: 50%; width: 3px; height: 3px; border-radius: 50%; background: var(--surface-border); }
+/* Window on right wall — moves with perspective */
+.dp-window { position: absolute; right: 10px; top: 12px; width: 28px; height: 36px; border: 1px solid var(--surface-border); background: rgba(255,255,255,0.03); z-index: 0; pointer-events: none; transition: right 2.5s ease, opacity 2.5s ease; }
 .dp-window::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--surface-border); }
 .dp-window::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--surface-border); }
 .dp-speech { position: absolute; bottom: calc(100% - 5px); left: 50%; transform: translateX(-50%); font-size: var(--text-2xs); color: var(--text-primary); background: var(--card-bg); border: 1px solid var(--surface-border); padding: 2px 8px; white-space: nowrap; z-index: 3; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 92%; overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono','Cascadia Code','Consolas',monospace; }
@@ -953,11 +956,11 @@ body {
 .dp-speech::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--surface-border); }
 .dp-creature { position: absolute; margin: 0; font-family: 'JetBrains Mono','Cascadia Code','Consolas',monospace; font-size: 13px; line-height: 1.25; color: var(--text-primary); user-select: none; transition: left 2.5s ease, top 2.5s ease; white-space: pre; z-index: 2; }
 .dp-stats { margin-bottom: 4px; }
-.dp-stat-row { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; font-size: var(--text-2xs); }
-.dp-stat-lbl { width: 38px; color: var(--text-secondary); flex-shrink: 0; }
-.dp-bar { flex: 1; height: 5px; background: rgba(0,0,0,0.15); overflow: hidden; }
+.dp-stat-row { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; font-size: var(--text-2xs); white-space: nowrap; }
+.dp-stat-lbl { width: 42px; color: var(--text-secondary); flex-shrink: 0; }
+.dp-bar { flex: 1; height: 5px; background: rgba(0,0,0,0.15); overflow: hidden; flex-shrink: 1; min-width: 20px; }
 .dp-fill { height: 100%; transition: width 0.4s; }
-.dp-val { width: 22px; text-align: right; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.dp-val { width: 24px; text-align: right; color: var(--text-tertiary); font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .dp-actions { display: flex; gap: 3px; }
 .dp-actions .btn { flex: 1; font-size: var(--text-2xs); padding: 3px 4px; justify-content: center; }
 

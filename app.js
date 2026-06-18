@@ -489,31 +489,34 @@ registerModule('digital-pet', {
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // Cat frames — 7×4 walking cat with leg animation
+    // Cat frames — 6-frame walk cycle + mood expressions, all 7×4
     var C={
       idle:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| '],
       blink:[' /\\_/\\ \n( - o )\n | Y | \n |_|_| '],
-      walk:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| ',' /\\_/\\ \n( o o )\n | Y | \n| |_|  ',' /\\_/\\ \n( o o )\n | Y | \n |_|_| ',' /\\_/\\ \n( o o )\n | Y | \n  |_|  '],
+      walk:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| ',' /\\_/\\ \n( o o )\n | Y | \n| |_|  ',' /\\_/\\ \n( o o )\n | Y | \n|_| |  ',' /\\_/\\ \n( o o )\n | Y | \n |_|_| ',' /\\_/\\ \n( o o )\n | Y | \n  |_| |',' /\\_/\\ \n( o o )\n | Y | \n | |_| '],
       happy:[' /\\_/\\ \n( * * )\n | Y | \n |_|_| '],
+      love:[' /\\_/\\ \n( ♥ ♥ )\n | Y | \n |_|_| '],
+      curious:[' /\\_/\\ \n( o O )\n | Y | \n |_|_| '],
       hungry:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| '],
       sad:[' /\\_/\\ \n( ;; )\n | Y | \n |_|_| '],
       dead:[' /\\_/\\ \n( x x )\n | Y | \n |_|_| '],
       angry:[' /\\_/\\ \n( # # )\n | Y | \n |_|_| '],
     };
-    var _mood='idle',_frame=0,_walking=false;
+    var _mood='idle',_frame=0,_walking=false,_lastX=50;
     // Top bar
     const top=document.createElement('div');top.className='dp-top';
     const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'cat';top.appendChild(nameEl);
     const moodLabel=document.createElement('span');moodLabel.className='dp-mood-label';top.appendChild(moodLabel);
     w.appendChild(top);
-    // Room — walls + floor frame the cat's world
+    // Room — walls, door, window, floor, cat
     const pen=document.createElement('div');pen.className='dp-pen';
     const floor=document.createElement('div');floor.className='dp-floor';pen.appendChild(floor);
+    const door=document.createElement('div');door.className='dp-door';pen.appendChild(door);
     const windowEl=document.createElement('div');windowEl.className='dp-window';pen.appendChild(windowEl);
     const speech=document.createElement('div');speech.className='dp-speech';pen.appendChild(speech);
     const creature=document.createElement('pre');creature.className='dp-creature';pen.appendChild(creature);
     w.appendChild(pen);
-    // Stats
+    // Stats — nowrap prevents text wrapping
     const stats=document.createElement('div');stats.className='dp-stats';
     function makeStat(label,getVal){
       const row=document.createElement('div');row.className='dp-stat-row';
@@ -579,20 +582,32 @@ registerModule('digital-pet', {
     }
     _sayTimer=setInterval(fetchNetFact,18000+Math.random()*12000);
     setTimeout(fetchNetFact,3000+Math.random()*4000);
-    // Walk cycle — frame animation while moving
+    // Walk cycle — floor-constrained, with perspective
+    function updatePerspective(x){
+      var pw=pen.offsetWidth||260;
+      var pct=x/(pw-80); // 0=left wall, 1=right wall
+      if(pct<0)pct=0;if(pct>1)pct=1;
+      windowEl.style.right=(6+pct*12)+'px';
+      windowEl.style.opacity=(0.3+pct*0.5)+'';
+      door.style.left=(4+(1-pct)*10)+'px';
+      door.style.opacity=(0.3+(1-pct)*0.5)+'';
+    }
     function startWalk(){
       if(_walking)return;_walking=true;
       var pw=pen.offsetWidth||260,ph=pen.offsetHeight||140;
-      var nx=Math.random()*(pw-80),ny=Math.random()*(ph-70);
+      var nx=Math.random()*(pw-80);
+      // Keep cat on the floor: sprite ~64px tall, pen 140px, floor 24px
+      var ny=ph-24-62+Math.random()*8;
+      _lastX=nx;
       creature.style.left=nx+'px';creature.style.top=ny+'px';
-      // Animate walk frames every 500ms during movement
+      updatePerspective(nx);
+      // Animate walk frames
       var wf=0;
       if(_frameTimer)clearInterval(_frameTimer);
       _frameTimer=setInterval(function(){
         wf=(wf+1)%C.walk.length;
         creature.textContent=C.walk[wf];
-      },550);
-      // After CSS transition completes, stop walking
+      },380);
       clearTimeout(_walkTimer);
       _walkTimer=setTimeout(function(){
         _walking=false;
@@ -602,14 +617,14 @@ registerModule('digital-pet', {
     }
     function setFrame(){
       if(_walking)return;
-      var moodKey=_mood;
-      var frames=C[moodKey]||C.idle;
-      if(moodKey==='idle'&&frames.length===1&&C.blink){
-        // Occasional blink: idle frame most of the time
-        creature.textContent=Math.random()<0.15?C.blink[0]:frames[0];
+      var frames=C[_mood]||C.idle;
+      var txt;
+      if(_mood==='idle'&&frames.length===1&&C.blink){
+        txt=Math.random()<0.15?C.blink[0]:frames[0];
       }else{
-        creature.textContent=frames[_frame%frames.length]||frames[0];
+        txt=frames[_frame%frames.length]||frames[0];
       }
+      creature.textContent=txt;
     }
     // Update display
     function updateAll(){
@@ -621,7 +636,9 @@ registerModule('digital-pet', {
       else if(h<30){moodKey='hungry';moodTxt='Hungry';}
       else if(wa>70){moodKey='sad';moodTxt='Dirty';}
       else if(ha<30){moodKey='sad';moodTxt='Sad';}
-      else if(ha>65&&h>50&&wa<30){moodKey='happy';moodTxt='Happy';}
+      else if(ha>80&&h>65&&wa<30){moodKey='love';moodTxt='Loved';}
+      else if(ha>65&&h>50){moodKey='happy';moodTxt='Happy';}
+      else if(ha>40){moodKey='curious';moodTxt='Curious';}
       else{moodKey='idle';moodTxt=(sec.petName||'cat');}
       if(moodKey!==_mood){_mood=moodKey;_frame=0;}
       moodLabel.textContent=moodTxt;
