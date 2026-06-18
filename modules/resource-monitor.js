@@ -19,9 +19,11 @@ registerModule('resource-monitor', {
     if(cache&&cache.hist){
       hist=cache.hist;
       var _prevRx=cache.prevRx||0,_prevTx=cache.prevTx||0,_prevTs=cache.prevTs||0;
+      var _smoothed=cache.smoothed||{};
     }else{
       hist={};['cpu','ram','disk','gpu','rx','tx'].forEach(function(k){hist[k]=[];});
       var _prevRx=0,_prevTx=0,_prevTs=0;
+      var _smoothed={};
     }
     var metrics=['cpu','ram','disk','gpu'];
     // viewBox always 0-100. Map values proportionally: 0% at bottom, maxVal at top.
@@ -140,7 +142,7 @@ registerModule('resource-monitor', {
     }
     // Write cache on each update
     function saveCache(){
-      window._rmCache[ck]={hist:hist,prevRx:_prevRx,prevTx:_prevTx,prevTs:_prevTs};
+      window._rmCache[ck]={hist:hist,prevRx:_prevRx,prevTx:_prevTx,prevTs:_prevTs,smoothed:_smoothed};
     }
     // Toggle bar / graph mode
     function setGraphMode(enabled){
@@ -158,8 +160,12 @@ registerModule('resource-monitor', {
     function fmtBytes(b){if(b<1024)return b.toFixed(0)+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
     function fmtSpeed(bps){if(bps<1024)return bps.toFixed(0)+'B/s';if(bps<1048576)return(bps/1024).toFixed(1)+'KB/s';return(bps/1048576).toFixed(1)+'MB/s';}
     function pushGraph(key,val){
+      // Exponential smoothing: 35% new, 65% history — prevents spikey on/off lines
+      if(_smoothed[key]===undefined)_smoothed[key]=val;
+      else _smoothed[key]=_smoothed[key]*0.65+val*0.35;
+      var sv=_smoothed[key];
       var h=hist[key];if(!h)return;
-      h.push(val);
+      h.push(sv);
       if(h.length>GRAPH_PTS)h.shift();
       var r=rows[key];
       if(r&&r.svg.style.display!=='none'){
