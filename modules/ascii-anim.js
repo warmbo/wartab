@@ -6,15 +6,13 @@
 registerModule('ascii-anim', {
   defaults: { anim:'donut', speed:1, contrast:1 },
   render: (sec,card,cw)=>{
+    cw.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0;';
     var pre=document.createElement('pre');pre.className='ascii-anim-pre';
-    pre.style.cssText='margin:0;font-size:10px;line-height:1.15;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.2);text-align:center;font-family:monospace;width:100%;height:100%;box-sizing:border-box;padding:4px;';
+    pre.style.cssText='margin:0;font-size:10px;line-height:1.15;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.2);text-align:left;font-family:monospace;flex:1;width:100%;box-sizing:border-box;padding:6px;';
     var running=true,_timer;
     var sp=parseFloat(sec.speed)||1;
     var ct=parseFloat(sec.contrast)||1;
-    cw.style.height='100%';cw.appendChild(pre);
-
-    // Show init text to confirm pre is reachable
-    pre.textContent='▌ initializing '+sec.anim+'... ▐';
+    cw.appendChild(pre);
 
     // ── Spinning Donut ──────────────────────────────
     function renderDonut(){
