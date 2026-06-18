@@ -28,9 +28,15 @@ registerModule('resource-monitor', {
     function fitRange(arr){
       var min=Infinity,max=-Infinity;
       for(var i=0;i<arr.length;i++){if(arr[i]<min)min=arr[i];if(arr[i]>max)max=arr[i];}
-      var range=Math.max(max-min,5);
-      var pad=range*0.08;
+      var range=Math.max(max-min,1);
+      var pad=range*0.1;
       return {min:Math.max(0,min-pad),max:max+pad,range:range+pad*2};
+    }
+    // Map a value to its y-position in the graph viewBox (0=top, range=bottom)
+    function mapY(v,fr){
+      if(fr.max===fr.min)return fr.range/2; // single value → center
+      var pos=(v-fr.min)/(fr.max-fr.min);   // 0=bottom, 1=top
+      return (1-pos)*fr.range;              // flip: 0=top, range=bottom
     }
     function buildMetricRow(key,label){
       const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;gap:2px;';
@@ -109,14 +115,14 @@ registerModule('resource-monitor', {
         var r=rows[key];if(!r||r.svg.style.display==='none')return;
         var fr=fitRange(h);
         r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
       });
       if(hist.rx&&hist.rx.length&&netSvg.style.display!=='none'){
         var both=hist.rx.concat(hist.tx);
         var fr=fitRange(both);
         netSvg.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
-        netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
-        netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
+        netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
+        netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
       }
     }
     // Write cache on each update
@@ -146,7 +152,7 @@ registerModule('resource-monitor', {
       if(r&&r.svg.style.display!=='none'){
         var fr=fitRange(h);
         r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
       }
     }
     function updateNetGraph(rxSpeed,txSpeed){
@@ -156,8 +162,8 @@ registerModule('resource-monitor', {
       var both=hist.rx.concat(hist.tx);
       var fr=fitRange(both);
       netSvg.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
-      netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
-      netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
+      netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
+      netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
     }
     // Fetch data
     function fetchData(){
