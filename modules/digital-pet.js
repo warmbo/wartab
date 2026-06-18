@@ -9,37 +9,39 @@ registerModule('digital-pet', {
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // Body frames — 9×4, NO tail stored (tail added via addTail() at render time)
+    // Body frames — 11×5, NO tail (added by addTail() at render time)
+    // Ear line has 3-char-wide head ___ , face has eyes (o o), nose (Y),
+    // torso has two upright columns, legs are two pairs |_| |_|
     var B={
-      idle:[' /\_/\   \n( o o )  \n | Y |   \n |_|_|   '],
-      blink:[' /\_/\   \n( - o )  \n | Y |   \n |_|_|   '],
+      idle:  ['  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
+      blink: ['  /\___/\  \n ( -   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
       walk:[
-        ' /\_/\   \n( o o )  \n | Y |   \n |_|_|   ',
-        ' /\_/\   \n( o o )  \n | Y |   \n| |_|    ',
-        ' /\_/\   \n( o o )  \n | Y |   \n|_| |    ',
-        ' /\_/\   \n( o o )  \n | Y |   \n |_|_|   ',
-        ' /\_/\   \n( o o )  \n | Y |   \n  |_| |  ',
-        ' /\_/\   \n( o o )  \n | Y |   \n | |_|   ',
+        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  ', // 0
+        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n |_| |_|   ', // 1 left
+        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n|_| |_|    ', // 2 left+
+        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  ', // 3
+        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n   |_| |_| ', // 4 right
+        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n    |_| |_|', // 5 right+
       ],
-      happy:[' /\_/\   \n( * * )  \n | Y |   \n |_|_|   '],
-      love:[' /\_/\   \n( ♥ ♥ )  \n | Y |   \n |_|_|   '],
-      curious:[' /\_/\   \n( o O )  \n | Y |   \n |_|_|   '],
-      hungry:[' /\_/\   \n( o o )  \n | Y |   \n |_|_|   '],
-      sad:[' /\_/\   \n( ; ; )  \n | Y |   \n |_|_|   '],
-      dead:[' /\_/\   \n( x x )  \n | Y |   \n |_|_|   '],
-      angry:[' /\_/\   \n( # # )  \n | Y |   \n |_|_|   '],
+      happy:  ['  /\___/\  \n ( *   * ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
+      love:   ['  /\___/\  \n ( ♥   ♥ ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
+      curious:['  /\___/\  \n ( o   O ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
+      hungry: ['  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
+      sad:    ['  /\___/\  \n ( ;   ; ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
+      dead:   ['  /\___/\  \n ( x   x ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
+      angry:  ['  /\___/\  \n ( #   # ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
     };
-    // Add tail to a body frame based on walking direction
-    // Right tail: ` and ~ on right of lines 3-4 (sweeps down from body)
-    // Left tail:  ` and ~ on left of lines 3-4
+    // Add tail to body frame based on walking direction
+    // Right tail: \~ on line 4,  ~ on line 5 (sweeps down from R side)
+    // Left tail:  ~ prefixed on lines 4-5 (sweeps down from L side)
     function addTail(f,dir){
       var l=f.split('\n');
       if(dir==='right'){
-        l[2]=l[2].slice(0,7)+'` ';
-        l[3]=l[3].slice(0,7)+' ~';
+        l[3]=l[3].slice(0,9)+'/~';
+        l[4]=l[4].slice(0,9)+' ~';
       }else{
-        l[2]='`'+l[2].slice(0,7)+' ';
-        l[3]='~'+l[3].slice(0,7)+' ';
+        l[3]=('~'+l[3]).slice(0,11);
+        l[4]=('~'+l[4]).slice(0,11);
       }
       return l.join('\n');
     }
@@ -94,7 +96,7 @@ registerModule('digital-pet', {
         if(typeof d.cpu==='number'){
           if(d.cpu>80)facts.push('CPU is '+d.cpu+"% ... that's hot!");
           else if(d.cpu<10)facts.push('CPU is only '+d.cpu+'% ... so quiet.');
-          else facts.push('CPU chillin\' at '+d.cpu+'%.');
+          else facts.push("CPU chillin' at "+d.cpu+'%.');
         }
         if(d.memory){
           var m=Math.round(d.memory.percent);
