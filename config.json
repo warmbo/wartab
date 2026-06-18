@@ -291,38 +291,6 @@
       "height": 3
     },
     {
-      "id": "dev-docs",
-      "title": "Dev Docs",
-      "icon": "book-open",
-      "color": "#8a8a8a",
-      "width": 1,
-      "sections": [
-        {
-          "id": "docs-links",
-          "type": "link-list",
-          "label": "References",
-          "links": [
-            {
-              "label": "Python Docs",
-              "url": "https://docs.python.org/3/",
-              "icon": "/icons/python.svg"
-            },
-            {
-              "label": "Docker Docs",
-              "url": "https://docs.docker.com",
-              "icon": "/icons/docker.svg"
-            },
-            {
-              "label": "Arch Wiki",
-              "url": "https://wiki.archlinux.org",
-              "icon": "/icons/arch-linux.svg"
-            }
-          ],
-          "collapsed": false
-        }
-      ]
-    },
-    {
       "id": "daily-drivers",
       "title": "Favorites",
       "icon": "Star",
@@ -660,38 +628,6 @@
             }
           ],
           "height": 3
-        },
-        {
-          "id": "dev-docs",
-          "title": "Dev Docs",
-          "icon": "book-open",
-          "color": "#8a8a8a",
-          "width": 1,
-          "sections": [
-            {
-              "id": "docs-links",
-              "type": "link-list",
-              "label": "References",
-              "links": [
-                {
-                  "label": "Python Docs",
-                  "url": "https://docs.python.org/3/",
-                  "icon": "/icons/python.svg"
-                },
-                {
-                  "label": "Docker Docs",
-                  "url": "https://docs.docker.com",
-                  "icon": "/icons/docker.svg"
-                },
-                {
-                  "label": "Arch Wiki",
-                  "url": "https://wiki.archlinux.org",
-                  "icon": "/icons/arch-linux.svg"
-                }
-              ],
-              "collapsed": false
-            }
-          ]
         },
         {
           "id": "daily-drivers",
@@ -1176,7 +1112,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 1
+              "_qi": 2
             }
           ]
         },
