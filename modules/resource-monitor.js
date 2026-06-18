@@ -39,7 +39,7 @@ registerModule('resource-monitor', {
       fill.style.cssText='height:100%;width:0%;background:var(--accent);transition:width 0.4s ease;';
       track.appendChild(fill);
       var canvas=document.createElement('canvas');canvas.className='rm-canvas-'+key;
-      canvas.style.cssText='display:none;width:100%;height:100%;background:rgba(0,0,0,0.08);';
+      canvas.style.cssText='width:100%;height:100%;background:rgba(0,0,0,0.08);';
       var cwrap=document.createElement('div');cwrap.style.cssText='display:none;height:48px;position:relative;';
       cwrap.appendChild(canvas);
       row.appendChild(track);row.appendChild(cwrap);
@@ -66,7 +66,7 @@ registerModule('resource-monitor', {
     netFill.style.cssText='height:100%;width:0%;background:var(--accent);transition:width 0.4s ease;';
     netTrack.appendChild(netFill);netRow.appendChild(netTrack);
     var netCanvas=document.createElement('canvas');netCanvas.className='rm-canvas-net';
-    netCanvas.style.cssText='display:none;width:100%;height:100%;background:rgba(0,0,0,0.08);';
+    netCanvas.style.cssText='width:100%;height:100%;background:rgba(0,0,0,0.08);';
     var netCwrap=document.createElement('div');netCwrap.style.cssText='display:none;height:40px;position:relative;';
     netCwrap.appendChild(netCanvas);
     netRow.appendChild(netCwrap);
