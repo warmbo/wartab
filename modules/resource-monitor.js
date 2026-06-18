@@ -135,7 +135,7 @@ registerModule('resource-monitor', {
     }
     var rows={};
     metrics.forEach(function(m){
-      var labels={cpu:'CPU',ram:'ACTV',disk:'DISK IO',gpu:'GPU'};
+      var labels={cpu:'CPU',ram:'RAM',disk:'DISK',gpu:'GPU'};
       rows[m]=buildMetricRow(m,labels[m]);
       w.appendChild(rows[m].row);
     });
