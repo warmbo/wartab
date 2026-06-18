@@ -309,26 +309,33 @@ function fetchLanScan(el){
   if(dot)dot.style.background='var(--accent)';
   fetch('/api/arp').then(function(r){return r.json();}).then(function(d){
     if(dot){dot.style.background='';}
-    var seenKey='wartab_lan_seen';
-    var known={};
-    try{known=JSON.parse(localStorage.getItem(seenKey)||'{}');}catch(e){}
     var now=Date.now(),ts=new Date();
     var timeStr=String(ts.getHours()).padStart(2,'0')+':'+String(ts.getMinutes()).padStart(2,'0')+':'+String(ts.getSeconds()).padStart(2,'0');
     var countEl=el.querySelector('.lan-scan-count');
     if(countEl)countEl.textContent=d.count+' hosts';
+    // Load last 3 scans from localStorage to compare for new devices
+    var histKey='wartab_lan_history';
+    var history=[];
+    try{history=JSON.parse(localStorage.getItem(histKey)||'[]');}catch(e){}
+    if(!Array.isArray(history))history=[];
+    // Collect all MACs seen in the last 3 scans
+    var seenInLast3={};
+    history.forEach(function(h){(h.macs||[]).forEach(function(m){seenInLast3[m]=true;});});
     var html='';
-    html+='<div class="lan-scan-line lan-scan-ts">['+timeStr+'] scan complete \u2014 '+d.count+' device'+(d.count!==1?'s':'')+' on network</div>';
+    var currentMacs=[];
+    html+='<div class="lan-scan-line lan-scan-ts">['+timeStr+'] scan '+((history.length||0)+1)+' \u2014 '+d.count+' device'+(d.count!==1?'s':'')+' on network</div>';
     (d.devices||[]).forEach(function(dev){
-      var isNew=!known[dev.mac];
+      currentMacs.push(dev.mac);
+      var isNew=!seenInLast3[dev.mac];
       var cls=isNew?'lan-scan-new':'lan-scan-line';
       var tag=isNew?' \u25c2 NEW':'';
-      known[dev.mac]=now;
       var hn = dev.hostname ? ' <span class="lan-scan-hostname">' + escAttr(dev.hostname) + '</span>' : '';
       html+='<div class="'+cls+'">['+timeStr+'] <span class="lan-scan-ip">'+dev.ip+'</span> \u2192 '+dev.mac+'  <span class="lan-scan-vendor">'+escAttr(dev.vendor)+'</span>'+hn+tag+'</div>';
     });
-    var cutoff=now-7*86400000;
-    Object.keys(known).forEach(function(k){if(known[k]<cutoff)delete known[k];});
-    try{localStorage.setItem(seenKey,JSON.stringify(known));}catch(e){}
+    // Push this scan into history, keep last 3
+    history.push({macs:currentMacs,ts:now});
+    if(history.length>3)history=history.slice(-3);
+    try{localStorage.setItem(histKey,JSON.stringify(history));}catch(e){}
     body.innerHTML=html;
     var iv=parseInt(el.dataset.refresh)*1000;
     if(iv>0)setTimeout(function(){fetchLanScan(el);},iv);
