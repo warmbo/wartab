@@ -949,7 +949,7 @@ body {
 /* Floor boards at the bottom */
 .dp-floor { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 14px, rgba(255,255,255,0.06) 14px, rgba(255,255,255,0.06) 15px); border-top: 1px solid var(--surface-border); pointer-events: none; z-index: 0; }
 /* Hallway floor — perspective trapezoid leading from doorway to room floor */
-.dp-hallway-floor { position: absolute; bottom: 24px; left: 0; width: 120px; height: 56px; clip-path: polygon(0 100%, 44px 0, 88px 0, 120px 100%); background: linear-gradient(to bottom, rgba(30,30,30,0.25), rgba(20,20,20,0.08)); z-index: 0; pointer-events: none; transition: opacity 2.5s ease; }
+.dp-hallway-floor { position: absolute; bottom: 24px; left: 2px; width: 88px; height: 56px; clip-path: polygon(-8px 100%, 0 0, 44px 0, 88px 100%); background: linear-gradient(to bottom, rgba(30,30,30,0.25), rgba(20,20,20,0.08)); z-index: 0; pointer-events: none; transition: opacity 2.5s ease; }
 /* Perspective floor lines inside the doorway */
 .dp-doorway-floor { position: absolute; bottom: 0; left: 0; width: 44px; height: 24px; background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.03) 3px, rgba(255,255,255,0.03) 4px), linear-gradient(to top, rgba(40,40,40,0.35), rgba(40,40,40,0.1)); z-index: 0; pointer-events: none; transition: opacity 2.5s ease; }
 .dp-floor-line { position: absolute; height: 1px; left: 0; width: 100%; background: rgba(255,255,255,0.02); pointer-events: none; z-index: 0; transition: opacity 2.5s ease; }
