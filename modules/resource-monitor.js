@@ -28,7 +28,7 @@ registerModule('resource-monitor', {
     function fitRange(arr){
       var min=Infinity,max=-Infinity;
       for(var i=0;i<arr.length;i++){if(arr[i]<min)min=arr[i];if(arr[i]>max)max=arr[i];}
-      var range=Math.max(max-min,1);
+      var range=Math.max(max-min,5);
       var pad=range*0.1;
       return {min:Math.max(0,min-pad),max:max+pad,range:range+pad*2};
     }
@@ -56,7 +56,8 @@ registerModule('resource-monitor', {
       svg.style.cssText='display:none;width:100%;height:48px;background:rgba(0,0,0,0.08);';
       svg.setAttribute('preserveAspectRatio','none');
       var polyline=document.createElementNS('http://www.w3.org/2000/svg','polyline');
-      polyline.style.cssText='fill:none;stroke:var(--accent);stroke-width:1.5px;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;';
+      polyline.setAttribute('vector-effect','non-scaling-stroke');
+      polyline.style.cssText='fill:none;stroke:var(--accent);stroke-width:1.5px;stroke-linejoin:round;stroke-linecap:round;';
       polyline.setAttribute('points','');
       svg.appendChild(polyline);
       row.appendChild(track);row.appendChild(svg);
@@ -87,11 +88,13 @@ registerModule('resource-monitor', {
     netSvg.style.cssText='display:none;width:100%;height:40px;background:rgba(0,0,0,0.08);';
     netSvg.setAttribute('preserveAspectRatio','none');
     var netRxLine=document.createElementNS('http://www.w3.org/2000/svg','polyline');
-    netRxLine.style.cssText='fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5px;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;';
+    netRxLine.setAttribute('vector-effect','non-scaling-stroke');
+    netRxLine.style.cssText='fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5px;stroke-linejoin:round;stroke-linecap:round;';
     netRxLine.setAttribute('points','');
     netSvg.appendChild(netRxLine);
     var netTxLine=document.createElementNS('http://www.w3.org/2000/svg','polyline');
-    netTxLine.style.cssText='fill:none;stroke:rgba(255,255,255,0.25);stroke-width:1px;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;';
+    netTxLine.setAttribute('vector-effect','non-scaling-stroke');
+    netTxLine.style.cssText='fill:none;stroke:rgba(255,255,255,0.25);stroke-width:1px;stroke-linejoin:round;stroke-linecap:round;';
     netTxLine.setAttribute('points','');
     netSvg.appendChild(netTxLine);
     netRow.appendChild(netSvg);
