@@ -954,7 +954,7 @@ body {
 .dp-speech { position: absolute; bottom: calc(100% - 5px); left: 50%; transform: translateX(-50%); font-size: var(--text-2xs); color: var(--text-primary); background: var(--card-bg); border: 1px solid var(--surface-border); padding: 2px 8px; white-space: nowrap; z-index: 3; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 92%; overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono','Cascadia Code','Consolas',monospace; }
 .dp-speech.visible { opacity: 1; }
 .dp-speech::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--surface-border); }
-.dp-creature { position: absolute; margin: 0; font-family: 'JetBrains Mono','Cascadia Code','Consolas',monospace; font-size: 13px; line-height: 1.25; color: var(--text-primary); user-select: none; transition: left 2.5s ease, top 2.5s ease; white-space: pre; z-index: 2; }
+.dp-creature { position: absolute; margin: 0; font-family: 'JetBrains Mono','Cascadia Code','Noto Sans Mono CJK SC','Noto Sans Mono CJK','MS Gothic','IPAGothic',Consolas,monospace; font-size: 14px; line-height: 1.3; color: var(--text-primary); user-select: none; transition: left 2.5s ease, top 2.5s ease; white-space: pre; z-index: 2; }
 .dp-stats { margin-bottom: 4px; }
 .dp-stat-row { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; font-size: var(--text-2xs); white-space: nowrap; }
 .dp-stat-lbl { width: 42px; color: var(--text-secondary); flex-shrink: 0; }
