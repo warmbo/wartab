@@ -210,18 +210,73 @@ registerModule('notes', {
   },
 });
 
+/* ── Public API presets for API Poller ── */
+var API_PRESETS = [
+  { label:'GitHub Repo', url:'https://api.github.com/repos/nousresearch/wartab', fields:[{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}], icon:'github' },
+  { label:'CoinDesk BTC', url:'https://api.coindesk.com/v1/bpi/currentprice.json', fields:[{label:'USD',path:'bpi.USD.rate'},{label:'GBP',path:'bpi.GBP.rate'},{label:'EUR',path:'bpi.EUR.rate'}], icon:'bitcoin' },
+  { label:'Dog API', url:'https://dog.ceo/api/breeds/image/random', fields:[{label:'Breed Image',path:'message'}], icon:'dog' },
+  { label:'IP Info', url:'https://ipapi.co/json/', fields:[{label:'IP',path:'ip'},{label:'City',path:'city'},{label:'Country',path:'country_name'}], icon:'map-pin' },
+  { label:'Random User', url:'https://randomuser.me/api/', fields:[{label:'Name',path:'results.0.name.first'},{label:'Country',path:'results.0.location.country'}], icon:'users' },
+  { label:'Open-Meteo (NYC)', url:'https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true', fields:[{label:'Temp °C',path:'current_weather.temperature'},{label:'Wind km/h',path:'current_weather.windspeed'}], icon:'cloud-sun' },
+];
 registerModule('api-poller', {
-  defaults: { url:'', jsonPath:'', label:'API', refreshInterval:60 },
+  defaults: { url:'', jsonPath:'', label:'API', refreshInterval:60, fields:[] },
   render: (sec,card,cw)=>{
-    const w=document.createElement('div');w.className='api-widget';w.dataset.url=sec.url||'';w.dataset.jsonPath=sec.jsonPath||'';w.dataset.label=sec.label||'';w.dataset.refresh=sec.refreshInterval||60;
-    w.innerHTML=`<div class="api-row"><span class="api-label">${escAttr(sec.label||'Loading...')}</span><span class="api-value">--</span></div>`;cw.appendChild(w);fetchApiWidget(w);
+    const w=document.createElement('div');w.className='api-widget';
+    w.dataset.url=sec.url||'';w.dataset.jsonPath=sec.jsonPath||'';
+    w.dataset.label=sec.label||'';w.dataset.refresh=sec.refreshInterval||60;
+    w.dataset.fields=JSON.stringify(sec.fields||[]);
+    renderApiWidget(w);
+    cw.appendChild(w);
   },
   editor: (sec,card,bd)=>{
+    bd.appendChild(cpLabel('Label'));
+    const li=cpInput('My API',sec.label||'',v=>{sec.label=v;saveConfig();});bd.appendChild(li);
     bd.appendChild(cpLabel('API URL'));
     const ui=cpInput('https://api.example.com/status',sec.url||'',v=>{sec.url=v;saveConfig();});bd.appendChild(ui);
-    bd.appendChild(cpLabel('JSON Path'));
-    const pi=cpInput('e.g. data.cpu.usage',sec.jsonPath||'',v=>{sec.jsonPath=v;saveConfig();});bd.appendChild(pi);
+    // Preset selector
+    bd.appendChild(cpLabel('Preset'));
+    const presetSel=document.createElement('select');presetSel.className='cp-input';
+    presetSel.appendChild(new Option('— None —',''));
+    API_PRESETS.forEach(function(p){
+      var opt=new Option(p.label, p.url);
+      if(p.url===sec.url)opt.selected=true;
+      presetSel.appendChild(opt);
+    });
+    presetSel.addEventListener('change',function(){
+      var p=API_PRESETS.find(function(x){return x.url===this.value;},this);
+      if(p){
+        sec.url=p.url;sec.fields=p.fields.map(function(f){return {label:f.label,path:f.path};});
+        if(!sec.label||sec.label==='API'||API_PRESETS.some(function(x){return x.label===sec.label;}))sec.label=p.label;
+        saveAndRefresh();
+      }
+    });
+    bd.appendChild(presetSel);
     bd.appendChild(cpRange('Refresh (seconds)',sec.refreshInterval||60,5,600,v=>{sec.refreshInterval=parseInt(v);saveConfig();}));
+    // Multiple fields
+    bd.appendChild(cpLabel('Fields'));
+    var fieldContainer=document.createElement('div');fieldContainer.style.cssText='margin-bottom:8px;';
+    function renderFields(){
+      fieldContainer.innerHTML='';
+      (sec.fields||[]).forEach(function(f,fi){
+        var row=document.createElement('div');row.style.cssText='display:flex;gap:4px;margin-bottom:4px;align-items:center;';
+        var lInp=document.createElement('input');lInp.className='cp-input';lInp.placeholder='Label';lInp.value=f.label;
+        lInp.style.cssText='flex:1;padding:5px 6px;font-size:var(--text-2xs);';
+        lInp.addEventListener('change',function(){sec.fields[fi].label=lInp.value;saveConfig();});
+        var pInp=document.createElement('input');pInp.className='cp-input';pInp.placeholder='Path';pInp.value=f.path;
+        pInp.style.cssText='flex:2;padding:5px 6px;font-size:var(--text-2xs);';
+        pInp.addEventListener('change',function(){sec.fields[fi].path=pInp.value;saveConfig();});
+        var rm=document.createElement('button');rm.className='btn btn-glass btn-sm';rm.textContent='✕';rm.style.cssText='padding:2px 5px;font-size:var(--text-2xs);';
+        rm.addEventListener('click',function(){sec.fields.splice(fi,1);renderFields();saveConfig();});
+        row.appendChild(lInp);row.appendChild(pInp);row.appendChild(rm);
+        fieldContainer.appendChild(row);
+      });
+      var addBtn=document.createElement('button');addBtn.className='btn btn-glass btn-sm';addBtn.textContent='+ Add Field';addBtn.style.cssText='font-size:var(--text-2xs);padding:4px 10px;';
+      addBtn.addEventListener('click',function(){if(!sec.fields)sec.fields=[];sec.fields.push({label:'Value',path:''});renderFields();saveConfig();});
+      fieldContainer.appendChild(addBtn);
+    }
+    renderFields();
+    bd.appendChild(fieldContainer);
   },
 });
 
@@ -1220,7 +1275,7 @@ const DEFAULT_CONFIG = {
         {
           id: 'api-demo', type: 'api-poller', label: 'WarTab Stars',
           url: 'https://api.github.com/repos/nousresearch/wartab',
-          jsonPath: 'stargazers_count',
+          fields: [{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}],
           refreshInterval: 120,
         },
       ],
@@ -1769,7 +1824,39 @@ if(typeof lucide!=='undefined'){
 }
 }).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;var tsEl=el.querySelector('.weather-ts');if(tsEl){var lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});weatherIntervals.push(setInterval(()=>fetchWeather(el),600000));}
 function wIcon(id){if(id<300)return'cloud-lightning';if(id<400)return'cloud-drizzle';if(id<600)return'cloud-rain';if(id<700)return'cloud-snow';if(id<800)return'cloud-fog';if(id===800)return'sun';return'cloud';}
-function fetchApiWidget(el){const u=el.dataset.url,jp=el.dataset.jsonPath;if(!u){el.innerHTML='<div class="api-row"><span class="api-label">No API URL set</span></div>';return;}const ts=Date.now();fetch(u).then(r=>r.json()).then(d=>{const v=jp?getNested(d,jp):JSON.stringify(d,null,2);el.innerHTML='<div class="api-row"><span class="api-label">'+escAttr(el.dataset.label)+'</span><span class="api-value">'+escAttr(String(v))+'</span></div><div class="api-ts" data-ts="'+ts+'">updated just now</div>';el.dataset.lastOk=String(ts);const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));}).catch(e=>{const lo=el.dataset.lastOk;el.innerHTML='<div class="api-row"><span class="api-label">'+escAttr(el.dataset.label)+'</span><span class="api-value api-error">'+escAttr(e.message)+'</span></div><div class="api-ts" data-ts="'+(lo||ts)+'">'+(lo?'last ok: '+timeAgo(parseInt(lo)):'')+'</div>';const iv=parseInt(el.dataset.refresh)*1000;if(iv>0)apiPollTimers.push(setTimeout(()=>fetchApiWidget(el),iv));});}
+function renderApiWidget(el){renderApiFetch(el);}
+function renderApiFetch(el){
+  const u=el.dataset.url,label=escAttr(el.dataset.label||'');
+  if(!u){el.innerHTML='<div class="api-row"><span class="api-label">No API URL set</span></div>';return;}
+  el.innerHTML='<div class="api-row"><span class="api-label">'+label+'</span><span class="api-value">Loading...</span></div><div class="api-ts">fetching...</div>';
+  const ts=Date.now();
+  fetch(u).then(function(r){if(!r.ok)throw Error(r.status+' '+r.statusText);return r.json();}).then(function(d){
+    var fields=[];
+    try{fields=JSON.parse(el.dataset.fields||'[]');}catch(e){}
+    var html='';
+    if(fields&&fields.length){
+      fields.forEach(function(f){
+        var v=f.path?getNested(d,f.path):'';
+        var vs=v!==undefined&&v!==null?String(v):'\u2014';
+        html+='<div class="api-row"><span class="api-label">'+escAttr(f.label)+'</span><span class="api-value">'+escAttr(vs)+'</span></div>';
+      });
+    } else {
+      var jp=el.dataset.jsonPath;
+      var v=jp?getNested(d,jp):JSON.stringify(d,null,2);
+      html+='<div class="api-row"><span class="api-label">'+label+'</span><span class="api-value">'+escAttr(String(v))+'</span></div>';
+    }
+    html+='<div class="api-ts" data-ts="'+ts+'">updated just now</div>';
+    el.innerHTML=html;
+    el.dataset.lastOk=String(ts);
+    var iv=parseInt(el.dataset.refresh)*1000;
+    if(iv>0){apiPollTimers.push(setTimeout(function(){renderApiFetch(el);},iv));}
+  }).catch(function(e){
+    var lo=el.dataset.lastOk;
+    el.innerHTML='<div class="api-row"><span class="api-label">'+label+'</span><span class="api-value api-error">'+escAttr(e.message)+'</span></div><div class="api-ts" data-ts="'+(lo||ts)+'">'+(lo?'last ok: '+timeAgo(parseInt(lo)):'')+'</div>';
+    var iv=parseInt(el.dataset.refresh)*1000;
+    if(iv>0){apiPollTimers.push(setTimeout(function(){renderApiFetch(el);},iv));}
+  });
+}
 function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
 
@@ -2813,7 +2900,7 @@ function addNewCard(){
       const colMax=config.layout.cols;
       var sec = {id:'sec-'+uid(),type:t.type,label:t.label};
       if(t.type==='links'||t.type==='link-list') sec.links=[{label:'Example',url:'https://example.com',icon:'link'}];
-      if(t.type==='api-poller') {sec.url='https://api.github.com/repos/nousresearch/wartab';sec.jsonPath='stargazers_count';sec.refreshInterval=120;}
+      if(t.type==='api-poller') {sec.url='https://api.github.com/repos/nousresearch/wartab';sec.fields=[{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}];sec.refreshInterval=120;}
       config.cards.push({
         id:'card-'+uid(), title:'', icon:'package', color:'#888888',
         width:Math.min(1,colMax), height:1,
