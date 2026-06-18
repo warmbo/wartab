@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════
    WarTab — Digital Pet Module
-   Unicode kitten with room environment,
+   ASCII cat (pair-style) with room,
    mood expressions, network speech,
    and direction-aware art.
    ═══════════════════════════════════════════ */
@@ -9,11 +9,13 @@ registerModule('digital-pet', {
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // Unicode kitten — right-facing and left-facing, padded to equal width
-    var Cr='  ╱|、          \n(˚ˎ 。7          \n |、˜〵          \nじしˍ,)ノ        ';
-    var Cl='、|╲            \n)  。ˎ˚(         \n          〵˜、| \nノ(,ˍしじ        ';
-    // Eye character per mood (replaces ˚ in the face)
-    var eyes={idle:'˚',blink:'-',happy:'*',love:'♥',curious:'O',hungry:'o',sad:';',dead:'x',angry:'#'};
+    // ASCII cat — inspired by user's pair art, 11x6
+    // Right-facing: comma ear, )\_  shape, =P ^ face,  body curves
+    // Left-facing:  exact mirror with \↔/ and (↔) swap
+    var Cr='     ,     \n    )\\_)_  \n   /  .  \'.\n  =P ^    \\\n  \'--.  /  \n   .-\'( /  ';
+    var Cl='     ,     \n  _(_/(    \n.\'  .  \\   \n / ^ P=    \n  \\  .--\'  \n  \\ )\'-.   ';
+    // Mouth character per mood (replaces ^ in the face)
+    var mouths={idle:'^',blink:'-',happy:'v',love:'♥',curious:'O',hungry:'o',sad:'.',dead:'x',angry:'#'};
     var _mood='idle',_walking=false,_lastX=50,_direction='right';
     // Top bar
     const top=document.createElement('div');top.className='dp-top';
@@ -101,7 +103,7 @@ registerModule('digital-pet', {
     }
     _sayTimer=setInterval(fetchNetFact,18000+Math.random()*12000);
     setTimeout(fetchNetFact,3000+Math.random()*4000);
-    // Perspective shift — door and window move with cat position
+    // Perspective shift
     function updatePerspective(x){
       var pw=pen.offsetWidth||260;
       var pct=x/(pw-80);
@@ -111,13 +113,13 @@ registerModule('digital-pet', {
       door.style.left=(4+(1-pct)*10)+'px';
       door.style.opacity=(0.3+(1-pct)*0.5)+'';
     }
-    // Render the cat facing the current direction with current mood
+    // Render cat facing current direction with mood mouth
     function setFrame(){
       var base=_direction==='right'?Cr:Cl;
-      // Replace ˚ (eye) with mood character, only first occurrence
-      creature.textContent=base.replace('˚',eyes[_mood]||'˚');
+      // Replace ^ (mouth) with mood character
+      creature.textContent=base.replace('^',mouths[_mood]||'^');
     }
-    // Glide to a new position (cat floats, CSS transition slides it)
+    // Glide to new position
     function startWalk(){
       if(_walking)return;_walking=true;
       var pw=pen.offsetWidth||260,ph=pen.offsetHeight||140;
@@ -131,7 +133,7 @@ registerModule('digital-pet', {
       clearTimeout(_walkTimer);
       _walkTimer=setTimeout(function(){_walking=false;},2600);
     }
-    // Update mood and redraw
+    // Update mood
     function updateAll(){
       hS.upd();haS.upd();wS.upd();
       const h=Math.max(0,curHunger()),ha=Math.max(0,curHappy()),wa=Math.max(0,curWaste());
