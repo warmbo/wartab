@@ -1330,9 +1330,13 @@ async function loadConfig() {
 function saveConfig() {
   var cfg = cloneObj(config);
   try {
-    storage.saveConfig(cfg).catch(function(){});
+    storage.saveConfig(cfg).then(function(){}, function(err){
+      console.error('saveConfig failed:', err);
+    });
   } catch(e) {
-    fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cfg), keepalive: true }).catch(function(){});
+    fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cfg), keepalive: true }).catch(function(err){
+      console.error('saveConfig fallback failed:', err);
+    });
   }
 }
 // Deep-merge stored config over defaults (arrays replaced, objects recursed)
