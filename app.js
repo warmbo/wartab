@@ -484,28 +484,40 @@ registerModule('timer', {
   },
 });
 
-registerModule('tamagotchi', {
-  defaults: { petName:'', creatureEmoji:'🐱', hunger:80, happiness:80, waste:10, lastFed:Date.now(), lastPetted:Date.now(), lastCleaned:Date.now() },
+registerModule('digital-pet', {
+  defaults: { petName:'', hunger:80, happiness:80, waste:10, lastFed:Date.now(), lastPetted:Date.now(), lastCleaned:Date.now() },
   render: (sec,card,cw)=>{
-    const w=document.createElement('div');w.className='tg-container';
+    const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // Top: name + mood
-    const top=document.createElement('div');top.className='tg-top';
-    const nameEl=document.createElement('span');nameEl.className='tg-name';nameEl.textContent=sec.petName||'Tamagotchi';top.appendChild(nameEl);
-    const moodEl=document.createElement('span');moodEl.className='tg-mood';top.appendChild(moodEl);
+    // ASCII art frames — compact 3-line creature
+    const F={
+      idle:['▄■▄\n■-■\n▀■▀','▄■▄\n■‿■\n▀■▀'],
+      happy:['▄★▄\n★‿★\n▀★▀'],
+      hungry:['▄■▄\n╥﹏╥\n▀■▀'],
+      sad:['▄■▄\n╥_╥\n▀■▀'],
+      dirty:['▄■▄\n⊙_⊙\n▀■▀'],
+      dead:['▄■▄\n×_×\n▀■▀'],
+      angry:['▄■▄\n#_#\n▀■▀'],
+    };
+    var _mood='idle',_frame=0;
+    // Top: name + mood label
+    const top=document.createElement('div');top.className='dp-top';
+    const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'Digital Pet';top.appendChild(nameEl);
+    const moodLabel=document.createElement('span');moodLabel.className='dp-mood-label';top.appendChild(moodLabel);
     w.appendChild(top);
     // Enclosure
-    const pen=document.createElement('div');pen.className='tg-pen';
-    const creature=document.createElement('div');creature.className='tg-creature';creature.textContent=sec.creatureEmoji||'🐱';pen.appendChild(creature);
+    const pen=document.createElement('div');pen.className='dp-pen';
+    const speech=document.createElement('div');speech.className='dp-speech';pen.appendChild(speech);
+    const creature=document.createElement('pre');creature.className='dp-creature';pen.appendChild(creature);
     w.appendChild(pen);
     // Stats
-    const stats=document.createElement('div');stats.className='tg-stats';
+    const stats=document.createElement('div');stats.className='dp-stats';
     function makeStat(label,getVal){
-      const row=document.createElement('div');row.className='tg-stat-row';
-      const lbl=document.createElement('span');lbl.className='tg-stat-lbl';lbl.textContent=label;row.appendChild(lbl);
-      const bar=document.createElement('div');bar.className='tg-bar';
-      const fill=document.createElement('div');fill.className='tg-fill';bar.appendChild(fill);row.appendChild(bar);
-      const valEl=document.createElement('span');valEl.className='tg-val';row.appendChild(valEl);
+      const row=document.createElement('div');row.className='dp-stat-row';
+      const lbl=document.createElement('span');lbl.className='dp-stat-lbl';lbl.textContent=label;row.appendChild(lbl);
+      const bar=document.createElement('div');bar.className='dp-bar';
+      const fill=document.createElement('div');fill.className='dp-fill';bar.appendChild(fill);row.appendChild(bar);
+      const valEl=document.createElement('span');valEl.className='dp-val';row.appendChild(valEl);
       const upd=()=>{const v=Math.max(0,Math.min(100,getVal()));fill.style.width=v+'%';fill.style.background=v>50?'rgba(255,255,255,0.3)':'rgba(200,80,80,0.5)';valEl.textContent=Math.round(v);};
       return {row,upd};
     }
@@ -517,42 +529,72 @@ registerModule('tamagotchi', {
     const haS=makeStat('Happy',curHappy);stats.appendChild(haS.row);
     const wS=makeStat('Waste',curWaste);stats.appendChild(wS.row);
     w.appendChild(stats);
-    // Actions
-    const acts=document.createElement('div');acts.className='tg-actions';
-    function mkBtn(label,onClick){const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent=label;b.addEventListener('click',onClick);acts.appendChild(b);}
-    mkBtn('🍕 Feed',()=>{sec.lastFed=Date.now();sec.hunger=Math.min(100,(sec.hunger||80)+30);sec.happiness=Math.min(100,(sec.happiness||80)+5);sec.waste=Math.min(100,(sec.waste||10)+10);upd();saveAndRefresh();});
-    mkBtn('🤚 Pet',()=>{sec.lastPetted=Date.now();sec.happiness=Math.min(100,(sec.happiness||80)+20);upd();saveAndRefresh();});
-    mkBtn('🧹 Clean',()=>{sec.lastCleaned=Date.now();sec.waste=Math.max(0,(sec.waste||10)-40);upd();saveAndRefresh();});
+    // Actions — stopPropagation prevents card-level interference
+    const acts=document.createElement('div');acts.className='dp-actions';
+    function mkBtn(label,onClick){const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent=label;b.addEventListener('click',function(e){e.stopPropagation();onClick();});acts.appendChild(b);}
+    mkBtn('🍕 Feed',()=>{sec.lastFed=Date.now();sec.hunger=Math.min(100,(sec.hunger||80)+30);sec.happiness=Math.min(100,(sec.happiness||80)+5);sec.waste=Math.min(100,(sec.waste||10)+10);saveConfig();updateAll();});
+    mkBtn('🤚 Pet',()=>{sec.lastPetted=Date.now();sec.happiness=Math.min(100,(sec.happiness||80)+20);saveConfig();updateAll();});
+    mkBtn('🧹 Clean',()=>{sec.lastCleaned=Date.now();sec.waste=Math.max(0,(sec.waste||10)-40);saveConfig();updateAll();});
     w.appendChild(acts);
     cw.appendChild(w);
-    // Roam
+    // Network speech — periodic fetch from /api/stats
+    var _sayTimer;
+    function fetchNetFact(){
+      fetch('/api/stats').then(function(r){return r.json();}).then(function(d){
+        var facts=[];
+        if(d.hostname)facts.push('I run on '+d.hostname);
+        if(d.uptime)facts.push('Up '+d.uptime.string);
+        if(typeof d.cpu==='number')facts.push('CPU: '+d.cpu+'%');
+        if(d.memory)facts.push('RAM: '+Math.round(d.memory.percent)+'%');
+        if(d.disks&&d.disks[0])facts.push('Disk: '+Math.round(d.disks[0].percent)+'% full');
+        if(!facts.length)facts.push('The network is quiet...');
+        speak(facts[Math.floor(Math.random()*facts.length)]);
+      }).catch(function(){speak('No network data...');});
+    }
+    function speak(msg){
+      speech.textContent=msg;speech.classList.add('visible');
+      clearTimeout(speech._hide);speech._hide=setTimeout(function(){speech.classList.remove('visible');},6000);
+    }
+    _sayTimer=setInterval(fetchNetFact,18000+Math.random()*12000);
+    setTimeout(fetchNetFact,3000+Math.random()*4000);
+    // Roam — pixel-based within enclosure
     var roamTimer;
-    function roam(){const x=10+Math.random()*70;const y=10+Math.random()*55;creature.style.left=x+'%';creature.style.top=y+'%';}
+    function roam(){
+      var pw=pen.offsetWidth||200,ph=pen.offsetHeight||110;
+      creature.style.left=Math.random()*(pw-80)+'px';creature.style.top=Math.random()*(ph-60)+'px';
+    }
     roam();
     // Update display
-    function upd(){
+    function updateAll(){
       hS.upd();haS.upd();wS.upd();
       const h=Math.max(0,curHunger()),ha=Math.max(0,curHappy()),wa=Math.max(0,curWaste());
-      var mood;if(h<=0||ha<=0){mood='💀';creature.style.filter='grayscale(0.8)';}else if(h<20&&ha<20)mood='😡';else if(h<30)mood='😫';else if(wa>70)mood='🤢';else if(ha<30)mood='😢';else if(ha>65&&h>50&&wa<30)mood='😊';else mood='😐';
-      moodEl.textContent=mood;
+      var moodKey,moodTxt;
+      if(h<=0||ha<=0){moodKey='dead';moodTxt='Dead';}
+      else if(h<20&&ha<20){moodKey='angry';moodTxt='Angry';}
+      else if(h<30){moodKey='hungry';moodTxt='Hungry';}
+      else if(wa>70){moodKey='dirty';moodTxt='Dirty';}
+      else if(ha<30){moodKey='sad';moodTxt='Sad';}
+      else if(ha>65&&h>50&&wa<30){moodKey='happy';moodTxt='Happy';}
+      else{moodKey='idle';moodTxt=sec.petName||'Digital Pet';}
+      if(moodKey!==_mood){_mood=moodKey;_frame=0;}
+      var frames=F[moodKey]||F.idle;
+      if(frames.length>1)_frame=(_frame+1)%frames.length;
+      creature.textContent=frames[_frame]||frames[0];
+      moodLabel.textContent=moodTxt;
     }
-    upd();
-    setInterval(upd,5000);
+    updateAll();
+    setInterval(updateAll,5000);
     roamTimer=setInterval(roam,3500);
+    card._dpCleanup=function(){if(roamTimer)clearInterval(roamTimer);if(_sayTimer)clearInterval(_sayTimer);};
   },
   editor: (sec,card,bd)=>{
     const nr=document.createElement('div');nr.style.cssText='margin-bottom:10px;';
     nr.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block;','Pet Name'));
-    const ni=document.createElement('input');ni.type='text';ni.value=sec.petName||'';ni.placeholder='Tamagotchi';ni.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';
+    const ni=document.createElement('input');ni.type='text';ni.value=sec.petName||'';ni.placeholder='Digital Pet';ni.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';
     ni.addEventListener('change',()=>{sec.petName=ni.value;saveAndRefresh();});nr.appendChild(ni);bd.appendChild(nr);
-    const er=document.createElement('div');er.style.cssText='margin-bottom:10px;';
-    er.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block;','Creature Emoji'));
-    const ei=document.createElement('input');ei.type='text';ei.value=sec.creatureEmoji||'🐱';ei.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';
-    ei.addEventListener('change',()=>{sec.creatureEmoji=ei.value;saveAndRefresh();});er.appendChild(ei);bd.appendChild(er);
-    // Reset button
     const rr=document.createElement('div');rr.style.cssText='margin-bottom:10px;';
     const rb=document.createElement('button');rb.className='btn btn-glass btn-sm btn-danger';rb.textContent='🔄 Reset Pet';
-    rb.addEventListener('click',()=>{const d=Date.now();sec.hunger=80;sec.happiness=80;sec.waste=10;sec.lastFed=d;sec.lastPetted=d;sec.lastCleaned=d;saveAndRefresh();});
+    rb.addEventListener('click',function(e){e.stopPropagation();const d=Date.now();sec.hunger=80;sec.happiness=80;sec.waste=10;sec.lastFed=d;sec.lastPetted=d;sec.lastCleaned=d;saveAndRefresh();});
     rr.appendChild(rb);bd.appendChild(rr);
   },
 });
@@ -1094,7 +1136,7 @@ function buildSectionEditor(sec, card, si) {
       {value:'resource-monitor',label:'Resource Monitor'},
       {value:'image',label:'Image'},
       {value:'lan-scan',label:'LAN Scan'},
-      {value:'tamagotchi',label:'Tamagotchi'},
+      {value:'digital-pet',label:'Digital Pet'},
     ],
     sec.type,
     v => {
@@ -2997,7 +3039,7 @@ function addNewCard(){
     {type:'resource-monitor', label:'Resources', icon:'bar-chart-3'},
     {type:'link-list', label:'Link List', icon:'list'},
     {type:'lan-scan', label:'LAN Scan', icon:'radio'},
-    {type:'tamagotchi', label:'Tamagotchi', icon:'heart'},
+    {type:'digital-pet', label:'Digital Pet', icon:'heart'},
   ];
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
@@ -3030,7 +3072,8 @@ function addNewCard(){
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   overlay.focus();
-  // Render Lucide icons in the modal (auto via MutationObserver)
+  // Render Lucide icons in the modal
+  if(typeof lucide!=='undefined'){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;}
 }
 function pf(type,key,label,options,value,onChange,attrs){const g=el('div','margin-bottom:10px;');
   if(type==='select'){g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;',label));const s=document.createElement('select');s.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;cursor:pointer;';(options||[]).forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;if(o.value===value)opt.selected=true;s.appendChild(opt);});s.addEventListener('change',()=>onChange(s.value));g.appendChild(s);}
