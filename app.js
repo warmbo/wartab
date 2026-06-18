@@ -2886,19 +2886,29 @@ function showShortcutsOverlay() {
   var box = document.createElement('div');
   box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px 32px;min-width:300px;max-width:420px;';
   box.innerHTML = '<div style="font-size:var(--heading-size);font-weight:700;color:var(--text-primary);margin-bottom:16px;">Keyboard Shortcuts</div>' +
+    '<div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:12px;">Press a key while this window is open:</div>' +
     '<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:var(--text-sm);line-height:1.8;">' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">N</span></kbd><span>Add new card</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">P</span></kbd><span>New page</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">S</span></kbd><span>Focus search bar</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">C</span></kbd><span>Toggle config panel</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+/</kbd><span>Toggle this overlay</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Esc</kbd><span>Close panels / overlay</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Tab</kbd><span>Next page</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+K</kbd><span>Focus search</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">N</kbd><span>Add new card</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">S</kbd><span>Focus search bar</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">P</kbd><span>New page</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">C</kbd><span>Toggle config panel</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">?</kbd><span>Close this window</span>' +
     '</div>' +
-    '<div style="text-align:center;margin-top:16px;font-size:var(--text-2xs);color:var(--text-tertiary);">Press Esc to close</div>';
+    '<div style="text-align:center;margin-top:16px;font-size:var(--text-2xs);color:var(--text-tertiary);">Esc to close · Ctrl+K to search anytime</div>';
   overlay.appendChild(box);
   overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  overlay.addEventListener('keydown', function(e) {
+    var key = e.key.toLowerCase();
+    if (key === 'n') { e.preventDefault(); overlay.remove(); addNewCard(); }
+    else if (key === 's') { e.preventDefault(); overlay.remove(); var fs=$('#card-grid .inline-search-wrap input'); if(fs)fs.focus(); }
+    else if (key === 'p') { e.preventDefault(); overlay.remove(); addPage(); }
+    else if (key === 'c') { e.preventDefault(); overlay.remove(); toggleConfigPanel(); }
+    else if (e.key === '?') { e.preventDefault(); overlay.remove(); }
+    else if (e.key === 'Escape') { overlay.remove(); }
+  });
+  // Focus the overlay so keydown events fire (needs tabindex)
+  overlay.setAttribute('tabindex', '-1');
+  overlay.focus();
   document.body.appendChild(overlay);
 }
 
@@ -2951,7 +2961,7 @@ async function init() {
   }
   renderAll(); renderPageNav(); initStatusBar();
   // Footer
-  $('#footer-text').textContent='WarTab v'+WARTAB_VERSION+'  [Ctrl+Shift+/] shortcuts';
+  $('#footer-text').textContent='WarTab v'+WARTAB_VERSION+'  [?] shortcuts';
   loadIconRepo();
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
@@ -2971,11 +2981,8 @@ async function init() {
     if(e.key==='Escape'&&document.querySelector('#shortcuts-overlay'))document.querySelector('#shortcuts-overlay').remove();
     if(e.key==='C'&&e.ctrlKey&&e.shiftKey){e.preventDefault();toggleConfigPanel();}
     if((e.key==='l'||e.key==='k')&&(e.ctrlKey||e.metaKey)){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
-    // All shortcuts use Ctrl+Shift modifiers — no bare key presses
-    if(e.key==='n'&&e.ctrlKey&&e.shiftKey){e.preventDefault();addNewCard();}
-    if(e.key==='p'&&e.ctrlKey&&e.shiftKey){e.preventDefault();addPage();}
-    if(e.key==='s'&&e.ctrlKey&&e.shiftKey){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
-    if(e.key==='/'&&e.ctrlKey&&e.shiftKey){e.preventDefault();showShortcutsOverlay();}
+    // ? opens shortcuts overlay — only bare key, not when typing
+    if(e.key==='/'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.target.closest('input,textarea,select,button')){e.preventDefault();showShortcutsOverlay();}
     if(e.key==='Tab'&&(e.ctrlKey||e.metaKey)){e.preventDefault();const order=config.pageOrder||[];if(!order.length)return;const idx=order.indexOf(config.currentPage);const next=order[(idx+1)%order.length];switchPage(next);}
   });
   let rt=null;window.addEventListener('resize',()=>{if(rt)clearTimeout(rt);rt=setTimeout(()=>{scheduleEqualize();},150);});
