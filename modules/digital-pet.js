@@ -1,20 +1,18 @@
 /* ═══════════════════════════════════════════
    WarTab — Digital Pet Module
-   ASCII cat (user's design) with room,
+   Front-facing cat with room,
    mood expressions, network speech,
-   and direction-aware mirror.
+   blink eyes, and tail wag.
    ═══════════════════════════════════════════ */
 registerModule('digital-pet', {
   defaults: { petName:'', hunger:80, happiness:80, waste:10, lastFed:Date.now(), lastPetted:Date.now(), lastCleaned:Date.now() },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // Cat — user's design, 12x7, mirrored for direction
-    var Cr='      /\\_/\\ \n /\\  / o o \\\n//\\\\ \\~(*)~/\n`  \\/   ^ / \n   | \\|| || \n   \\ \'|| || \n    \\)()-())';
-    var Cl=' /\\_/\\      \n\\ o o /  \\/ \n\\~(*)~/ //\\\\\n \\ ^   \\/  \'\n   || /|| | \n   || ||` / \n   (()-()(/ ';
-    // Eye (replaces * in (*))
-    var eyes={idle:'*',blink:'-',happy:'*',love:'♥',curious:'O',hungry:'o',sad:';',dead:'x',angry:'#'};
-    var _mood='idle',_walking=false,_lastX=50,_direction='right';
+    // Front-facing cat — 11x5, moves side-to-side
+    var C='  /\\_/\\  ( \n ( ^.^ ) _)\n   \\"/  (   \n ( | | )   \n(__d b__)  ';
+    var eyes={idle:'^',blink:'-',happy:'*',love:'♥',curious:'O',hungry:'o',sad:';',dead:'x',angry:'#'};
+    var _mood='idle',_walking=false,_lastX=50,_blink=false,_wag=false;
     // Top bar
     const top=document.createElement('div');top.className='dp-top';
     const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'cat';top.appendChild(nameEl);
@@ -56,7 +54,7 @@ registerModule('digital-pet', {
     w.appendChild(acts);
     cw.appendChild(w);
     // Network speech
-    var _sayTimer,_walkTimer;
+    var _sayTimer,_walkTimer,_blinkTimer,_wagTimer;
     function fetchNetFact(){
       fetch('/api/stats').then(function(r){
         if(r.status===401){throw{retry:true};}
@@ -111,19 +109,19 @@ registerModule('digital-pet', {
       door.style.left=(4+(1-pct)*10)+'px';
       door.style.opacity=(0.3+(1-pct)*0.5)+'';
     }
-    // Render cat facing current direction with mood eye
+    // Render cat with mood eyes, blink, and tail wag
     function setFrame(){
-      var base=_direction==='right'?Cr:Cl;
-      // Replace * (eye in (*)) with mood character
-      creature.textContent=base.replace('*',eyes[_mood]||'*');
+      var ec=_blink?'-':(eyes[_mood]||'^');
+      var txt=C.replace(/\^/g,ec);
+      if(_wag) txt=txt.replace('d','\x00').replace('b','d').replace('\x00','b');
+      creature.textContent=txt;
     }
     // Glide to new position
     function startWalk(){
       if(_walking)return;_walking=true;
-      var pw=pen.offsetWidth||260,ph=pen.offsetHeight||140;
+      var pw=pen.offsetWidth||260,ph=pen.offsetHeight||180;
       var nx=Math.random()*(pw-80);
-      _direction=nx<_lastX?'left':'right';
-      var ny=ph-24-114+Math.random()*8;
+      var ny=ph-24-82+Math.random()*8;
       _lastX=nx;
       creature.style.left=nx+'px';creature.style.top=ny+'px';
       updatePerspective(nx);
@@ -155,10 +153,22 @@ registerModule('digital-pet', {
     var walkTimer=setInterval(function(){
       if(!_walking)startWalk();
     },4500+Math.random()*2500);
+    // Blink every 4s
+    _blinkTimer=setInterval(function(){
+      _blink=!_blink;
+      if(!_walking)setFrame();
+    },4000);
+    // Tail wag every 600ms
+    _wagTimer=setInterval(function(){
+      _wag=!_wag;
+      if(!_walking)setFrame();
+    },600);
     card._dpCleanup=function(){
       if(walkTimer)clearInterval(walkTimer);
       if(_walkTimer)clearTimeout(_walkTimer);
       if(_sayTimer)clearInterval(_sayTimer);
+      if(_blinkTimer)clearInterval(_blinkTimer);
+      if(_wagTimer)clearInterval(_wagTimer);
     };
   },
   editor: (sec,card,bd)=>{
