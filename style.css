@@ -948,10 +948,13 @@ body {
   border: 2px solid var(--surface-border); margin-bottom: 4px; overflow: hidden; }
 /* Floor boards at the bottom */
 .dp-floor { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 14px, rgba(255,255,255,0.06) 14px, rgba(255,255,255,0.06) 15px); border-top: 1px solid var(--surface-border); pointer-events: none; z-index: 0; }
-/* Door on left wall — closer perspective, bigger */
-.dp-door { position: absolute; top: 8px; left: 4px; width: 24px; height: 64px; border: 2px solid var(--surface-border); border-bottom: none; background: rgba(255,255,255,0.05); z-index: 0; pointer-events: none; transition: left 2.5s ease, opacity 2.5s ease; }
-.dp-door::before { content: ''; position: absolute; right: 4px; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--surface-border); }
-.dp-door::after { content: ''; position: absolute; left: 3px; right: 3px; top: 22px; height: 1px; background: var(--surface-border); }
+/* Door on left wall — oversized for close perspective */
+.dp-doorway { position: absolute; top: 0; left: 2px; width: 44px; height: 100px; background: linear-gradient(90deg, rgba(0,0,0,0.25), rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.25)); border: 2px solid var(--surface-border); border-bottom: none; z-index: 0; pointer-events: none; transition: left 2.5s ease, opacity 2.5s ease; }
+.dp-door { position: absolute; top: 4px; left: 4px; width: 40px; height: 94px; border: 2px solid var(--surface-border); border-bottom: none; background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%); z-index: 0; pointer-events: none; transition: left 2.5s ease, opacity 2.5s ease; }
+.dp-door::before { content: ''; position: absolute; right: 5px; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--surface-border); }
+.dp-door::after { content: ''; position: absolute; left: 4px; right: 4px; top: 28px; height: 1px; background: var(--surface-border); }
+/* Hallway floor lines receding into the doorway */
+.dp-hallway-line { position: absolute; left: 4px; height: 1px; background: rgba(255,255,255,0.025); z-index: 0; pointer-events: none; transition: left 2.5s ease; border: none; }
 /* Window on right wall — larger with sill */
 .dp-window { position: absolute; right: 10px; top: 6px; width: 36px; height: 52px; border: 2px solid var(--surface-border); border-bottom: none; background: rgba(255,255,255,0.04); z-index: 0; pointer-events: none; transition: right 2.5s ease, opacity 2.5s ease; }
 .dp-window::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--surface-border); }

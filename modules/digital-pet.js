@@ -21,6 +21,7 @@ registerModule('digital-pet', {
     // Room — walls, door, window, floor, cat
     const pen=document.createElement('div');pen.className='dp-pen';
     const floor=document.createElement('div');floor.className='dp-floor';pen.appendChild(floor);
+    const doorway=document.createElement('div');doorway.className='dp-doorway';pen.appendChild(doorway);
     const door=document.createElement('div');door.className='dp-door';pen.appendChild(door);
     const windowEl=document.createElement('div');windowEl.className='dp-window';pen.appendChild(windowEl);
     const sillEl=document.createElement('div');sillEl.className='dp-window-sill';pen.appendChild(sillEl);
@@ -111,6 +112,8 @@ registerModule('digital-pet', {
       sillEl.style.opacity=(0.3+pct*0.5)+'';
       door.style.left=(4+(1-pct)*10)+'px';
       door.style.opacity=(0.3+(1-pct)*0.5)+'';
+      doorway.style.left=(2+(1-pct)*10)+'px';
+      doorway.style.opacity=(0.3+(1-pct)*0.5)+'';
     }
     // Render cat with mood eyes, blink, and tail wag
     function setFrame(){
