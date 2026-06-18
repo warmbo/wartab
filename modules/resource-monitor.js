@@ -24,11 +24,17 @@ registerModule('resource-monitor', {
       var _prevRx=0,_prevTx=0,_prevTs=0;
     }
     var metrics=['cpu','ram','disk','gpu'];
-    // Auto-scale from 0 to maxVal: 0% always at bottom, max value near top
-    function pctRange(arr){
+    // viewBox always 0-100. Map values proportionally: 0% at bottom, maxVal at top.
+    // This way the line always fills the full graph height.
+    function pctScale(arr){
       var max=0;
       for(var i=0;i<arr.length;i++)if(arr[i]>max)max=arr[i];
-      return Math.max(max*1.15,5); // minimum 5 to show tiny values
+      return max;
+    }
+    function pctY(v,max){
+      if(max<=0)return 50; // no data yet → center
+      var clamped=Math.max(0,Math.min(max,v));
+      return 100-((clamped/max)*100); // 0%→bottom(100), max%→top(0)
     }
     function fitRange(arr){
       var min=Infinity,max=-Infinity;
@@ -120,9 +126,9 @@ registerModule('resource-monitor', {
       metrics.forEach(function(key){
         var h=hist[key];if(!h||!h.length)return;
         var r=rows[key];if(!r||r.svg.style.display==='none')return;
-        var vh=pctRange(h);
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+vh);
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(vh-v);}).join(' '));
+        var maxV=pctScale(h);
+        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' 100');
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+pctY(v,maxV);}).join(' '));
       });
       if(hist.rx&&hist.rx.length&&netSvg.style.display!=='none'){
         var both=hist.rx.concat(hist.tx);
@@ -157,9 +163,9 @@ registerModule('resource-monitor', {
       if(h.length>GRAPH_PTS)h.shift();
       var r=rows[key];
       if(r&&r.svg.style.display!=='none'){
-        var vh=pctRange(h);
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+vh);
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(vh-v);}).join(' '));
+        var maxV=pctScale(h);
+        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' 100');
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+pctY(v,maxV);}).join(' '));
       }
     }
     function updateNetGraph(rxSpeed,txSpeed){
