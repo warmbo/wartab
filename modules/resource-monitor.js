@@ -24,19 +24,19 @@ registerModule('resource-monitor', {
       var _prevRx=0,_prevTx=0,_prevTs=0;
     }
     var metrics=['cpu','ram','disk','gpu'];
-    // Fit graph to data range: lowest point at bottom, highest at top, with padding
+    // Fixed 0-100 viewBox: 0% at bottom, 100% at top, all SVG viewBoxes are identical
+    function pctY(v){return Math.max(0,Math.min(100,100-v));}
     function fitRange(arr){
       var min=Infinity,max=-Infinity;
       for(var i=0;i<arr.length;i++){if(arr[i]<min)min=arr[i];if(arr[i]>max)max=arr[i];}
-      var range=Math.max(max-min,5);
+      var range=Math.max(max-min,1);
       var pad=range*0.1;
       return {min:Math.max(0,min-pad),max:max+pad,range:range+pad*2};
     }
-    // Map a value to its y-position in the graph viewBox (0=top, range=bottom)
     function mapY(v,fr){
-      if(fr.max===fr.min)return fr.range/2; // single value → center
-      var pos=(v-fr.min)/(fr.max-fr.min);   // 0=bottom, 1=top
-      return (1-pos)*fr.range;              // flip: 0=top, range=bottom
+      if(fr.max===fr.min)return fr.range/2;
+      var pos=(v-fr.min)/(fr.max-fr.min);
+      return (1-pos)*fr.range;
     }
     function buildMetricRow(key,label){
       const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;gap:2px;';
@@ -116,9 +116,8 @@ registerModule('resource-monitor', {
       metrics.forEach(function(key){
         var h=hist[key];if(!h||!h.length)return;
         var r=rows[key];if(!r||r.svg.style.display==='none')return;
-        var fr=fitRange(h);
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
+        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' 100');
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(pctY(v));}).join(' '));
       });
       if(hist.rx&&hist.rx.length&&netSvg.style.display!=='none'){
         var both=hist.rx.concat(hist.tx);
@@ -153,9 +152,8 @@ registerModule('resource-monitor', {
       if(h.length>GRAPH_PTS)h.shift();
       var r=rows[key];
       if(r&&r.svg.style.display!=='none'){
-        var fr=fitRange(h);
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
+        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' 100');
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(pctY(v));}).join(' '));
       }
     }
     function updateNetGraph(rxSpeed,txSpeed){
