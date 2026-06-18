@@ -251,14 +251,14 @@ function cpCheck(label, checked, onChange) {
   return w;
 }
 
-function cpRange(label, value, min, max, onChange) {
+function cpRange(label, value, min, max, onChange, step) {
   const g = document.createElement('div');
   g.className = 'cp-range';
   g.appendChild(cpLabel(label));
   const row = document.createElement('div');
   row.className = 'cp-range-row';
   const r = document.createElement('input');
-  r.type = 'range'; r.min = min; r.max = max; r.value = value;
+  r.type = 'range'; r.min = min; r.max = max; r.value = value; if(step!==undefined) r.step = step;
   const s = document.createElement('span');
   s.className = 'cp-range-val';
   s.textContent = value;

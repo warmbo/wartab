@@ -2,25 +2,45 @@
    WarTab — ASCII Animations Module
    Pure terminal-style animations rendered
    in a <pre> element via requestAnimationFrame.
+   Supports dynamic font scaling, ghost/afterimage
+   effect, and real-time speed/contrast controls.
    ═══════════════════════════════════════════ */
 registerModule('ascii-anim', {
-  defaults: { anim:'donut', speed:1, contrast:1 },
+  defaults: { anim:'donut', speed:10, contrast:10, ghost:false },
   render: (sec,card,cw)=>{
     cw.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0;';
-    var pre=document.createElement('pre');pre.className='ascii-anim-pre';
-    pre.style.cssText='margin:0;font-size:10px;line-height:1.15;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.2);text-align:left;font-family:monospace;flex:1;width:100%;box-sizing:border-box;padding:6px;';
-    var running=true,_timer;
-    var sp=parseFloat(sec.speed)||1;
-    var ct=parseFloat(sec.contrast)||1;
+    var pre=document.createElement('pre');
+    pre.style.cssText='margin:0;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.2);text-align:left;font-family:monospace;flex:1;width:100%;box-sizing:border-box;padding:4px;line-height:1.12;';
+    var running=true,_timer,ro;
+    var sp=(parseFloat(sec.speed)||10)/10;
+    var ct=(parseFloat(sec.contrast)||10)/10;
+    var ghostOn=!!sec.ghost;
     cw.appendChild(pre);
+
+    var lum='.,-~:;=!*#$@';
+    var ghostBuf=null,ghostDecay=0.88;
+
+    // Dynamic font sizing — fills available space
+    var W=70,H=22;
+    function sizeFont(){
+      var pw=pre.clientWidth-8,ph=pre.clientHeight-8;
+      if(pw<10||ph<10)return;
+      var fs=Math.min(pw/W*1.18,ph/H*1.25);
+      pre.style.fontSize=Math.max(4,Math.round(fs))+'px';
+    }
+    // Observe resize
+    if(window.ResizeObserver){
+      ro=new ResizeObserver(sizeFont);ro.observe(pre);
+    }
+    // Manually size after append (pre needs layout)
+    setTimeout(sizeFont,50);
 
     // ── Spinning Donut ──────────────────────────────
     function renderDonut(){
       var A=0,B=0;
-      var lum='.,-~:;=!*#$@';
-      var W=70,H=22;
       function frame(){
         if(!running)return;
+        sizeFont();
         var b=new Array(W*H);b.fill(' ');
         var z=new Array(W*H);z.fill(0);
         var rA,rB,ci,co,si,so,ei,eo,D,L,m,n,t,x,y,o,N;
@@ -43,11 +63,7 @@ registerModule('ascii-anim', {
             }
           }
         }
-        var out='';
-        for(var k=0;k<W*H;k++){
-          out+=k>0&&k%W===0?'\n':b[k];
-        }
-        pre.textContent=out;
+        pre.textContent=applyGhost(b,function(v){return v!==' '?1:0;});
         A+=0.04*sp;B+=0.02*sp;
         _timer=requestAnimationFrame(frame);
       }
@@ -56,27 +72,26 @@ registerModule('ascii-anim', {
 
     // ── Matrix Rain ────────────────────────────────
     function renderMatrix(){
-      var cols=60;
       var drops=[];
-      for(var i=0;i<cols;i++)drops.push({y:-Math.random()*20,speed:1+Math.random()*3});
+      for(var i=0;i<60;i++)drops.push({y:-Math.random()*20,speed:0.8+Math.random()*2.5});
       var glyphs='ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝ0123456789ABCDEF';
-      var rows=20;
-      var trail=Math.max(2,Math.round(rows*0.5*ct));
+      var rows=20,cols=60,trail=Math.max(2,Math.round(rows*0.5*ct));
       function frame(){
         if(!running)return;
+        sizeFont();
         var grid=[];
         for(var r=0;r<rows;r++)grid.push(new Array(cols).fill(' '));
         for(var i=0;i<drops.length;i++){
           var d=drops[i];
-          d.y+=d.speed*0.15*sp;
-          if(d.y>=rows+trail){d.y=-trail-Math.random()*10;d.speed=1+Math.random()*3;}
+          d.y+=d.speed*0.12*sp;
+          if(d.y>=rows+trail){d.y=-trail-Math.random()*8;d.speed=0.8+Math.random()*2.5;}
           for(var t=0;t<trail&&d.y-t>=0&&d.y-t<rows;t++){
             var ch=glyphs[Math.floor(Math.random()*glyphs.length)];
             var bright=t<2?0.9:t<trail*0.3?0.6:0.3;
             if(Math.random()<bright)grid[Math.floor(d.y)-t][i]=ch;
           }
         }
-        pre.textContent=grid.map(function(r){return r.join('');}).join('\n');
+        pre.textContent=applyGhostGrid(grid);
         _timer=requestAnimationFrame(frame);
       }
       _timer=requestAnimationFrame(frame);
@@ -86,11 +101,11 @@ registerModule('ascii-anim', {
     function renderStars(){
       var stars=[];
       for(var i=0;i<200;i++){
-        stars.push({x:Math.random()*2-1,y:Math.random()*2-1,z:Math.random()*2+0.5});
+        stars.push({x:Math.random()*2-1,y:Math.random()*2-1,z:0.5+Math.random()*2});
       }
-      var W=70,H=22;
       function frame(){
         if(!running)return;
+        sizeFont();
         var rows=[];
         for(var i=0;i<H;i++)rows.push(new Array(W).fill(' '));
         for(var i=0;i<stars.length;i++){
@@ -104,7 +119,7 @@ registerModule('ascii-anim', {
             rows[py][px]=lum[b];
           }
         }
-        pre.textContent=rows.map(function(r){return r.join('');}).join('\n');
+        pre.textContent=applyGhostGrid(rows);
         _timer=requestAnimationFrame(frame);
       }
       _timer=requestAnimationFrame(frame);
@@ -112,17 +127,15 @@ registerModule('ascii-anim', {
 
     // ── Fire ───────────────────────────────────────
     function renderFire(){
-      var W=70,H=22;
       var pixels=[];
       for(var i=0;i<W*H;i++)pixels.push(0);
-      var lastTime=0;
-      var frameInterval=Math.max(1,Math.round(3/sp));
-      var frameCount=0;
+      var frameCount=0,frameSkip=Math.max(0,Math.round(3-sp*0.6));
       function frame(){
         if(!running)return;
+        sizeFont();
         frameCount++;
         for(var x=0;x<W;x++){
-          pixels[(H-1)*W+x]=Math.random()<0.3?35:0;
+          pixels[(H-1)*W+x]=Math.random()<0.35?35:0;
         }
         for(var y=0;y<H-1;y++){
           for(var x=0;x<W;x++){
@@ -130,47 +143,104 @@ registerModule('ascii-anim', {
             if(x>0)v+=pixels[(y+1)*W+(x-1)];
             v+=pixels[(y+1)*W+x];
             if(x<W-1)v+=pixels[(y+1)*W+(x+1)];
-            pixels[y*W+x]=Math.max(0,Math.round(v/3.2-Math.random()*0.5));
+            pixels[y*W+x]=Math.max(0,Math.round(v/3.4-Math.random()*0.4));
           }
         }
-        var chars=' .,:;xX#';
-        var out='';
-        for(var y=0;y<H;y++){
-          for(var x=0;x<W;x++){
-            var v=Math.round(pixels[y*W+x]/ct);
-            out+=v<chars.length?chars[v>=0?v:0]:'#';
+        if(frameSkip<1||frameCount%frameSkip===0){
+          var chars=' .,:;xX#';
+          var out='';
+          for(var y=0;y<H;y++){
+            for(var x=0;x<W;x++){
+              var v=Math.round(pixels[y*W+x]/ct);
+              out+=v<chars.length?chars[v>=0?v:0]:'#';
+            }
+            out+='\n';
           }
-          out+='\n';
+          pre.textContent=applyGhostStr(out);
         }
-        pre.textContent=out;
         _timer=requestAnimationFrame(frame);
       }
       _timer=requestAnimationFrame(frame);
     }
 
-    // ── Boids / Flocking ────────────────────────────
-    // (placeholder for future)
+    // ── Ghost/Afterimage Engine ────────────────────
+    function applyGhost(arr,valFn){
+      if(!ghostOn)return gridToString(arr);
+      if(!ghostBuf||ghostBuf.length!==W*H)ghostBuf=new Float32Array(W*H);
+      var out='';var fn=valFn||function(v){return v;}
+      for(var k=0;k<W*H;k++){
+        var raw=fn(arr[k]);
+        ghostBuf[k]=Math.min(1,Math.max(0,ghostBuf[k]*ghostDecay+raw*(1-ghostDecay)));
+        var idx=Math.round(ghostBuf[k]*11);
+        out+=k>0&&k%W===0?'\n':lum[Math.min(11,idx)];
+      }
+      return out;
+    }
+    function applyGhostGrid(grid){
+      if(!ghostOn)return grid.map(function(r){return r.join('');}).join('\n');
+      var gcols=grid[0]?grid[0].length:60;
+      if(!ghostBuf||ghostBuf.length!==gcols)ghostBuf=new Float32Array(gcols);
+      var out='';
+      for(var r=0;r<grid.length;r++){
+        for(var c=0;c<grid[r].length;c++){
+          var raw=grid[r][c]!==' '?1:0;
+          ghostBuf[c]=Math.min(1,Math.max(0,ghostBuf[c]*ghostDecay+raw*(1-ghostDecay)));
+          var li=Math.round(ghostBuf[c]*11);
+          out+=lum[Math.min(11,li)];
+        }
+        out+='\n';
+      }
+      return out;
+    }
+    function applyGhostStr(str){
+      if(!ghostOn)return str;
+      if(!ghostBuf||ghostBuf.length!==W*H)ghostBuf=new Float32Array(W*H);
+      var out='';var ci=0;
+      for(var k=0;k<str.length;k++){
+        var ch=str[k];
+        if(ch==='\n'){out+='\n';continue;}
+        var raw=ch!==' '?1:0;
+        ghostBuf[ci]=Math.min(1,Math.max(0,ghostBuf[ci]*ghostDecay+raw*(1-ghostDecay)));
+        var li=Math.round(ghostBuf[ci]*11);
+        out+=lum[Math.min(11,li)];
+        ci++;
+      }
+      return out;
+    }
+    function gridToString(arr){
+      var out='';
+      for(var k=0;k<W*H;k++){
+        out+=k>0&&k%W===0?'\n':arr[k];
+      }
+      return out;
+    }
 
     // Start selected animation
-    var lum='.,-~:;=!*#$@';
     function startAnim(){
+      ghostBuf=null;
       if(_timer){cancelAnimationFrame(_timer);_timer=null;}
       switch(sec.anim){
-        case'donut':renderDonut();break;
+        case'donut':W=70;H=22;renderDonut();break;
         case'matrix':renderMatrix();break;
-        case'stars':renderStars();break;
-        case'fire':renderFire();break;
-        default:renderDonut();
+        case'stars':W=70;H=22;renderStars();break;
+        case'fire':W=70;H=22;renderFire();break;
+        default:W=70;H=22;renderDonut();
       }
     }
-    setTimeout(startAnim,100);
+    setTimeout(startAnim,50);
 
     // Cleanup
     card._asciiCleanup=function(){
       running=false;
       if(_timer){cancelAnimationFrame(_timer);_timer=null;}
+      if(ro)ro.disconnect();
     };
-    card._asciiRestart=function(){running=true;startAnim();};
+    card._asciiRestart=function(){
+      sp=(parseFloat(sec.speed)||10)/10;
+      ct=(parseFloat(sec.contrast)||10)/10;
+      ghostOn=!!sec.ghost;
+      running=true;startAnim();
+    };
   },
   editor: (sec,card,bd)=>{
     bd.appendChild(cpLabel('Animation'));
@@ -180,7 +250,14 @@ registerModule('ascii-anim', {
       {value:'stars',label:'Starfield'},
       {value:'fire',label:'Fire'},
     ],sec.anim||'donut',function(v){sec.anim=v;saveConfig();if(card._asciiRestart)card._asciiRestart();}));
-    bd.appendChild(cpRange('Speed',parseFloat(sec.speed)||1,0.1,5,function(v){sec.speed=parseFloat(v);saveConfig();if(card._asciiRestart)card._asciiRestart();}));
-    bd.appendChild(cpRange('Contrast',parseFloat(sec.contrast)||1,0.2,3,function(v){sec.contrast=parseFloat(v);saveConfig();if(card._asciiRestart)card._asciiRestart();}));
+    bd.appendChild(cpRange('Speed',parseFloat(sec.speed)||10,1,20,function(v){
+      sec.speed=parseInt(v);saveConfig();if(card._asciiRestart)card._asciiRestart();
+    },1));
+    bd.appendChild(cpRange('Contrast',parseFloat(sec.contrast)||10,1,20,function(v){
+      sec.contrast=parseInt(v);saveConfig();if(card._asciiRestart)card._asciiRestart();
+    },1));
+    bd.appendChild(cpCheck('Ghost / Afterimage',!!sec.ghost,function(v){
+      sec.ghost=v;saveConfig();if(card._asciiRestart)card._asciiRestart();
+    }));
   },
 });
