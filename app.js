@@ -32,12 +32,14 @@ function registerModule(type, module){
 
 /* ── Public API presets for API Poller ── */
 var API_PRESETS = [
-  { label:'GitHub Repo', url:'https://api.github.com/repos/nousresearch/wartab', fields:[{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}], icon:'github' },
-  { label:'CoinDesk BTC', url:'https://api.coindesk.com/v1/bpi/currentprice.json', fields:[{label:'USD',path:'bpi.USD.rate'},{label:'GBP',path:'bpi.GBP.rate'},{label:'EUR',path:'bpi.EUR.rate'}], icon:'bitcoin' },
+  { label:'GitHub Repo', url:'https://api.github.com/repos/warmbo/wartab', fields:[{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}], icon:'github' },
+  { label:'Bitcoin Price', url:'https://api.coinbase.com/v2/prices/BTC-USD/spot', fields:[{label:'BTC/USD',path:'data.amount'}], icon:'bitcoin' },
   { label:'Dog API', url:'https://dog.ceo/api/breeds/image/random', fields:[{label:'Breed Image',path:'message'}], icon:'dog' },
-  { label:'IP Info', url:'https://ipapi.co/json/', fields:[{label:'IP',path:'ip'},{label:'City',path:'city'},{label:'Country',path:'country_name'}], icon:'map-pin' },
+  { label:'IP Info', url:'http://ip-api.com/json/', fields:[{label:'IP',path:'query'},{label:'ISP',path:'isp'},{label:'City',path:'city'},{label:'Country',path:'country'}], icon:'map-pin' },
   { label:'Random User', url:'https://randomuser.me/api/', fields:[{label:'Name',path:'results.0.name.first'},{label:'Country',path:'results.0.location.country'}], icon:'users' },
   { label:'Open-Meteo (NYC)', url:'https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true', fields:[{label:'Temp °C',path:'current_weather.temperature'},{label:'Wind km/h',path:'current_weather.windspeed'}], icon:'cloud-sun' },
+  { label:'Joke', url:'https://v2.jokeapi.dev/joke/Any?type=single', fields:[{label:'Joke',path:'joke'}], icon:'message-circle' },
+  { label:'ISS Location', url:'http://api.open-notify.org/iss-now.json', fields:[{label:'Lat',path:'iss_position.latitude'},{label:'Lon',path:'iss_position.longitude'}], icon:'globe' },
 ];
 
 /* ── LAN Scan — terminal-style ARP table viewer ── */
