@@ -4,26 +4,28 @@
    in a <pre> element via requestAnimationFrame.
    ═══════════════════════════════════════════ */
 registerModule('ascii-anim', {
-  defaults: { anim:'donut', speed:1, height:4, contrast:1 },
+  defaults: { anim:'donut', speed:1, contrast:1 },
   render: (sec,card,cw)=>{
     var pre=document.createElement('pre');pre.className='ascii-anim-pre';
-    pre.style.cssText='margin:0;font-size:10px;line-height:1.15;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.15);text-align:center;font-family:monospace;';
-    var h=(sec.height||4)*48;pre.style.height=h+'px';
+    pre.style.cssText='margin:0;font-size:10px;line-height:1.15;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.2);text-align:center;font-family:monospace;width:100%;height:100%;box-sizing:border-box;padding:4px;';
     var running=true,_timer;
-    var contrast=parseFloat(sec.contrast)||1;
-    cw.appendChild(pre);
+    var sp=parseFloat(sec.speed)||1;
+    var ct=parseFloat(sec.contrast)||1;
+    cw.style.height='100%';cw.appendChild(pre);
+
+    // Show init text to confirm pre is reachable
+    pre.textContent='▌ initializing '+sec.anim+'... ▐';
 
     // ── Spinning Donut ──────────────────────────────
     function renderDonut(){
       var A=0,B=0;
-      var lum=".,-~:;=!*#$@";
+      var lum='.,-~:;=!*#$@';
       var W=70,H=22;
-      var lumStep=Math.max(1,Math.round(12/contrast));
       function frame(){
         if(!running)return;
         var b=new Array(W*H);b.fill(' ');
         var z=new Array(W*H);z.fill(0);
-        var rA,rB,ci,co,si,so,ei,eo,D,l,m,n,t,x,y,o,N;
+        var rA,rB,ci,co,si,so,ei,eo,D,L,m,n,t,x,y,o,N;
         for(var j=0;j<6.28;j+=0.07){
           rA=Math.sin(j);rB=Math.cos(j);
           for(var i=0;i<6.28;i+=0.02){
@@ -31,15 +33,15 @@ registerModule('ascii-anim', {
             si=Math.sin(A);so=Math.sin(j);
             ei=Math.cos(A);eo=Math.cos(j);
             D=1/(ci*(rB+2)*ei+so*si+5);
-            l=co*(rB+2)*eo-si*so;
+            L=co*(rB+2)*eo-si*so;
             m=Math.cos(B);n=Math.sin(B);
             t=ci*(rB+2)*si-so*ei;
-            x=Math.round(35+30*D*(l*m-t*n));
-            y=Math.round(12+15*D*(l*n+t*m));
+            x=Math.round(35+30*D*(L*m-t*n));
+            y=Math.round(12+15*D*(L*n+t*m));
             o=x+W*y;
             N=Math.round(8*((so*si-ci*rB*ei)*m-ci*rB*si-so*ei-co*rB*n));
             if(y>=0&&y<H&&x>=0&&x<W&&D>z[o]){
-              z[o]=D;b[o]=lum[Math.min(11,Math.max(0,Math.round(N/lumStep)))];
+              z[o]=D;b[o]=lum[Math.min(11,Math.max(0,Math.round(N*ct)))];
             }
           }
         }
@@ -48,7 +50,7 @@ registerModule('ascii-anim', {
           out+=k>0&&k%W===0?'\n':b[k];
         }
         pre.textContent=out;
-        A+=0.04*sec.speed;B+=0.02*sec.speed;
+        A+=0.04*sp;B+=0.02*sp;
         _timer=requestAnimationFrame(frame);
       }
       _timer=requestAnimationFrame(frame);
@@ -56,28 +58,27 @@ registerModule('ascii-anim', {
 
     // ── Matrix Rain ────────────────────────────────
     function renderMatrix(){
-      var cols=Math.floor((pre.offsetWidth||300)/8);
-      if(cols<10)cols=30;
-      var drops=new Array(cols);
-      for(var i=0;i<cols;i++)drops[i]=Math.random()*20;
+      var cols=60;
+      var drops=[];
+      for(var i=0;i<cols;i++)drops.push({y:-Math.random()*20,speed:1+Math.random()*3});
       var glyphs='ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝ0123456789ABCDEF';
-      var lines=Math.floor(h/15);if(lines<3)lines=10;
+      var rows=20;
+      var trail=Math.max(2,Math.round(rows*0.5*ct));
       function frame(){
         if(!running)return;
-        var out='';
-        for(var l=0;l<lines;l++){
-          for(var i=0;i<drops.length;i++){
+        var grid=[];
+        for(var r=0;r<rows;r++)grid.push(new Array(cols).fill(' '));
+        for(var i=0;i<drops.length;i++){
+          var d=drops[i];
+          d.y+=d.speed*0.15*sp;
+          if(d.y>=rows+trail){d.y=-trail-Math.random()*10;d.speed=1+Math.random()*3;}
+          for(var t=0;t<trail&&d.y-t>=0&&d.y-t<rows;t++){
             var ch=glyphs[Math.floor(Math.random()*glyphs.length)];
-            var trail=Math.max(1,Math.round(lines*0.6*contrast));
-            out+=drops[i]>l&&drops[i]<l+trail&&Math.random()>0.2?ch:' ';
-            if(l===lines-1){
-              drops[i]+=0.5*sec.speed;
-              if(drops[i]>lines+trail||(drops[i]>lines/2&&Math.random()<0.02))drops[i]=-Math.random()*5;
-            }
+            var bright=t<2?0.9:t<trail*0.3?0.6:0.3;
+            if(Math.random()<bright)grid[Math.floor(d.y)-t][i]=ch;
           }
-          out+='\n';
         }
-        pre.textContent=out;
+        pre.textContent=grid.map(function(r){return r.join('');}).join('\n');
         _timer=requestAnimationFrame(frame);
       }
       _timer=requestAnimationFrame(frame);
@@ -85,10 +86,9 @@ registerModule('ascii-anim', {
 
     // ── Starfield ──────────────────────────────────
     function renderStars(){
-      var numStars=120;
       var stars=[];
-      for(var i=0;i<numStars;i++){
-        stars.push({x:Math.random()*2-1,y:Math.random()*2-1,z:Math.random()});
+      for(var i=0;i<200;i++){
+        stars.push({x:Math.random()*2-1,y:Math.random()*2-1,z:Math.random()*2+0.5});
       }
       var W=70,H=22;
       function frame(){
@@ -97,13 +97,13 @@ registerModule('ascii-anim', {
         for(var i=0;i<H;i++)rows.push(new Array(W).fill(' '));
         for(var i=0;i<stars.length;i++){
           var s=stars[i];
-          s.z-=0.02*sec.speed;
-          if(s.z<=0){s.x=Math.random()*2-1;s.y=Math.random()*2-1;s.z=1;}
+          s.z-=0.03*sp;
+          if(s.z<=0.1){s.x=Math.random()*2-1;s.y=Math.random()*2-1;s.z=2.5;}
           var px=Math.round(W/2+s.x/s.z*30);
           var py=Math.round(H/2+s.y/s.z*15);
           if(px>=0&&px<W&&py>=0&&py<H){
-            var b=Math.max(0,Math.min(10,Math.round((1-s.z)*10*contrast)));
-            rows[py][px]='.,-~:;=!*#$@'[Math.min(11,b)];
+            var b=Math.max(0,Math.min(11,Math.round((1-(s.z-0.1)/2.4)*10*ct)));
+            rows[py][px]=lum[b];
           }
         }
         pre.textContent=rows.map(function(r){return r.join('');}).join('\n');
@@ -117,8 +117,12 @@ registerModule('ascii-anim', {
       var W=70,H=22;
       var pixels=[];
       for(var i=0;i<W*H;i++)pixels.push(0);
+      var lastTime=0;
+      var frameInterval=Math.max(1,Math.round(3/sp));
+      var frameCount=0;
       function frame(){
         if(!running)return;
+        frameCount++;
         for(var x=0;x<W;x++){
           pixels[(H-1)*W+x]=Math.random()<0.3?35:0;
         }
@@ -131,12 +135,11 @@ registerModule('ascii-anim', {
             pixels[y*W+x]=Math.max(0,Math.round(v/3.2-Math.random()*0.5));
           }
         }
-        var maxVal=Math.max(1,Math.round(7/contrast));
         var chars=' .,:;xX#';
         var out='';
         for(var y=0;y<H;y++){
           for(var x=0;x<W;x++){
-            var v=Math.round(pixels[y*W+x]/contrast);
+            var v=Math.round(pixels[y*W+x]/ct);
             out+=v<chars.length?chars[v>=0?v:0]:'#';
           }
           out+='\n';
@@ -147,7 +150,11 @@ registerModule('ascii-anim', {
       _timer=requestAnimationFrame(frame);
     }
 
+    // ── Boids / Flocking ────────────────────────────
+    // (placeholder for future)
+
     // Start selected animation
+    var lum='.,-~:;=!*#$@';
     function startAnim(){
       if(_timer){cancelAnimationFrame(_timer);_timer=null;}
       switch(sec.anim){
@@ -158,7 +165,7 @@ registerModule('ascii-anim', {
         default:renderDonut();
       }
     }
-    startAnim();
+    setTimeout(startAnim,100);
 
     // Cleanup
     card._asciiCleanup=function(){
@@ -175,8 +182,7 @@ registerModule('ascii-anim', {
       {value:'stars',label:'Starfield'},
       {value:'fire',label:'Fire'},
     ],sec.anim||'donut',function(v){sec.anim=v;if(card._asciiRestart)card._asciiRestart();saveAndRefresh();}));
-    bd.appendChild(cpRange('Speed',parseFloat(sec.speed)||1,0.1,3,function(v){sec.speed=parseFloat(v);card._asciiRestart();saveAndRefresh();}));
+    bd.appendChild(cpRange('Speed',parseFloat(sec.speed)||1,0.1,5,function(v){sec.speed=parseFloat(v);card._asciiRestart();saveAndRefresh();}));
     bd.appendChild(cpRange('Contrast',parseFloat(sec.contrast)||1,0.2,3,function(v){sec.contrast=parseFloat(v);card._asciiRestart();saveAndRefresh();}));
-    bd.appendChild(cpRange('Height',sec.height||4,2,8,function(v){sec.height=parseInt(v);saveAndRefresh();}));
   },
 });
