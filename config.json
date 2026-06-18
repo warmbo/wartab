@@ -9,14 +9,14 @@
     "bgValue": "/uploads/f09dd3fd38a6453786f20dff3aee32ca.jpg",
     "bgBlur": 20,
     "bgDim": 60,
-    "blur": 18,
+    "blur": 4,
     "glow": "#cad3d8",
     "fontSizeText": 16,
-    "fontSizeHeading": 18,
+    "fontSizeHeading": 20,
     "fontFamily": "Karla",
     "cardBg": "dark",
     "fontColor": "#dedede",
-    "cardOpacity": 0.6699999999999999,
+    "cardOpacity": 0.42000000000000004,
     "bgRotate": false,
     "animations": true,
     "showAccentBar": true,
@@ -41,7 +41,7 @@
     "cols": 4,
     "gap": 16,
     "pageWidth": 85,
-    "pagePadding": 20,
+    "pagePadding": 120,
     "paddingHeight": "compact"
   },
   "search": {
@@ -439,7 +439,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 0,
+          "_qi": 1,
           "collapsed": false
         }
       ]
@@ -847,7 +847,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 0,
+              "_qi": 1,
               "collapsed": false
             }
           ]
