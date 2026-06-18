@@ -24,7 +24,14 @@ registerModule('resource-monitor', {
       var _prevRx=0,_prevTx=0,_prevTs=0;
     }
     var metrics=['cpu','ram','disk','gpu'];
-    function autoMax(arr){var m=0;for(var i=0;i<arr.length;i++)if(arr[i]>m)m=arr[i];return Math.max(m*1.15,10);}
+    // Fit graph to data range: lowest point at bottom, highest at top, with padding
+    function fitRange(arr){
+      var min=Infinity,max=-Infinity;
+      for(var i=0;i<arr.length;i++){if(arr[i]<min)min=arr[i];if(arr[i]>max)max=arr[i];}
+      var range=Math.max(max-min,5);
+      var pad=range*0.08;
+      return {min:Math.max(0,min-pad),max:max+pad,range:range+pad*2};
+    }
     function buildMetricRow(key,label){
       const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;gap:2px;';
       const labelRow=document.createElement('div');labelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
@@ -74,11 +81,11 @@ registerModule('resource-monitor', {
     netSvg.style.cssText='display:none;width:100%;height:40px;background:rgba(0,0,0,0.08);';
     netSvg.setAttribute('preserveAspectRatio','none');
     var netRxLine=document.createElementNS('http://www.w3.org/2000/svg','polyline');
-    netRxLine.style.cssText='fill:none;stroke:var(--accent);stroke-width:1.5;stroke-linejoin:round;';
+    netRxLine.style.cssText='fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1;stroke-linejoin:round;stroke-linecap:round;';
     netRxLine.setAttribute('points','');
     netSvg.appendChild(netRxLine);
     var netTxLine=document.createElementNS('http://www.w3.org/2000/svg','polyline');
-    netTxLine.style.cssText='fill:none;stroke:var(--accent);stroke-width:1;stroke-linejoin:round;stroke-dasharray:3,2;opacity:0.5;';
+    netTxLine.style.cssText='fill:none;stroke:rgba(255,255,255,0.25);stroke-width:1;stroke-linejoin:round;stroke-linecap:round;';
     netTxLine.setAttribute('points','');
     netSvg.appendChild(netTxLine);
     netRow.appendChild(netSvg);
@@ -100,15 +107,16 @@ registerModule('resource-monitor', {
       metrics.forEach(function(key){
         var h=hist[key];if(!h||!h.length)return;
         var r=rows[key];if(!r||r.svg.style.display==='none')return;
-        var maxY=autoMax(h);
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+maxY);
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(maxY-v);}).join(' '));
+        var fr=fitRange(h);
+        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
       });
       if(hist.rx&&hist.rx.length&&netSvg.style.display!=='none'){
-        var maxV=autoMax(hist.rx.concat(hist.tx));
-        netSvg.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+maxV);
-        netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(maxV-v);}).join(' '));
-        netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(maxV-v);}).join(' '));
+        var both=hist.rx.concat(hist.tx);
+        var fr=fitRange(both);
+        netSvg.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
+        netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
+        netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
       }
     }
     // Write cache on each update
@@ -136,19 +144,20 @@ registerModule('resource-monitor', {
       if(h.length>GRAPH_PTS)h.shift();
       var r=rows[key];
       if(r&&r.svg.style.display!=='none'){
-        var maxY=autoMax(h);
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+maxY);
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(maxY-v);}).join(' '));
+        var fr=fitRange(h);
+        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
       }
     }
     function updateNetGraph(rxSpeed,txSpeed){
       hist.rx.push(rxSpeed);hist.tx.push(txSpeed);
       if(hist.rx.length>GRAPH_PTS){hist.rx.shift();hist.tx.shift();}
       if(netSvg.style.display==='none')return;
-      var maxV=autoMax(hist.rx.concat(hist.tx));
-      netSvg.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+maxV);
-      netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(maxV-v);}).join(' '));
-      netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(maxV-v);}).join(' '));
+      var both=hist.rx.concat(hist.tx);
+      var fr=fitRange(both);
+      netSvg.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
+      netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
+      netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(fr.max-v);}).join(' '));
     }
     // Fetch data
     function fetchData(){
