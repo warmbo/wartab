@@ -2824,9 +2824,8 @@ if(typeof lucide!=='undefined'){
   body.appendChild(ps('Layout'));
   body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
   body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
-  body.appendChild(pf('range','','Page Width (%)',null,config.layout.pageWidth,v=>{config.layout.pageWidth=parseInt(v);applyChanges();renderAll();},{min:50,max:100}));
-  body.appendChild(pf('range','','Page Width Padding (px)',null,parseInt(config.layout.pageWidthPadding)||20,v=>{config.layout.pageWidthPadding=parseInt(v);applyChanges();renderAll();},{min:0,max:200}));
-  body.appendChild(pf('range','','Page Height Padding (px)',null,config.layout.pagePadding||20,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:20,max:200}));
+  body.appendChild(pf('range','','Page Width Padding (px)',null,parseInt(config.layout.pageWidthPadding)||20,v=>{config.layout.pageWidthPadding=parseInt(v);applyChanges();renderAll();},{min:0,max:400}));
+  body.appendChild(pf('range','','Page Height Padding (px)',null,config.layout.pagePadding||20,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:20,max:400}));
 
   /* ── Data ── */
   body.appendChild(ps('Data'));
@@ -3242,5 +3241,6 @@ async function init() {
     $$('.weather-ts').forEach(el=>{const t=parseInt(el.dataset.ts);if(t)el.textContent='updated '+timeAgo(t);});
   },15000);
   console.log('WarTab initialized');
+  $('#page-loader').classList.add('hidden');
 }
 document.addEventListener('DOMContentLoaded', init);

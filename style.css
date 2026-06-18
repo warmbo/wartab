@@ -16,6 +16,8 @@
   --accent: #888888;
   --accent-glow: rgba(136, 136, 136, 0.3);
   --accent-glass: rgba(136, 136, 136, 0.12);
+  --bg-img-blur: 0px;
+  --bg-dim-opacity: 0;
   --bevel-light: rgba(255, 255, 255, 0.08);
   --bevel-dark: rgba(0, 0, 0, 0.20);
   --emboss-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -90,6 +92,25 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-attachment: fixed;
 }
+
+/* ══════ Full-page Loader ══════ */
+#page-loader {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #0a0a0a;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.4s ease;
+}
+#page-loader.hidden {
+  opacity: 0; pointer-events: none;
+}
+.loader-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(255,255,255,0.12);
+  border-top-color: rgba(255,255,255,0.7);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ══════ Fixed Background Layer ══════ */
 #bg-canvas {

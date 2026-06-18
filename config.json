@@ -6,7 +6,7 @@
   },
   "theme": {
     "bgType": "image",
-    "bgValue": "/uploads/f09dd3fd38a6453786f20dff3aee32ca.jpg",
+    "bgValue": "/uploads/7a2b338733b34d4ebcee2acadbb410fa.jpg",
     "bgBlur": 20,
     "bgDim": 60,
     "blur": 4,
@@ -17,14 +17,14 @@
     "cardBg": "dark",
     "fontColor": "#dedede",
     "cardOpacity": 0.42000000000000004,
-    "bgRotate": true,
+    "bgRotate": false,
     "animations": true,
     "showAccentBar": false
   },
   "statusBar": {
     "enabled": true,
     "source": "local",
-    "glancesUrl": "http://10.0.0.227:61208",
+    "glancesUrl": "",
     "customUrl": "",
     "refreshInterval": 5,
     "items": [
@@ -38,8 +38,9 @@
   "layout": {
     "cols": 4,
     "gap": 4,
-    "pageWidth": 92,
-    "pagePadding": 78
+    "pageWidth": 100,
+    "pagePadding": 46,
+    "pageWidthPadding": 200
   },
   "search": {
     "engine": "https://www.google.com/search?q=",
@@ -367,7 +368,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         }
       ]
@@ -733,7 +734,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]
