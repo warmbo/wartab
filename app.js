@@ -109,6 +109,7 @@ function openCardEditPanel(cardId) {
   _editPanelOpen = true;
   $('#edit-panel-body').innerHTML = '';
   buildCardEditPanel(card);
+  renderIcons();
   $('#edit-panel-overlay').classList.add('open');
   $('#edit-panel').classList.add('open');
   const title = $('#edit-panel-title');
@@ -930,6 +931,15 @@ function isLucideName(s){if(!s||typeof s!=='string')return false;if(s.startsWith
 // Render a Lucide icon element (data-lucide attribute for auto-replacement by lucide.createIcons())
 function renderLucideEl(name,cls){var i=document.createElement('i');i.className=cls;i.setAttribute('data-lucide',name);return i;}
 
+// Safe icon render — calls lucide.createIcons with console.warn suppression
+function renderIcons(){
+  if(typeof lucide==='undefined')return;
+  var _lw=console.warn;console.warn=function(m){
+    if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);
+  };try{lucide.createIcons();}catch(e){}
+  console.warn=_lw;
+}
+
 let config = {}, clockInterval = null, weatherIntervals = [], apiPollTimers = [], statsTimer = null;
 let dragState = null, iconPickerCallback = null;
 let uploadedFiles = [], _eqPending = false;
@@ -1119,7 +1129,7 @@ if(!config.cards.length){
 config.cards.forEach((c,i)=>{grid.appendChild(renderCard(c,i));});
 setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs)fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
   // Render Lucide icons for any newly created data-lucide elements
-  if(typeof lucide!=='undefined'){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;}
+  renderIcons();
 }
 function scheduleEqualize(){if(!_eqPending){_eqPending=true;requestAnimationFrame(()=>{_eqPending=false;equalizeCardHeights();});}}
 function equalizeCardHeights(){const grid=$('#card-grid');const allCards=[...grid.children].filter(el=>el.classList.contains('card'));if(!allCards.length)return;allCards.forEach(c=>c.style.minHeight='');// Skip cards with height>1 (double-height cards control their own size)
@@ -2118,7 +2128,7 @@ function openBgPicker() {
 
 /* ═══════════════════════════════════════════ CONFIG PANEL ═══════════════════════════════════════════ */
 let configPanelOpen=false;
-function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);if(configPanelOpen)buildConfigPanel();}
+function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);if(configPanelOpen){buildConfigPanel();renderIcons();}}
 function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   const brand=config.branding||{};
   // Update header title
@@ -2473,7 +2483,7 @@ function addNewCard(){
   document.body.appendChild(overlay);
   overlay.focus();
   // Render Lucide icons in the modal
-  if(typeof lucide!=='undefined'){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;}
+  renderIcons();
 }
 function pf(type,key,label,options,value,onChange,attrs){const g=el('div','margin-bottom:10px;');
   if(type==='select'){g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;',label));const s=document.createElement('select');s.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;cursor:pointer;';(options||[]).forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;if(o.value===value)opt.selected=true;s.appendChild(opt);});s.addEventListener('change',()=>onChange(s.value));g.appendChild(s);}
@@ -2543,7 +2553,7 @@ function renderPageNav() {
     tabs.appendChild(tab);
   });
   // Render Lucide SVGs for page tab icons
-  if(typeof lucide!=='undefined'){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;}
+  renderIcons();
 }
 
 /** Simple confirmation overlay */
@@ -2706,7 +2716,7 @@ async function init() {
   },15000);
   console.log('WarTab initialized');
   // Render any Lucide icons that were added dynamically
-  if(typeof lucide!=='undefined'){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;}
+  renderIcons();
   } catch(e) {
     console.error('init error:', e);
   } finally {

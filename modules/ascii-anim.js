@@ -25,9 +25,8 @@ registerModule('ascii-anim', {
     function sizeFont(){
       var pw=pre.clientWidth-8,ph=pre.clientHeight-8;
       if(pw<10||ph<10)return;
-      // Monospace char aspect ≈ 0.6 width/height at line-height 1.12
-      var fs=Math.min(pw/(W*0.6),ph/(H*1.12));
-      pre.style.fontSize=Math.max(4,Math.round(fs))+'px';
+      // Fill width; height overflow is hidden by overflow:hidden
+      pre.style.fontSize=Math.max(4,Math.round(pw/(W*0.6)))+'px';
     }
     // Observe resize + size on every frame
     if(window.ResizeObserver){ro=new ResizeObserver(sizeFont);ro.observe(pre);}
