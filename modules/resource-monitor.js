@@ -29,12 +29,12 @@ registerModule('resource-monitor', {
     var metrics=['cpu','ram','disk','gpu'];
     // Canvas sparkline renderer — draws a polyline scaled to fill the canvas
     function hexToRgba(h,a){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return'rgba('+r+','+g+','+b+','+a+')';}
-    function drawSparkline(canvas,data,color){
+    function drawSparkline(canvas,data,color,fixedMax){
       if(!canvas||!data||!data.length)return;
       var ctx=canvas.getContext('2d');
       var W=canvas.width,H=canvas.height,pad=2;
-      var max=0;
-      for(var i=0;i<data.length;i++)if(data[i]>max)max=data[i];
+      var max=fixedMax||0;
+      if(!fixedMax)for(var i=0;i<data.length;i++)if(data[i]>max)max=data[i];
       if(max<1)max=1;
       var plotH=H-pad*2,plotW=W-pad*2,plotBot=H-pad;
       ctx.clearRect(0,0,W,H);
@@ -180,7 +180,7 @@ registerModule('resource-monitor', {
         var ctx=r.canvas.getContext('2d');
         ctx.scale(dpr,dpr);
         var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888';
-        drawSparkline(r.canvas,hist[key],accent);
+        drawSparkline(r.canvas,hist[key],accent,key==='ram'?100:0);
       });
       if(netCwrap.style.display==='none')return;
       var rect=netCwrap.getBoundingClientRect();
@@ -218,7 +218,7 @@ registerModule('resource-monitor', {
       if(h.length>GRAPH_PTS)h.shift();
       var r=rows[key];
       if(r&&r.cwrap.style.display!=='none'){
-        drawSparkline(r.canvas,h,getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888');
+        drawSparkline(r.canvas,h,getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888',key==='ram'?100:0);
       }
     }
     function updateNetGraph(rxSpeed,txSpeed){
