@@ -8,18 +8,18 @@ registerModule('digital-pet', {
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // Cat frames — 6-frame walk cycle + mood expressions, all 7×4
+    // Cat frames — 6-frame walk cycle + mood expressions, all 8×4 with tail
     var C={
-      idle:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| '],
-      blink:[' /\\_/\\ \n( - o )\n | Y | \n |_|_| '],
-      walk:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| ',' /\\_/\\ \n( o o )\n | Y | \n| |_|  ',' /\\_/\\ \n( o o )\n | Y | \n|_| |  ',' /\\_/\\ \n( o o )\n | Y | \n |_|_| ',' /\\_/\\ \n( o o )\n | Y | \n  |_| |',' /\\_/\\ \n( o o )\n | Y | \n | |_| '],
-      happy:[' /\\_/\\ \n( * * )\n | Y | \n |_|_| '],
-      love:[' /\\_/\\ \n( ♥ ♥ )\n | Y | \n |_|_| '],
-      curious:[' /\\_/\\ \n( o O )\n | Y | \n |_|_| '],
-      hungry:[' /\\_/\\ \n( o o )\n | Y | \n |_|_| '],
-      sad:[' /\\_/\\ \n( ;; )\n | Y | \n |_|_| '],
-      dead:[' /\\_/\\ \n( x x )\n | Y | \n |_|_| '],
-      angry:[' /\\_/\\ \n( # # )\n | Y | \n |_|_| '],
+      idle:[' /\\_/\\ \n( o o )~\n | Y |  \n |_|_|  '],
+      blink:[' /\\_/\\ \n( - o )~\n | Y |  \n |_|_|  '],
+      walk:[' /\\_/\\ \n( o o )~\n | Y |  \n |_|_|  ',' /\\_/\\ \n( o o )~\n | Y |  \n| |_|   ',' /\\_/\\ \n( o o )~\n | Y |  \n|_| |   ',' /\\_/\\ \n( o o )~\n | Y |  \n |_|_|  ',' /\\_/\\ \n( o o )~\n | Y |  \n  |_| | ',' /\\_/\\ \n( o o )~\n | Y |  \n | |_|  '],
+      happy:[' /\\_/\\ \n( * * )~\n | Y |  \n |_|_|  '],
+      love:[' /\\_/\\ \n( ♥ ♥ )~\n | Y |  \n |_|_|  '],
+      curious:[' /\\_/\\ \n( o O )~\n | Y |  \n |_|_|  '],
+      hungry:[' /\\_/\\ \n( o o )~\n | Y |  \n |_|_|  '],
+      sad:[' /\\_/\\ \n( ;; )~\n | Y |  \n |_|_|  '],
+      dead:[' /\\_/\\ \n( x x )~\n | Y |  \n |_|_|  '],
+      angry:[' /\\_/\\ \n( # # )~\n | Y |  \n |_|_|  '],
     };
     var _mood='idle',_frame=0,_walking=false,_lastX=50;
     // Top bar
