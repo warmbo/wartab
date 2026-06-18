@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════
    WarTab — Resource Monitor Module
    CPU, RAM, Disk, GPU + Network speed
-   Bar view or Chart.js sparkline graph view
+   Bar view or canvas sparkline graph view
+   Zero external dependencies — no Chart.js
    ═══════════════════════════════════════════ */
 if(!window._rmCache)window._rmCache={};
 registerModule('resource-monitor', {
@@ -24,7 +25,51 @@ registerModule('resource-monitor', {
       var _smoothed={};
     }
     var metrics=['cpu','ram','disk','gpu'];
-    var charts={}; // Chart.js instances per metric
+    // Canvas sparkline renderer — draws a polyline scaled to fill the canvas
+    function drawSparkline(canvas,data,color){
+      if(!canvas||!data||!data.length)return;
+      var ctx=canvas.getContext('2d');
+      var W=canvas.width,H=canvas.height,pad=2;
+      var min=Infinity,max=-Infinity;
+      for(var i=0;i<data.length;i++){if(data[i]<min)min=data[i];if(data[i]>max)max=data[i];}
+      if(max-min<1)max=min+1; // avoid division by zero
+      var plotH=H-pad*2,plotW=W-pad*2;
+      ctx.clearRect(0,0,W,H);
+      ctx.beginPath();
+      ctx.strokeStyle=color;
+      ctx.lineWidth=1.5;
+      ctx.lineJoin='round';
+      ctx.lineCap='round';
+      for(var i=0;i<data.length;i++){
+        var x=pad+(i/(data.length-1||1))*plotW;
+        var y=pad+plotH-((data[i]-min)/(max-min))*plotH;
+        if(i===0)ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    function drawNetSparkline(canvas,rxData,txData){
+      if(!canvas||!rxData||!rxData.length)return;
+      var ctx=canvas.getContext('2d');
+      var W=canvas.width,H=canvas.height,pad=2;
+      var all=rxData.concat(txData);
+      var min=Infinity,max=-Infinity;
+      for(var i=0;i<all.length;i++){if(all[i]<min)min=all[i];if(all[i]>max)max=all[i];}
+      if(max-min<1)max=min+1;
+      var plotH=H-pad*2,plotW=W-pad*2;
+      ctx.clearRect(0,0,W,H);
+      function drawLine(data,style){
+        ctx.beginPath();ctx.strokeStyle=style;ctx.lineWidth=1;ctx.lineJoin='round';ctx.lineCap='round';
+        for(var i=0;i<data.length;i++){
+          var x=pad+(i/(data.length-1||1))*plotW;
+          var y=pad+plotH-((data[i]-min)/(max-min))*plotH;
+          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      }
+      drawLine(txData,'rgba(255,255,255,0.25)');
+      drawLine(rxData,'rgba(255,255,255,0.7)');
+    }
     function buildMetricRow(key,label){
       const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;gap:2px;';
       const labelRow=document.createElement('div');labelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
@@ -38,14 +83,12 @@ registerModule('resource-monitor', {
       const fill=document.createElement('div');fill.className='rm-fill-'+key;
       fill.style.cssText='height:100%;width:0%;background:var(--accent);transition:width 0.4s ease;';
       track.appendChild(fill);
-      var canvas=document.createElement('canvas');canvas.className='rm-canvas-'+key;
-      canvas.style.cssText='width:100%;height:100%;background:rgba(0,0,0,0.08);';
+      var canvas=document.createElement('canvas');canvas.className='rm-spark-'+key;
       var cwrap=document.createElement('div');cwrap.style.cssText='display:none;height:48px;position:relative;';
       cwrap.appendChild(canvas);
       row.appendChild(track);row.appendChild(cwrap);
       return {row:row,fill:fill,val:val,canvas:canvas,cwrap:cwrap,track:track,key:key};
     }
-    // Build metric rows
     var rows={};
     metrics.forEach(function(m){
       var labels={cpu:'CPU',ram:'RAM',disk:'DISK',gpu:'GPU'};
@@ -60,13 +103,10 @@ registerModule('resource-monitor', {
     const netVal=document.createElement('span');netVal.className='rm-val-net';netVal.style.cssText='color:var(--text-primary);font-variant-numeric:tabular-nums;font-size:var(--text-2xs);';
     netVal.textContent='--';
     netLabelRow.appendChild(netLbl);netLabelRow.appendChild(netVal);netRow.appendChild(netLabelRow);
-    const netTrack=document.createElement('div');netTrack.className='rm-track-net';
-    netTrack.style.cssText='height:4px;background:rgba(255,255,255,0.06);overflow:hidden;';
     const netFill=document.createElement('div');netFill.className='rm-fill-net';
-    netFill.style.cssText='height:100%;width:0%;background:var(--accent);transition:width 0.4s ease;';
-    netTrack.appendChild(netFill);netRow.appendChild(netTrack);
-    var netCanvas=document.createElement('canvas');netCanvas.className='rm-canvas-net';
-    netCanvas.style.cssText='width:100%;height:100%;background:rgba(0,0,0,0.08);';
+    netFill.style.cssText='height:4px;width:0%;background:var(--accent);transition:width 0.4s ease;';
+    netRow.appendChild(netFill);
+    var netCanvas=document.createElement('canvas');netCanvas.className='rm-spark-net';
     var netCwrap=document.createElement('div');netCwrap.style.cssText='display:none;height:40px;position:relative;';
     netCwrap.appendChild(netCanvas);
     netRow.appendChild(netCwrap);
@@ -75,12 +115,41 @@ registerModule('resource-monitor', {
     const txEl=document.createElement('span');txEl.className='rm-tx';
     netSpeedRow.appendChild(rxEl);netSpeedRow.appendChild(txEl);netRow.appendChild(netSpeedRow);
     w.appendChild(netRow);
+    // System info
     const sysRow=document.createElement('div');sysRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:2px;';
     const hostEl=document.createElement('span');hostEl.className='rm-host';
     const tsEl=document.createElement('span');tsEl.className='rm-ts';
     sysRow.appendChild(hostEl);sysRow.appendChild(tsEl);
     w.appendChild(sysRow);
     cw.appendChild(w);
+    // Size canvases to match their container, then redraw
+    function sizeAndDrawAll(){
+      metrics.forEach(function(key){
+        var r=rows[key];if(!r)return;
+        if(r.cwrap.style.display==='none')return;
+        var rect=r.cwrap.getBoundingClientRect();
+        var dpr=window.devicePixelRatio||1;
+        r.canvas.width=rect.width*dpr;
+        r.canvas.height=rect.height*dpr;
+        r.canvas.style.width=rect.width+'px';
+        r.canvas.style.height=rect.height+'px';
+        var ctx=r.canvas.getContext('2d');
+        ctx.scale(dpr,dpr);
+        var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888';
+        drawSparkline(r.canvas,hist[key],accent);
+      });
+      if(netCwrap.style.display==='none')return;
+      var rect=netCwrap.getBoundingClientRect();
+      var dpr=window.devicePixelRatio||1;
+      netCanvas.width=rect.width*dpr;
+      netCanvas.height=rect.height*dpr;
+      netCanvas.style.width=rect.width+'px';
+      netCanvas.style.height=rect.height+'px';
+      var ctx=netCanvas.getContext('2d');
+      ctx.scale(dpr,dpr);
+      drawNetSparkline(netCanvas,hist.rx,hist.tx);
+    }
+    // Toggle bar / graph mode
     function setGraphMode(enabled){
       w.dataset.graphMode=enabled?'1':'0';
       metrics.forEach(function(key){
@@ -88,50 +157,11 @@ registerModule('resource-monitor', {
         if(enabled){r.track.style.display='none';r.cwrap.style.display='block';}
         else{r.track.style.display='';r.cwrap.style.display='none';}
       });
-      if(enabled){netTrack.style.display='none';netCwrap.style.display='block';}
-      else{netTrack.style.display='';netCwrap.style.display='none';}
-      if(enabled&&typeof Chart!=='undefined'){
-        initCharts();
-      }else{
-        Object.keys(charts).forEach(function(k){if(charts[k]){charts[k].destroy();delete charts[k];}});
-      }
+      if(enabled){netFill.style.display='none';netCwrap.style.display='block';}
+      else{netFill.style.display='';netCwrap.style.display='none';}
+      if(enabled)setTimeout(sizeAndDrawAll,0);
     }
     setGraphMode(sec.graphMode);
-    // Create Chart.js instances on visible canvases
-    function initCharts(){
-      metrics.forEach(function(key){
-        var r=rows[key];if(!r)return;
-        if(charts[key]){charts[key].destroy();}
-        var ctx=r.canvas.getContext('2d');
-        var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888';
-        charts[key]=new Chart(ctx,{
-          type:'line',
-          data:{datasets:[{data:(hist[key]||[]).slice(),borderColor:accent,borderWidth:1.5,fill:false,pointRadius:0,tension:0.1}]},
-          options:{
-            responsive:true,maintainAspectRatio:false,animation:false,
-            scales:{y:{beginAtZero:true,min:0,grid:{display:false},ticks:{display:false}},x:{display:false,grid:{display:false}}},
-            plugins:{legend:{display:false},tooltip:{enabled:false}},
-            elements:{point:{radius:0}}
-          }
-        });
-      });
-      // Network chart
-      if(charts.net){charts.net.destroy();}
-      var nctx=netCanvas.getContext('2d');
-      charts.net=new Chart(nctx,{
-        type:'line',
-        data:{datasets:[
-          {data:(hist.rx||[]).slice(),borderColor:'rgba(255,255,255,0.7)',borderWidth:1,fill:false,pointRadius:0,tension:0.1},
-          {data:(hist.tx||[]).slice(),borderColor:'rgba(255,255,255,0.25)',borderWidth:1,fill:false,pointRadius:0,tension:0.1,borderDash:[3,2]}
-        ]},
-        options:{
-          responsive:true,maintainAspectRatio:false,animation:false,
-          scales:{y:{beginAtZero:true,min:0,grid:{display:false},ticks:{display:false}},x:{display:false,grid:{display:false}}},
-          plugins:{legend:{display:false},tooltip:{enabled:false}},
-          elements:{point:{radius:0}}
-        }
-      });
-    }
     // Helpers
     function fmtBytes(b){if(b<1024)return b.toFixed(0)+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
     function fmtSpeed(bps){if(bps<1024)return bps.toFixed(0)+'B/s';if(bps<1048576)return(bps/1024).toFixed(1)+'KB/s';return(bps/1048576).toFixed(1)+'MB/s';}
@@ -142,23 +172,18 @@ registerModule('resource-monitor', {
       var h=hist[key];if(!h)return;
       h.push(sv);
       if(h.length>GRAPH_PTS)h.shift();
-      var chart=charts[key];
-      if(chart){
-        chart.data.datasets[0].data=h.slice();
-        chart.update('none');
+      var r=rows[key];
+      if(r&&r.cwrap.style.display!=='none'){
+        drawSparkline(r.canvas,h,getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888');
       }
     }
     function updateNetGraph(rxSpeed,txSpeed){
       hist.rx.push(rxSpeed);hist.tx.push(txSpeed);
       if(hist.rx.length>GRAPH_PTS){hist.rx.shift();hist.tx.shift();}
-      var ch=charts.net;
-      if(ch){
-        ch.data.datasets[0].data=hist.rx.slice();
-        ch.data.datasets[1].data=hist.tx.slice();
-        ch.update('none');
+      if(netCwrap.style.display!=='none'){
+        drawNetSparkline(netCanvas,hist.rx,hist.tx);
       }
     }
-    // Write cache on each update
     function saveCache(){
       window._rmCache[ck]={hist:hist,prevRx:_prevRx,prevTx:_prevTx,prevTs:_prevTs,smoothed:_smoothed};
     }
@@ -184,12 +209,10 @@ registerModule('resource-monitor', {
         }
         if(!w.parentNode)return;
         var isGraph=w.dataset.graphMode==='1';
-        // CPU — show temp and process count alongside percentage
+        // CPU
         var cpuVal=Math.min(cpuPct,100);
         rows.cpu.fill.style.width=cpuVal+'%';
-        var cpuExtra=[];
-        if(cpuTemp.celsius>0)cpuExtra.push(cpuTemp.celsius+'°C');
-        if(procs>0)cpuExtra.push(procs+'p');
+        var cpuExtra=[];if(cpuTemp.celsius>0)cpuExtra.push(cpuTemp.celsius+'°C');if(procs>0)cpuExtra.push(procs+'p');
         rows.cpu.val.innerHTML=(cpuPct||0).toFixed(1)+'% <span style="opacity:0.5;font-weight:400;font-size:var(--text-3xs)">'+cpuExtra.join(' ')+'</span>';
         pushGraph('cpu',cpuVal);
         // RAM
@@ -218,7 +241,6 @@ registerModule('resource-monitor', {
         if(_prevTs>0){var dt=now-_prevTs;if(dt>0){rxSpeed=Math.max(0,(rx-_prevRx))/dt;txSpeed=Math.max(0,(tx-_prevTx))/dt;}}
         if(isGraph){netVal.textContent=fmtSpeed(rxSpeed)+' / '+fmtSpeed(txSpeed);updateNetGraph(rxSpeed,txSpeed);}
         else{netVal.textContent=fmtBytes(rx)+' / '+fmtBytes(tx);}
-        netFill.style.width='0%';
         rxEl.textContent='▼ '+fmtBytes(rx);txEl.textContent='▲ '+fmtBytes(tx);
         _prevRx=rx;_prevTx=tx;_prevTs=now;
         hostEl.textContent=hostname;
