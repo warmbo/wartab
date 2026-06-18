@@ -3139,29 +3139,8 @@ function deletePage(pageId) {
 }
 
 /* ═══════════════════════════════════════════ INIT ═══════════════════════════════════════════ */
-let _lucideObserver = null;
-
-/** Watch DOM for [data-lucide] elements and auto-render them */
-function setupLucideObserver() {
-  if (_lucideObserver) return;
-  _lucideObserver = new MutationObserver(function() {
-    if (typeof lucide !== 'undefined') {
-      var _lw = console.warn; console.warn = function(m) { if(m && m.indexOf && m.indexOf('not found') < 0) _lw.apply(console, arguments); };
-      lucide.createIcons();
-      console.warn = _lw;
-    }
-  });
-  _lucideObserver.observe(document.body, { childList: true, subtree: true });
-  // Initial render for elements already in the DOM
-  if (typeof lucide !== 'undefined') {
-    var _lw = console.warn; console.warn = function(m) { if(m && m.indexOf && m.indexOf('not found') < 0) _lw.apply(console, arguments); };
-    lucide.createIcons();
-    console.warn = _lw;
-  }
-}
-
 async function init() {
-  setupLucideObserver();
+  try {
   await loadConfig(); applyTheme();
   pageInit();  // migrate/init pages
   if(!config.cards||!config.cards.length){console.warn('Config had no cards — restored defaults');config=cloneObj(DEFAULT_CONFIG);pageInit();saveConfig();}
@@ -3206,6 +3185,14 @@ async function init() {
     $$('.weather-ts').forEach(el=>{const t=parseInt(el.dataset.ts);if(t)el.textContent='updated '+timeAgo(t);});
   },15000);
   console.log('WarTab initialized');
-  $('#page-loader').classList.add('hidden');
+  // Render any Lucide icons that were added dynamically
+  if(typeof lucide!=='undefined'){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;}
+  } catch(e) {
+    console.error('init error:', e);
+  } finally {
+    $('#page-loader').classList.add('hidden');
+  }
 }
+// Safety net: hide spinner after 10s even if init function fails silently
+setTimeout(function(){var pl=document.getElementById('page-loader');if(pl)pl.classList.add('hidden');},10000);
 document.addEventListener('DOMContentLoaded', init);
