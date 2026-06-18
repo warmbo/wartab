@@ -484,6 +484,79 @@ registerModule('timer', {
   },
 });
 
+registerModule('tamagotchi', {
+  defaults: { petName:'', creatureEmoji:'🐱', hunger:80, happiness:80, waste:10, lastFed:Date.now(), lastPetted:Date.now(), lastCleaned:Date.now() },
+  render: (sec,card,cw)=>{
+    const w=document.createElement('div');w.className='tg-container';
+    w.dataset.secId=sec.id;
+    // Top: name + mood
+    const top=document.createElement('div');top.className='tg-top';
+    const nameEl=document.createElement('span');nameEl.className='tg-name';nameEl.textContent=sec.petName||'Tamagotchi';top.appendChild(nameEl);
+    const moodEl=document.createElement('span');moodEl.className='tg-mood';top.appendChild(moodEl);
+    w.appendChild(top);
+    // Enclosure
+    const pen=document.createElement('div');pen.className='tg-pen';
+    const creature=document.createElement('div');creature.className='tg-creature';creature.textContent=sec.creatureEmoji||'🐱';pen.appendChild(creature);
+    w.appendChild(pen);
+    // Stats
+    const stats=document.createElement('div');stats.className='tg-stats';
+    function makeStat(label,getVal){
+      const row=document.createElement('div');row.className='tg-stat-row';
+      const lbl=document.createElement('span');lbl.className='tg-stat-lbl';lbl.textContent=label;row.appendChild(lbl);
+      const bar=document.createElement('div');bar.className='tg-bar';
+      const fill=document.createElement('div');fill.className='tg-fill';bar.appendChild(fill);row.appendChild(bar);
+      const valEl=document.createElement('span');valEl.className='tg-val';row.appendChild(valEl);
+      const upd=()=>{const v=Math.max(0,Math.min(100,getVal()));fill.style.width=v+'%';fill.style.background=v>50?'rgba(255,255,255,0.3)':'rgba(200,80,80,0.5)';valEl.textContent=Math.round(v);};
+      return {row,upd};
+    }
+    function elapsed(ts){return(Date.now()-(ts||Date.now()))/60000;}
+    function curHunger(){return(sec.hunger||80)-elapsed(sec.lastFed)*2;}
+    function curHappy(){return(sec.happiness||80)-elapsed(sec.lastPetted)*1;}
+    function curWaste(){return(sec.waste||10)+elapsed(sec.lastCleaned)*0.5;}
+    const hS=makeStat('Hunger',curHunger);stats.appendChild(hS.row);
+    const haS=makeStat('Happy',curHappy);stats.appendChild(haS.row);
+    const wS=makeStat('Waste',curWaste);stats.appendChild(wS.row);
+    w.appendChild(stats);
+    // Actions
+    const acts=document.createElement('div');acts.className='tg-actions';
+    function mkBtn(label,onClick){const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent=label;b.addEventListener('click',onClick);acts.appendChild(b);}
+    mkBtn('🍕 Feed',()=>{sec.lastFed=Date.now();sec.hunger=Math.min(100,(sec.hunger||80)+30);sec.happiness=Math.min(100,(sec.happiness||80)+5);sec.waste=Math.min(100,(sec.waste||10)+10);upd();saveAndRefresh();});
+    mkBtn('🤚 Pet',()=>{sec.lastPetted=Date.now();sec.happiness=Math.min(100,(sec.happiness||80)+20);upd();saveAndRefresh();});
+    mkBtn('🧹 Clean',()=>{sec.lastCleaned=Date.now();sec.waste=Math.max(0,(sec.waste||10)-40);upd();saveAndRefresh();});
+    w.appendChild(acts);
+    cw.appendChild(w);
+    // Roam
+    var roamTimer;
+    function roam(){const x=10+Math.random()*70;const y=10+Math.random()*55;creature.style.left=x+'%';creature.style.top=y+'%';}
+    roam();
+    // Update display
+    function upd(){
+      hS.upd();haS.upd();wS.upd();
+      const h=Math.max(0,curHunger()),ha=Math.max(0,curHappy()),wa=Math.max(0,curWaste());
+      var mood;if(h<=0||ha<=0){mood='💀';creature.style.filter='grayscale(0.8)';}else if(h<20&&ha<20)mood='😡';else if(h<30)mood='😫';else if(wa>70)mood='🤢';else if(ha<30)mood='😢';else if(ha>65&&h>50&&wa<30)mood='😊';else mood='😐';
+      moodEl.textContent=mood;
+    }
+    upd();
+    setInterval(upd,5000);
+    roamTimer=setInterval(roam,3500);
+  },
+  editor: (sec,card,bd)=>{
+    const nr=document.createElement('div');nr.style.cssText='margin-bottom:10px;';
+    nr.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block;','Pet Name'));
+    const ni=document.createElement('input');ni.type='text';ni.value=sec.petName||'';ni.placeholder='Tamagotchi';ni.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';
+    ni.addEventListener('change',()=>{sec.petName=ni.value;saveAndRefresh();});nr.appendChild(ni);bd.appendChild(nr);
+    const er=document.createElement('div');er.style.cssText='margin-bottom:10px;';
+    er.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block;','Creature Emoji'));
+    const ei=document.createElement('input');ei.type='text';ei.value=sec.creatureEmoji||'🐱';ei.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';
+    ei.addEventListener('change',()=>{sec.creatureEmoji=ei.value;saveAndRefresh();});er.appendChild(ei);bd.appendChild(er);
+    // Reset button
+    const rr=document.createElement('div');rr.style.cssText='margin-bottom:10px;';
+    const rb=document.createElement('button');rb.className='btn btn-glass btn-sm btn-danger';rb.textContent='🔄 Reset Pet';
+    rb.addEventListener('click',()=>{const d=Date.now();sec.hunger=80;sec.happiness=80;sec.waste=10;sec.lastFed=d;sec.lastPetted=d;sec.lastCleaned=d;saveAndRefresh();});
+    rr.appendChild(rb);bd.appendChild(rr);
+  },
+});
+
 registerModule('resource-monitor', {
   defaults: { source:'local', glancesUrl:'http://localhost:61209', refreshInterval:15 },
   render: (sec,card,cw)=>{
@@ -1021,6 +1094,7 @@ function buildSectionEditor(sec, card, si) {
       {value:'resource-monitor',label:'Resource Monitor'},
       {value:'image',label:'Image'},
       {value:'lan-scan',label:'LAN Scan'},
+      {value:'tamagotchi',label:'Tamagotchi'},
     ],
     sec.type,
     v => {
@@ -2923,6 +2997,7 @@ function addNewCard(){
     {type:'resource-monitor', label:'Resources', icon:'bar-chart-3'},
     {type:'link-list', label:'Link List', icon:'list'},
     {type:'lan-scan', label:'LAN Scan', icon:'radio'},
+    {type:'tamagotchi', label:'Tamagotchi', icon:'heart'},
   ];
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
