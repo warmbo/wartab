@@ -1233,8 +1233,8 @@ const DEFAULT_CONFIG = {
     cols: 4,                      // number of grid columns
     gap: 16,                      // gap between cards (px)
     pageWidth: 100,               // page width as percentage (slider: 50-100)
-    pagePadding: 20,              // top/bottom padding in px (slider: 20-200)
-    pageWidthPadding: 20,         // left/right padding in px (slider: 0-200)
+    pagePadding: 2,               // top/bottom padding as % of container width (slider: 0-15)
+    pageWidthPadding: 2,          // left/right padding as % of container width (slider: 0-15)
   },
 
   /* ── Search widget settings ── */
@@ -1582,11 +1582,11 @@ function stItem(icon,label,value,pct){const div=document.createElement('span');d
 function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];weatherIntervals.forEach(clearInterval);weatherIntervals=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width
   appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
-  const xPad=parseInt(config.layout.pageWidthPadding)||20;
-  appEl.style.paddingLeft=xPad+'px';appEl.style.paddingRight=xPad+'px';
-  // Top/bottom padding: slider (20-200px)
-  const yPad=parseInt(config.layout.pagePadding)||20;
-  appEl.style.paddingTop=yPad+'px';appEl.style.paddingBottom=yPad+'px';
+  const xPad=parseInt(config.layout.pageWidthPadding)||2;
+  appEl.style.paddingLeft=xPad+'%';appEl.style.paddingRight=xPad+'%';
+  // Top/bottom padding: slider (%)
+  const yPad=parseInt(config.layout.pagePadding)||2;
+  appEl.style.paddingTop=yPad+'%';appEl.style.paddingBottom=yPad+'%';
 }const _scrollY=window.scrollY;
 if(!config.cards.length){
   grid.innerHTML=`<div class="card" style="grid-column:1/-1;padding:0;"><div class="card-body" style="display:flex;flex-direction:column;align-items:center;padding:40px 24px;text-align:center;">
@@ -2824,8 +2824,8 @@ if(typeof lucide!=='undefined'){
   body.appendChild(ps('Layout'));
   body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
   body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
-  body.appendChild(pf('range','','Page Width Padding (px)',null,parseInt(config.layout.pageWidthPadding)||20,v=>{config.layout.pageWidthPadding=parseInt(v);applyChanges();renderAll();},{min:0,max:400}));
-  body.appendChild(pf('range','','Page Height Padding (px)',null,config.layout.pagePadding||20,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:20,max:400}));
+  body.appendChild(pf('range','','Page Width Padding (%)',null,parseInt(config.layout.pageWidthPadding)||2,v=>{config.layout.pageWidthPadding=parseInt(v);applyChanges();renderAll();},{min:0,max:15}));
+  body.appendChild(pf('range','','Page Height Padding (%)',null,config.layout.pagePadding||2,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:0,max:15}));
 
   /* ── Data ── */
   body.appendChild(ps('Data'));

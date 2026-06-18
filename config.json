@@ -39,8 +39,8 @@
     "cols": 4,
     "gap": 4,
     "pageWidth": 100,
-    "pagePadding": 46,
-    "pageWidthPadding": 200
+    "pagePadding": 3,
+    "pageWidthPadding": 4
   },
   "search": {
     "engine": "https://www.google.com/search?q=",
@@ -1181,7 +1181,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 1
+              "_qi": 0
             }
           ]
         },
