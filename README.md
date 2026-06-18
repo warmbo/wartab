@@ -5,6 +5,11 @@ Card-based layout with multi-page support, fully customizable from the UI.
 Entirely self-contained — no external network required once loaded.
 
 ```
+🌐 GitHub:  https://github.com/warmbo/wartab
+🌐 Forgejo: http://10.0.0.253:3000/cody/wartab
+```
+
+```
 http://localhost:8081   or   http://<your-ip>:8081
 ```
 
@@ -33,7 +38,7 @@ http://localhost:8081   or   http://<your-ip>:8081
 | **Timer** | Hours/minutes dropdown-set countdown with Start/Reset |
 | **API Poller** | Fetch JSON from any endpoint, extract a value via dot-path, auto-refresh |
 
-### Icon System — 2,363 icons
+### Icon System — 2,000+ icons
 
 - **Lucide SVG** — 2,000+ vector icons, all from the Lucide library, color-matched to your theme
 - **Selfh.st service icons** — 350+ self-hosted app logos (Jellyfin, Home Assistant, Portainer, etc.) — organized in a searchable Services tab
@@ -94,12 +99,12 @@ A slide-out right panel organized into card-like sections:
 Built-in `/api/stats` endpoint — CPU, memory, disk, uptime, load — all from `/proc`
 with zero Python dependencies (no psutil). Returns JSON for the status bar widget.
 
-### Offline Capable
+### Offline Capable — after first setup
 
-All assets ship with the repo:
-- **Lucide icon library** — 602KB (`/static/lucide.min.js`)
-- **Inter font** — weights 200–700 (`/static/fonts/`)
-- **2,363 service icons** — SVG set from selfhst/icons (`/icons/`)
+All assets can be shipped with the repo or downloaded on demand:
+- **Lucide icon library** — 602KB (`/static/lucide.min.js`), included in repo
+- **Inter font** — weights 200–700 (`/static/fonts/`), included in repo
+- **Service icons** — 350+ SVG icons downloaded from selfh.st CDN during setup (`python3 download_icons.sh`)
 - **Quotes** — user-defined only, no network calls
 
 Only the Font Family's non-Inter options require network (Google Fonts),
@@ -112,7 +117,7 @@ and OpenWeatherMap API — both degrade gracefully.
 ### Option 1: Install Script (Debian)
 
 ```bash
-curl -sL https://raw.githubusercontent.com/nousresearch/wartab/main/setup.sh | bash
+curl -sL https://raw.githubusercontent.com/warmbo/wartab/main/setup.sh | bash
 # Or from the repo:
 bash setup.sh
 ```
@@ -190,6 +195,7 @@ wartab/
 ├── server.py          # Python HTTP server (zero deps)
 ├── Dockerfile         # Container build
 ├── docker-compose.yml # Container orchestration
+├── download_icons.sh   # Fetches service icons from selfh.st CDN
 ├── setup.sh           # Debian install script
 ├── manifest.json      # Chrome extension manifest
 ├── config.json        # Server-side config (auto-managed)

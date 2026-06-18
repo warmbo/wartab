@@ -3,7 +3,7 @@
 # WarTab — Debian Install Script  v0.3.0
 # ═══════════════════════════════════════════════════════════════
 # Usage:
-#   curl -sL https://raw.githubusercontent.com/your-repo/wartab/main/setup.sh | bash
+#   curl -sL https://raw.githubusercontent.com/warmbo/wartab/main/setup.sh | bash
 #   bash setup.sh [options]
 #
 # Options:
@@ -11,7 +11,7 @@
 #   --bind 0.0.0.0      Bind address (default: 0.0.0.0)
 #   --user cody         System user (default: current user)
 #   --dir /opt/wartab   Install directory (default: /opt/wartab)
-#   --repo URL          Git repo URL (default: https://github.com/nousresearch/wartab.git)
+#   --repo URL          Git repo URL (default: https://github.com/warmbo/wartab.git)
 #   --uninstall         Remove WarTab service, files, and data
 #   --help              Show this help
 # ═══════════════════════════════════════════════════════════════
@@ -24,7 +24,7 @@ PORT="${PORT:-8081}"
 BIND="${BIND:-0.0.0.0}"
 INSTALL_USER="${INSTALL_USER:-$(whoami)}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/wartab}"
-REPO_URL="${REPO_URL:-https://github.com/nousresearch/wartab.git}"
+REPO_URL="${REPO_URL:-https://github.com/warmbo/wartab.git}"
 UNINSTALL=false
 
 # ── Parse arguments ──
