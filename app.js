@@ -1234,6 +1234,7 @@ const DEFAULT_CONFIG = {
     gap: 16,                      // gap between cards (px)
     pageWidth: 100,               // page width as percentage (slider: 50-100)
     pagePadding: 20,              // top/bottom padding in px (slider: 20-200)
+    pageWidthPadding: 20,         // left/right padding in px (slider: 0-200)
   },
 
   /* ── Search widget settings ── */
@@ -1581,7 +1582,7 @@ function stItem(icon,label,value,pct){const div=document.createElement('span');d
 function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];weatherIntervals.forEach(clearInterval);weatherIntervals=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width
   appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
-  const xPad=config.layout.pageWidth>=100?20:0;
+  const xPad=parseInt(config.layout.pageWidthPadding)||20;
   appEl.style.paddingLeft=xPad+'px';appEl.style.paddingRight=xPad+'px';
   // Top/bottom padding: slider (20-200px)
   const yPad=parseInt(config.layout.pagePadding)||20;
@@ -2641,7 +2642,14 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   const brand=config.branding||{};
   // Update header title
   const ht=$('#config-header-title');
-  if(ht)ht.textContent='⚙️ '+(brand.title||'WarTab')+' Config';
+  if(ht)ht.innerHTML='<i data-lucide="Settings" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i><span style="vertical-align:middle;">'+(brand.title||'WarTab')+' Config</span>';
+  setTimeout(function(){
+if(typeof lucide!=='undefined'){
+  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+  lucide.createIcons();
+  console.warn=_lw;
+}
+},0);
 
   /* ── Page ── */
   body.appendChild(ps('Page'));
@@ -2817,7 +2825,8 @@ if(typeof lucide!=='undefined'){
   body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
   body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
   body.appendChild(pf('range','','Page Width (%)',null,config.layout.pageWidth,v=>{config.layout.pageWidth=parseInt(v);applyChanges();renderAll();},{min:50,max:100}));
-  body.appendChild(pf('range','','Page Padding (px)',null,config.layout.pagePadding||20,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:20,max:200}));
+  body.appendChild(pf('range','','Page Width Padding (px)',null,parseInt(config.layout.pageWidthPadding)||20,v=>{config.layout.pageWidthPadding=parseInt(v);applyChanges();renderAll();},{min:0,max:200}));
+  body.appendChild(pf('range','','Page Height Padding (px)',null,config.layout.pagePadding||20,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:20,max:200}));
 
   /* ── Data ── */
   body.appendChild(ps('Data'));
