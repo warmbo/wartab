@@ -24,8 +24,12 @@ registerModule('resource-monitor', {
       var _prevRx=0,_prevTx=0,_prevTs=0;
     }
     var metrics=['cpu','ram','disk','gpu'];
-    // Fixed 0-100 viewBox: 0% at bottom, 100% at top, all SVG viewBoxes are identical
-    function pctY(v){return Math.max(0,Math.min(100,100-v));}
+    // Auto-scale from 0 to maxVal: 0% always at bottom, max value near top
+    function pctRange(arr){
+      var max=0;
+      for(var i=0;i<arr.length;i++)if(arr[i]>max)max=arr[i];
+      return Math.max(max*1.15,5); // minimum 5 to show tiny values
+    }
     function fitRange(arr){
       var min=Infinity,max=-Infinity;
       for(var i=0;i<arr.length;i++){if(arr[i]<min)min=arr[i];if(arr[i]>max)max=arr[i];}
@@ -116,8 +120,9 @@ registerModule('resource-monitor', {
       metrics.forEach(function(key){
         var h=hist[key];if(!h||!h.length)return;
         var r=rows[key];if(!r||r.svg.style.display==='none')return;
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' 100');
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(pctY(v));}).join(' '));
+        var vh=pctRange(h);
+        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+vh);
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(vh-v);}).join(' '));
       });
       if(hist.rx&&hist.rx.length&&netSvg.style.display!=='none'){
         var both=hist.rx.concat(hist.tx);
@@ -152,8 +157,9 @@ registerModule('resource-monitor', {
       if(h.length>GRAPH_PTS)h.shift();
       var r=rows[key];
       if(r&&r.svg.style.display!=='none'){
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' 100');
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(pctY(v));}).join(' '));
+        var vh=pctRange(h);
+        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+vh);
+        r.pline.setAttribute('points',h.map(function(v,i){return i+','+(vh-v);}).join(' '));
       }
     }
     function updateNetGraph(rxSpeed,txSpeed){
