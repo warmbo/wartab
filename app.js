@@ -1468,10 +1468,12 @@ function saveConfig() {
   try {
     storage.saveConfig(cfg).then(function(){}, function(err){
       console.error('saveConfig failed:', err);
+      toast('Config save failed — check server', 'error');
     });
   } catch(e) {
     fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cfg), keepalive: true }).catch(function(err){
       console.error('saveConfig fallback failed:', err);
+      toast('Config save failed — server unreachable', 'error');
     });
   }
 }
@@ -1564,7 +1566,7 @@ function loadGoogleFont(fn,allowReplace){
     document.head.appendChild(l);
   }
 }
-function escAttr(s){if(typeof s!=='string')return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function escAttr(s){if(typeof s!=='string')return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML.replace(/'/g,'&#39;');}
 
 /* ── Status Bar ── */
 function initStatusBar(){renderStatusBar();clearInterval(statsTimer);const sb=config.statusBar;if(!sb||!sb.enabled)return;const ms=(sb.refreshInterval||15)*1000;statsTimer=setInterval(fetchStats,ms);fetchStats();}
@@ -1576,7 +1578,7 @@ function stItem(icon,label,value,pct){const div=document.createElement('span');d
 
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
 // Full page re-render: destroys and rebuilds grid from config
-function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){
+function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];weatherIntervals.forEach(clearInterval);weatherIntervals=[];const grid=$('#card-grid');grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width
   appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
   const xPad=config.layout.pageWidth>=100?20:0;
@@ -1788,6 +1790,9 @@ function renderSection(section, card) {
           c.offsetHeight;
           c.classList.remove('open');
           c.style.maxHeight = '';
+          // Stop any running timers in this section
+          var timers = c.querySelectorAll('[data-timer-id]');
+          timers.forEach(function(t){if(t._timer){clearInterval(t._timer);}});
         } else {
           // Expand: open class sets max-height:3000px, override to 0, force reflow, then animate to actual height
           c.classList.add('open');

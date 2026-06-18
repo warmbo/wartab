@@ -64,10 +64,7 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 .weather-ts { color: var(--text-tertiary); margin-top: 4px; }
 
 .cfg-conditional { overflow: hidden; transition: max-height 0.2s ease, opacity 0.15s ease, margin 0.2s ease; max-height: 200px; opacity: 1; margin-bottom: 10px; }
-.cfg-conditional.hidden { max-height: 0; opacity: 0; margin-bottom: 0; pointer-events: none; }
 
-.cfg-conditional { overflow: hidden; transition: max-height 0.2s ease, opacity 0.15s ease, margin 0.2s ease; max-height: 200px; opacity: 1; margin-bottom: 10px; }
-.cfg-conditional.hidden { max-height: 0; opacity: 0; margin-bottom: 0; pointer-events: none; }
 
 /* ── Quotes widget ── */
 .quotes-widget { cursor: pointer; user-select: none; }
@@ -85,7 +82,7 @@ html { height: 100%; overflow-x: hidden; }
 
 body {
   font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
-  font-size: var(--font-size, 14px);
+  font-size: var(--text-size, 14px);
   min-height: 100vh;
   color: var(--text-primary);
   line-height: 1.5;
@@ -260,7 +257,6 @@ body {
 .link-row .link-icon { font-size: 16px; width: 20px; text-align: center; }
 .link-row .link-custom-icon { width: 20px; height: 20px; object-fit: contain; }
 
-.clock-widget { text-align: center; padding: 8px 0; }
 .section-divider { border: none; height: 1px; background: linear-gradient(90deg, var(--glass-border) 0%, transparent 100%); margin: 8px 0; }
 .section-title { font-size: var(--heading-size); font-weight: 600; }
 
@@ -296,7 +292,6 @@ body {
 .dropdown-content.open { max-height: 3000px; opacity: 1; padding: 4px 0; margin: 4px 0; }
 /* Unify section toggles with dropdown style */
 /* ── Section toggle: unified with dropdown style ── */
-.api-widget { }
 .api-widget .api-label { color: var(--text-secondary); }
 .api-widget .api-value { font-weight: 600; font-variant-numeric: tabular-nums; }
 .api-widget .api-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--surface-border); }
@@ -690,7 +685,6 @@ body {
 .card-transparent::before { display: none !important; }
 
 /* Cards in their simulated final position during drag preview — instant updates for tight cursor tracking */
-.card.push-preview { }
 
 /* Accent border on cards to the right of the insertion point */
 .card.drop-shift {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """WarTab Server — new tab page + /api/stats + image upload + icon save."""
-import argparse, http.server, io, json, os, re, socket, subprocess, sys, time, uuid, webbrowser
+import argparse, http.server, io, json, os, re, socket, subprocess, sys, time, threading, uuid, webbrowser
 from pathlib import Path
 HERE = Path(__file__).parent.resolve()
 UPLOADS = HERE / "uploads"
@@ -99,9 +99,20 @@ def list_uploads():
         if f.is_file() and f.suffix.lower() in('.png','.jpg','.jpeg','.gif','.webp','.svg'):
             files.append({"name":f.name,"url":f"/uploads/{f.name}","size":f.stat().st_size,"mtime":f.stat().st_mtime})
     return files
+_arp_cache = None
+_arp_cache_ts = 0
+_arp_lock = threading.Lock()
+
 def scan_arp():
     import csv, io, socket, subprocess
-    OUI = {
+    global _arp_cache, _arp_cache_ts
+    if _arp_cache and (time.time() - _arp_cache_ts) < 30:
+        return _arp_cache
+    with _arp_lock:
+        # Double-check inside lock
+        if _arp_cache and (time.time() - _arp_cache_ts) < 30:
+            return _arp_cache
+        OUI = {
         "38:F7:CD":"Ubiquiti","F0:2F:74":"Ubiquiti","02:8B:32":"Local",
         "56:D1:D1":"Local","BC:24:11":"Raspberry Pi","B0:DC:EF":"Apple",
         "8C:55:4A":"Intel","8C:86:DD":"Apple",
@@ -174,7 +185,9 @@ def scan_arp():
                         except: pass
                         result.append({"ip": ip, "mac": hw, "vendor": vendor, "hostname": hostname, "iface": iface})
     except: pass
-    return {"devices": result, "timestamp": time.time(), "count": len(result)}
+    _arp_cache = {"devices": result, "timestamp": time.time(), "count": len(result)}
+    _arp_cache_ts = time.time()
+    return _arp_cache
 
 class WarTabHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self,*a,**kw): super().__init__(*a,directory=str(HERE),**kw)
