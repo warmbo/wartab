@@ -532,6 +532,7 @@ function buildSectionEditor(sec, card, si) {
       {value:'image',label:'Image'},
       {value:'lan-scan',label:'LAN Scan'},
       {value:'digital-pet',label:'Digital Pet'},
+      {value:'ascii-anim',label:'ASCII Animation'},
     ],
     sec.type,
     v => {
@@ -2437,6 +2438,7 @@ function addNewCard(){
     {type:'link-list', label:'Link List', icon:'list'},
     {type:'lan-scan', label:'LAN Scan', icon:'radio'},
     {type:'digital-pet', label:'Digital Pet', icon:'heart'},
+    {type:'ascii-anim', label:'ASCII Animation', icon:'monitor'},
   ];
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
