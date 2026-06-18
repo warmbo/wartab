@@ -14,7 +14,7 @@ registerModule('resource-monitor', {
     w.dataset.source=sec.source||'local';w.dataset.glancesUrl=sec.glancesUrl||'';
     w.dataset.graphMode=sec.graphMode?'1':'0';
     // Restore or initialize graph cache
-    var GRAPH_PTS=60,ck=sec.id,cache=window._rmCache[ck];
+    var GRAPH_PTS=25,ck=sec.id,cache=window._rmCache[ck];
     var hist;
     if(cache&&cache.hist){
       hist=cache.hist;
@@ -26,17 +26,17 @@ registerModule('resource-monitor', {
       var _smoothed={};
     }
     var metrics=['cpu','ram','disk','gpu'];
-    // viewBox always 0-100. Map values proportionally: 0% at bottom, maxVal at top.
-    // This way the line always fills the full graph height.
+    // viewBox always 0-100. Map values proportionally: 0% at bottom, maxVal near top.
+    // 15% headroom keeps the highest value from clipping the top edge.
     function pctScale(arr){
       var max=0;
       for(var i=0;i<arr.length;i++)if(arr[i]>max)max=arr[i];
-      return max;
+      return max*1.15||1; // headroom so top value sits at y≈13 not y=0
     }
     function pctY(v,max){
-      if(max<=0)return 50; // no data yet → center
+      if(max<=0)return 100; // no data → bottom
       var clamped=Math.max(0,Math.min(max,v));
-      return 100-((clamped/max)*100); // 0%→bottom(100), max%→top(0)
+      return 100-((clamped/max)*100); // 0%→bottom(100), max%→y≈13
     }
     function fitRange(arr){
       var min=Infinity,max=-Infinity;
