@@ -694,14 +694,7 @@ function openPageEditPanel(pageId) {
   // Open panel
   $('#edit-panel-overlay').classList.add('open');
   $('#edit-panel').classList.add('open');
-  // Render icons
-  setTimeout(function(){
-    if(typeof lucide!=='undefined'){
-      var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-      lucide.createIcons();
-      console.warn=_lw;
-    }
-  }, 0);
+  // Render icons (auto via MutationObserver)
 }
 
 /* ── Edit Panel Form Helpers ── */
@@ -1546,8 +1539,7 @@ function applyTheme(){
   // Toggles
   document.documentElement.dataset.animations=config.theme.animations!==false?'on':'off';
   document.documentElement.dataset.accentBar=config.theme.showAccentBar!==false?'on':'off';
-  // Re-render Lucide SVGs (brand icon may have changed)
-  if(typeof lucide!=='undefined')setTimeout(function(){var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};lucide.createIcons();console.warn=_lw;},0);
+  // Re-render Lucide SVGs (auto via MutationObserver)
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
 function loadGoogleFont(fn,allowReplace){
@@ -1607,22 +1599,12 @@ if(!config.cards.length){
     const d=document.getElementById('empty-config');if(d)d.addEventListener('click',toggleConfigPanel);
   },0);
   if(_scrollY)window.scrollTo(0,_scrollY);
-if(typeof lucide!=='undefined'){
-  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-  lucide.createIcons();
-  console.warn=_lw;
-}
 
   return;
 }
 // Ungrouped cards render as normal
 config.cards.forEach((c,i)=>{grid.appendChild(renderCard(c,i));});
 setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs)fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
-if(typeof lucide!=='undefined'){
-  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-  lucide.createIcons();
-  console.warn=_lw;
-}
 }
 function scheduleEqualize(){if(!_eqPending){_eqPending=true;requestAnimationFrame(()=>{_eqPending=false;equalizeCardHeights();});}}
 function equalizeCardHeights(){const grid=$('#card-grid');const allCards=[...grid.children].filter(el=>el.classList.contains('card'));if(!allCards.length)return;allCards.forEach(c=>c.style.minHeight='');// Skip cards with height>1 (double-height cards control their own size)
@@ -1891,11 +1873,6 @@ function updateClocks(){$$('.clock-widget').forEach(el=>{const n=new Date(),f24=
 function renderCalendar(el,date){const y=date.getFullYear(),m=date.getMonth();const fd=new Date(y,m,1).getDay();const ld=new Date(y,m+1,0).getDate();const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];let h=`<div class="calendar-month">${mn[m]} ${y}</div><div class="calendar-grid">`;['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{h+=`<div class="calendar-day-header">${d}</div>`;});for(let i=0;i<fd;i++)h+='<div class="calendar-day other-month"></div>';const today=new Date();for(let d=1;d<=ld;d++){const is=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();h+=`<div class="calendar-day${is?' today':''}">${d}</div>`;}h+='</div>';el.innerHTML=h;}
 function setupWeatherWidgets(){weatherIntervals.forEach(clearInterval);weatherIntervals=[];$$('.weather-widget').forEach(fetchWeather);}
 function fetchWeather(el){const k=el.dataset.apiKey,z=el.dataset.zip,c=el.dataset.country||'US';if(!k||!z){el.querySelector('.weather-detail').textContent='Set API key & zip code in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?zip=${encodeURIComponent(z)},${encodeURIComponent(c)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);var iconEl=el.querySelector('.weather-icon');if(iconEl){var lname=wIcon(d.weather[0].id);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';var windEl=el.querySelector('.weather-wind-val');if(windEl){var ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}var tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);
-if(typeof lucide!=='undefined'){
-  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-  lucide.createIcons();
-  console.warn=_lw;
-}
 }).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;var tsEl=el.querySelector('.weather-ts');if(tsEl){var lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});weatherIntervals.push(setInterval(()=>fetchWeather(el),600000));}
 function wIcon(id){if(id<300)return'cloud-lightning';if(id<400)return'cloud-drizzle';if(id<600)return'cloud-rain';if(id<700)return'cloud-snow';if(id<800)return'cloud-fog';if(id===800)return'sun';return'cloud';}
 function renderApiWidget(el){renderApiFetch(el);}
@@ -2470,11 +2447,6 @@ function buildIconsTab(c){
           d.addEventListener('click',function(n){return function(){selectIcon(n);};}(name));g.appendChild(d);
         }
         if(idx<items.length)requestAnimationFrame(renderBatch);
-        else if(typeof lucide!=='undefined'){
-          var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-          lucide.createIcons();
-          console.warn=_lw;
-        }
       }
       requestAnimationFrame(renderBatch);
     }else{
@@ -2483,13 +2455,7 @@ function buildIconsTab(c){
       items.forEach(function(emo){var d=document.createElement('div');d.className='icon-grid-item';d.innerHTML='<span class="ip-emoji">'+emo+'</span>';d.addEventListener('click',function(){selectIcon(emo);});g.appendChild(d);});
     }
   }
-  function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);if(m==='svg')setTimeout(function(){
-if(typeof lucide!=='undefined'){
-  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-  lucide.createIcons();
-  console.warn=_lw;
-}
-},0);}
+  function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);}
   btnSvg.addEventListener('click',function(){setMode('svg');});btnEmoji.addEventListener('click',function(){setMode('emoji');});
   s.addEventListener('input',function(){ri(s.value);});setMode('svg');
 }
@@ -2643,13 +2609,6 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   // Update header title
   const ht=$('#config-header-title');
   if(ht)ht.innerHTML='<i data-lucide="Settings" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i><span style="vertical-align:middle;">'+(brand.title||'WarTab')+' Config</span>';
-  setTimeout(function(){
-if(typeof lucide!=='undefined'){
-  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-  lucide.createIcons();
-  console.warn=_lw;
-}
-},0);
 
   /* ── Page ── */
   body.appendChild(ps('Page'));
@@ -2664,13 +2623,7 @@ if(typeof lucide!=='undefined'){
   const ir2=el('div','display:flex;gap:4px;align-items:center;');
   const ip=el('span','font-size:var(--text-xl);width:30px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);');
   const bi=brand.icon||'sword';
-  if(bi.startsWith('http')||bi.startsWith('data:')||bi.startsWith('/')){const img=document.createElement('img');img.src=bi;img.style.cssText='width:22px;height:22px;object-fit:contain;';ip.appendChild(img);}else if(isLucideName(bi)){var li=document.createElement('i');li.setAttribute('data-lucide',bi);li.style.cssText='width:22px;height:22px;';ip.appendChild(li);setTimeout(function(){
-if(typeof lucide!=='undefined'){
-  var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-  lucide.createIcons();
-  console.warn=_lw;
-}
-},0);}else{ip.textContent=bi;ip.className+=' emoji-icon';}
+  if(bi.startsWith('http')||bi.startsWith('data:')||bi.startsWith('/')){const img=document.createElement('img');img.src=bi;img.style.cssText='width:22px;height:22px;object-fit:contain;';ip.appendChild(img);}else if(isLucideName(bi)){var li=document.createElement('i');li.setAttribute('data-lucide',bi);li.style.cssText='width:22px;height:22px;';ip.appendChild(li);}else{ip.textContent=bi;ip.className+=' emoji-icon';}
   ir2.appendChild(ip);
   const ib=el('button','','Change');ib.className='btn btn-glass btn-sm';
   ib.addEventListener('click',()=>openIconPicker(url=>{if(!config.branding)config.branding={};config.branding.icon=url;applyTheme();saveConfig();buildConfigPanel();}));
@@ -3002,12 +2955,7 @@ function addNewCard(){
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   overlay.focus();
-  // Render Lucide icons in the modal
-  if(typeof lucide!=='undefined'){
-    var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-    lucide.createIcons();
-    console.warn=_lw;
-  }
+  // Render Lucide icons in the modal (auto via MutationObserver)
 }
 function pf(type,key,label,options,value,onChange,attrs){const g=el('div','margin-bottom:10px;');
   if(type==='select'){g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;',label));const s=document.createElement('select');s.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;cursor:pointer;';(options||[]).forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;if(o.value===value)opt.selected=true;s.appendChild(opt);});s.addEventListener('change',()=>onChange(s.value));g.appendChild(s);}
@@ -3076,12 +3024,7 @@ function renderPageNav() {
     tab.appendChild(nameSpan);
     tabs.appendChild(tab);
   });
-  // Render Lucide SVGs for page tab icons
-  if(typeof lucide!=='undefined'){
-    var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
-    lucide.createIcons();
-    console.warn=_lw;
-  }
+  // Render Lucide SVGs for page tab icons (auto via MutationObserver)
 }
 
 /** Simple confirmation overlay */
@@ -3196,7 +3139,29 @@ function deletePage(pageId) {
 }
 
 /* ═══════════════════════════════════════════ INIT ═══════════════════════════════════════════ */
+let _lucideObserver = null;
+
+/** Watch DOM for [data-lucide] elements and auto-render them */
+function setupLucideObserver() {
+  if (_lucideObserver) return;
+  _lucideObserver = new MutationObserver(function() {
+    if (typeof lucide !== 'undefined') {
+      var _lw = console.warn; console.warn = function(m) { if(m && m.indexOf && m.indexOf('not found') < 0) _lw.apply(console, arguments); };
+      lucide.createIcons();
+      console.warn = _lw;
+    }
+  });
+  _lucideObserver.observe(document.body, { childList: true, subtree: true });
+  // Initial render for elements already in the DOM
+  if (typeof lucide !== 'undefined') {
+    var _lw = console.warn; console.warn = function(m) { if(m && m.indexOf && m.indexOf('not found') < 0) _lw.apply(console, arguments); };
+    lucide.createIcons();
+    console.warn = _lw;
+  }
+}
+
 async function init() {
+  setupLucideObserver();
   await loadConfig(); applyTheme();
   pageInit();  // migrate/init pages
   if(!config.cards||!config.cards.length){console.warn('Config had no cards — restored defaults');config=cloneObj(DEFAULT_CONFIG);pageInit();saveConfig();}

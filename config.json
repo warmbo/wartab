@@ -40,7 +40,7 @@
     "gap": 4,
     "pageWidth": 100,
     "pagePadding": 3,
-    "pageWidthPadding": 4
+    "pageWidthPadding": 10
   },
   "search": {
     "engine": "https://www.google.com/search?q=",
@@ -1181,7 +1181,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 0
+              "_qi": 1
             }
           ]
         },
@@ -1253,7 +1253,44 @@
     "page-tf789wmmqiw5bln": {
       "name": "Page 3",
       "icon": "layout",
-      "cards": []
+      "cards": [
+        {
+          "id": "card-dc8hc4tmqjg36kq",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-ud2j3ramqjg36kq",
+              "type": "api-poller",
+              "label": "API Poller",
+              "url": "https://ipapi.co/json/",
+              "fields": [
+                {
+                  "label": "IP",
+                  "path": "ip"
+                },
+                {
+                  "label": "City",
+                  "path": "city"
+                },
+                {
+                  "label": "Country",
+                  "path": "country_name"
+                },
+                {
+                  "label": "ISP",
+                  "path": "org"
+                }
+              ],
+              "refreshInterval": 120,
+              "collapsed": false
+            }
+          ]
+        }
+      ]
     }
   },
   "pageOrder": [
