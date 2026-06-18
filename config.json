@@ -400,15 +400,17 @@
       "sections": [
         {
           "id": "sec-46bgm8wmqissnod",
-          "type": "links",
-          "label": "Links",
+          "type": "lan-scan",
+          "label": "",
           "links": [
             {
               "label": "Example",
               "url": "https://example.com",
               "icon": "link"
             }
-          ]
+          ],
+          "refreshInterval": 10,
+          "collapsed": false
         }
       ],
       "_isGap": false,
@@ -776,15 +778,17 @@
           "sections": [
             {
               "id": "sec-46bgm8wmqissnod",
-              "type": "links",
-              "label": "Links",
+              "type": "lan-scan",
+              "label": "",
               "links": [
                 {
                   "label": "Example",
                   "url": "https://example.com",
                   "icon": "link"
                 }
-              ]
+              ],
+              "refreshInterval": 10,
+              "collapsed": false
             }
           ],
           "_isGap": false,

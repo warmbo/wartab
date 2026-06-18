@@ -554,6 +554,7 @@ body {
 .lan-scan-new { color:var(--accent); }
 .lan-scan-ip { color:var(--text-primary); font-weight:600; }
 .lan-scan-vendor { color:var(--text-tertiary); font-size:var(--text-2xs); }
+.lan-scan-hostname { color:var(--text-secondary); font-size:var(--text-2xs); }
 
 /* ── Links table ── */
 .me-link-th {

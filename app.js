@@ -323,7 +323,8 @@ function fetchLanScan(el){
       var cls=isNew?'lan-scan-new':'lan-scan-line';
       var tag=isNew?' \u25c2 NEW':'';
       known[dev.mac]=now;
-      html+='<div class="'+cls+'">['+timeStr+'] <span class="lan-scan-ip">'+dev.ip+'</span> \u2192 '+dev.mac+'  <span class="lan-scan-vendor">'+escAttr(dev.vendor)+'</span>'+tag+'</div>';
+      var hn = dev.hostname ? ' <span class="lan-scan-hostname">' + escAttr(dev.hostname) + '</span>' : '';
+      html+='<div class="'+cls+'">['+timeStr+'] <span class="lan-scan-ip">'+dev.ip+'</span> \u2192 '+dev.mac+'  <span class="lan-scan-vendor">'+escAttr(dev.vendor)+'</span>'+hn+tag+'</div>';
     });
     var cutoff=now-7*86400000;
     Object.keys(known).forEach(function(k){if(known[k]<cutoff)delete known[k];});
