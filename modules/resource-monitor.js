@@ -18,10 +18,12 @@ registerModule('resource-monitor', {
     if(cache&&cache.hist){
       hist=cache.hist;
       var _prevRx=cache.prevRx||0,_prevTx=cache.prevTx||0,_prevTs=cache.prevTs||0;
+      var _prevDiskRd=cache.prevDiskRd||0,_prevDiskWr=cache.prevDiskWr||0,_prevDiskTs=cache.prevDiskTs||0;
       var _smoothed=cache.smoothed||{};
     }else{
       hist={};['cpu','ram','disk','gpu','rx','tx'].forEach(function(k){hist[k]=[];});
       var _prevRx=0,_prevTx=0,_prevTs=0;
+      var _prevDiskRd=0,_prevDiskWr=0,_prevDiskTs=0;
       var _smoothed={};
     }
     var metrics=['cpu','ram','disk','gpu'];
@@ -133,7 +135,7 @@ registerModule('resource-monitor', {
     }
     var rows={};
     metrics.forEach(function(m){
-      var labels={cpu:'CPU',ram:'RAM',disk:'DISK',gpu:'GPU'};
+      var labels={cpu:'CPU',ram:'ACTV',disk:'DISK IO',gpu:'GPU'};
       rows[m]=buildMetricRow(m,labels[m]);
       w.appendChild(rows[m].row);
     });
@@ -227,7 +229,7 @@ registerModule('resource-monitor', {
       }
     }
     function saveCache(){
-      window._rmCache[ck]={hist:hist,prevRx:_prevRx,prevTx:_prevTx,prevTs:_prevTs,smoothed:_smoothed};
+      window._rmCache[ck]={hist:hist,prevRx:_prevRx,prevTx:_prevTx,prevTs:_prevTs,prevDiskRd:_prevDiskRd,prevDiskWr:_prevDiskWr,prevDiskTs:_prevDiskTs,smoothed:_smoothed};
     }
     // Fetch data
     function fetchData(){
@@ -257,18 +259,28 @@ registerModule('resource-monitor', {
         var cpuExtra=[];if(cpuTemp.celsius>0)cpuExtra.push(cpuTemp.celsius+'°C');if(procs>0)cpuExtra.push(procs+'p');
         rows.cpu.val.innerHTML=(cpuPct||0).toFixed(1)+'% <span style="opacity:0.5;font-weight:400;font-size:var(--text-3xs)">'+cpuExtra.join(' ')+'</span>';
         pushGraph('cpu',cpuVal);
-        // RAM
-        var memPct=typeof mem.percent==='number'?mem.percent:0;
+        // RAM — show active memory (fluctuates with process activity)
+        var memPct=typeof mem.active==='number'&&mem.total?mem.active/mem.total*100:0;
         rows.ram.fill.style.width=Math.min(memPct,100)+'%';
-        var mu=mem.used?Math.round(mem.used/1024/1024/1024*10)/10:0;
+        var mu=mem.active?Math.round(mem.active/1024/1024/1024*10)/10:0;
         var mt=mem.total?Math.round(mem.total/1024/1024/1024*10)/10:0;
         rows.ram.val.textContent=mu+'/'+mt+'GB';pushGraph('ram',memPct);
-        // Disk
-        var diskPct=typeof root.percent==='number'?root.percent:0;
-        rows.disk.fill.style.width=Math.min(diskPct,100)+'%';
-        var du=root.used?Math.round(root.used/1024/1024/1024*10)/10:0;
-        var dt=root.total?Math.round(root.total/1024/1024/1024*10)/10:0;
-        rows.disk.val.textContent=du+'/'+dt+'GB';pushGraph('disk',diskPct);
+        // Disk — I/O speed (delta-based, like network)
+        var dio=d.disk_io||{};
+        var dr=dio.readsectors||0,dw=dio.writesectors||0;
+        var diskNow=Date.now()/1000;
+        var diskRdSpeed=0,diskWrSpeed=0;
+        if(_prevDiskTs>0){
+          var ddt=diskNow-_prevDiskTs;
+          if(ddt>0){
+            diskRdSpeed=Math.max(0,(dr-_prevDiskRd))*512/ddt;
+            diskWrSpeed=Math.max(0,(dw-_prevDiskWr))*512/ddt;
+          }
+        }
+        rows.disk.val.textContent=fmtSpeed(diskRdSpeed)+' / '+fmtSpeed(diskWrSpeed);
+        rows.disk.fill.style.width='0%';
+        pushGraph('disk',diskRdSpeed);
+        _prevDiskRd=dr;_prevDiskWr=dw;_prevDiskTs=diskNow;
         // GPU
         var gpuPct=typeof gpu.percent==='number'?gpu.percent:0;
         rows.gpu.fill.style.width=Math.min(gpuPct,100)+'%';

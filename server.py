@@ -58,9 +58,10 @@ def get_memory():
         with open("/proc/meminfo") as f: data=f.read()
         total=int(re.search(r"MemTotal:\s+(\d+)",data).group(1))*1024
         avail=int(re.search(r"MemAvailable:\s+(\d+)",data).group(1))*1024
+        active=int(re.search(r"Active:\s+(\d+)",data).group(1))*1024
         used=total-avail
-        return {"total":total,"used":used,"available":avail,"percent":round(used/total*100,1) if total else 0}
-    except: return {"total":0,"used":0,"available":0,"percent":-1}
+        return {"total":total,"used":used,"available":avail,"active":active,"percent":round(active/total*100,1) if total else 0}
+    except: return {"total":0,"used":0,"available":0,"active":0,"percent":-1}
 def get_disks():
     disks=[]
     try:
@@ -76,6 +77,15 @@ def get_uptime():
         d,r=divmod(s,86400); h,m=divmod(r,3600)
         return {"seconds":round(s,0),"days":int(d),"hours":int(h),"minutes":int(m//60),"string":f"{int(d)}d {int(h)}h {int(m//60)}m"}
     except: return {"seconds":0,"days":0,"hours":0,"minutes":0,"string":"unknown"}
+def get_disk_io():
+    try:
+        with open("/proc/diskstats") as f:
+            for line in f:
+                p=line.strip().split()
+                if len(p)>=14 and p[2]=='nvme0n1' and not p[2].endswith(('p1','p2','p3')):
+                    return {"device":p[2],"readsectors":int(p[5]),"writesectors":int(p[9])}
+        return {"device":"","readsectors":0,"writesectors":0}
+    except: return {"device":"","readsectors":0,"writesectors":0}
 def get_load():
     try:
         with open("/proc/loadavg") as f: p=f.read().strip().split()
@@ -134,7 +144,7 @@ def get_process_count():
 def build_stats():
     return {"hostname":socket.gethostname(),"cpu":get_cpu_percent(),"memory":get_memory(),"disks":get_disks(),
             "uptime":get_uptime(),"load":get_load(),"network":get_network(),"gpu":get_gpu(),
-            "cpu_temp":get_cpu_temp(),"processes":get_process_count(),"timestamp":time.time()}
+            "cpu_temp":get_cpu_temp(),"processes":get_process_count(),"disk_io":get_disk_io(),"timestamp":time.time()}
 def list_uploads():
     files=[]
     for f in sorted(UPLOADS.iterdir(),key=lambda p:p.stat().st_mtime,reverse=True):
