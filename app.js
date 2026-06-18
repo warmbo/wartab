@@ -315,7 +315,7 @@ registerModule('timer', {
       const stop=()=>{if(interval){clearInterval(interval);interval=null;startBtn.textContent='▶ Start';}};
       const start=()=>{if(interval)return;if(remaining<=0){remaining=sec.duration||300;display.style.color='';}interval=setInterval(()=>{remaining--;updateDisplay();if(remaining<=0)stop();},1000);startBtn.textContent='⏸ Pause';};
       startBtn.addEventListener('click',()=>{if(interval)stop();else start();});
-      resetBtn.addEventListener('click',()=>{showConfirmModal('Reset timer?',()=>{stop();remaining=sec.duration||300;display.style.color='';updateDisplay();});});
+      resetBtn.addEventListener('click',()=>{showConfirmModal('Reset timer?',()=>{stop();remaining=sec.duration||300;display.style.color='';updateDisplay();},'Reset');});
       updateDisplay();
     }
     cw.appendChild(w);
@@ -817,12 +817,13 @@ function buildCardEditPanel(card) {
     const snap = cloneObj(config.cards);
     const idx = config.cards.findIndex(c => c.id === card.id);
     if (idx < 0) return;
-    if (!confirm('Delete "' + (card.title || 'card') + '"?')) return;
-    config.cards.splice(idx, 1);
-    closeCardEditPanel();
-    saveConfig();
-    renderAll();
-    toastWithUndo('Card deleted', () => { config.cards = snap; saveConfig(); renderAll(); });
+    showConfirmModal('Delete "' + (card.title || 'card') + '"?', function() {
+      config.cards.splice(idx, 1);
+      closeCardEditPanel();
+      saveConfig();
+      renderAll();
+      toastWithUndo('Card deleted', () => { config.cards = snap; saveConfig(); renderAll(); });
+    });
   });
   foot.appendChild(delBtn);
   body.appendChild(foot);
@@ -2654,7 +2655,7 @@ if(typeof lucide!=='undefined'){
     b.addEventListener('click',()=>{
       if(label==='Export'){const d=new Date();const bb=new Blob([JSON.stringify(config,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='wartab-config-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';a.click();URL.revokeObjectURL(a.href);toast('Exported');}
       else if(label==='Import'){$('#import-file-input2').click();}
-      else if(label==='Reset'){showConfirmModal('Reset all settings to defaults? This cannot be undone.',()=>{const snap=cloneObj(config);config=cloneObj(DEFAULT_CONFIG);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toastWithUndo('Reset',()=>{config=snap;saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();});});}
+      else if(label==='Reset'){showConfirmModal('Reset all settings to defaults? This cannot be undone.',()=>{const snap=cloneObj(config);config=cloneObj(DEFAULT_CONFIG);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toastWithUndo('Reset',()=>{config=snap;saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();});},'Reset');}
     });
     acts.appendChild(b);
   });
@@ -2684,7 +2685,7 @@ if(typeof lucide!=='undefined'){
         const lbl=el('span','flex:1;font-size:var(--text-xs);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;',ts);
         const sz=el('span','font-size:var(--text-2xs);color:var(--text-tertiary);flex-shrink:0;',fmtSize(s.size));
         const rst=el('button','','Restore');rst.className='btn btn-glass btn-sm';rst.style.cssText='padding:2px 8px;font-size:var(--text-2xs);';
-        rst.addEventListener('click',()=>{showConfirmModal('Restore snapshot from '+ts+'? Current config will be replaced.',async()=>{await storage.snapshots.restore(s.name);await loadConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toast('Restored: '+ts);});});
+        rst.addEventListener('click',()=>{showConfirmModal('Restore snapshot from '+ts+'? Current config will be replaced.',async()=>{await storage.snapshots.restore(s.name);await loadConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toast('Restored: '+ts);},'Restore')});
         r.appendChild(lbl);r.appendChild(sz);r.appendChild(rst);
         snapList.appendChild(r);
       });
@@ -2849,7 +2850,8 @@ function renderPageNav() {
 }
 
 /** Simple confirmation overlay */
-function showConfirmModal(msg, onConfirm) {
+function showConfirmModal(msg, onConfirm, okText) {
+  okText = okText || 'Delete';
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
   const box = document.createElement('div');
@@ -2862,8 +2864,8 @@ function showConfirmModal(msg, onConfirm) {
   btnRow.style.cssText = 'display:flex;gap:8px;justify-content:center;';
   const okBtn = document.createElement('button');
   okBtn.className = 'btn btn-glass btn-sm';
-  okBtn.textContent = 'Delete';
-  okBtn.style.cssText = 'border-color:#cc4444;color:#cc4444;';
+  okBtn.textContent = okText;
+  okBtn.style.cssText = okText === 'Delete' ? 'border-color:#cc4444;color:#cc4444;' : '';
   okBtn.addEventListener('click', () => { overlay.remove(); onConfirm(); });
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn btn-glass btn-sm';
