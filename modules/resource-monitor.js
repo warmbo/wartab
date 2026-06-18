@@ -26,26 +26,46 @@ registerModule('resource-monitor', {
     }
     var metrics=['cpu','ram','disk','gpu'];
     // Canvas sparkline renderer — draws a polyline scaled to fill the canvas
+    function hexToRgba(h,a){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return'rgba('+r+','+g+','+b+','+a+')';}
     function drawSparkline(canvas,data,color){
       if(!canvas||!data||!data.length)return;
       var ctx=canvas.getContext('2d');
       var W=canvas.width,H=canvas.height,pad=2;
       var min=Infinity,max=-Infinity;
       for(var i=0;i<data.length;i++){if(data[i]<min)min=data[i];if(data[i]>max)max=data[i];}
-      if(max-min<1)max=min+1; // avoid division by zero
-      var plotH=H-pad*2,plotW=W-pad*2;
+      if(max-min<1)max=min+1;
+      var plotH=H-pad*2,plotW=W-pad*2,plotBot=H-pad;
       ctx.clearRect(0,0,W,H);
+      // Build points array
+      var pts=[];
+      for(var i=0;i<data.length;i++){
+        pts.push({x:pad+(i/(data.length-1||1))*plotW,y:pad+plotH-((data[i]-min)/(max-min))*plotH});
+      }
+      // Smooth quadratic bezier through points (caller must moveTo first)
+      function smoothCurve(ctx,pts){
+        for(var i=1;i<pts.length-1;i++){
+          var xc=(pts[i].x+pts[i+1].x)/2,yc=(pts[i].y+pts[i+1].y)/2;
+          ctx.quadraticCurveTo(pts[i].x,pts[i].y,xc,yc);
+        }
+        ctx.lineTo(pts[pts.length-1].x,pts[pts.length-1].y);
+      }
+      // Fill below the line — from bottom-left up to first point, along curve, down to bottom-right
       ctx.beginPath();
+      ctx.moveTo(pts[0].x,plotBot);
+      ctx.lineTo(pts[0].x,pts[0].y);
+      smoothCurve(ctx,pts);
+      ctx.lineTo(pts[pts.length-1].x,plotBot);
+      ctx.closePath();
+      ctx.fillStyle=hexToRgba(color,0.12);
+      ctx.fill();
+      // Stroke the line
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x,pts[0].y);
+      smoothCurve(ctx,pts);
       ctx.strokeStyle=color;
       ctx.lineWidth=1.5;
       ctx.lineJoin='round';
       ctx.lineCap='round';
-      for(var i=0;i<data.length;i++){
-        var x=pad+(i/(data.length-1||1))*plotW;
-        var y=pad+plotH-((data[i]-min)/(max-min))*plotH;
-        if(i===0)ctx.moveTo(x,y);
-        else ctx.lineTo(x,y);
-      }
       ctx.stroke();
     }
     function drawNetSparkline(canvas,rxData,txData){
@@ -56,19 +76,42 @@ registerModule('resource-monitor', {
       var min=Infinity,max=-Infinity;
       for(var i=0;i<all.length;i++){if(all[i]<min)min=all[i];if(all[i]>max)max=all[i];}
       if(max-min<1)max=min+1;
-      var plotH=H-pad*2,plotW=W-pad*2;
+      var plotH=H-pad*2,plotW=W-pad*2,plotBot=H-pad;
       ctx.clearRect(0,0,W,H);
-      function drawLine(data,style){
-        ctx.beginPath();ctx.strokeStyle=style;ctx.lineWidth=1;ctx.lineJoin='round';ctx.lineCap='round';
-        for(var i=0;i<data.length;i++){
-          var x=pad+(i/(data.length-1||1))*plotW;
-          var y=pad+plotH-((data[i]-min)/(max-min))*plotH;
-          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      function buildPts(data){
+        var p=[];
+        for(var i=0;i<data.length;i++)p.push({x:pad+(i/(data.length-1||1))*plotW,y:pad+plotH-((data[i]-min)/(max-min))*plotH});
+        return p;
+      }
+      function drawFilledCurve(pts,fillColor,strokeColor,lineW){
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x,plotBot);
+        ctx.lineTo(pts[0].x,pts[0].y);
+        for(var i=1;i<pts.length-1;i++){
+          var xc=(pts[i].x+pts[i+1].x)/2,yc=(pts[i].y+pts[i+1].y)/2;
+          ctx.quadraticCurveTo(pts[i].x,pts[i].y,xc,yc);
         }
+        ctx.lineTo(pts[pts.length-1].x,pts[pts.length-1].y);
+        ctx.lineTo(pts[pts.length-1].x,plotBot);
+        ctx.closePath();
+        ctx.fillStyle=fillColor;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x,pts[0].y);
+        for(var i=1;i<pts.length-1;i++){
+          var xc=(pts[i].x+pts[i+1].x)/2,yc=(pts[i].y+pts[i+1].y)/2;
+          ctx.quadraticCurveTo(pts[i].x,pts[i].y,xc,yc);
+        }
+        ctx.lineTo(pts[pts.length-1].x,pts[pts.length-1].y);
+        ctx.strokeStyle=strokeColor;
+        ctx.lineWidth=lineW;
+        ctx.lineJoin='round';
+        ctx.lineCap='round';
         ctx.stroke();
       }
-      drawLine(txData,'rgba(255,255,255,0.25)');
-      drawLine(rxData,'rgba(255,255,255,0.7)');
+      var rxPts=buildPts(rxData),txPts=buildPts(txData);
+      drawFilledCurve(txPts,'rgba(255,255,255,0.05)','rgba(255,255,255,0.25)',1);
+      drawFilledCurve(rxPts,'rgba(255,255,255,0.08)','rgba(255,255,255,0.7)',1.5);
     }
     function buildMetricRow(key,label){
       const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;gap:2px;';
