@@ -13,7 +13,7 @@
     "glow": "#cad3d8",
     "fontSizeText": 16,
     "fontSizeHeading": 20,
-    "fontFamily": "Karla",
+    "fontFamily": "Barlow",
     "cardBg": "dark",
     "fontColor": "#dedede",
     "cardOpacity": 0.42000000000000004,
@@ -39,7 +39,7 @@
   "layout": {
     "cols": 4,
     "gap": 16,
-    "pageWidth": 80,
+    "pageWidth": 96,
     "pagePadding": 44
   },
   "search": {
@@ -335,7 +335,7 @@
           "type": "links",
           "label": "Projects",
           "links": [],
-          "collapsed": true
+          "collapsed": false
         }
       ]
     },
@@ -698,7 +698,7 @@
               "type": "links",
               "label": "Projects",
               "links": [],
-              "collapsed": true
+              "collapsed": false
             }
           ]
         },
@@ -1213,11 +1213,62 @@
           ]
         }
       ]
+    },
+    "page-jsd6qx2mqitxzqk": {
+      "name": "Page 3",
+      "icon": "layout",
+      "cards": [
+        {
+          "id": "card-kdfb7scmqity0z4",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hnqu6z5mqity0z4",
+              "type": "links",
+              "label": "Links",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "card-n1u56n5mqity8il",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-jk1eeofmqity8il",
+              "type": "links",
+              "label": "Links",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   },
   "pageOrder": [
     "page-fjpy1g4mqguw1x3",
-    "page-19gesa9mqh2t3u2"
+    "page-19gesa9mqh2t3u2",
+    "page-jsd6qx2mqitxzqk"
   ],
   "currentPage": "page-fjpy1g4mqguw1x3"
 }

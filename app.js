@@ -2766,13 +2766,58 @@ function hexToRgba2(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c
 
 function ps(t){return el('div','','',el('h3','font-size:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:10px;margin-top:12px;padding-bottom:4px;border-bottom:1px solid var(--glass-border);font-family:var(--font);',t));}
 function addNewCard(){
-  const colMax=config.layout.cols;
-  config.cards.push({
-    id:'card-'+uid(), title:'', icon:'package', color:'#888888',
-    width:Math.min(1,colMax),height:1,
-    sections:[{id:'sec-'+uid(),type:'links',label:'Links',links:[{label:'Example',url:'https://example.com',icon:'link'}]}],
+  // Show card type picker
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px;min-width:280px;text-align:center;';
+  const label = document.createElement('div');
+  label.textContent = 'Choose card type:';
+  label.style.cssText = 'font-size:var(--heading-size);font-weight:600;color:var(--text-primary);margin-bottom:16px;';
+  box.appendChild(label);
+  const types = [
+    {type:'links', label:'Links', icon:'🔗'},
+    {type:'search', label:'Search', icon:'🔍'},
+    {type:'clock', label:'Clock', icon:'🕐'},
+    {type:'notes', label:'Notes', icon:'📝'},
+    {type:'weather', label:'Weather', icon:'🌤'},
+    {type:'iframe', label:'Iframe', icon:'🔌'},
+    {type:'image', label:'Image', icon:'🖼️'},
+    {type:'api-poller', label:'API Poller', icon:'📡'},
+    {type:'quotes', label:'Quotes', icon:'💬'},
+    {type:'timer', label:'Timer', icon:'⏱️'},
+    {type:'resource-monitor', label:'Resources', icon:'📊'},
+    {type:'link-list', label:'Link List', icon:'📋'},
+  ];
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
+  types.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-glass btn-sm';
+    btn.style.cssText = 'padding:10px 6px;font-size:var(--text-xs);display:flex;flex-direction:column;align-items:center;gap:4px;';
+    btn.innerHTML = '<span style="font-size:20px;">'+t.icon+'</span><span>'+t.label+'</span>';
+    btn.addEventListener('click', () => {
+      overlay.remove();
+      const colMax=config.layout.cols;
+      var sec = {id:'sec-'+uid(),type:t.type,label:t.label};
+      if(t.type==='links'||t.type==='link-list') sec.links=[{label:'Example',url:'https://example.com',icon:'link'}];
+      config.cards.push({
+        id:'card-'+uid(), title:'', icon:'package', color:'#888888',
+        width:Math.min(1,colMax), height:1,
+        sections:[sec],
+      });
+      saveConfig(); renderAll(); toast('Card added: '+t.label);
+    });
+    grid.appendChild(btn);
   });
-  saveConfig(); renderAll(); toast('New card added');
+  box.appendChild(grid);
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-glass btn-sm';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => overlay.remove());
+  box.appendChild(cancelBtn);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
 }
 function pf(type,key,label,options,value,onChange,attrs){const g=el('div','margin-bottom:10px;');
   if(type==='select'){g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;',label));const s=document.createElement('select');s.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;cursor:pointer;';(options||[]).forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;if(o.value===value)opt.selected=true;s.appendChild(opt);});s.addEventListener('change',()=>onChange(s.value));g.appendChild(s);}
