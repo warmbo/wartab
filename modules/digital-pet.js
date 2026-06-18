@@ -1,51 +1,20 @@
 /* ═══════════════════════════════════════════
    WarTab — Digital Pet Module
-   ASCII cat with walk cycle, room environment,
-   mood expressions, network speech, and a
-   direction-aware tail.
+   ASCII cat (jgs/sk/kitten hybrid) with
+   room environment, mood expressions,
+   network speech, and direction-aware tail.
    ═══════════════════════════════════════════ */
 registerModule('digital-pet', {
   defaults: { petName:'', hunger:80, happiness:80, waste:10, lastFed:Date.now(), lastPetted:Date.now(), lastCleaned:Date.now() },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // Body frames — 11×5, NO tail (added by addTail() at render time)
-    // Ear line has 3-char-wide head ___ , face has eyes (o o), nose (Y),
-    // torso has two upright columns, legs are two pairs |_| |_|
-    var B={
-      idle:  ['  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
-      blink: ['  /\___/\  \n ( -   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
-      walk:[
-        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  ', // 0
-        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n |_| |_|   ', // 1 left
-        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n|_| |_|    ', // 2 left+
-        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  ', // 3
-        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n   |_| |_| ', // 4 right
-        '  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n    |_| |_|', // 5 right+
-      ],
-      happy:  ['  /\___/\  \n ( *   * ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
-      love:   ['  /\___/\  \n ( ♥   ♥ ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
-      curious:['  /\___/\  \n ( o   O ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
-      hungry: ['  /\___/\  \n ( o   o ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
-      sad:    ['  /\___/\  \n ( ;   ; ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
-      dead:   ['  /\___/\  \n ( x   x ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
-      angry:  ['  /\___/\  \n ( #   # ) \n (   Y   ) \n  |  |  |  \n  |_| |_|  '],
-    };
-    // Add tail to body frame based on walking direction
-    // Right tail: \~ on line 4,  ~ on line 5 (sweeps down from R side)
-    // Left tail:  ~ prefixed on lines 4-5 (sweeps down from L side)
-    function addTail(f,dir){
-      var l=f.split('\n');
-      if(dir==='right'){
-        l[3]=l[3].slice(0,9)+'/~';
-        l[4]=l[4].slice(0,9)+' ~';
-      }else{
-        l[3]=('~'+l[3]).slice(0,11);
-        l[4]=('~'+l[4]).slice(0,11);
-      }
-      return l.join('\n');
-    }
-    var _mood='idle',_frame=0,_walking=false,_lastX=50,_direction='right';
+    // Sitting cat — right-facing (tail left) and left-facing (tail right)
+    // Tail wraps from back to front: \(__)| for right-facing, |(__)/ for left
+    var Cr='\\    /\\  \n )  ( ,) \n(  /  )\\~\n \\(__)/  ';
+    var Cl='  /\\    /\n (  , )  \n~\\  (  ) \n /(__)\\  ';
+    var eyes={idle:',',blink:'-',happy:'*',love:'♥',curious:'O',hungry:'o',sad:';',dead:'x',angry:'#'};
+    var _mood='idle',_walking=false,_lastX=50,_direction='right';
     // Top bar
     const top=document.createElement('div');top.className='dp-top';
     const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'cat';top.appendChild(nameEl);
@@ -87,9 +56,12 @@ registerModule('digital-pet', {
     w.appendChild(acts);
     cw.appendChild(w);
     // Network speech
-    var _sayTimer,_frameTimer,_walkTimer;
+    var _sayTimer,_walkTimer;
     function fetchNetFact(){
-      fetch('/api/stats').then(function(r){return r.json();}).then(function(d){
+      fetch('/api/stats').then(function(r){
+        if(r.status===401){throw{retry:true};}
+        return r.json();
+      }).then(function(d){
         var facts=[];
         if(d.hostname)facts.push('Hello, '+d.hostname+' here!');
         if(d.uptime)facts.push("I've been up "+d.uptime.string+" ... getting sleepy.");
@@ -114,7 +86,11 @@ registerModule('digital-pet', {
         facts.push("What's going on with 10.0.0.x?");
         if(d.hostname)facts.push(d.hostname+' is alive and well.');
         speak(facts[Math.floor(Math.random()*facts.length)]);
-      }).catch(function(){
+      }).catch(function(e){
+        if(e&&e.retry){
+          setTimeout(fetchNetFact,60000);
+          return;
+        }
         var fb=["No signal... is the server okay?","Can't reach the network...","Hello? Anyone there?","The network is quiet... too quiet."];
         speak(fb[Math.floor(Math.random()*fb.length)]);
       });
@@ -125,53 +101,36 @@ registerModule('digital-pet', {
     }
     _sayTimer=setInterval(fetchNetFact,18000+Math.random()*12000);
     setTimeout(fetchNetFact,3000+Math.random()*4000);
-    // Walk cycle — floor-constrained, with perspective
+    // Perspective shift — door and window move with cat position
     function updatePerspective(x){
       var pw=pen.offsetWidth||260;
-      var pct=x/(pw-80); // 0=left wall, 1=right wall
+      var pct=x/(pw-80);
       if(pct<0)pct=0;if(pct>1)pct=1;
       windowEl.style.right=(6+pct*12)+'px';
       windowEl.style.opacity=(0.3+pct*0.5)+'';
       door.style.left=(4+(1-pct)*10)+'px';
       door.style.opacity=(0.3+(1-pct)*0.5)+'';
     }
+    // Render the cat facing the current direction with current mood
+    function setFrame(){
+      var base=_direction==='right'?Cr:Cl;
+      creature.textContent=base.replace(',',eyes[_mood]||',');
+    }
+    // Glide to a new position (cat sits, CSS transition slides it)
     function startWalk(){
       if(_walking)return;_walking=true;
       var pw=pen.offsetWidth||260,ph=pen.offsetHeight||140;
       var nx=Math.random()*(pw-80);
-      // Track direction for tail flip
       _direction=nx<_lastX?'left':'right';
-      // Keep cat on the floor: sprite ~64px tall, pen 140px, floor 24px
       var ny=ph-24-62+Math.random()*8;
       _lastX=nx;
       creature.style.left=nx+'px';creature.style.top=ny+'px';
       updatePerspective(nx);
-      // Animate walk frames
-      var wf=0;
-      if(_frameTimer)clearInterval(_frameTimer);
-      _frameTimer=setInterval(function(){
-        wf=(wf+1)%B.walk.length;
-        creature.textContent=addTail(B.walk[wf],_direction);
-      },380);
+      setFrame();
       clearTimeout(_walkTimer);
-      _walkTimer=setTimeout(function(){
-        _walking=false;
-        if(_frameTimer){clearInterval(_frameTimer);_frameTimer=null;}
-        setFrame();
-      },2600);
+      _walkTimer=setTimeout(function(){_walking=false;},2600);
     }
-    function setFrame(){
-      if(_walking)return;
-      var frames=B[_mood]||B.idle;
-      var txt;
-      if(_mood==='idle'&&frames.length===1&&B.blink){
-        txt=Math.random()<0.15?B.blink[0]:frames[0];
-      }else{
-        txt=frames[_frame%frames.length]||frames[0];
-      }
-      creature.textContent=addTail(txt,_direction);
-    }
-    // Update display
+    // Update mood and redraw
     function updateAll(){
       hS.upd();haS.upd();wS.upd();
       const h=Math.max(0,curHunger()),ha=Math.max(0,curHappy()),wa=Math.max(0,curWaste());
@@ -185,7 +144,7 @@ registerModule('digital-pet', {
       else if(ha>65&&h>50){moodKey='happy';moodTxt='Happy';}
       else if(ha>40){moodKey='curious';moodTxt='Curious';}
       else{moodKey='idle';moodTxt=(sec.petName||'cat');}
-      if(moodKey!==_mood){_mood=moodKey;_frame=0;}
+      if(moodKey!==_mood){_mood=moodKey;}
       moodLabel.textContent=moodTxt;
       setFrame();
     }
@@ -197,7 +156,6 @@ registerModule('digital-pet', {
     },4500+Math.random()*2500);
     card._dpCleanup=function(){
       if(walkTimer)clearInterval(walkTimer);
-      if(_frameTimer)clearInterval(_frameTimer);
       if(_walkTimer)clearTimeout(_walkTimer);
       if(_sayTimer)clearInterval(_sayTimer);
     };
