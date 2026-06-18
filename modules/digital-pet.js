@@ -1,27 +1,49 @@
 /* ═══════════════════════════════════════════
    WarTab — Digital Pet Module
    ASCII cat with walk cycle, room environment,
-   mood expressions, and network speech.
+   mood expressions, network speech, and a
+   direction-aware tail.
    ═══════════════════════════════════════════ */
 registerModule('digital-pet', {
   defaults: { petName:'', hunger:80, happiness:80, waste:10, lastFed:Date.now(), lastPetted:Date.now(), lastCleaned:Date.now() },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // Cat frames — 6-frame walk cycle + mood expressions, all 8×4 with tail
-    var C={
-      idle:[' /\\_/\\ \n( o o )~\n | Y |  \n |_|_|  '],
-      blink:[' /\\_/\\ \n( - o )~\n | Y |  \n |_|_|  '],
-      walk:[' /\\_/\\ \n( o o )~\n | Y |  \n |_|_|  ',' /\\_/\\ \n( o o )~\n | Y |  \n| |_|   ',' /\\_/\\ \n( o o )~\n | Y |  \n|_| |   ',' /\\_/\\ \n( o o )~\n | Y |  \n |_|_|  ',' /\\_/\\ \n( o o )~\n | Y |  \n  |_| | ',' /\\_/\\ \n( o o )~\n | Y |  \n | |_|  '],
-      happy:[' /\\_/\\ \n( * * )~\n | Y |  \n |_|_|  '],
-      love:[' /\\_/\\ \n( ♥ ♥ )~\n | Y |  \n |_|_|  '],
-      curious:[' /\\_/\\ \n( o O )~\n | Y |  \n |_|_|  '],
-      hungry:[' /\\_/\\ \n( o o )~\n | Y |  \n |_|_|  '],
-      sad:[' /\\_/\\ \n( ;; )~\n | Y |  \n |_|_|  '],
-      dead:[' /\\_/\\ \n( x x )~\n | Y |  \n |_|_|  '],
-      angry:[' /\\_/\\ \n( # # )~\n | Y |  \n |_|_|  '],
+    // Body frames — 9×4, NO tail stored (tail added via addTail() at render time)
+    var B={
+      idle:[' /\_/\   \n( o o )  \n | Y |   \n |_|_|   '],
+      blink:[' /\_/\   \n( - o )  \n | Y |   \n |_|_|   '],
+      walk:[
+        ' /\_/\   \n( o o )  \n | Y |   \n |_|_|   ',
+        ' /\_/\   \n( o o )  \n | Y |   \n| |_|    ',
+        ' /\_/\   \n( o o )  \n | Y |   \n|_| |    ',
+        ' /\_/\   \n( o o )  \n | Y |   \n |_|_|   ',
+        ' /\_/\   \n( o o )  \n | Y |   \n  |_| |  ',
+        ' /\_/\   \n( o o )  \n | Y |   \n | |_|   ',
+      ],
+      happy:[' /\_/\   \n( * * )  \n | Y |   \n |_|_|   '],
+      love:[' /\_/\   \n( ♥ ♥ )  \n | Y |   \n |_|_|   '],
+      curious:[' /\_/\   \n( o O )  \n | Y |   \n |_|_|   '],
+      hungry:[' /\_/\   \n( o o )  \n | Y |   \n |_|_|   '],
+      sad:[' /\_/\   \n( ; ; )  \n | Y |   \n |_|_|   '],
+      dead:[' /\_/\   \n( x x )  \n | Y |   \n |_|_|   '],
+      angry:[' /\_/\   \n( # # )  \n | Y |   \n |_|_|   '],
     };
-    var _mood='idle',_frame=0,_walking=false,_lastX=50;
+    // Add tail to a body frame based on walking direction
+    // Right tail: ` and ~ on right of lines 3-4 (sweeps down from body)
+    // Left tail:  ` and ~ on left of lines 3-4
+    function addTail(f,dir){
+      var l=f.split('\n');
+      if(dir==='right'){
+        l[2]=l[2].slice(0,7)+'` ';
+        l[3]=l[3].slice(0,7)+' ~';
+      }else{
+        l[2]='`'+l[2].slice(0,7)+' ';
+        l[3]='~'+l[3].slice(0,7)+' ';
+      }
+      return l.join('\n');
+    }
+    var _mood='idle',_frame=0,_walking=false,_lastX=50,_direction='right';
     // Top bar
     const top=document.createElement('div');top.className='dp-top';
     const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'cat';top.appendChild(nameEl);
@@ -115,6 +137,8 @@ registerModule('digital-pet', {
       if(_walking)return;_walking=true;
       var pw=pen.offsetWidth||260,ph=pen.offsetHeight||140;
       var nx=Math.random()*(pw-80);
+      // Track direction for tail flip
+      _direction=nx<_lastX?'left':'right';
       // Keep cat on the floor: sprite ~64px tall, pen 140px, floor 24px
       var ny=ph-24-62+Math.random()*8;
       _lastX=nx;
@@ -124,8 +148,8 @@ registerModule('digital-pet', {
       var wf=0;
       if(_frameTimer)clearInterval(_frameTimer);
       _frameTimer=setInterval(function(){
-        wf=(wf+1)%C.walk.length;
-        creature.textContent=C.walk[wf];
+        wf=(wf+1)%B.walk.length;
+        creature.textContent=addTail(B.walk[wf],_direction);
       },380);
       clearTimeout(_walkTimer);
       _walkTimer=setTimeout(function(){
@@ -136,14 +160,14 @@ registerModule('digital-pet', {
     }
     function setFrame(){
       if(_walking)return;
-      var frames=C[_mood]||C.idle;
+      var frames=B[_mood]||B.idle;
       var txt;
-      if(_mood==='idle'&&frames.length===1&&C.blink){
-        txt=Math.random()<0.15?C.blink[0]:frames[0];
+      if(_mood==='idle'&&frames.length===1&&B.blink){
+        txt=Math.random()<0.15?B.blink[0]:frames[0];
       }else{
         txt=frames[_frame%frames.length]||frames[0];
       }
-      creature.textContent=txt;
+      creature.textContent=addTail(txt,_direction);
     }
     // Update display
     function updateAll(){
