@@ -941,7 +941,7 @@ body {
 .dp-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .dp-name { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); }
 .dp-mood-label { font-size: var(--text-2xs); color: var(--text-tertiary); }
-.dp-pen { position: relative; height: 140px; background: var(--card-bg); border: 2px solid var(--surface-border); margin-bottom: 4px; overflow: hidden; }
+.dp-pen { position: relative; height: 180px; background: var(--card-bg); border: 2px solid var(--surface-border); margin-bottom: 4px; overflow: hidden; }
 /* Floor boards at the bottom */
 .dp-floor { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 14px, rgba(255,255,255,0.06) 14px, rgba(255,255,255,0.06) 15px); border-top: 1px solid var(--surface-border); pointer-events: none; z-index: 0; }
 /* Door on left wall — moves with perspective */

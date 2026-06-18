@@ -11,7 +11,7 @@ registerModule('digital-pet', {
     w.dataset.secId=sec.id;
     // Cat — user's design, 12x7, mirrored for direction
     var Cr='      /\\_/\\ \n /\\  / o o \\\n//\\\\ \\~(*)~/\n`  \\/   ^ / \n   | \\|| || \n   \\ \'|| || \n    \\)()-())';
-    var Cl=' /\\_/\\      \n/ o o \\  /\\ \n\\~(*)~/ //\\\\\n \\ ^   \\/  \'\n || ||/ |   \n || ||` /   \n(()-()(/    ';
+    var Cl=' /\\_/\\      \n\\ o o /  \\/ \n\\~(*)~/ //\\\\\n \\ ^   \\/  \'\n   || /|| | \n   || ||` / \n   (()-()(/ ';
     // Eye (replaces * in (*))
     var eyes={idle:'*',blink:'-',happy:'*',love:'♥',curious:'O',hungry:'o',sad:';',dead:'x',angry:'#'};
     var _mood='idle',_walking=false,_lastX=50,_direction='right';
@@ -123,7 +123,7 @@ registerModule('digital-pet', {
       var pw=pen.offsetWidth||260,ph=pen.offsetHeight||140;
       var nx=Math.random()*(pw-80);
       _direction=nx<_lastX?'left':'right';
-      var ny=ph-24-62+Math.random()*8;
+      var ny=ph-24-114+Math.random()*8;
       _lastX=nx;
       creature.style.left=nx+'px';creature.style.top=ny+'px';
       updatePerspective(nx);
