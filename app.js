@@ -2806,10 +2806,8 @@ function addNewCard(){
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
   types.forEach(t => {
     const btn = document.createElement('button');
-    btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px 10px;background:var(--card-bg-alt);border:1px solid var(--surface-border);color:var(--text-primary);cursor:pointer;transition:all 0.12s;';
+    btn.className = 'cp-type-btn';
     btn.innerHTML = '<i data-lucide="'+t.icon+'" style="width:22px;height:22px;"></i><span style="font-size:var(--text-xs);color:var(--text-secondary);">'+t.label+'</span>';
-    btn.addEventListener('mouseenter',()=>{btn.style.background='rgba(255,255,255,0.08)';btn.style.borderColor='var(--accent)';});
-    btn.addEventListener('mouseleave',()=>{btn.style.background='';btn.style.borderColor='';});
     btn.addEventListener('click', () => {
       overlay.remove();
       const colMax=config.layout.cols;

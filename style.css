@@ -502,6 +502,21 @@ body {
 .me-card .me-check-group { padding: 4px 0 0; }
 .me-card .me-link-add { margin-top: 12px; }
 
+/* Card type picker buttons */
+.cp-type-btn {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 14px 6px 10px;
+  background: var(--card-bg-alt);
+  border: 1px solid var(--surface-border);
+  color: var(--text-primary); cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  font-family: var(--font);
+}
+.cp-type-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--accent);
+}
+
 /* ── Links table ── */
 .me-link-th {
   display: flex; gap: 8px; align-items: center; padding: 0 10px 10px;
