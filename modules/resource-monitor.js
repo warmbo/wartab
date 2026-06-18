@@ -79,8 +79,7 @@ registerModule('resource-monitor', {
     const sysRow=document.createElement('div');sysRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:2px;';
     const hostEl=document.createElement('span');hostEl.className='rm-host';
     const tsEl=document.createElement('span');tsEl.className='rm-ts';
-    const extraEl=document.createElement('span');extraEl.className='rm-extra';
-    sysRow.appendChild(hostEl);sysRow.appendChild(extraEl);sysRow.appendChild(tsEl);
+    sysRow.appendChild(hostEl);sysRow.appendChild(tsEl);
     w.appendChild(sysRow);
     cw.appendChild(w);
     // Chart.js defaults: sparkline style, no decorations
@@ -196,10 +195,13 @@ registerModule('resource-monitor', {
         }
         if(!w.parentNode)return;
         var isGraph=w.dataset.graphMode==='1';
-        // CPU
+        // CPU — show temp and process count alongside percentage
         var cpuVal=Math.min(cpuPct,100);
         rows.cpu.fill.style.width=cpuVal+'%';
-        rows.cpu.val.textContent=(cpuPct||0).toFixed(1)+'%';
+        var cpuExtra=[];
+        if(cpuTemp.celsius>0)cpuExtra.push(cpuTemp.celsius+'°C');
+        if(procs>0)cpuExtra.push(procs+'p');
+        rows.cpu.val.innerHTML=(cpuPct||0).toFixed(1)+'% <span style="opacity:0.5;font-weight:400;font-size:var(--text-3xs)">'+cpuExtra.join(' ')+'</span>';
         pushGraph('cpu',cpuVal);
         // RAM
         var memPct=typeof mem.percent==='number'?mem.percent:0;
@@ -231,8 +233,6 @@ registerModule('resource-monitor', {
         rxEl.textContent='▼ '+fmtBytes(rx);txEl.textContent='▲ '+fmtBytes(tx);
         _prevRx=rx;_prevTx=tx;_prevTs=now;
         hostEl.textContent=hostname;
-        var extraParts=[];if(cpuTemp.celsius>0)extraParts.push(cpuTemp.celsius+'°C');if(procs>0)extraParts.push(procs+' proc');
-        extraEl.textContent=extraParts.length?extraParts.join(' · '):'';
         tsEl.textContent='↑ '+(uptime.string||'');
         saveCache();
       }).catch(function(){});
