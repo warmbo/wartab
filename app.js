@@ -1278,7 +1278,7 @@ const DEFAULT_CONFIG = {
           links: [
             { label: 'GitHub', url: 'https://github.com', icon: '/icons/github.svg' },
             { label: 'GitLab', url: 'https://gitlab.com', icon: '/icons/gitlab.svg' },
-            { label: 'Stack Overflow', url: 'https://stackoverflow.com', icon: '/icons/stackoverflow.svg' },
+            { label: 'Stack Overflow', url: 'https://stackoverflow.com', icon: 'help-circle' },
             { label: 'npm', url: 'https://www.npmjs.com', icon: 'package' },
             { label: 'PyPI', url: 'https://pypi.org', icon: 'code-2' },
           ],
@@ -1301,9 +1301,9 @@ const DEFAULT_CONFIG = {
         {
           id: 'sh-services', type: 'links', label: 'Services',
           links: [
-            { label: 'Home Assistant', url: 'http://homeassistant.local:8123', icon: '/icons/homeassistant.svg' },
+            { label: 'Home Assistant', url: 'http://homeassistant.local:8123', icon: '/icons/home-assistant.svg' },
             { label: 'Jellyfin', url: 'http://jellyfin.local:8096', icon: '/icons/jellyfin.svg' },
-            { label: 'Pi-hole', url: 'http://pi.hole/admin', icon: '/icons/pihole.svg' },
+            { label: 'Pi-hole', url: 'http://pi.hole/admin', icon: '/icons/pi-hole.svg' },
             { label: 'Grafana', url: 'http://grafana.local:3000', icon: '/icons/grafana.svg' },
             { label: 'Portainer', url: 'http://portainer.local:9000', icon: '/icons/portainer.svg' },
             { label: 'Vaultwarden', url: 'http://vault.local:8080', icon: '/icons/vaultwarden.svg' },

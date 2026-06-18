@@ -85,6 +85,13 @@ preflight() {
   # Python
   if command -v python3 &>/dev/null; then
     ok "Python: $(python3 --version 2>&1)"
+    # Check pip3 availability
+    if command -v pip3 &>/dev/null; then
+      HAS_PIP=true
+    else
+      HAS_PIP=false
+      warn "pip3 not found — Pillow install will use apt instead"
+    fi
   else
     warn "Python 3 not found — install: sudo apt install python3"
     fail=1
@@ -106,7 +113,7 @@ preflight() {
   fi
 
   # Port check
-  if ss -tlnp "sport = :${PORT}" 2>/dev/null | grep -q .; then
+  if ss -tlnp 2>/dev/null | grep -q ":${PORT} "; then
     warn "Port ${PORT} is already in use — pick another with --port"
   else
     ok "Port ${PORT} is available"
@@ -159,11 +166,16 @@ else
 fi
 
 # ── Install Pillow if needed ──
-if [ "$HAS_PIL" = false ] && command -v pip3 &>/dev/null; then
-  info "Attempting to install Pillow..."
-  pip3 install --user Pillow 2>/dev/null \
-    && ok "Pillow installed" \
-    || warn "Pillow install failed — images won't be resized"
+if [ "$HAS_PIL" = false ]; then
+  # Try apt first (more reliable on Debian)
+  if sudo apt-get install -y python3-pil 2>/dev/null; then
+    ok "Pillow installed via apt (python3-pil)"
+  elif [ "$HAS_PIP" = true ] && pip3 install --user Pillow 2>/dev/null; then
+    ok "Pillow installed via pip"
+  else
+    warn "Pillow install failed — image uploads won't be resized"
+    warn "  Run: sudo apt install python3-pil"
+  fi
 fi
 
 # ── systemd user service ──
@@ -207,17 +219,28 @@ fi
 
 # ── Health check ──
 info "Waiting for server to respond..."
+SERVER_OK=false
 for i in 1 2 3 4 5; do
   sleep 1
   HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${PORT}/" 2>/dev/null || true)
   if [ "$HTTP_CODE" = "200" ]; then
     ok "Server responded with HTTP ${HTTP_CODE}"
+    SERVER_OK=true
     break
   fi
   if [ "$i" -eq 5 ]; then
     warn "Server didn't respond in time — check: journalctl --user -u wartab -n 20"
   fi
 done
+# Verify API is functional
+if [ "$SERVER_OK" = true ]; then
+  CONFIG_TEST=$(curl -s "http://localhost:${PORT}/api/config" | python3 -c "import json,sys; d=json.load(sys.stdin); print('ok' if 'version' in d or not d else 'empty')" 2>/dev/null || echo 'fail')
+  if [ "$CONFIG_TEST" = 'ok' ] || [ "$CONFIG_TEST" = 'empty' ]; then
+    ok "API config endpoint responding"
+  else
+    warn "API config check failed — config may not load"
+  fi
+fi
 
 # ── Firewall ──
 if command -v ufw &>/dev/null && ! ufw status 2>/dev/null | grep -q "${PORT}/tcp"; then

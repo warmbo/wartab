@@ -6,7 +6,7 @@
   },
   "theme": {
     "bgType": "image",
-    "bgValue": "/uploads/f09dd3fd38a6453786f20dff3aee32ca.jpg",
+    "bgValue": "/uploads/acac358fa82449e4ab7648c29f31ac76.png",
     "bgBlur": 20,
     "bgDim": 60,
     "blur": 4,
@@ -367,7 +367,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         }
       ]
@@ -733,7 +733,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]
@@ -1180,7 +1180,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 2
+              "_qi": 0
             }
           ]
         },
