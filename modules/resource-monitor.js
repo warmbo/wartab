@@ -75,58 +75,12 @@ registerModule('resource-monitor', {
     const txEl=document.createElement('span');txEl.className='rm-tx';
     netSpeedRow.appendChild(rxEl);netSpeedRow.appendChild(txEl);netRow.appendChild(netSpeedRow);
     w.appendChild(netRow);
-    // System info row
     const sysRow=document.createElement('div');sysRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:2px;';
     const hostEl=document.createElement('span');hostEl.className='rm-host';
     const tsEl=document.createElement('span');tsEl.className='rm-ts';
     sysRow.appendChild(hostEl);sysRow.appendChild(tsEl);
     w.appendChild(sysRow);
     cw.appendChild(w);
-    // Chart.js defaults: sparkline style, no decorations
-    var CHART_CFG={
-      type:'line',
-      data:{datasets:[{data:[],borderColor:'',borderWidth:1.5,fill:false,pointRadius:0,tension:0.1}]},
-      options:{
-        responsive:true,maintainAspectRatio:false,animation:false,
-        scales:{
-          y:{beginAtZero:true,min:0,grid:{display:false},ticks:{display:false}},
-          x:{display:false,grid:{display:false}}
-        },
-        plugins:{legend:{display:false},tooltip:{enabled:false}},
-        elements:{point:{radius:0}}
-      }
-    };
-    // Create or destroy Chart.js instances
-    function initCharts(enabled){
-      if(!enabled){
-        Object.keys(charts).forEach(function(k){if(charts[k]){charts[k].destroy();delete charts[k];}});
-        return;
-      }
-      metrics.forEach(function(key){
-        var r=rows[key];if(!r)return;
-        if(charts[key]){charts[key].destroy();}
-        var ctx=r.canvas.getContext('2d');
-        var cfg=JSON.parse(JSON.stringify(CHART_CFG));
-        var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888';
-        cfg.data.datasets[0].borderColor=accent;
-        cfg.data.datasets[0].data=hist[key]||[];
-        charts[key]=new Chart(ctx,cfg);
-      });
-      // Network chart — two datasets (RX solid, TX dashed)
-      if(charts.net){charts.net.destroy();}
-      if(netCanvas){
-        var nctx=netCanvas.getContext('2d');
-        var netCfg=JSON.parse(JSON.stringify(CHART_CFG));
-        netCfg.data.datasets=[
-          {data:hist.rx||[],borderColor:'rgba(255,255,255,0.7)',borderWidth:1,fill:false,pointRadius:0,tension:0.1},
-          {data:hist.tx||[],borderColor:'rgba(255,255,255,0.25)',borderWidth:1,fill:false,pointRadius:0,tension:0.1,borderDash:[3,2]}
-        ];
-        netCfg.options.scales.y.beginAtZero=true;
-        netCfg.options.scales.y.min=0;
-        charts.net=new Chart(nctx,netCfg);
-      }
-    }
-    // Toggle bar / graph mode
     function setGraphMode(enabled){
       w.dataset.graphMode=enabled?'1':'0';
       metrics.forEach(function(key){
@@ -136,13 +90,48 @@ registerModule('resource-monitor', {
       });
       if(enabled){netTrack.style.display='none';netCwrap.style.display='block';}
       else{netTrack.style.display='';netCwrap.style.display='none';}
-      if(enabled){
-        if(typeof Chart!=='undefined')setTimeout(function(){initCharts(true);},0);
+      if(enabled&&typeof Chart!=='undefined'){
+        initCharts();
       }else{
-        initCharts(false);
+        Object.keys(charts).forEach(function(k){if(charts[k]){charts[k].destroy();delete charts[k];}});
       }
     }
     setGraphMode(sec.graphMode);
+    // Create Chart.js instances on visible canvases
+    function initCharts(){
+      metrics.forEach(function(key){
+        var r=rows[key];if(!r)return;
+        if(charts[key]){charts[key].destroy();}
+        var ctx=r.canvas.getContext('2d');
+        var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888';
+        charts[key]=new Chart(ctx,{
+          type:'line',
+          data:{datasets:[{data:(hist[key]||[]).slice(),borderColor:accent,borderWidth:1.5,fill:false,pointRadius:0,tension:0.1}]},
+          options:{
+            responsive:true,maintainAspectRatio:false,animation:false,
+            scales:{y:{beginAtZero:true,min:0,grid:{display:false},ticks:{display:false}},x:{display:false,grid:{display:false}}},
+            plugins:{legend:{display:false},tooltip:{enabled:false}},
+            elements:{point:{radius:0}}
+          }
+        });
+      });
+      // Network chart
+      if(charts.net){charts.net.destroy();}
+      var nctx=netCanvas.getContext('2d');
+      charts.net=new Chart(nctx,{
+        type:'line',
+        data:{datasets:[
+          {data:(hist.rx||[]).slice(),borderColor:'rgba(255,255,255,0.7)',borderWidth:1,fill:false,pointRadius:0,tension:0.1},
+          {data:(hist.tx||[]).slice(),borderColor:'rgba(255,255,255,0.25)',borderWidth:1,fill:false,pointRadius:0,tension:0.1,borderDash:[3,2]}
+        ]},
+        options:{
+          responsive:true,maintainAspectRatio:false,animation:false,
+          scales:{y:{beginAtZero:true,min:0,grid:{display:false},ticks:{display:false}},x:{display:false,grid:{display:false}}},
+          plugins:{legend:{display:false},tooltip:{enabled:false}},
+          elements:{point:{radius:0}}
+        }
+      });
+    }
     // Helpers
     function fmtBytes(b){if(b<1024)return b.toFixed(0)+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
     function fmtSpeed(bps){if(bps<1024)return bps.toFixed(0)+'B/s';if(bps<1048576)return(bps/1024).toFixed(1)+'KB/s';return(bps/1048576).toFixed(1)+'MB/s';}
