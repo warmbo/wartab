@@ -39,9 +39,11 @@ registerModule('resource-monitor', {
       fill.style.cssText='height:100%;width:0%;background:var(--accent);transition:width 0.4s ease;';
       track.appendChild(fill);
       var canvas=document.createElement('canvas');canvas.className='rm-canvas-'+key;
-      canvas.style.cssText='display:none;width:100%;height:48px;background:rgba(0,0,0,0.08);';
-      row.appendChild(track);row.appendChild(canvas);
-      return {row:row,fill:fill,val:val,canvas:canvas,track:track,key:key};
+      canvas.style.cssText='display:none;width:100%;height:100%;background:rgba(0,0,0,0.08);';
+      var cwrap=document.createElement('div');cwrap.style.cssText='display:none;height:48px;position:relative;';
+      cwrap.appendChild(canvas);
+      row.appendChild(track);row.appendChild(cwrap);
+      return {row:row,fill:fill,val:val,canvas:canvas,cwrap:cwrap,track:track,key:key};
     }
     // Build metric rows
     var rows={};
@@ -64,8 +66,10 @@ registerModule('resource-monitor', {
     netFill.style.cssText='height:100%;width:0%;background:var(--accent);transition:width 0.4s ease;';
     netTrack.appendChild(netFill);netRow.appendChild(netTrack);
     var netCanvas=document.createElement('canvas');netCanvas.className='rm-canvas-net';
-    netCanvas.style.cssText='display:none;width:100%;height:40px;background:rgba(0,0,0,0.08);';
-    netRow.appendChild(netCanvas);
+    netCanvas.style.cssText='display:none;width:100%;height:100%;background:rgba(0,0,0,0.08);';
+    var netCwrap=document.createElement('div');netCwrap.style.cssText='display:none;height:40px;position:relative;';
+    netCwrap.appendChild(netCanvas);
+    netRow.appendChild(netCwrap);
     const netSpeedRow=document.createElement('div');netSpeedRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:1px;';
     const rxEl=document.createElement('span');rxEl.className='rm-rx';
     const txEl=document.createElement('span');txEl.className='rm-tx';
@@ -128,11 +132,11 @@ registerModule('resource-monitor', {
       w.dataset.graphMode=enabled?'1':'0';
       metrics.forEach(function(key){
         var r=rows[key];
-        if(enabled){r.track.style.display='none';r.canvas.style.display='block';}
-        else{r.track.style.display='';r.canvas.style.display='none';}
+        if(enabled){r.track.style.display='none';r.cwrap.style.display='block';}
+        else{r.track.style.display='';r.cwrap.style.display='none';}
       });
-      if(enabled){netTrack.style.display='none';netCanvas.style.display='block';}
-      else{netTrack.style.display='';netCanvas.style.display='none';}
+      if(enabled){netTrack.style.display='none';netCwrap.style.display='block';}
+      else{netTrack.style.display='';netCwrap.style.display='none';}
       if(enabled){
         if(typeof Chart!=='undefined')setTimeout(function(){initCharts(true);},0);
       }else{
