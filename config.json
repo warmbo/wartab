@@ -103,14 +103,15 @@
       "sections": [
         {
           "id": "sec-gaju5snmqjk5g90",
-          "type": "tamagotchi",
-          "label": "Tamagotchi",
-          "lastFed": 1781790661042,
-          "hunger": 100,
-          "happiness": 85,
-          "waste": 0,
-          "lastCleaned": 1781790664513,
-          "petName": "Xerxes"
+          "type": "digital-pet",
+          "label": "My Cat",
+          "lastFed": 1781791020798,
+          "hunger": 80,
+          "happiness": 80,
+          "waste": 10,
+          "lastCleaned": 1781791020798,
+          "petName": "",
+          "lastPetted": 1781791020798
         }
       ]
     }
@@ -997,14 +998,15 @@
           "sections": [
             {
               "id": "sec-gaju5snmqjk5g90",
-              "type": "tamagotchi",
-              "label": "Tamagotchi",
-              "lastFed": 1781790661042,
-              "hunger": 100,
-              "happiness": 85,
-              "waste": 0,
-              "lastCleaned": 1781790664513,
-              "petName": "Xerxes"
+              "type": "digital-pet",
+              "label": "My Cat",
+              "lastFed": 1781791020798,
+              "hunger": 80,
+              "happiness": 80,
+              "waste": 10,
+              "lastCleaned": 1781791020798,
+              "petName": "",
+              "lastPetted": 1781791020798
             }
           ]
         }

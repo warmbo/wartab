@@ -489,28 +489,29 @@ registerModule('digital-pet', {
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // ASCII art frames — compact 3-line creature
-    const F={
-      idle:['▄■▄\n■-■\n▀■▀','▄■▄\n■‿■\n▀■▀'],
-      happy:['▄★▄\n★‿★\n▀★▀'],
-      hungry:['▄■▄\n╥﹏╥\n▀■▀'],
-      sad:['▄■▄\n╥_╥\n▀■▀'],
-      dirty:['▄■▄\n⊙_⊙\n▀■▀'],
-      dead:['▄■▄\n×_×\n▀■▀'],
-      angry:['▄■▄\n#_#\n▀■▀'],
+    // Cat ASCII frames — based on user's design, padded to 12×5
+    var C={
+      idle:['    /\\    \n   )  (\')\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~',
+            '    /\\    \n   )  ( -)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
+      happy:['    /\\    \n   )  (*)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
+      hungry:['    /\\    \n   )  (o)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
+      sad:['    /\\    \n   )  (;;)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
+      dead:['    /\\    \n   )  (x)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
+      angry:['    /\\    \n   )  (#)\n  (  /  ) \n   \\(__)|  \n ~~~~~~~~~'],
     };
     var _mood='idle',_frame=0;
-    // Top: name + mood label
+    // Top bar
     const top=document.createElement('div');top.className='dp-top';
     const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'Digital Pet';top.appendChild(nameEl);
     const moodLabel=document.createElement('span');moodLabel.className='dp-mood-label';top.appendChild(moodLabel);
     w.appendChild(top);
-    // Enclosure
+    // Terminal enclosure
     const pen=document.createElement('div');pen.className='dp-pen';
+    const scanlines=document.createElement('div');scanlines.className='dp-scanlines';pen.appendChild(scanlines);
     const speech=document.createElement('div');speech.className='dp-speech';pen.appendChild(speech);
     const creature=document.createElement('pre');creature.className='dp-creature';pen.appendChild(creature);
     w.appendChild(pen);
-    // Stats
+    // Stats with terminal coloring
     const stats=document.createElement('div');stats.className='dp-stats';
     function makeStat(label,getVal){
       const row=document.createElement('div');row.className='dp-stat-row';
@@ -518,38 +519,38 @@ registerModule('digital-pet', {
       const bar=document.createElement('div');bar.className='dp-bar';
       const fill=document.createElement('div');fill.className='dp-fill';bar.appendChild(fill);row.appendChild(bar);
       const valEl=document.createElement('span');valEl.className='dp-val';row.appendChild(valEl);
-      const upd=()=>{const v=Math.max(0,Math.min(100,getVal()));fill.style.width=v+'%';fill.style.background=v>50?'rgba(255,255,255,0.3)':'rgba(200,80,80,0.5)';valEl.textContent=Math.round(v);};
+      const upd=()=>{const v=Math.max(0,Math.min(100,getVal()));fill.style.width=v+'%';fill.style.background=v>50?'rgba(51,255,51,0.4)':'rgba(255,80,80,0.5)';valEl.textContent=Math.round(v);};
       return {row,upd};
     }
     function elapsed(ts){return(Date.now()-(ts||Date.now()))/60000;}
     function curHunger(){return(sec.hunger||80)-elapsed(sec.lastFed)*2;}
     function curHappy(){return(sec.happiness||80)-elapsed(sec.lastPetted)*1;}
     function curWaste(){return(sec.waste||10)+elapsed(sec.lastCleaned)*0.5;}
-    const hS=makeStat('Hunger',curHunger);stats.appendChild(hS.row);
-    const haS=makeStat('Happy',curHappy);stats.appendChild(haS.row);
-    const wS=makeStat('Waste',curWaste);stats.appendChild(wS.row);
+    const hS=makeStat('HUNGER',curHunger);stats.appendChild(hS.row);
+    const haS=makeStat('MOOD',curHappy);stats.appendChild(haS.row);
+    const wS=makeStat('DIRT',curWaste);stats.appendChild(wS.row);
     w.appendChild(stats);
-    // Actions — stopPropagation prevents card-level interference
+    // Actions
     const acts=document.createElement('div');acts.className='dp-actions';
     function mkBtn(label,onClick){const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent=label;b.addEventListener('click',function(e){e.stopPropagation();onClick();});acts.appendChild(b);}
-    mkBtn('🍕 Feed',()=>{sec.lastFed=Date.now();sec.hunger=Math.min(100,(sec.hunger||80)+30);sec.happiness=Math.min(100,(sec.happiness||80)+5);sec.waste=Math.min(100,(sec.waste||10)+10);saveConfig();updateAll();});
-    mkBtn('🤚 Pet',()=>{sec.lastPetted=Date.now();sec.happiness=Math.min(100,(sec.happiness||80)+20);saveConfig();updateAll();});
-    mkBtn('🧹 Clean',()=>{sec.lastCleaned=Date.now();sec.waste=Math.max(0,(sec.waste||10)-40);saveConfig();updateAll();});
+    mkBtn('FEED',()=>{sec.lastFed=Date.now();sec.hunger=Math.min(100,(sec.hunger||80)+30);sec.happiness=Math.min(100,(sec.happiness||80)+5);sec.waste=Math.min(100,(sec.waste||10)+10);saveConfig();updateAll();});
+    mkBtn('PET',()=>{sec.lastPetted=Date.now();sec.happiness=Math.min(100,(sec.happiness||80)+20);saveConfig();updateAll();});
+    mkBtn('CLEAN',()=>{sec.lastCleaned=Date.now();sec.waste=Math.max(0,(sec.waste||10)-40);saveConfig();updateAll();});
     w.appendChild(acts);
     cw.appendChild(w);
-    // Network speech — periodic fetch from /api/stats
+    // Network speech
     var _sayTimer;
     function fetchNetFact(){
       fetch('/api/stats').then(function(r){return r.json();}).then(function(d){
         var facts=[];
-        if(d.hostname)facts.push('I run on '+d.hostname);
-        if(d.uptime)facts.push('Up '+d.uptime.string);
-        if(typeof d.cpu==='number')facts.push('CPU: '+d.cpu+'%');
-        if(d.memory)facts.push('RAM: '+Math.round(d.memory.percent)+'%');
-        if(d.disks&&d.disks[0])facts.push('Disk: '+Math.round(d.disks[0].percent)+'% full');
-        if(!facts.length)facts.push('The network is quiet...');
+        if(d.hostname)facts.push('$ hostname: '+d.hostname);
+        if(d.uptime)facts.push('$ uptime: '+d.uptime.string);
+        if(typeof d.cpu==='number')facts.push('$ cpu: '+d.cpu+'%');
+        if(d.memory)facts.push('$ mem: '+Math.round(d.memory.percent)+'%');
+        if(d.disks&&d.disks[0])facts.push('$ disk: '+Math.round(d.disks[0].percent)+'%');
+        if(!facts.length)facts.push('$ no signal...');
         speak(facts[Math.floor(Math.random()*facts.length)]);
-      }).catch(function(){speak('No network data...');});
+      }).catch(function(){speak('$ connection lost');});
     }
     function speak(msg){
       speech.textContent=msg;speech.classList.add('visible');
@@ -557,43 +558,45 @@ registerModule('digital-pet', {
     }
     _sayTimer=setInterval(fetchNetFact,18000+Math.random()*12000);
     setTimeout(fetchNetFact,3000+Math.random()*4000);
-    // Roam — pixel-based within enclosure
-    var roamTimer;
-    function roam(){
-      var pw=pen.offsetWidth||200,ph=pen.offsetHeight||110;
-      creature.style.left=Math.random()*(pw-80)+'px';creature.style.top=Math.random()*(ph-60)+'px';
+    // Walk — move cat around enclosure with frame alternation
+    var roamTimer,_dir=1;
+    function walk(){
+      var pw=pen.offsetWidth||280,ph=pen.offsetHeight||120;
+      var nx=Math.random()*(pw-80),ny=Math.random()*(ph-70);
+      _dir=nx>parseInt(creature.style.left||0)?1:-1;
+      creature.style.left=nx+'px';creature.style.top=ny+'px';
     }
-    roam();
     // Update display
     function updateAll(){
       hS.upd();haS.upd();wS.upd();
       const h=Math.max(0,curHunger()),ha=Math.max(0,curHappy()),wa=Math.max(0,curWaste());
       var moodKey,moodTxt;
-      if(h<=0||ha<=0){moodKey='dead';moodTxt='Dead';}
-      else if(h<20&&ha<20){moodKey='angry';moodTxt='Angry';}
-      else if(h<30){moodKey='hungry';moodTxt='Hungry';}
-      else if(wa>70){moodKey='dirty';moodTxt='Dirty';}
-      else if(ha<30){moodKey='sad';moodTxt='Sad';}
-      else if(ha>65&&h>50&&wa<30){moodKey='happy';moodTxt='Happy';}
-      else{moodKey='idle';moodTxt=sec.petName||'Digital Pet';}
+      if(h<=0||ha<=0){moodKey='dead';moodTxt='[DEAD]';}
+      else if(h<20&&ha<20){moodKey='angry';moodTxt='[ANGRY]';}
+      else if(h<30){moodKey='hungry';moodTxt='[HUNGRY]';}
+      else if(wa>70){moodKey='sad';moodTxt='[DIRTY]';}
+      else if(ha<30){moodKey='sad';moodTxt='[SAD]';}
+      else if(ha>65&&h>50&&wa<30){moodKey='happy';moodTxt='[HAPPY]';}
+      else{moodKey='idle';moodTxt='$ cat '+sec.petName.toLowerCase()||'$ cat pet';}
       if(moodKey!==_mood){_mood=moodKey;_frame=0;}
-      var frames=F[moodKey]||F.idle;
+      var frames=C[moodKey]||C.idle;
       if(frames.length>1)_frame=(_frame+1)%frames.length;
       creature.textContent=frames[_frame]||frames[0];
       moodLabel.textContent=moodTxt;
     }
     updateAll();
     setInterval(updateAll,5000);
-    roamTimer=setInterval(roam,3500);
+    walk();
+    roamTimer=setInterval(walk,4500+Math.random()*2000);
     card._dpCleanup=function(){if(roamTimer)clearInterval(roamTimer);if(_sayTimer)clearInterval(_sayTimer);};
   },
   editor: (sec,card,bd)=>{
     const nr=document.createElement('div');nr.style.cssText='margin-bottom:10px;';
     nr.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block;','Pet Name'));
-    const ni=document.createElement('input');ni.type='text';ni.value=sec.petName||'';ni.placeholder='Digital Pet';ni.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';
+    const ni=document.createElement('input');ni.type='text';ni.value=sec.petName||'';ni.placeholder='cat';ni.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';
     ni.addEventListener('change',()=>{sec.petName=ni.value;saveAndRefresh();});nr.appendChild(ni);bd.appendChild(nr);
     const rr=document.createElement('div');rr.style.cssText='margin-bottom:10px;';
-    const rb=document.createElement('button');rb.className='btn btn-glass btn-sm btn-danger';rb.textContent='🔄 Reset Pet';
+    const rb=document.createElement('button');rb.className='btn btn-glass btn-sm btn-danger';rb.textContent='RESET PET';
     rb.addEventListener('click',function(e){e.stopPropagation();const d=Date.now();sec.hunger=80;sec.happiness=80;sec.waste=10;sec.lastFed=d;sec.lastPetted=d;sec.lastCleaned=d;saveAndRefresh();});
     rr.appendChild(rb);bd.appendChild(rr);
   },
