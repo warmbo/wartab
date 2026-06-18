@@ -58,6 +58,53 @@
   },
   "cards": [
     {
+      "id": "card-0ew9ucqmqjk5g90",
+      "title": "",
+      "icon": "package",
+      "color": "#888888",
+      "width": 2,
+      "height": 3,
+      "sections": [
+        {
+          "id": "sec-gaju5snmqjk5g90",
+          "type": "digital-pet",
+          "label": "My Cat",
+          "lastFed": 1781791716695,
+          "hunger": 100,
+          "happiness": 100,
+          "waste": 0,
+          "lastCleaned": 1781791720307,
+          "petName": "Dog",
+          "lastPetted": 1781791721893
+        }
+      ]
+    },
+    {
+      "id": "card-0wfkopemqjl5my9",
+      "title": "",
+      "icon": "package",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-k9zzug9mqjl5my9",
+          "type": "resource-monitor",
+          "label": "Resource monitor",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "source": "local",
+          "glancesUrl": "http://localhost:61209",
+          "refreshInterval": 15
+        }
+      ]
+    },
+    {
       "id": "card-dc8hc4tmqjg36kq",
       "title": "",
       "icon": "package",
@@ -90,7 +137,7 @@
       ]
     },
     {
-      "id": "card-0ew9ucqmqjk5g90",
+      "id": "card-68kmkgnmqjl5a29",
       "title": "",
       "icon": "package",
       "color": "#888888",
@@ -98,16 +145,9 @@
       "height": 1,
       "sections": [
         {
-          "id": "sec-gaju5snmqjk5g90",
-          "type": "digital-pet",
-          "label": "My Cat",
-          "lastFed": 1781791716695,
-          "hunger": 100,
-          "happiness": 100,
-          "waste": 0,
-          "lastCleaned": 1781791720307,
-          "petName": "Dog",
-          "lastPetted": 1781791721893
+          "id": "sec-zwfhcolmqjl5a29",
+          "type": "lan-scan",
+          "label": "LAN Scan"
         }
       ]
     }
@@ -428,7 +468,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]
@@ -949,6 +989,53 @@
       "icon": "layout",
       "cards": [
         {
+          "id": "card-0ew9ucqmqjk5g90",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 2,
+          "height": 3,
+          "sections": [
+            {
+              "id": "sec-gaju5snmqjk5g90",
+              "type": "digital-pet",
+              "label": "My Cat",
+              "lastFed": 1781791716695,
+              "hunger": 100,
+              "happiness": 100,
+              "waste": 0,
+              "lastCleaned": 1781791720307,
+              "petName": "Dog",
+              "lastPetted": 1781791721893
+            }
+          ]
+        },
+        {
+          "id": "card-0wfkopemqjl5my9",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-k9zzug9mqjl5my9",
+              "type": "resource-monitor",
+              "label": "Resource monitor",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "source": "local",
+              "glancesUrl": "http://localhost:61209",
+              "refreshInterval": 15
+            }
+          ]
+        },
+        {
           "id": "card-dc8hc4tmqjg36kq",
           "title": "",
           "icon": "package",
@@ -981,7 +1068,7 @@
           ]
         },
         {
-          "id": "card-0ew9ucqmqjk5g90",
+          "id": "card-68kmkgnmqjl5a29",
           "title": "",
           "icon": "package",
           "color": "#888888",
@@ -989,16 +1076,9 @@
           "height": 1,
           "sections": [
             {
-              "id": "sec-gaju5snmqjk5g90",
-              "type": "digital-pet",
-              "label": "My Cat",
-              "lastFed": 1781791716695,
-              "hunger": 100,
-              "happiness": 100,
-              "waste": 0,
-              "lastCleaned": 1781791720307,
-              "petName": "Dog",
-              "lastPetted": 1781791721893
+              "id": "sec-zwfhcolmqjl5a29",
+              "type": "lan-scan",
+              "label": "LAN Scan"
             }
           ]
         }
