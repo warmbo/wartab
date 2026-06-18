@@ -1,21 +1,19 @@
 /* ═══════════════════════════════════════════
    WarTab — Digital Pet Module
-   ASCII cat (pair-style) with room,
+   ASCII cat (user's design) with room,
    mood expressions, network speech,
-   and direction-aware art.
+   and direction-aware mirror.
    ═══════════════════════════════════════════ */
 registerModule('digital-pet', {
   defaults: { petName:'', hunger:80, happiness:80, waste:10, lastFed:Date.now(), lastPetted:Date.now(), lastCleaned:Date.now() },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='dp-container';
     w.dataset.secId=sec.id;
-    // ASCII cat — inspired by user's pair art, 11x6
-    // Right-facing: comma ear, )\_  shape, =P ^ face,  body curves
-    // Left-facing:  exact mirror with \↔/ and (↔) swap
-    var Cr='     ,     \n    )\\_)_  \n   /  .  \'.\n  =P ^    \\\n  \'--.  /  \n   .-\'( /  ';
-    var Cl='     ,     \n  _(_/(    \n.\'  .  \\   \n / ^ P=    \n  \\  .--\'  \n  \\ )\'-.   ';
-    // Mouth character per mood (replaces ^ in the face)
-    var mouths={idle:'^',blink:'-',happy:'v',love:'♥',curious:'O',hungry:'o',sad:'.',dead:'x',angry:'#'};
+    // Cat — user's design, 12x7, mirrored for direction
+    var Cr='      /\\_/\\ \n /\\  / o o \\\n//\\\\ \\~(*)~/\n`  \\/   ^ / \n   | \\|| || \n   \\ \'|| || \n    \\)()-())';
+    var Cl=' /\\_/\\      \n/ o o \\  /\\ \n\\~(*)~/ //\\\\\n \\ ^   \\/  \'\n || ||/ |   \n || ||` /   \n(()-()(/    ';
+    // Eye (replaces * in (*))
+    var eyes={idle:'*',blink:'-',happy:'*',love:'♥',curious:'O',hungry:'o',sad:';',dead:'x',angry:'#'};
     var _mood='idle',_walking=false,_lastX=50,_direction='right';
     // Top bar
     const top=document.createElement('div');top.className='dp-top';
@@ -113,11 +111,11 @@ registerModule('digital-pet', {
       door.style.left=(4+(1-pct)*10)+'px';
       door.style.opacity=(0.3+(1-pct)*0.5)+'';
     }
-    // Render cat facing current direction with mood mouth
+    // Render cat facing current direction with mood eye
     function setFrame(){
       var base=_direction==='right'?Cr:Cl;
-      // Replace ^ (mouth) with mood character
-      creature.textContent=base.replace('^',mouths[_mood]||'^');
+      // Replace * (eye in (*)) with mood character
+      creature.textContent=base.replace('*',eyes[_mood]||'*');
     }
     // Glide to new position
     function startWalk(){
