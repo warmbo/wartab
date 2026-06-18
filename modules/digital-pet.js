@@ -23,13 +23,14 @@ registerModule('digital-pet', {
     const floor=document.createElement('div');floor.className='dp-floor';pen.appendChild(floor);
     // Hallway perspective floor between doorway and main floor
     const hfloor=document.createElement('div');hfloor.className='dp-hallway-floor';pen.appendChild(hfloor);
-    // Perspective lines on hallway floor (closer together near door)
-    var lineHeights=[106,113,122,133,146,156];
-    var floorLines=[];
+    // Perspective lines inside the hallway floor (closer together near door)
+    var lineHeights=[2,8,15,23,32,42,53];
     for(var i=0;i<lineHeights.length;i++){
-      var fl=document.createElement('div');fl.className='dp-floor-line';fl.style.top=lineHeights[i]+'px';
-      fl.style.opacity=0.04+0.015*i; // fade out near the door
-      pen.appendChild(fl);floorLines.push(fl);
+      var fl=document.createElement('div');fl.className='dp-floor-line';
+      fl.style.top=lineHeights[i]+'px';fl.style.position='absolute';
+      fl.style.left='0';fl.style.width='100%';fl.style.height='1px';
+      fl.style.background='rgba(255,255,255,0.05)';fl.style.pointerEvents='none';
+      hfloor.appendChild(fl);
     }
     // Floor inside the doorway opening
     const dwfloor=document.createElement('div');dwfloor.className='dp-doorway-floor';pen.appendChild(dwfloor);
@@ -128,8 +129,6 @@ registerModule('digital-pet', {
       doorway.style.opacity=(0.3+(1-pct)*0.5)+'';
       hfloor.style.opacity=(0.3+(1-pct)*0.5)+'';
       dwfloor.style.opacity=(0.3+(1-pct)*0.5)+'';
-      for(var i=0;i<floorLines.length;i++)
-        floorLines[i].style.opacity=(0.04+0.015*i)*(0.3+(1-pct)*0.5);
     }
     // Render cat with mood eyes, blink, and tail wag
     function setFrame(){
