@@ -1972,6 +1972,7 @@ function buildIconsTab(c){
           d.addEventListener('click',function(n){return function(){selectIcon(n);};}(name));g.appendChild(d);
         }
         if(idx<items.length)requestAnimationFrame(renderBatch);
+        else setTimeout(renderIcons,50); // render icons after all batches done
       }
       requestAnimationFrame(renderBatch);
     }else{
