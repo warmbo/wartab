@@ -194,7 +194,7 @@ body {
 .btn-search { padding: 4px 8px; font-size: var(--text-sm); flex-shrink: 0; }
 
 /* ══════ Card Grid ══════ */
-#card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; transition: opacity 0.15s ease; }
+#card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; transition: opacity 0.15s ease; margin-top: 12px; }
 
 /* ══════ Page Bar ══════ */
 #page-bar { display: flex; align-items: center; gap: 8px; padding: 12px 0; justify-content: center; }

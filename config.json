@@ -38,9 +38,9 @@
   },
   "layout": {
     "cols": 4,
-    "gap": 16,
-    "pageWidth": 96,
-    "pagePadding": 44
+    "gap": 40,
+    "pageWidth": 92,
+    "pagePadding": 78
   },
   "search": {
     "engine": "https://www.google.com/search?q=",
