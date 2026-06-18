@@ -164,9 +164,21 @@ body {
 .stat-item .stat-bar-fill.mid { background: #cccc99; }
 .stat-sep { color: var(--text-tertiary); font-size: var(--text-3xs); }
 
-#top-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-#top-actions .btn-icon { border-color: var(--accent); color: var(--accent); opacity: 0.7; }
-#top-actions .btn-icon:hover { opacity: 1; background: var(--accent-glass); }
+#top-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+#top-actions .btn-icon {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: var(--text-secondary);
+  opacity: 0.6;
+  padding: 4px 8px;
+}
+#top-actions .btn-icon:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  opacity: 0.8;
+  background: rgba(255,255,255,0.08);
+}
 /* Sticky top bar (optional) */
 /* ── Collapsible section toggle (unified with dropdown) ── */
 
