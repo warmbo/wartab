@@ -1213,6 +1213,18 @@ const DEFAULT_CONFIG = {
         },
       ],
     },
+    {
+      id: 'demo-api', title: 'GitHub Stars', icon: 'github',
+      color: '#9a9a9a', width: 1,
+      sections: [
+        {
+          id: 'api-demo', type: 'api-poller', label: 'WarTab Stars',
+          url: 'https://api.github.com/repos/nousresearch/wartab',
+          jsonPath: 'stargazers_count',
+          refreshInterval: 120,
+        },
+      ],
+    },
   ],
 };
 
@@ -2766,41 +2778,44 @@ function hexToRgba2(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c
 
 function ps(t){return el('div','','',el('h3','font-size:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:10px;margin-top:12px;padding-bottom:4px;border-bottom:1px solid var(--glass-border);font-family:var(--font);',t));}
 function addNewCard(){
-  // Show card type picker
+  // Card type picker modal — Lucide icons, glass style
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+  overlay.setAttribute('tabindex','-1');
   const box = document.createElement('div');
-  box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px;min-width:280px;text-align:center;';
+  box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px;min-width:320px;';
   const label = document.createElement('div');
-  label.textContent = 'Choose card type:';
+  label.textContent = 'New Card';
   label.style.cssText = 'font-size:var(--heading-size);font-weight:600;color:var(--text-primary);margin-bottom:16px;';
   box.appendChild(label);
   const types = [
-    {type:'links', label:'Links', icon:'🔗'},
-    {type:'search', label:'Search', icon:'🔍'},
-    {type:'clock', label:'Clock', icon:'🕐'},
-    {type:'notes', label:'Notes', icon:'📝'},
-    {type:'weather', label:'Weather', icon:'🌤'},
-    {type:'iframe', label:'Iframe', icon:'🔌'},
-    {type:'image', label:'Image', icon:'🖼️'},
-    {type:'api-poller', label:'API Poller', icon:'📡'},
-    {type:'quotes', label:'Quotes', icon:'💬'},
-    {type:'timer', label:'Timer', icon:'⏱️'},
-    {type:'resource-monitor', label:'Resources', icon:'📊'},
-    {type:'link-list', label:'Link List', icon:'📋'},
+    {type:'links', label:'Links', icon:'link'},
+    {type:'search', label:'Search', icon:'search'},
+    {type:'clock', label:'Clock', icon:'clock'},
+    {type:'notes', label:'Notes', icon:'edit-3'},
+    {type:'weather', label:'Weather', icon:'cloud-sun'},
+    {type:'iframe', label:'Iframe', icon:'monitor'},
+    {type:'image', label:'Image', icon:'image'},
+    {type:'api-poller', label:'API Poller', icon:'activity'},
+    {type:'quotes', label:'Quotes', icon:'message-circle'},
+    {type:'timer', label:'Timer', icon:'timer'},
+    {type:'resource-monitor', label:'Resources', icon:'bar-chart-3'},
+    {type:'link-list', label:'Link List', icon:'list'},
   ];
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
   types.forEach(t => {
     const btn = document.createElement('button');
-    btn.className = 'btn btn-glass btn-sm';
-    btn.style.cssText = 'padding:10px 6px;font-size:var(--text-xs);display:flex;flex-direction:column;align-items:center;gap:4px;';
-    btn.innerHTML = '<span style="font-size:20px;">'+t.icon+'</span><span>'+t.label+'</span>';
+    btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px 10px;background:var(--card-bg-alt);border:1px solid var(--surface-border);color:var(--text-primary);cursor:pointer;transition:all 0.12s;';
+    btn.innerHTML = '<i data-lucide="'+t.icon+'" style="width:22px;height:22px;"></i><span style="font-size:var(--text-xs);color:var(--text-secondary);">'+t.label+'</span>';
+    btn.addEventListener('mouseenter',()=>{btn.style.background='rgba(255,255,255,0.08)';btn.style.borderColor='var(--accent)';});
+    btn.addEventListener('mouseleave',()=>{btn.style.background='';btn.style.borderColor='';});
     btn.addEventListener('click', () => {
       overlay.remove();
       const colMax=config.layout.cols;
       var sec = {id:'sec-'+uid(),type:t.type,label:t.label};
       if(t.type==='links'||t.type==='link-list') sec.links=[{label:'Example',url:'https://example.com',icon:'link'}];
+      if(t.type==='api-poller') {sec.url='https://api.github.com/repos/nousresearch/wartab';sec.jsonPath='stargazers_count';sec.refreshInterval=120;}
       config.cards.push({
         id:'card-'+uid(), title:'', icon:'package', color:'#888888',
         width:Math.min(1,colMax), height:1,
@@ -2814,10 +2829,18 @@ function addNewCard(){
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn btn-glass btn-sm';
   cancelBtn.textContent = 'Cancel';
+  cancelBtn.style.cssText = 'width:100%;justify-content:center;';
   cancelBtn.addEventListener('click', () => overlay.remove());
   box.appendChild(cancelBtn);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
+  overlay.focus();
+  // Render Lucide icons in the modal
+  if(typeof lucide!=='undefined'){
+    var _lw=console.warn;console.warn=function(m){if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);};
+    lucide.createIcons();
+    console.warn=_lw;
+  }
 }
 function pf(type,key,label,options,value,onChange,attrs){const g=el('div','margin-bottom:10px;');
   if(type==='select'){g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;',label));const s=document.createElement('select');s.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;cursor:pointer;';(options||[]).forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;if(o.value===value)opt.selected=true;s.appendChild(opt);});s.addEventListener('change',()=>onChange(s.value));g.appendChild(s);}

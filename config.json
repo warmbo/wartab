@@ -368,7 +368,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         }
       ]
@@ -731,7 +731,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]
@@ -1219,7 +1219,7 @@
       "icon": "layout",
       "cards": [
         {
-          "id": "card-kdfb7scmqity0z4",
+          "id": "card-evyz1zhmqiufmsb",
           "title": "",
           "icon": "package",
           "color": "#888888",
@@ -1227,29 +1227,7 @@
           "height": 1,
           "sections": [
             {
-              "id": "sec-hnqu6z5mqity0z4",
-              "type": "links",
-              "label": "Links",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "card-n1u56n5mqity8il",
-          "title": "",
-          "icon": "package",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-jk1eeofmqity8il",
+              "id": "sec-foxu99pmqiufmsb",
               "type": "links",
               "label": "Links",
               "links": [
