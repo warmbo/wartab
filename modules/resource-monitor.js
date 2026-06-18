@@ -221,7 +221,7 @@ registerModule('resource-monitor', {
     renderUrl();
     var sel=bd.querySelector('select');if(sel)sel.addEventListener('change',function(){setTimeout(renderUrl,0);});
     bd.appendChild(urlWrap);
-    bd.appendChild(cpRange('Poll interval (s)',sec.refreshInterval||3,1,60,function(v){sec.refreshInterval=parseInt(v);saveConfig();}));
+    bd.appendChild(cpRange('Poll interval (s)',sec.refreshInterval||3,1,60,function(v){sec.refreshInterval=parseInt(v);saveAndRefresh();}));
     bd.appendChild(cpCheck('Show graphs',sec.graphMode,function(v){sec.graphMode=v;saveAndRefresh();}));
   },
 });
