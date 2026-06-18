@@ -17,7 +17,7 @@
     "cardBg": "dark",
     "fontColor": "#dedede",
     "cardOpacity": 0.42000000000000004,
-    "bgRotate": false,
+    "bgRotate": true,
     "animations": true,
     "showAccentBar": false
   },
@@ -367,7 +367,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 0,
+          "_qi": 1,
           "collapsed": false
         }
       ]
@@ -413,7 +413,8 @@
           "refreshInterval": 10,
           "collapsed": false
         }
-      ]
+      ],
+      "minHeight": 189
     }
   ],
   "pages": {
@@ -732,7 +733,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 0,
+              "_qi": 1,
               "collapsed": false
             }
           ]
@@ -778,7 +779,8 @@
               "refreshInterval": 10,
               "collapsed": false
             }
-          ]
+          ],
+          "minHeight": 189
         }
       ]
     },
