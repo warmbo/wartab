@@ -179,8 +179,8 @@ registerModule('ascii-anim', {
       {value:'matrix',label:'Matrix Rain'},
       {value:'stars',label:'Starfield'},
       {value:'fire',label:'Fire'},
-    ],sec.anim||'donut',function(v){sec.anim=v;if(card._asciiRestart)card._asciiRestart();saveAndRefresh();}));
-    bd.appendChild(cpRange('Speed',parseFloat(sec.speed)||1,0.1,5,function(v){sec.speed=parseFloat(v);card._asciiRestart();saveAndRefresh();}));
-    bd.appendChild(cpRange('Contrast',parseFloat(sec.contrast)||1,0.2,3,function(v){sec.contrast=parseFloat(v);card._asciiRestart();saveAndRefresh();}));
+    ],sec.anim||'donut',function(v){sec.anim=v;saveConfig();if(card._asciiRestart)card._asciiRestart();}));
+    bd.appendChild(cpRange('Speed',parseFloat(sec.speed)||1,0.1,5,function(v){sec.speed=parseFloat(v);saveConfig();if(card._asciiRestart)card._asciiRestart();}));
+    bd.appendChild(cpRange('Contrast',parseFloat(sec.contrast)||1,0.2,3,function(v){sec.contrast=parseFloat(v);saveConfig();if(card._asciiRestart)card._asciiRestart();}));
   },
 });
