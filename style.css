@@ -197,7 +197,7 @@ body {
 #card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; transition: opacity 0.15s ease; margin-top: 12px; }
 
 /* ══════ Page Bar ══════ */
-#page-bar { display: flex; align-items: center; gap: 8px; padding: 12px 0; justify-content: center; }
+#page-bar { display: flex; align-items: center; gap: 8px; padding: 20px 0 16px; justify-content: center; }
 #page-bar .btn-icon { border-color: var(--accent); color: var(--accent); opacity: 0.5; background: rgba(255,255,255,0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 #page-bar .btn-icon:hover { opacity: 0.9; background: rgba(255,255,255,0.08); }
 #page-tabs { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
