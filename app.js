@@ -1647,26 +1647,19 @@ function renderSection(section, card) {
       while (c && !c.classList.contains('section-content') && !c.classList.contains('dropdown-content')) c = c.nextElementSibling;
       if (c) {
         if (section.collapsed) {
-          // Collapse: measure actual height first, then animate to 0
-          var h = c.scrollHeight;
-          c.style.maxHeight = h + 'px';
-          requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-              c.classList.remove('open');
-              c.style.maxHeight = '';
-            });
-          });
+          // Collapse: pin to actual height, force reflow, then let CSS animate to 0
+          c.style.maxHeight = c.scrollHeight + 'px';
+          c.offsetHeight;
+          c.classList.remove('open');
+          c.style.maxHeight = '';
         } else {
-          // Expand: set max-height large so content grows into it
+          // Expand: open class sets max-height:3000px, override to 0, force reflow, then animate to actual height
           c.classList.add('open');
           c.style.maxHeight = '';
           var h2 = c.scrollHeight;
           c.style.maxHeight = '0px';
-          requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-              c.style.maxHeight = h2 + 'px';
-            });
-          });
+          c.offsetHeight;
+          c.style.maxHeight = h2 + 'px';
         }
       }
       saveConfig();
@@ -2894,15 +2887,14 @@ function showShortcutsOverlay() {
   box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px 32px;min-width:300px;max-width:420px;';
   box.innerHTML = '<div style="font-size:var(--heading-size);font-weight:700;color:var(--text-primary);margin-bottom:16px;">Keyboard Shortcuts</div>' +
     '<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:var(--text-sm);line-height:1.8;">' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">n</kbd><span>Add new card</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">s</kbd><span>Focus search bar</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">?</kbd><span>Toggle this overlay</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">N</span></kbd><span>Add new card</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">P</span></kbd><span>New page</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">S</span></kbd><span>Focus search bar</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">C</span></kbd><span>Toggle config panel</span>' +
+    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+/</kbd><span>Toggle this overlay</span>' +
     '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Esc</kbd><span>Close panels / overlay</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+<span style="text-decoration:underline">N</span></kbd><span>New card</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">N</span></kbd><span>New page</span>' +
     '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Tab</kbd><span>Next page</span>' +
     '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+K</kbd><span>Focus search</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);">Ctrl+Shift+<span style="text-decoration:underline">C</span></kbd><span>Toggle config panel</span>' +
     '</div>' +
     '<div style="text-align:center;margin-top:16px;font-size:var(--text-2xs);color:var(--text-tertiary);">Press Esc to close</div>';
   overlay.appendChild(box);
@@ -2959,7 +2951,7 @@ async function init() {
   }
   renderAll(); renderPageNav(); initStatusBar();
   // Footer
-  $('#footer-text').textContent='WarTab v'+WARTAB_VERSION+'  [?] shortcuts';
+  $('#footer-text').textContent='WarTab v'+WARTAB_VERSION+'  [Ctrl+Shift+/] shortcuts';
   loadIconRepo();
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
@@ -2979,16 +2971,12 @@ async function init() {
     if(e.key==='Escape'&&document.querySelector('#shortcuts-overlay'))document.querySelector('#shortcuts-overlay').remove();
     if(e.key==='C'&&e.ctrlKey&&e.shiftKey){e.preventDefault();toggleConfigPanel();}
     if((e.key==='l'||e.key==='k')&&(e.ctrlKey||e.metaKey)){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
-    // Keyboard shortcuts: Ctrl+N = new card, Ctrl+Shift+N = new page, Ctrl+Tab = next page
-    if(e.key==='n'&&(e.ctrlKey||e.metaKey)&&!e.shiftKey){e.preventDefault();addNewCard();}
-    if(e.key==='n'&&(e.ctrlKey||e.metaKey)&&e.shiftKey){e.preventDefault();addPage();}
+    // All shortcuts use Ctrl+Shift modifiers — no bare key presses
+    if(e.key==='n'&&e.ctrlKey&&e.shiftKey){e.preventDefault();addNewCard();}
+    if(e.key==='p'&&e.ctrlKey&&e.shiftKey){e.preventDefault();addPage();}
+    if(e.key==='s'&&e.ctrlKey&&e.shiftKey){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
+    if(e.key==='/'&&e.ctrlKey&&e.shiftKey){e.preventDefault();showShortcutsOverlay();}
     if(e.key==='Tab'&&(e.ctrlKey||e.metaKey)){e.preventDefault();const order=config.pageOrder||[];if(!order.length)return;const idx=order.indexOf(config.currentPage);const next=order[(idx+1)%order.length];switchPage(next);}
-    // Single-key shortcuts — only when no panels are open
-    if(!configPanelOpen&&!_editPanelOpen&&!iconPickerOpen){
-      if(e.key==='?'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();showShortcutsOverlay();}
-      if(e.key==='n'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();addNewCard();}
-      if(e.key==='s'&&!e.ctrlKey&&!e.metaKey&&!e.target.closest('input,textarea,select')){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
-    }
   });
   let rt=null;window.addEventListener('resize',()=>{if(rt)clearTimeout(rt);rt=setTimeout(()=>{scheduleEqualize();},150);});
   // Periodic timestamp updater
