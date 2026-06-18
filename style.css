@@ -945,6 +945,7 @@ body {
 .dp-scanlines { position: absolute; inset: 0; pointer-events: none; z-index: 1; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px); }
 .dp-speech { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: var(--text-2xs); color: #33ff33; background: rgba(0,0,0,0.9); border: 1px solid rgba(51,255,51,0.3); padding: 2px 8px; white-space: nowrap; z-index: 3; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 92%; overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono','Cascadia Code','Consolas',monospace; }
 .dp-speech.visible { opacity: 1; }
+.dp-speech::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border: 5px solid transparent; border-top-color: rgba(51,255,51,0.3); }
 .dp-creature { position: absolute; margin: 0; font-family: 'JetBrains Mono','Cascadia Code','Consolas',monospace; font-size: 13px; line-height: 1.25; color: #33ff33; user-select: none; transition: left 2.5s ease, top 2.5s ease; white-space: pre; z-index: 2; filter: drop-shadow(0 0 4px rgba(51,255,51,0.15)); }
 .dp-stats { margin-bottom: 4px; }
 .dp-stat-row { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; font-size: var(--text-2xs); }

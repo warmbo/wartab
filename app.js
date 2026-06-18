@@ -543,14 +543,33 @@ registerModule('digital-pet', {
     function fetchNetFact(){
       fetch('/api/stats').then(function(r){return r.json();}).then(function(d){
         var facts=[];
-        if(d.hostname)facts.push('$ hostname: '+d.hostname);
-        if(d.uptime)facts.push('$ uptime: '+d.uptime.string);
-        if(typeof d.cpu==='number')facts.push('$ cpu: '+d.cpu+'%');
-        if(d.memory)facts.push('$ mem: '+Math.round(d.memory.percent)+'%');
-        if(d.disks&&d.disks[0])facts.push('$ disk: '+Math.round(d.disks[0].percent)+'%');
-        if(!facts.length)facts.push('$ no signal...');
+        if(d.hostname)facts.push('Hello, '+d.hostname+' here!');
+        if(d.uptime)facts.push("I've been up "+d.uptime.string+" ... getting sleepy.");
+        if(typeof d.cpu==='number'){
+          if(d.cpu>80)facts.push('CPU is '+d.cpu+"% ... that's hot!");
+          else if(d.cpu<10)facts.push('CPU is only '+d.cpu+'% ... so quiet.');
+          else facts.push('CPU chillin\' at '+d.cpu+'%.');
+        }
+        if(d.memory){
+          var m=Math.round(d.memory.percent);
+          if(m>80)facts.push('RAM is '+m+"% full ... need more sticks!");
+          else if(m<30)facts.push('Plenty of RAM free ... '+m+'% used.');
+          else facts.push('Memory looking good at '+m+'%.');
+        }
+        if(d.disks&&d.disks[0]){
+          var ds=Math.round(d.disks[0].percent);
+          if(ds>90)facts.push('Disk is '+ds+"% full ... yikes!");
+          else if(ds>70)facts.push('Disk at '+ds+"% ... might want to clean up.");
+          else facts.push('Disk has plenty of space ... '+ds+'% used.');
+        }
+        facts.push('The network looks good.');
+        facts.push("What's going on with 10.0.0.x?");
+        if(d.hostname)facts.push(d.hostname+' is alive and well.');
         speak(facts[Math.floor(Math.random()*facts.length)]);
-      }).catch(function(){speak('$ connection lost');});
+      }).catch(function(){
+        var fb=["No signal... is the server okay?","Can't reach the network...","Hello? Anyone there?","The network is quiet... too quiet."];
+        speak(fb[Math.floor(Math.random()*fb.length)]);
+      });
     }
     function speak(msg){
       speech.textContent=msg;speech.classList.add('visible');

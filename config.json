@@ -110,7 +110,7 @@
           "happiness": 80,
           "waste": 10,
           "lastCleaned": 1781791020798,
-          "petName": "",
+          "petName": "Dog",
           "lastPetted": 1781791020798
         }
       ]
@@ -1005,7 +1005,7 @@
               "happiness": 80,
               "waste": 10,
               "lastCleaned": 1781791020798,
-              "petName": "",
+              "petName": "Dog",
               "lastPetted": 1781791020798
             }
           ]
