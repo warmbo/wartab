@@ -941,16 +941,23 @@ body {
 .dp-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .dp-name { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); }
 .dp-mood-label { font-size: var(--text-2xs); color: var(--text-tertiary); }
-.dp-pen { position: relative; height: 180px; background: var(--card-bg); border: 2px solid var(--surface-border); margin-bottom: 4px; overflow: hidden; }
+.dp-pen { position: relative; height: 180px; background: 
+  repeating-linear-gradient(45deg, transparent, transparent 30px, rgba(255,255,255,0.012) 30px, rgba(255,255,255,0.012) 31px),
+  repeating-linear-gradient(-45deg, transparent, transparent 30px, rgba(255,255,255,0.012) 30px, rgba(255,255,255,0.012) 31px),
+  var(--card-bg);
+  border: 2px solid var(--surface-border); margin-bottom: 4px; overflow: hidden; }
 /* Floor boards at the bottom */
 .dp-floor { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 14px, rgba(255,255,255,0.06) 14px, rgba(255,255,255,0.06) 15px); border-top: 1px solid var(--surface-border); pointer-events: none; z-index: 0; }
-/* Door on left wall — moves with perspective */
-.dp-door { position: absolute; top: 18px; left: 4px; width: 16px; height: 42px; border: 1px solid var(--surface-border); background: rgba(255,255,255,0.04); z-index: 0; pointer-events: none; transition: left 2.5s ease, opacity 2.5s ease; }
-.dp-door::before { content: ''; position: absolute; right: 3px; top: 50%; width: 3px; height: 3px; border-radius: 50%; background: var(--surface-border); }
-/* Window on right wall — moves with perspective */
-.dp-window { position: absolute; right: 10px; top: 12px; width: 28px; height: 36px; border: 1px solid var(--surface-border); background: rgba(255,255,255,0.03); z-index: 0; pointer-events: none; transition: right 2.5s ease, opacity 2.5s ease; }
+/* Door on left wall — closer perspective, bigger */
+.dp-door { position: absolute; top: 8px; left: 4px; width: 24px; height: 64px; border: 2px solid var(--surface-border); border-bottom: none; background: rgba(255,255,255,0.05); z-index: 0; pointer-events: none; transition: left 2.5s ease, opacity 2.5s ease; }
+.dp-door::before { content: ''; position: absolute; right: 4px; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--surface-border); }
+.dp-door::after { content: ''; position: absolute; left: 3px; right: 3px; top: 22px; height: 1px; background: var(--surface-border); }
+/* Window on right wall — larger with sill */
+.dp-window { position: absolute; right: 10px; top: 6px; width: 36px; height: 52px; border: 2px solid var(--surface-border); border-bottom: none; background: rgba(255,255,255,0.04); z-index: 0; pointer-events: none; transition: right 2.5s ease, opacity 2.5s ease; }
 .dp-window::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--surface-border); }
 .dp-window::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--surface-border); }
+/* Window sill */
+.dp-window-sill { position: absolute; right: 8px; top: 58px; width: 40px; height: 5px; background: rgba(255,255,255,0.08); border: 1px solid var(--surface-border); border-top: none; z-index: 0; pointer-events: none; transition: right 2.5s ease, opacity 2.5s ease; }
 .dp-speech { position: absolute; bottom: calc(100% - 5px); left: 50%; transform: translateX(-50%); font-size: var(--text-2xs); color: var(--text-primary); background: var(--card-bg); border: 1px solid var(--surface-border); padding: 2px 8px; white-space: nowrap; z-index: 3; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 92%; overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono','Cascadia Code','Consolas',monospace; }
 .dp-speech.visible { opacity: 1; }
 .dp-speech::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--surface-border); }

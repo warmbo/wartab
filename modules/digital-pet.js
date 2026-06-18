@@ -23,6 +23,7 @@ registerModule('digital-pet', {
     const floor=document.createElement('div');floor.className='dp-floor';pen.appendChild(floor);
     const door=document.createElement('div');door.className='dp-door';pen.appendChild(door);
     const windowEl=document.createElement('div');windowEl.className='dp-window';pen.appendChild(windowEl);
+    const sillEl=document.createElement('div');sillEl.className='dp-window-sill';pen.appendChild(sillEl);
     const speech=document.createElement('div');speech.className='dp-speech';pen.appendChild(speech);
     const creature=document.createElement('pre');creature.className='dp-creature';pen.appendChild(creature);
     w.appendChild(pen);
@@ -106,6 +107,8 @@ registerModule('digital-pet', {
       if(pct<0)pct=0;if(pct>1)pct=1;
       windowEl.style.right=(6+pct*12)+'px';
       windowEl.style.opacity=(0.3+pct*0.5)+'';
+      sillEl.style.right=(6+pct*12-2)+'px';
+      sillEl.style.opacity=(0.3+pct*0.5)+'';
       door.style.left=(4+(1-pct)*10)+'px';
       door.style.opacity=(0.3+(1-pct)*0.5)+'';
     }
