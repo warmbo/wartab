@@ -69,13 +69,13 @@
           "id": "sec-gaju5snmqjk5g90",
           "type": "digital-pet",
           "label": "My Cat",
-          "lastFed": 1781796734407,
+          "lastFed": 1781801282458,
           "hunger": 100,
           "happiness": 100,
           "waste": 0,
-          "lastCleaned": 1781796738544,
+          "lastCleaned": 1781801283430,
           "petName": "Dog",
-          "lastPetted": 1781796736902
+          "lastPetted": 1781801282795
         }
       ]
     },
@@ -100,10 +100,11 @@
           ],
           "source": "local",
           "glancesUrl": "http://localhost:61209",
-          "refreshInterval": 15,
+          "refreshInterval": 1,
           "graphMode": true
         }
-      ]
+      ],
+      "transparent": false
     },
     {
       "id": "card-68kmkgnmqjl5a29",
@@ -507,7 +508,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 0,
+              "_qi": 1,
               "collapsed": false
             }
           ]
@@ -1054,13 +1055,13 @@
               "id": "sec-gaju5snmqjk5g90",
               "type": "digital-pet",
               "label": "My Cat",
-              "lastFed": 1781796734407,
+              "lastFed": 1781801282458,
               "hunger": 100,
               "happiness": 100,
               "waste": 0,
-              "lastCleaned": 1781796738544,
+              "lastCleaned": 1781801283430,
               "petName": "Dog",
-              "lastPetted": 1781796736902
+              "lastPetted": 1781801282795
             }
           ]
         },
@@ -1085,10 +1086,11 @@
               ],
               "source": "local",
               "glancesUrl": "http://localhost:61209",
-              "refreshInterval": 15,
+              "refreshInterval": 1,
               "graphMode": true
             }
-          ]
+          ],
+          "transparent": false
         },
         {
           "id": "card-68kmkgnmqjl5a29",

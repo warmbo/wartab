@@ -1,8 +1,7 @@
 /* ═══════════════════════════════════════════
    WarTab — Resource Monitor Module
-   CPU, RAM, Disk, GPU, Network speed
-   Bar view or auto-scaled SVG line graph view
-   Graph data cached globally — survives re-renders
+   CPU, RAM, Disk, GPU + Network speed
+   Bar view or Chart.js sparkline graph view
    ═══════════════════════════════════════════ */
 if(!window._rmCache)window._rmCache={};
 registerModule('resource-monitor', {
@@ -13,7 +12,6 @@ registerModule('resource-monitor', {
     w.dataset.refresh=sec.refreshInterval||3;
     w.dataset.source=sec.source||'local';w.dataset.glancesUrl=sec.glancesUrl||'';
     w.dataset.graphMode=sec.graphMode?'1':'0';
-    // Restore or initialize graph cache
     var GRAPH_PTS=25,ck=sec.id,cache=window._rmCache[ck];
     var hist;
     if(cache&&cache.hist){
@@ -26,30 +24,7 @@ registerModule('resource-monitor', {
       var _smoothed={};
     }
     var metrics=['cpu','ram','disk','gpu'];
-    // viewBox always 0-100. Map values proportionally: 0% at bottom, maxVal near top.
-    // 15% headroom keeps the highest value from clipping the top edge.
-    function pctScale(arr){
-      var max=0;
-      for(var i=0;i<arr.length;i++)if(arr[i]>max)max=arr[i];
-      return max*1.15||1; // headroom so top value sits at y≈13 not y=0
-    }
-    function pctY(v,max){
-      if(max<=0)return 100; // no data → bottom
-      var clamped=Math.max(0,Math.min(max,v));
-      return 100-((clamped/max)*100); // 0%→bottom(100), max%→y≈13
-    }
-    function fitRange(arr){
-      var min=Infinity,max=-Infinity;
-      for(var i=0;i<arr.length;i++){if(arr[i]<min)min=arr[i];if(arr[i]>max)max=arr[i];}
-      var range=Math.max(max-min,1);
-      var pad=range*0.1;
-      return {min:Math.max(0,min-pad),max:max+pad,range:range+pad*2};
-    }
-    function mapY(v,fr){
-      if(fr.max===fr.min)return fr.range/2;
-      var pos=(v-fr.min)/(fr.max-fr.min);
-      return (1-pos)*fr.range;
-    }
+    var charts={}; // Chart.js instances per metric
     function buildMetricRow(key,label){
       const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;gap:2px;';
       const labelRow=document.createElement('div');labelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
@@ -59,21 +34,14 @@ registerModule('resource-monitor', {
       val.textContent='--';
       labelRow.appendChild(lbl);labelRow.appendChild(val);row.appendChild(labelRow);
       const track=document.createElement('div');track.className='rm-track-'+key;
-      track.style.cssText='height:6px;background:rgba(255,255,255,0.06);overflow:hidden;position:relative;';
+      track.style.cssText='height:6px;background:rgba(255,255,255,0.06);overflow:hidden;';
       const fill=document.createElement('div');fill.className='rm-fill-'+key;
       fill.style.cssText='height:100%;width:0%;background:var(--accent);transition:width 0.4s ease;';
       track.appendChild(fill);
-      var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-      svg.setAttribute('class','rm-graph-'+key);
-      svg.style.cssText='display:none;width:100%;height:48px;background:rgba(0,0,0,0.08);';
-      svg.setAttribute('preserveAspectRatio','none');
-      var polyline=document.createElementNS('http://www.w3.org/2000/svg','polyline');
-      polyline.setAttribute('vector-effect','non-scaling-stroke');
-      polyline.style.cssText='fill:none;stroke:var(--accent);stroke-width:1.5px;stroke-linejoin:round;stroke-linecap:round;';
-      polyline.setAttribute('points','');
-      svg.appendChild(polyline);
-      row.appendChild(track);row.appendChild(svg);
-      return {row:row,fill:fill,val:val,svg:svg,pline:polyline,track:track};
+      var canvas=document.createElement('canvas');canvas.className='rm-canvas-'+key;
+      canvas.style.cssText='display:none;width:100%;height:48px;background:rgba(0,0,0,0.08);';
+      row.appendChild(track);row.appendChild(canvas);
+      return {row:row,fill:fill,val:val,canvas:canvas,track:track,key:key};
     }
     // Build metric rows
     var rows={};
@@ -95,21 +63,9 @@ registerModule('resource-monitor', {
     const netFill=document.createElement('div');netFill.className='rm-fill-net';
     netFill.style.cssText='height:100%;width:0%;background:var(--accent);transition:width 0.4s ease;';
     netTrack.appendChild(netFill);netRow.appendChild(netTrack);
-    var netSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    netSvg.setAttribute('class','rm-graph-net');
-    netSvg.style.cssText='display:none;width:100%;height:40px;background:rgba(0,0,0,0.08);';
-    netSvg.setAttribute('preserveAspectRatio','none');
-    var netRxLine=document.createElementNS('http://www.w3.org/2000/svg','polyline');
-    netRxLine.setAttribute('vector-effect','non-scaling-stroke');
-    netRxLine.style.cssText='fill:none;stroke:rgba(255,255,255,0.7);stroke-width:1.5px;stroke-linejoin:round;stroke-linecap:round;';
-    netRxLine.setAttribute('points','');
-    netSvg.appendChild(netRxLine);
-    var netTxLine=document.createElementNS('http://www.w3.org/2000/svg','polyline');
-    netTxLine.setAttribute('vector-effect','non-scaling-stroke');
-    netTxLine.style.cssText='fill:none;stroke:rgba(255,255,255,0.25);stroke-width:1px;stroke-linejoin:round;stroke-linecap:round;';
-    netTxLine.setAttribute('points','');
-    netSvg.appendChild(netTxLine);
-    netRow.appendChild(netSvg);
+    var netCanvas=document.createElement('canvas');netCanvas.className='rm-canvas-net';
+    netCanvas.style.cssText='display:none;width:100%;height:40px;background:rgba(0,0,0,0.08);';
+    netRow.appendChild(netCanvas);
     const netSpeedRow=document.createElement('div');netSpeedRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:1px;';
     const rxEl=document.createElement('span');rxEl.className='rm-rx';
     const txEl=document.createElement('span');txEl.className='rm-tx';
@@ -123,66 +79,96 @@ registerModule('resource-monitor', {
     sysRow.appendChild(hostEl);sysRow.appendChild(extraEl);sysRow.appendChild(tsEl);
     w.appendChild(sysRow);
     cw.appendChild(w);
-    // Redraw existing graph data onto fresh SVGs after re-render
-    function redrawExistingGraphs(){
-      metrics.forEach(function(key){
-        var h=hist[key];if(!h||!h.length)return;
-        var r=rows[key];if(!r||r.svg.style.display==='none')return;
-        var maxV=pctScale(h);
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' 100');
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+pctY(v,maxV);}).join(' '));
-      });
-      if(hist.rx&&hist.rx.length&&netSvg.style.display!=='none'){
-        var both=hist.rx.concat(hist.tx);
-        var fr=fitRange(both);
-        netSvg.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
-        netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
-        netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
+    // Chart.js defaults: sparkline style, no decorations
+    var CHART_CFG={
+      type:'line',
+      data:{datasets:[{data:[],borderColor:'',borderWidth:1.5,fill:false,pointRadius:0,tension:0.1}]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:false,
+        scales:{
+          y:{beginAtZero:true,min:0,grid:{display:false},ticks:{display:false}},
+          x:{display:false,grid:{display:false}}
+        },
+        plugins:{legend:{display:false},tooltip:{enabled:false}},
+        elements:{point:{radius:0}}
       }
-    }
-    // Write cache on each update
-    function saveCache(){
-      window._rmCache[ck]={hist:hist,prevRx:_prevRx,prevTx:_prevTx,prevTs:_prevTs,smoothed:_smoothed};
+    };
+    // Create or destroy Chart.js instances
+    function initCharts(enabled){
+      if(!enabled){
+        Object.keys(charts).forEach(function(k){if(charts[k]){charts[k].destroy();delete charts[k];}});
+        return;
+      }
+      metrics.forEach(function(key){
+        var r=rows[key];if(!r)return;
+        if(charts[key]){charts[key].destroy();}
+        var ctx=r.canvas.getContext('2d');
+        var cfg=JSON.parse(JSON.stringify(CHART_CFG));
+        var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888';
+        cfg.data.datasets[0].borderColor=accent;
+        cfg.data.datasets[0].data=hist[key]||[];
+        charts[key]=new Chart(ctx,cfg);
+      });
+      // Network chart — two datasets (RX solid, TX dashed)
+      if(charts.net){charts.net.destroy();}
+      if(netCanvas){
+        var nctx=netCanvas.getContext('2d');
+        var netCfg=JSON.parse(JSON.stringify(CHART_CFG));
+        netCfg.data.datasets=[
+          {data:hist.rx||[],borderColor:'rgba(255,255,255,0.7)',borderWidth:1,fill:false,pointRadius:0,tension:0.1},
+          {data:hist.tx||[],borderColor:'rgba(255,255,255,0.25)',borderWidth:1,fill:false,pointRadius:0,tension:0.1,borderDash:[3,2]}
+        ];
+        netCfg.options.scales.y.beginAtZero=true;
+        netCfg.options.scales.y.min=0;
+        charts.net=new Chart(nctx,netCfg);
+      }
     }
     // Toggle bar / graph mode
     function setGraphMode(enabled){
       w.dataset.graphMode=enabled?'1':'0';
       metrics.forEach(function(key){
         var r=rows[key];
-        if(enabled){r.track.style.display='none';r.svg.style.display='block';}
-        else{r.track.style.display='';r.svg.style.display='none';}
+        if(enabled){r.track.style.display='none';r.canvas.style.display='block';}
+        else{r.track.style.display='';r.canvas.style.display='none';}
       });
-      if(enabled){netTrack.style.display='none';netSvg.style.display='block';}
-      else{netTrack.style.display='';netSvg.style.display='none';}
-      if(enabled)setTimeout(redrawExistingGraphs,0);
+      if(enabled){netTrack.style.display='none';netCanvas.style.display='block';}
+      else{netTrack.style.display='';netCanvas.style.display='none';}
+      if(enabled){
+        if(typeof Chart!=='undefined')setTimeout(function(){initCharts(true);},0);
+      }else{
+        initCharts(false);
+      }
     }
     setGraphMode(sec.graphMode);
+    // Helpers
     function fmtBytes(b){if(b<1024)return b.toFixed(0)+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
     function fmtSpeed(bps){if(bps<1024)return bps.toFixed(0)+'B/s';if(bps<1048576)return(bps/1024).toFixed(1)+'KB/s';return(bps/1048576).toFixed(1)+'MB/s';}
     function pushGraph(key,val){
-      // Exponential smoothing: 35% new, 65% history — prevents spikey on/off lines
       if(_smoothed[key]===undefined)_smoothed[key]=val;
       else _smoothed[key]=_smoothed[key]*0.65+val*0.35;
       var sv=_smoothed[key];
       var h=hist[key];if(!h)return;
       h.push(sv);
       if(h.length>GRAPH_PTS)h.shift();
-      var r=rows[key];
-      if(r&&r.svg.style.display!=='none'){
-        var maxV=pctScale(h);
-        r.pline.setAttribute('viewBox','0 0 '+GRAPH_PTS+' 100');
-        r.pline.setAttribute('points',h.map(function(v,i){return i+','+pctY(v,maxV);}).join(' '));
+      var chart=charts[key];
+      if(chart){
+        chart.data.datasets[0].data=h.slice();
+        chart.update('none');
       }
     }
     function updateNetGraph(rxSpeed,txSpeed){
       hist.rx.push(rxSpeed);hist.tx.push(txSpeed);
       if(hist.rx.length>GRAPH_PTS){hist.rx.shift();hist.tx.shift();}
-      if(netSvg.style.display==='none')return;
-      var both=hist.rx.concat(hist.tx);
-      var fr=fitRange(both);
-      netSvg.setAttribute('viewBox','0 0 '+GRAPH_PTS+' '+fr.range);
-      netRxLine.setAttribute('points',hist.rx.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
-      netTxLine.setAttribute('points',hist.tx.map(function(v,i){return i+','+(mapY(v,fr));}).join(' '));
+      var ch=charts.net;
+      if(ch){
+        ch.data.datasets[0].data=hist.rx.slice();
+        ch.data.datasets[1].data=hist.tx.slice();
+        ch.update('none');
+      }
+    }
+    // Write cache on each update
+    function saveCache(){
+      window._rmCache[ck]={hist:hist,prevRx:_prevRx,prevTx:_prevTx,prevTs:_prevTs,smoothed:_smoothed};
     }
     // Fetch data
     function fetchData(){
@@ -205,30 +191,36 @@ registerModule('resource-monitor', {
           cpuTemp=d.cpu_temp||{celsius:0};procs=d.processes||0;
         }
         if(!w.parentNode)return;
-        rows.cpu.fill.style.width=Math.min(cpuPct,100)+'%';
+        var isGraph=w.dataset.graphMode==='1';
+        // CPU
+        var cpuVal=Math.min(cpuPct,100);
+        rows.cpu.fill.style.width=cpuVal+'%';
         rows.cpu.val.textContent=(cpuPct||0).toFixed(1)+'%';
-        pushGraph('cpu',Math.min(cpuPct,100));
+        pushGraph('cpu',cpuVal);
+        // RAM
         var memPct=typeof mem.percent==='number'?mem.percent:0;
         rows.ram.fill.style.width=Math.min(memPct,100)+'%';
         var mu=mem.used?Math.round(mem.used/1024/1024/1024*10)/10:0;
         var mt=mem.total?Math.round(mem.total/1024/1024/1024*10)/10:0;
         rows.ram.val.textContent=mu+'/'+mt+'GB';pushGraph('ram',memPct);
+        // Disk
         var diskPct=typeof root.percent==='number'?root.percent:0;
         rows.disk.fill.style.width=Math.min(diskPct,100)+'%';
         var du=root.used?Math.round(root.used/1024/1024/1024*10)/10:0;
         var dt=root.total?Math.round(root.total/1024/1024/1024*10)/10:0;
         rows.disk.val.textContent=du+'/'+dt+'GB';pushGraph('disk',diskPct);
+        // GPU
         var gpuPct=typeof gpu.percent==='number'?gpu.percent:0;
         rows.gpu.fill.style.width=Math.min(gpuPct,100)+'%';
         var vu=gpu.vram_used?Math.round(gpu.vram_used/1024/1024/1024*100)/100:0;
         var vt=gpu.vram_total?Math.round(gpu.vram_total/1024/1024/1024*100)/100:0;
         rows.gpu.val.innerHTML=vu+'/'+vt+'GB <span style="opacity:0.5">'+(gpu.temp_c||0)+'°C</span>';
         pushGraph('gpu',gpuPct);
+        // Network
         var rx=net.rx_bytes||0,tx=net.tx_bytes||0;
         var now=Date.now()/1000;
         var rxSpeed=0,txSpeed=0;
         if(_prevTs>0){var dt=now-_prevTs;if(dt>0){rxSpeed=Math.max(0,(rx-_prevRx))/dt;txSpeed=Math.max(0,(tx-_prevTx))/dt;}}
-        var isGraph=w.dataset.graphMode==='1';
         if(isGraph){netVal.textContent=fmtSpeed(rxSpeed)+' / '+fmtSpeed(txSpeed);updateNetGraph(rxSpeed,txSpeed);}
         else{netVal.textContent=fmtBytes(rx)+' / '+fmtBytes(tx);}
         netFill.style.width='0%';
