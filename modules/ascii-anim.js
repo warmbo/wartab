@@ -50,14 +50,16 @@ registerModule('ascii-anim', {
       return out;
     }
 
-    // ── Ghost/Afterimage Engine ─────────────
+    // ── Ghost/Afterimage Engine ──────────────
     function rebuildGhost(){ghostBuf=new Float32Array(W*H);}
+    // Luminance value for a character (0-1), or 0 for space
+    function charLum(ch){var li=lum.indexOf(ch);return li>=0?li/11:(ch!==' '?0.5:0);}
     function applyGhost(arr,valFn){
       if(!ghostOn)return gridToString(arr);
       if(!ghostBuf||ghostBuf.length!==W*H)rebuildGhost();
-      var out='';var fn=valFn||function(v){return v;}
+      var out='';
       for(var k=0;k<W*H;k++){
-        var raw=fn(arr[k]);
+        var raw=valFn?valFn(arr[k]):charLum(arr[k]);
         ghostBuf[k]=Math.min(1,Math.max(0,ghostBuf[k]*ghostDecay+raw*(1-ghostDecay)));
         out+=k>0&&k%W===0?'\n':lum[Math.min(11,Math.round(ghostBuf[k]*11))];
       }
@@ -84,7 +86,7 @@ registerModule('ascii-anim', {
       for(var k=0;k<str.length;k++){
         var ch=str[k];
         if(ch==='\n'){out+='\n';continue;}
-        ghostBuf[ci]=Math.min(1,Math.max(0,ghostBuf[ci]*ghostDecay+(ch!==' '?1:0)*(1-ghostDecay)));
+        ghostBuf[ci]=Math.min(1,Math.max(0,ghostBuf[ci]*ghostDecay+charLum(ch)*(1-ghostDecay)));
         out+=lum[Math.min(11,Math.round(ghostBuf[ci]*11))];
         ci++;
       }

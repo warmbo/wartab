@@ -449,7 +449,7 @@
               "a": "God"
             }
           ],
-          "_qi": 1
+          "_qi": 0
         }
       ]
     },
@@ -544,8 +544,9 @@
           "type": "ascii-anim",
           "label": "ASCII Animation",
           "speed": 2,
-          "ghost": true,
-          "anim": "life"
+          "ghost": false,
+          "anim": "stars",
+          "contrast": 17
         }
       ]
     }
@@ -866,7 +867,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 0,
+              "_qi": 1,
               "collapsed": false
             }
           ]
@@ -1313,7 +1314,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 1
+              "_qi": 0
             }
           ]
         },
@@ -1408,8 +1409,9 @@
               "type": "ascii-anim",
               "label": "ASCII Animation",
               "speed": 2,
-              "ghost": true,
-              "anim": "life"
+              "ghost": false,
+              "anim": "stars",
+              "contrast": 17
             }
           ]
         }
@@ -1569,8 +1571,8 @@
               "type": "ascii-anim",
               "label": "ASCII Animation",
               "anim": "life",
-              "speed": 2,
-              "contrast": 4,
+              "speed": 18,
+              "contrast": 18,
               "ghost": true
             }
           ]
@@ -1584,5 +1586,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-19gesa9mqh2t3u2",
-  "_version": "f291081-dirty"
+  "_version": "5683bd1-dirty"
 }
