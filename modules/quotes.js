@@ -27,7 +27,7 @@ registerModule('quotes', {
       list.innerHTML='';
       (sec.quotes||[]).forEach((qt,i)=>{
         const row=document.createElement('div');row.style.cssText='display:flex;gap:4px;align-items:center;margin-bottom:4px;font-size:var(--text-xs);';
-        row.innerHTML='<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary);">"'+escAttr(qt.q)+'" — '+escAttr(qt.a)+'</span>';
+        row.innerHTML='<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary);">"'+escHtml(qt.q)+'" — '+escHtml(qt.a)+'</span>';
         const rm=document.createElement('button');rm.className='btn btn-glass btn-sm';rm.textContent='✕';rm.style.cssText='padding:0 4px;font-size:var(--text-2xs);';
         rm.addEventListener('click',()=>{sec.quotes.splice(i,1);renderQuotes();saveAndRefresh();});
         row.appendChild(rm);list.appendChild(row);

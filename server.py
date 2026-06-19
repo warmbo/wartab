@@ -17,6 +17,27 @@ CORS_HEADERS = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods"
 try: from PIL import Image, ImageOps; HAVE_PIL=True
 except ImportError: HAVE_PIL=False
 MAX_W,MAX_H,MAX_BYTES=1024,1024,5*1024*1024
+
+def validate_config(data):
+    """Basic schema validation before writing config.json."""
+    if not isinstance(data, dict):
+        return False, "config must be a JSON object"
+    has_pages = "pages" in data and isinstance(data["pages"], dict) and len(data["pages"]) > 0
+    has_cards = "cards" in data and isinstance(data["cards"], list)
+    if not has_pages and not has_cards:
+        return False, "missing 'pages' or 'cards' array"
+    if "theme" not in data or not isinstance(data["theme"], dict):
+        return False, "missing 'theme' object"
+    theme = data["theme"]
+    if "bgType" not in theme or "bgValue" not in theme or "glow" not in theme:
+        return False, "theme missing required fields (bgType, bgValue, glow)"
+    if "layout" not in data or not isinstance(data["layout"], dict):
+        return False, "missing 'layout' object"
+    layout = data["layout"]
+    if "cols" not in layout or not isinstance(layout.get("cols"), (int, float)):
+        return False, "layout missing valid 'cols'"
+    return True, "ok"
+
 def process_image(raw_bytes,filename):
     if not raw_bytes: return {"error":"Empty file"}
     if len(raw_bytes)>MAX_BYTES: return {"error":f"File too large ({len(raw_bytes)//1024}KB, max {MAX_BYTES//1024}KB)"}
@@ -263,7 +284,6 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
                 return self._json({"id": note_id, "content": note_path.read_text()})
             return self._json({"id": note_id, "content": ""})
         if self.path == "/api/config/backups":
-            import json as _json
             snap_dir = HERE / "snapshots"
             snap_dir.mkdir(exist_ok=True)
             snaps = sorted(snap_dir.glob("config_*.json"), reverse=True)
@@ -274,11 +294,10 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
                 result.append({"name": ts, "size": size, "file": s.name})
             return self._json(result)
         if self.path == "/api/config":
-            import json as _json
             cfg_path = HERE / "config.json"
             if cfg_path.exists():
                 with open(cfg_path) as f:
-                    data = _json.load(f)
+                    data = json.load(f)
                     data["_version"] = GIT_VERSION
                     return self._json(data)
             return self._json({})
@@ -298,12 +317,14 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             return self._json(result)
         if self.path.startswith("/api/upload/"): return self._handle_delete(self.path)
         if self.path == "/api/config":
-            import json as _json
             cl = int(self.headers.get("Content-Length", 0))
             if cl > 1024*1024: return self._json({"error":"too large"},413)
             body = self.rfile.read(cl) if cl else b"{}"
             try:
-                data = _json.loads(body)
+                data = json.loads(body)
+                valid, msg = validate_config(data)
+                if not valid:
+                    return self._json({"error":"invalid config: "+msg},400)
                 cfg_path = HERE / "config.json"
                 # Save a timestamped snapshot before overwriting
                 snap_dir = HERE / "snapshots"
@@ -319,21 +340,20 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
                     for old in snaps[20:]:
                         old.unlink()
                 with open(cfg_path, "w") as f:
-                    _json.dump(data, f, indent=2)
+                    json.dump(data, f, indent=2)
                 return self._json({"status":"saved"})
             except Exception as e:
                 return self._json({"error":str(e)},400)
         if self.path.startswith("/api/config/restore/"):
-            import json as _json
             name = self.path.split("/api/config/restore/")[1]
             safe = re.sub(r"[^a-zA-Z0-9_-]", "", name)
             snap_path = HERE / "snapshots" / f"config_{safe}.json"
             if not snap_path.exists():
                 return self._json({"error":"snapshot not found"},404)
-            data = _json.loads(snap_path.read_text())
+            data = json.loads(snap_path.read_text())
             cfg_path = HERE / "config.json"
             with open(cfg_path, "w") as f:
-                _json.dump(data, f, indent=2)
+                json.dump(data, f, indent=2)
             return self._json({"status":"restored","snapshot":safe})
         if self.path.startswith("/api/notes/"):
             note_id = self.path.split("/api/notes/")[1].split("?")[0]
@@ -374,6 +394,15 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
         for k,v in CORS_HEADERS.items(): self.send_header(k,v)
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache, must-revalidate")
+        # Content-Security-Policy: block inline scripts, allow external connects (API poller), fonts, images
+        self.send_header("Content-Security-Policy",
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: blob: https:; "
+            "connect-src 'self' http: https:; "
+            "frame-src *;")
         super().end_headers()
     def _json(self,data,status=200):
         self.send_response(status); self._cors(); self.send_header("Content-Type","application/json"); self.end_headers()
