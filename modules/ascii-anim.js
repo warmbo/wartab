@@ -82,11 +82,17 @@ registerModule('ascii-anim', {
     function applyGhostStr(str){
       if(!ghostOn)return str;
       if(!ghostBuf||ghostBuf.length!==W*H)rebuildGhost();
+      // Count spaces to decide ghost mode: binary (space/non-space) for sparse
+      // frames, luminance-based for dense frames (plasma, fire, etc.)
+      var spaces=0,total=0;
+      for(var sk=0;sk<str.length;sk++){if(str[sk]===' ')spaces++;if(str[sk]!=='\n')total++;}
+      var useLum=spaces/total<0.05;
       var out='',ci=0;
       for(var k=0;k<str.length;k++){
         var ch=str[k];
         if(ch==='\n'){out+='\n';continue;}
-        ghostBuf[ci]=Math.min(1,Math.max(0,ghostBuf[ci]*ghostDecay+charLum(ch)*(1-ghostDecay)));
+        var raw=useLum?charLum(ch):(ch!==' '?1:0);
+        ghostBuf[ci]=Math.min(1,Math.max(0,ghostBuf[ci]*ghostDecay+raw*(1-ghostDecay)));
         out+=lum[Math.min(11,Math.round(ghostBuf[ci]*11))];
         ci++;
       }
