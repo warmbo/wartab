@@ -33,8 +33,8 @@ registerModule('ascii-anim', {
       if(rowsFit<5)fs=Math.max(8,Math.round(ph/(8*1.12)));
       pre.style.fontSize=fs+'px';
       // Monospace character width varies by font; use a conservative estimate
-      // (0.58 × fs) to ensure the grid slightly overfills; overflow:hidden clips the excess
-      var charW=fs*0.58;
+      // (0.55 × fs) to ensure the grid overfills by 2-4 columns; overflow:hidden clips the excess
+      var charW=fs*0.55;
       var newW=Math.max(10,Math.ceil(pw/charW));
       var newH=Math.max(5,Math.ceil(ph/(fs*1.12)));
       if(newH>newW*2)newH=Math.round(newW*2);
