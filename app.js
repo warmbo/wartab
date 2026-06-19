@@ -1438,6 +1438,21 @@ function renderApiFetch(el){
 function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
 
+// Shrink link labels that overflow their container — keeps buttons single-line
+function shrinkLabels(container) {
+  setTimeout(function() {
+    if (!container || !container.parentNode) return;
+    container.querySelectorAll('.link-label').forEach(function(el) {
+      if (el.scrollWidth > el.clientWidth) {
+        var fs = parseInt(window.getComputedStyle(el).fontSize);
+        while (el.scrollWidth > el.clientWidth && fs > 8) {
+          el.style.fontSize = (--fs) + 'px';
+        }
+      }
+    });
+  }, 0);
+}
+
 
 
 const LOCAL_QUOTES=[

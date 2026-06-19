@@ -5,7 +5,7 @@ registerModule('links', {
       const a=document.createElement('a');a.className='link-item';a.href=link.url;a.target='_blank';a.rel='noopener';
       a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label';s.textContent=link.label;
       a.appendChild(s);ig.appendChild(a);
-    });cw.appendChild(ig);
+    });cw.appendChild(ig);shrinkLabels(cw);
   },
   editor: (sec,card,bd)=>{
     const header=document.createElement('div');header.className='me-link-th';

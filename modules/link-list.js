@@ -6,7 +6,7 @@ registerModule('link-list', {
       const a=document.createElement('a');a.className='link-row';a.href=link.url;a.target='_blank';a.rel='noopener';
       a.appendChild(renderLinkIcon(link.icon));a.appendChild(document.createTextNode(' '+link.label));
       lst.appendChild(a);
-    });cw.appendChild(lst);
+    });cw.appendChild(lst);shrinkLabels(cw);
   },
   editor: (sec,card,bd)=>{
     // link-list shares the same link-row editor as links
