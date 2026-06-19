@@ -2,9 +2,8 @@
    WarTab — ASCII Animations Module
    Pure terminal-style animations rendered
    in a <pre> element via requestAnimationFrame.
-   Supports dynamic font scaling, centering,
-   ghost/afterimage effect, and real-time
-   speed/contrast controls.
+   Dynamically adapts W/H grid to fill the
+   available card space; restarts on resize.
    ═══════════════════════════════════════════ */
 registerModule('ascii-anim', {
   defaults: { anim:'donut', speed:10, contrast:10, ghost:false },
@@ -22,58 +21,53 @@ registerModule('ascii-anim', {
     var ghostBuf=null,ghostDecay=0.88;
     var W=70,H=22;
 
-    // Font sizing — fills available space in both dimensions, then centers
+    // Calculate W/H from actual container size, fills both dimensions
+    // Returns true if dimensions actually changed
     function sizeFont(){
-      if(!pre.parentNode)return;
+      if(!pre.parentNode)return false;
       var pw=pre.clientWidth-8,ph=pre.clientHeight-8;
-      if(pw<10||ph<10)return;
-      var fsW=Math.max(4,Math.round(pw/(W*0.6)));
-      var fsH=Math.max(4,Math.round(ph/(H*1.12)));
-      var fs=Math.min(fsW,fsH);
+      if(pw<10||ph<10)return false;
+      var fs=Math.max(5,Math.round(pw/(70*0.6)));
+      var rowsFit=Math.floor(ph/(fs*1.12));
+      if(rowsFit<10)fs=Math.max(5,Math.round(ph/(12*1.12)));
+      var newW=Math.max(10,Math.floor(pw/(fs*0.6)));
+      var newH=Math.max(5,Math.floor(ph/(fs*1.12)));
+      if(newW===W&&newH===H&&pre.style.fontSize===fs+'px')return false;
+      W=newW;H=newH;
       pre.style.fontSize=fs+'px';
-      // Center content with padding
-      var cw2=Math.round(W*fs*0.6),ch2=Math.round(H*fs*1.12);
-      pre.style.paddingLeft=Math.max(0,Math.round((pw-cw2)/2))+'px';
-      pre.style.paddingTop=Math.max(0,Math.round((ph-ch2)/2))+'px';
+      pre.style.padding='4px';
+      return true;
     }
 
-    // Only size on resize, not every frame
-    if(window.ResizeObserver){ro=new ResizeObserver(sizeFont);ro.observe(pre);}
-    setTimeout(sizeFont,50);
-
-    // ── Shared helpers ────────────────────────
+    // ── Helpers ─────────────────────────────
     function gridToString(arr){
       var out='';
-      for(var k=0;k<W*H;k++){
-        out+=k>0&&k%W===0?'\n':arr[k];
-      }
+      for(var k=0;k<W*H;k++)out+=k>0&&k%W===0?'\n':arr[k];
       return out;
     }
 
-    // ── Ghost/Afterimage Engine ──────────────
+    // ── Ghost/Afterimage Engine ─────────────
+    function rebuildGhost(){ghostBuf=new Float32Array(W*H);}
     function applyGhost(arr,valFn){
       if(!ghostOn)return gridToString(arr);
-      if(!ghostBuf||ghostBuf.length!==W*H)ghostBuf=new Float32Array(W*H);
+      if(!ghostBuf||ghostBuf.length!==W*H)rebuildGhost();
       var out='';var fn=valFn||function(v){return v;}
       for(var k=0;k<W*H;k++){
         var raw=fn(arr[k]);
         ghostBuf[k]=Math.min(1,Math.max(0,ghostBuf[k]*ghostDecay+raw*(1-ghostDecay)));
-        var idx=Math.round(ghostBuf[k]*11);
-        out+=k>0&&k%W===0?'\n':lum[Math.min(11,idx)];
+        out+=k>0&&k%W===0?'\n':lum[Math.min(11,Math.round(ghostBuf[k]*11))];
       }
       return out;
     }
     function applyGhostGrid(grid){
       if(!ghostOn)return grid.map(function(r){return r.join('');}).join('\n');
-      var gcols=grid[0]?grid[0].length:60;
+      var gcols=grid[0]?grid[0].length:W;
       if(!ghostBuf||ghostBuf.length!==gcols)ghostBuf=new Float32Array(gcols);
       var out='';
       for(var r=0;r<grid.length;r++){
         for(var c=0;c<grid[r].length;c++){
-          var raw=grid[r][c]!==' '?1:0;
-          ghostBuf[c]=Math.min(1,Math.max(0,ghostBuf[c]*ghostDecay+raw*(1-ghostDecay)));
-          var li=Math.round(ghostBuf[c]*11);
-          out+=lum[Math.min(11,li)];
+          ghostBuf[c]=Math.min(1,Math.max(0,ghostBuf[c]*ghostDecay+(grid[r][c]!==' '?1:0)*(1-ghostDecay)));
+          out+=lum[Math.min(11,Math.round(ghostBuf[c]*11))];
         }
         out+='\n';
       }
@@ -81,15 +75,13 @@ registerModule('ascii-anim', {
     }
     function applyGhostStr(str){
       if(!ghostOn)return str;
-      if(!ghostBuf||ghostBuf.length!==W*H)ghostBuf=new Float32Array(W*H);
-      var out='';var ci=0;
+      if(!ghostBuf||ghostBuf.length!==W*H)rebuildGhost();
+      var out='',ci=0;
       for(var k=0;k<str.length;k++){
         var ch=str[k];
         if(ch==='\n'){out+='\n';continue;}
-        var raw=ch!==' '?1:0;
-        ghostBuf[ci]=Math.min(1,Math.max(0,ghostBuf[ci]*ghostDecay+raw*(1-ghostDecay)));
-        var li=Math.round(ghostBuf[ci]*11);
-        out+=lum[Math.min(11,li)];
+        ghostBuf[ci]=Math.min(1,Math.max(0,ghostBuf[ci]*ghostDecay+(ch!==' '?1:0)*(1-ghostDecay)));
+        out+=lum[Math.min(11,Math.round(ghostBuf[ci]*11))];
         ci++;
       }
       return out;
@@ -107,14 +99,12 @@ registerModule('ascii-anim', {
           rA=Math.sin(j);rB=Math.cos(j);
           for(var i=0;i<6.28;i+=0.02){
             ci=Math.sin(i);co=Math.cos(i);
-            si=Math.sin(A);so=Math.sin(j);
-            ei=Math.cos(A);eo=Math.cos(j);
+            si=Math.sin(A);so=Math.sin(j);ei=Math.cos(A);eo=Math.cos(j);
             D=1/(ci*(rB+2)*ei+so*si+5);
-            L=co*(rB+2)*eo-si*so;
-            m=Math.cos(B);n=Math.sin(B);
+            L=co*(rB+2)*eo-si*so;m=Math.cos(B);n=Math.sin(B);
             t=ci*(rB+2)*si-so*ei;
-            x=Math.round(35+30*D*(L*m-t*n));
-            y=Math.round(12+15*D*(L*n+t*m));
+            x=Math.round(W/2+W*0.43*D*(L*m-t*n));
+            y=Math.round(H/2+H*0.68*D*(L*n+t*m));
             o=x+W*y;
             N=Math.round(8*((so*si-ci*rB*ei)*m-ci*rB*si-so*ei-co*rB*n));
             if(y>=0&&y<H&&x>=0&&x<W&&D>z[o]){
@@ -131,22 +121,22 @@ registerModule('ascii-anim', {
 
     // ── Matrix Rain ──────────────────────────
     function renderMatrix(){
+      var nDrops=Math.max(10,Math.round(W*0.85));
       var drops=[];
-      for(var i=0;i<60;i++)drops.push({y:-Math.random()*20,speed:0.8+Math.random()*2.5});
+      for(var i=0;i<nDrops;i++)drops.push({y:-Math.random()*20,speed:0.8+Math.random()*2.5});
       var glyphs='ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝ0123456789ABCDEF';
-      var rows=H,cols=W,trail=Math.max(2,Math.round(rows*0.5*ct));
+      var trail=Math.max(2,Math.round(H*0.5*ct));
       function frame(){
         if(!running)return;
         var grid=[];
-        for(var r=0;r<rows;r++)grid.push(new Array(cols).fill(' '));
+        for(var r=0;r<H;r++)grid.push(new Array(W).fill(' '));
         for(var i=0;i<drops.length;i++){
           var d=drops[i];
           d.y+=d.speed*0.12*sp;
-          if(d.y>=rows+trail){d.y=-trail-Math.random()*8;d.speed=0.8+Math.random()*2.5;}
-          for(var t=0;t<trail&&d.y-t>=0&&d.y-t<rows;t++){
+          if(d.y>=H+trail){d.y=-trail-Math.random()*8;d.speed=0.8+Math.random()*2.5;}
+          for(var t=0;t<trail&&d.y-t>=0&&d.y-t<H;t++){
             var ch=glyphs[Math.floor(Math.random()*glyphs.length)];
-            var bright=t<2?0.9:t<trail*0.3?0.6:0.3;
-            if(Math.random()<bright)grid[Math.floor(d.y)-t][i]=ch;
+            if(Math.random()<(t<2?0.9:t<trail*0.3?0.6:0.3))grid[Math.floor(d.y)-t][i]=ch;
           }
         }
         pre.textContent=applyGhostGrid(grid);
@@ -157,10 +147,9 @@ registerModule('ascii-anim', {
 
     // ── Starfield ────────────────────────────
     function renderStars(){
+      var nStars=Math.max(20,Math.round(W*H*0.13));
       var stars=[];
-      for(var i=0;i<200;i++){
-        stars.push({x:Math.random()*2-1,y:Math.random()*2-1,z:0.5+Math.random()*2});
-      }
+      for(var i=0;i<nStars;i++)stars.push({x:Math.random()*2-1,y:Math.random()*2-1,z:0.5+Math.random()*2});
       function frame(){
         if(!running)return;
         var rows=[];
@@ -169,8 +158,8 @@ registerModule('ascii-anim', {
           var s=stars[i];
           s.z-=0.03*sp;
           if(s.z<=0.1){s.x=Math.random()*2-1;s.y=Math.random()*2-1;s.z=2.5;}
-          var px=Math.round(W/2+s.x/s.z*30);
-          var py=Math.round(H/2+s.y/s.z*15);
+          var px=Math.round(W/2+s.x/s.z*(W*0.43));
+          var py=Math.round(H/2+s.y/s.z*(H*0.68));
           if(px>=0&&px<W&&py>=0&&py<H){
             var b=Math.max(0,Math.min(11,Math.round((1-(s.z-0.1)/2.4)*10*ct)));
             rows[py][px]=lum[b];
@@ -190,25 +179,21 @@ registerModule('ascii-anim', {
       function frame(){
         if(!running)return;
         frameCount++;
-        for(var x=0;x<W;x++){
-          pixels[(H-1)*W+x]=Math.random()<0.35?35:0;
-        }
-        for(var y=0;y<H-1;y++){
-          for(var x=0;x<W;x++){
-            var v=0;
-            if(x>0)v+=pixels[(y+1)*W+(x-1)];
-            v+=pixels[(y+1)*W+x];
-            if(x<W-1)v+=pixels[(y+1)*W+(x+1)];
-            pixels[y*W+x]=Math.max(0,Math.round(v/3.4-Math.random()*0.4));
-          }
+        for(var x=0;x<W;x++)pixels[(H-1)*W+x]=Math.random()<0.35?35:0;
+        for(var y=0;y<H-1;y++)for(var x=0;x<W;x++){
+          var v=0;
+          if(x>0)v+=pixels[(y+1)*W+(x-1)];
+          v+=pixels[(y+1)*W+x];
+          if(x<W-1)v+=pixels[(y+1)*W+(x+1)];
+          pixels[y*W+x]=Math.max(0,Math.round(v/3.4-Math.random()*0.4));
         }
         if(frameSkip<1||frameCount%frameSkip===0){
           var chars=' .,:;xX#';
           var out='';
           for(var y=0;y<H;y++){
             for(var x=0;x<W;x++){
-              var v=Math.round(pixels[y*W+x]/ct);
-              out+=v<chars.length?chars[v>=0?v:0]:'#';
+              var val=Math.round(pixels[y*W+x]/ct);
+              out+=val<chars.length?chars[val>=0?val:0]:'#';
             }
             out+='\n';
           }
@@ -221,15 +206,13 @@ registerModule('ascii-anim', {
 
     // ── Game of Life ─────────────────────────
     function renderLife(){
-      var grid=[];
-      for(var i=0;i<W*H;i++)grid.push(Math.random()<0.3?1:0);
+      var grid=[];for(var i=0;i<W*H;i++)grid.push(Math.random()<0.3?1:0);
       var frameCount=0,skip=Math.max(1,Math.round(5-sp*0.4));
       function countN(g,x,y){
         var n=0;
         for(var dy=-1;dy<=1;dy++)for(var dx=-1;dx<=1;dx++){
           if(dx===0&&dy===0)continue;
-          var nx=(x+dx+W)%W,ny=(y+dy+H)%H;
-          n+=g[ny*W+nx];
+          n+=g[((y+dy+H)%H)*W+((x+dx+W)%W)];
         }
         return n;
       }
@@ -246,10 +229,7 @@ registerModule('ascii-anim', {
           if(grid.every(function(c){return c===0;})){pre.textContent='';_timer=requestAnimationFrame(frame);return;}
         }
         var out='';
-        for(var y=0;y<H;y++){
-          for(var x=0;x<W;x++)out+=grid[y*W+x]?lum[Math.min(11,Math.round(ct*8))]:' ';
-          out+='\n';
-        }
+        for(var y=0;y<H;y++){for(var x=0;x<W;x++)out+=grid[y*W+x]?lum[Math.min(11,Math.round(ct*8))]:' ';out+='\n';}
         pre.textContent=applyGhostStr(out);
         _timer=requestAnimationFrame(frame);
       }
@@ -281,15 +261,24 @@ registerModule('ascii-anim', {
     function startAnim(){
       ghostBuf=null;
       if(_timer){cancelAnimationFrame(_timer);_timer=null;}
+      sizeFont(); // sets W,H from actual dimensions
       switch(sec.anim){
-        case'donut':W=70;H=22;sizeFont();renderDonut();break;
-        case'matrix':W=60;H=20;sizeFont();renderMatrix();break;
-        case'stars':W=70;H=22;sizeFont();renderStars();break;
-        case'fire':W=70;H=22;sizeFont();renderFire();break;
-        case'life':W=70;H=40;sizeFont();renderLife();break;
-        case'plasma':W=70;H=22;sizeFont();renderPlasma();break;
-        default:W=70;H=22;sizeFont();renderDonut();
+        case'donut':renderDonut();break;
+        case'matrix':renderMatrix();break;
+        case'stars':renderStars();break;
+        case'fire':renderFire();break;
+        case'life':renderLife();break;
+        case'plasma':renderPlasma();break;
+        default:renderDonut();
       }
+    }
+
+    // Resize → recalculate W/H and restart animation if dimensions changed
+    if(window.ResizeObserver){
+      ro=new ResizeObserver(function(){
+        if(sizeFont()&&_timer){cancelAnimationFrame(_timer);_timer=null;startAnim();}
+      });
+      ro.observe(pre);
     }
     setTimeout(startAnim,50);
 
