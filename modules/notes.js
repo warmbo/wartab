@@ -1,7 +1,7 @@
 registerModule('notes', {
   defaults: { content:'' },
   render: (sec,card,cw)=>{
-    cw.style.cssText='flex:1;display:flex;flex-direction:column;';
+    cw.style.cssText='flex:1;display:flex;flex-direction:column;width:100%;';
     const e=document.createElement('div');e.className='notes-text';
     e.style.cssText='flex:1;white-space:pre-wrap;padding:8px;min-height:100px;';e.contentEditable=true;
     e.innerHTML=sec.content||'';

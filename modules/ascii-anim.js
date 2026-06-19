@@ -8,9 +8,9 @@
 registerModule('ascii-anim', {
   defaults: { anim:'donut', speed:10, contrast:10, ghost:false },
   render: (sec,card,cw)=>{
-    cw.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0;';
+    cw.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0;width:100%;';
     var pre=document.createElement('pre');
-    pre.style.cssText='margin:0;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.2);text-align:left;font-family:monospace;flex:1;width:100%;box-sizing:border-box;padding:4px;line-height:1.12;';
+    pre.style.cssText='margin:0;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.2);text-align:left;font-family:monospace;flex:1;width:100%;min-width:100%;box-sizing:border-box;padding:4px;line-height:1.12;';
     var running=true,_timer,ro;
     var sp=(parseFloat(sec.speed)||10)/10;
     var ct=(parseFloat(sec.contrast)||10)/10;
@@ -25,24 +25,21 @@ registerModule('ascii-anim', {
     // Returns true if dimensions actually changed
     function sizeFont(){
       if(!pre.parentNode)return false;
-      var pad=parseInt(getComputedStyle(pre).paddingLeft)||4;
-      var fs=13;
-      var rowsFit=Math.round((pre.clientHeight-pad*2)/(fs*1.12));
-      if(rowsFit<5)fs=Math.max(8,Math.round((pre.clientHeight-pad*2)/(8*1.12)));
-      pre.style.fontSize=fs+'px';
-      // Measure actual character width at this font size
-      pre.textContent='A'.repeat(50);
-      var cw=(pre.scrollWidth-pad*2)/50;
-      pre.textContent='';
+      var pad=4;
       var pw=pre.clientWidth-pad*2,ph=pre.clientHeight-pad*2;
       if(pw<10||ph<10)return false;
-      var newW=Math.max(10,Math.ceil(pw/cw));
+      var fs=13;
+      var rowsFit=Math.round(ph/(fs*1.12));
+      if(rowsFit<5)fs=Math.max(8,Math.round(ph/(8*1.12)));
+      pre.style.fontSize=fs+'px';
+      // Monospace character width varies by font; use a conservative estimate
+      // (0.58 × fs) to ensure the grid slightly overfills; overflow:hidden clips the excess
+      var charW=fs*0.58;
+      var newW=Math.max(10,Math.ceil(pw/charW));
       var newH=Math.max(5,Math.ceil(ph/(fs*1.12)));
-      // Prevent tall narrow strips in small-width cards sharing a row
       if(newH>newW*2)newH=Math.round(newW*2);
-      if(newW===W&&newH===H&&pre.style.fontSize===fs+'px')return false;
+      if(newW===W&&newH===H)return false;
       W=newW;H=newH;
-      pre.style.padding=pad+'px';
       return true;
     }
 
@@ -287,7 +284,7 @@ registerModule('ascii-anim', {
       });
       ro.observe(pre);
     }
-    setTimeout(startAnim,50);
+    setTimeout(startAnim,200);
 
     // Cleanup
     card._cleanup=function(){

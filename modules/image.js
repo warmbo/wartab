@@ -1,7 +1,7 @@
 registerModule('image', {
   defaults: { url:'', alt:'' },
   render: (sec,card,cw)=>{
-    cw.style.cssText='flex:1;display:flex;flex-direction:column;';
+    cw.style.cssText='flex:1;display:flex;flex-direction:column;width:100%;';
     const w=document.createElement('div');w.style.cssText='flex:1;display:flex;flex-direction:column;padding:4px 0;';
     if(!sec.url){w.innerHTML='<div style="font-size:var(--text-xs);color:var(--text-tertiary);text-align:center;padding:20px;">No image selected. Edit to add one.</div>';}
     else{
