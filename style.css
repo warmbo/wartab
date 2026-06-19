@@ -279,10 +279,10 @@ body {
 .link-item img.link-icon { display: block; }
 .link-item .link-label { 
   line-height: 1.25; 
-  word-break: break-word; overflow-wrap: break-word; 
   font-size: var(--text-xs); 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   text-align: center;
+  padding: 0 4px; max-width: 100%;
 }
 .link-item .link-custom-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; display: block; }
 /* Lucide SVGs replace <i> elements — ensure they match our fixed icon box */
