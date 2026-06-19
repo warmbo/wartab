@@ -31,7 +31,7 @@ function registerModule(type, module){
 // Built-in modules — each owns { defaults, render(sec,card,cw), editor(sec,card,bd) }
 
 /* ── Public API presets for API Poller ── */
-var API_PRESETS = [
+const API_PRESETS = [
   { label:'GitHub Repo', url:'https://api.github.com/repos/warmbo/wartab', fields:[{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}], icon:'github' },
   { label:'Bitcoin Price', url:'https://api.coinbase.com/v2/prices/BTC-USD/spot', fields:[{label:'BTC/USD',path:'data.amount'}], icon:'bitcoin' },
   { label:'Dog API', url:'https://dog.ceo/api/breeds/image/random', fields:[{label:'Breed Image',path:'message'}], icon:'dog' },
@@ -559,7 +559,7 @@ function buildSectionEditor(sec, card, si) {
   cardEl.appendChild(bd);
 
   /* ── Drag setup ── */
-  dh.addEventListener('mousedown', e => {
+  dh.addEventListener('pointerdown', e => {
     startSectionDrag(e, card.id, si, cardEl);
   });
 
@@ -590,8 +590,8 @@ function startSectionDrag(e, cardId, secIdx, srcEl) {
     _startY: e.clientY,
     _insertAfter: null,
   };
-  document.addEventListener('mousemove', onSecDragMove);
-  document.addEventListener('mouseup', onSecDragEnd);
+  document.addEventListener('pointermove', onSecDragMove);
+  document.addEventListener('pointerup', onSecDragEnd);
 }
 
 function onSecDragMove(e) {
@@ -644,8 +644,8 @@ function onSecDragMove(e) {
 }
 
 function onSecDragEnd(e) {
-  document.removeEventListener('mousemove', onSecDragMove);
-  document.removeEventListener('mouseup', onSecDragEnd);
+  document.removeEventListener('pointermove', onSecDragMove);
+  document.removeEventListener('pointerup', onSecDragEnd);
   if (!secDragState) return;
   const { cardId, srcEl, ghost, active } = secDragState;
   if (srcEl) srcEl.classList.remove('dragging');
@@ -893,7 +893,7 @@ const LUCIDE_ICONS = ['search', 'clock', 'globe', 'monitor', 'book-open', 'edit-
 
 // Detect if a string is a Lucide icon name (not URL, not emoji)
 // Emoji → Lucide name migration map for existing configs
-var EMOJI_TO_LUCIDE={
+const EMOJI_TO_LUCIDE={
 '🔍':'search','🕐':'clock','🌐':'globe','🖥️':'monitor','📖':'book-open',
 '📝':'edit-3','📦':'package','🏠':'home','🎬':'film','🛡️':'shield',
 '📊':'bar-chart-3','🐳':'container','🔐':'lock','🐙':'github','🦊':'gitlab',
@@ -1250,6 +1250,8 @@ function renderCard(card,idx){
 function renderIconElement(icon, cls) {
   if (!icon) return renderLucideEl('package', cls);
   if (icon.startsWith('http') || icon.startsWith('data:') || icon.startsWith('/')) {
+    // Reject file: protocol URLs
+    if (icon.startsWith('file:')) return renderLucideEl('package', cls);
     const img = document.createElement('img');
     img.className = cls; img.src = icon; img.alt = '';
     img.loading = 'lazy';
@@ -1272,7 +1274,7 @@ function doSearch(query, section) {
   if (!s) return;
   const engine = section.engine || config.search.selected || 'Google';
   const url = (config.search.engines[engine] || config.search.engines['Google']) + encodeURIComponent(s);
-  window.open(url, '_blank');
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 /**
@@ -1363,14 +1365,9 @@ function renderSection(section, card) {
  * @returns {HTMLElement}
  */
 function renderLinkIcon(icon) {
-  /* Default: Lucide 'link' icon */
-  if (!icon) {
-    var el = document.createElement('i');
-    el.className = 'link-icon'; el.setAttribute('data-lucide', 'link');
-    return el;
-  }
-  /* Image URL */
-  if (icon.startsWith('http') || icon.startsWith('data:') || icon.startsWith('/')) {
+  /* Image URL needs link-custom-icon class for object-fit sizing */
+  if (icon && (icon.startsWith('http') || icon.startsWith('data:') || icon.startsWith('/'))) {
+    if (icon.startsWith('file:')) return renderLinkIcon('');
     const img = document.createElement('img');
     img.className = 'link-custom-icon'; img.src = icon; img.alt = '';
     img.loading = 'lazy';
@@ -1381,17 +1378,7 @@ function renderLinkIcon(icon) {
     };
     return img;
   }
-  /* Lucide icon name */
-  if (isLucideName(icon)) {
-    var el = document.createElement('i');
-    el.className = 'link-icon'; el.setAttribute('data-lucide', icon);
-    return el;
-  }
-  /* Emoji fallback */
-  const span = document.createElement('span');
-  span.className = 'link-icon emoji-icon';
-  span.textContent = icon;
-  return span;
+  return renderIconElement(icon, 'link-icon');
 }
 /**
  * Find a section by its ID across all cards.
@@ -1413,7 +1400,7 @@ function updateClocks(){$$('.clock-widget').forEach(el=>{const n=new Date(),f24=
 function renderCalendar(el,date){const y=date.getFullYear(),m=date.getMonth();const fd=new Date(y,m,1).getDay();const ld=new Date(y,m+1,0).getDate();const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];let h=`<div class="calendar-month">${mn[m]} ${y}</div><div class="calendar-grid">`;['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{h+=`<div class="calendar-day-header">${d}</div>`;});for(let i=0;i<fd;i++)h+='<div class="calendar-day other-month"></div>';const today=new Date();for(let d=1;d<=ld;d++){const is=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();h+=`<div class="calendar-day${is?' today':''}">${d}</div>`;}h+='</div>';el.innerHTML=h;}
 function setupWeatherWidgets(){weatherIntervals.forEach(clearInterval);weatherIntervals=[];$$('.weather-widget').forEach(fetchWeather);}
 function fetchWeather(el){const k=el.dataset.apiKey,z=el.dataset.zip,c=el.dataset.country||'US';if(!k||!z){el.querySelector('.weather-detail').textContent='Set API key & zip code in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?zip=${encodeURIComponent(z)},${encodeURIComponent(c)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);var iconEl=el.querySelector('.weather-icon');if(iconEl){var lname=wIcon(d.weather[0].id);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';var windEl=el.querySelector('.weather-wind-val');if(windEl){var ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}var tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);
-}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;var tsEl=el.querySelector('.weather-ts');if(tsEl){var lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});weatherIntervals.push(setInterval(()=>fetchWeather(el),600000));}
+}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;var tsEl=el.querySelector('.weather-ts');if(tsEl){var lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});var wi=parseInt(el.dataset.refresh)*1000;if(wi>0)weatherIntervals.push(setInterval(()=>fetchWeather(el),Math.max(5000,wi)));}
 function wIcon(id){if(id<300)return'cloud-lightning';if(id<400)return'cloud-drizzle';if(id<600)return'cloud-rain';if(id<700)return'cloud-snow';if(id<800)return'cloud-fog';if(id===800)return'sun';return'cloud';}
 function renderApiWidget(el){renderApiFetch(el);}
 function renderApiFetch(el){
@@ -1453,7 +1440,7 @@ function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
 
 
 
-var LOCAL_QUOTES=[
+const LOCAL_QUOTES=[
   {q:'The best way to predict the future is to invent it.',a:'Alan Kay'},
   {q:'Any sufficiently advanced technology is indistinguishable from magic.',a:'Arthur C. Clarke'},
   {q:'Simplicity is prerequisite for reliability.',a:'Edsger W. Dijkstra'},

@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """WarTab Server — new tab page + /api/stats + image upload + icon save."""
-import argparse, http.server, io, json, os, re, socket, subprocess, sys, time, uuid, webbrowser
+import argparse, http.server, io, json, logging, os, re, socket, subprocess, sys, time, uuid, webbrowser
 from pathlib import Path
 from threading import Lock
+
+log = logging.getLogger("wartab")
+log.setLevel(logging.DEBUG)
+if not log.handlers:
+    sh = logging.StreamHandler()
+    sh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    log.addHandler(sh)
 HERE = Path(__file__).parent.resolve()
 UPLOADS = HERE / "uploads"
 ICONS = HERE / "icons"
@@ -53,7 +60,7 @@ def process_image(raw_bytes,filename):
             ow,oh=img.size
             if ow>MAX_W or oh>MAX_H: img.thumbnail((MAX_W,MAX_H),Image.LANCZOS)
             try: img=ImageOps.exif_transpose(img) or img
-            except: pass
+            except Exception: pass
             kw={"format":fmt}
             if fmt=="JPEG": kw["quality"]=80; kw["optimize"]=True
             elif fmt=="PNG": kw["optimize"]=True
@@ -74,7 +81,7 @@ def get_cpu_percent():
             lt,li,lts=_last_cpu; dt=now-lts
             if dt>0: used=((total-lt)-(idle-li))/(total-lt)*100 if (total-lt)>0 else 0; _last_cpu=(total,idle,now); return round(used,1)
         _last_cpu=(total,idle,now); return 0.0
-    except: return -1
+    except Exception as e: log.warning("get_cpu_percent failed: %s", e); return -1
 def get_memory():
     try:
         with open("/proc/meminfo") as f: data=f.read()
@@ -83,7 +90,7 @@ def get_memory():
         active=int(re.search(r"Active:\s+(\d+)",data).group(1))*1024
         used=total-avail
         return {"total":total,"used":used,"available":avail,"active":active,"percent":round(active/total*100,1) if total else 0}
-    except: return {"total":0,"used":0,"available":0,"active":0,"percent":-1}
+    except Exception as e: log.warning("get_memory failed: %s", e); return {"total":0,"used":0,"available":0,"active":0,"percent":-1}
 def get_disks():
     disks=[]
     try:
@@ -91,14 +98,14 @@ def get_disks():
         for line in r.stdout.strip().split("\n")[1:]:
             p=line.split()
             if len(p)>=6: disks.append({"device":p[0],"mount":p[5],"total":int(p[1]),"used":int(p[2]),"free":int(p[3]),"percent":float(p[4].replace("%",""))})
-    except: pass
+    except Exception as e: log.warning("get_disks failed: %s", e)
     return disks
 def get_uptime():
     try:
         with open("/proc/uptime") as f: s=float(f.read().split()[0])
         d,r=divmod(s,86400); h,m=divmod(r,3600)
         return {"seconds":round(s,0),"days":int(d),"hours":int(h),"minutes":int(m//60),"string":f"{int(d)}d {int(h)}h {int(m//60)}m"}
-    except: return {"seconds":0,"days":0,"hours":0,"minutes":0,"string":"unknown"}
+    except Exception as e: log.warning("get_uptime failed: %s", e); return {"seconds":0,"days":0,"hours":0,"minutes":0,"string":"unknown"}
 def get_disk_io():
     try:
         with open("/proc/diskstats") as f:
@@ -107,12 +114,12 @@ def get_disk_io():
                 if len(p)>=14 and p[2]=='nvme0n1' and not p[2].endswith(('p1','p2','p3')):
                     return {"device":p[2],"readsectors":int(p[5]),"writesectors":int(p[9])}
         return {"device":"","readsectors":0,"writesectors":0}
-    except: return {"device":"","readsectors":0,"writesectors":0}
+    except Exception as e: log.warning("get_disk_io failed: %s", e); return {"device":"","readsectors":0,"writesectors":0}
 def get_load():
     try:
         with open("/proc/loadavg") as f: p=f.read().strip().split()
         return {"1m":float(p[0]),"5m":float(p[1]),"15m":float(p[2])}
-    except: return {"1m":-1,"5m":-1,"15m":-1}
+    except Exception as e: log.warning("get_load failed: %s", e); return {"1m":-1,"5m":-1,"15m":-1}
 def get_network():
     try:
         with open("/proc/net/dev") as f:
@@ -122,7 +129,7 @@ def get_network():
                     rx=int(parts[1]); tx=int(parts[9])
                     return {"rx_bytes":rx,"tx_bytes":tx,"interface":parts[0].rstrip(':')}
         return {"rx_bytes":0,"tx_bytes":0,"interface":"unknown"}
-    except: return {"rx_bytes":0,"tx_bytes":0,"interface":"unknown"}
+    except Exception as e: log.warning("get_network failed: %s", e); return {"rx_bytes":0,"tx_bytes":0,"interface":"unknown"}
 def get_gpu():
     import subprocess, json as _json
     result = {"percent":0,"vram_total":0,"vram_used":0,"temp_c":0}
@@ -138,15 +145,16 @@ def get_gpu():
             result["vram_used"] = int(card.get("VRAM Total Used Memory (B)","0"))
             temp_str = card.get("Temperature (Sensor edge) (C)","0")
             result["temp_c"] = float(temp_str) if temp_str else 0
-    except:
+    except Exception as e:
+        log.warning("get_gpu (rocm-smi) failed: %s", e)
         try:
             with open("/sys/class/drm/card0/device/gpu_busy_percent") as f:
                 result["percent"] = int(f.read().strip())
-        except: pass
+        except Exception as e2: log.debug("gpu_busy_percent fallback failed: %s", e2)
         try:
             with open("/sys/class/drm/card0/device/mem_info_vram_total") as f:
                 result["vram_total"] = int(f.read().strip())
-        except: pass
+        except Exception as e2: log.debug("mem_info_vram_total fallback failed: %s", e2)
     return result
 def get_cpu_temp():
     try:
@@ -157,12 +165,12 @@ def get_cpu_temp():
                 vals = [float(v) for _,v in temps]
                 return {"celsius":round(sum(vals)/len(vals),1),"max":round(max(vals),1)}
         return {"celsius":0,"max":0}
-    except: return {"celsius":0,"max":0}
+    except Exception as e: log.warning("get_cpu_temp failed: %s", e); return {"celsius":0,"max":0}
 def get_process_count():
     try:
         with open("/proc/loadavg") as f:
             return int(f.read().strip().split("/")[1].split()[0])
-    except: return 0
+    except Exception as e: log.warning("get_process_count failed: %s", e); return 0
 def build_stats():
     return {"hostname":socket.gethostname(),"cpu":get_cpu_percent(),"memory":get_memory(),"disks":get_disks(),
             "uptime":get_uptime(),"load":get_load(),"network":get_network(),"gpu":get_gpu(),
@@ -183,7 +191,7 @@ try:
         capture_output=True,text=True,timeout=2,cwd=HERE)
     if out.returncode==0:
         GIT_VERSION = out.stdout.strip()
-except: pass
+except Exception: pass
 
 def scan_arp():
     import csv, io, socket, subprocess
@@ -246,8 +254,8 @@ def scan_arp():
             if len(targets) >= 8: break
         for ip in targets:
             try: subprocess.run(["ping", "-c1", "-W1", ip], capture_output=True, timeout=2)
-            except: pass
-    except: pass
+            except Exception: pass
+    except Exception: pass
     # Read refreshed ARP table
     try:
         with open("/proc/net/arp") as f:
@@ -264,9 +272,9 @@ def scan_arp():
                         try:
                             hn = socket.gethostbyaddr(ip)
                             hostname = hn[0] if hn and hn[0] else ""
-                        except: pass
+                        except Exception: pass
                         result.append({"ip": ip, "mac": hw, "vendor": vendor, "hostname": hostname, "iface": iface})
-    except: pass
+    except Exception: pass
     _arp_cache = {"devices": result, "timestamp": time.time(), "count": len(result)}
     _arp_cache_ts = time.time()
     return _arp_cache
@@ -303,8 +311,8 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             return self._json({})
         if self.path == "/api/arp":
             return self._json(scan_arp())
-        path=self.translate_path(self.path)
-        if not os.path.isfile(path) or self.path=="/": self.path="/index.html"
+        path = self.translate_path(self.path)
+        if not Path(path).is_file() or self.path=="/": self.path="/index.html"
         return super().do_GET()
     def do_POST(self):
         if self.path=="/api/upload":
@@ -413,9 +421,9 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
 def get_local_ips():
     ips=[]
     try: s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.settimeout(0.1); s.connect(("10.254.254.254",1)); ips.append(s.getsockname()[0]); s.close()
-    except: pass
+    except Exception: pass
     try: ips.extend(a for a in socket.gethostbyname_ex(socket.gethostname())[2] if a not in ips)
-    except: pass
+    except Exception: pass
     return ips or ["127.0.0.1"]
 def main():
     ap=argparse.ArgumentParser(description="WarTab Server")

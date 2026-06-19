@@ -51,6 +51,16 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 [data-animations="off"] .link-row:hover { background: transparent; }
 [data-animations="off"] #top-bar, [data-animations="off"] .config-panel, [data-animations="off"] .icon-picker { transition-duration: 0s !important; }
 
+/* ── Reduced motion — respect OS preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .loader-spinner { animation-duration: 0.8s !important; }
+}
+
 /* ── Accent bar toggle ── */
 [data-accent-bar="off"] .card::before,
 [data-accent-bar="off"] #top-bar::before { display: none; }
@@ -331,12 +341,12 @@ body {
 .config-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 520px; max-width: 100vw; z-index: 101; background: linear-gradient(180deg, rgba(16,16,16,0.97) 0%, rgba(10,10,10,0.97) 100%); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-left: 1px solid var(--glass-border); transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; overflow: hidden; }
 .config-panel.open { transform: translateX(0); box-shadow: -8px 0 40px rgba(0,0,0,0.5); }
 /* Fixed colors for config panel — never affected by theme */
-.config-panel, .config-panel * { color: rgba(255,255,255,0.92) !important; }
+.config-panel { color: rgba(255,255,255,0.92) !important; }
 .config-panel select, .config-panel input, .config-panel textarea, .config-panel button { color: rgba(255,255,255,0.92) !important; }
 .config-panel .form-group label, .config-panel .config-section h3 { color: rgba(255,255,255,0.60) !important; }
 .config-panel select option { background: #1a1a1a !important; color: rgba(255,255,255,0.92) !important; }
 /* Icon picker same treatment */
-.icon-picker, .icon-picker * { color: rgba(255,255,255,0.92) !important; }
+.icon-picker { color: rgba(255,255,255,0.92) !important; }
 .icon-picker select option { background: #1a1a1a !important; }
 .config-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; border-bottom: 1px solid var(--glass-border); flex-shrink: 0; }
 .config-header h2 { font-size: var(--heading-size); font-weight: 700; text-shadow: var(--emboss-shadow); font-family: var(--font); }
