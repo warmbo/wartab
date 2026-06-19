@@ -33,6 +33,8 @@ registerModule('ascii-anim', {
       if(rowsFit<5)fs=Math.max(8,Math.round(ph/(8*1.12)));
       var newW=Math.max(10,Math.ceil(pw/(fs*0.6)));
       var newH=Math.max(5,Math.ceil(ph/(fs*1.12)));
+      // Prevent tall narrow strips in small-width cards sharing a row
+      if(newH>newW*2)newH=Math.round(newW*2);
       if(newW===W&&newH===H&&pre.style.fontSize===fs+'px')return false;
       W=newW;H=newH;
       pre.style.fontSize=fs+'px';
