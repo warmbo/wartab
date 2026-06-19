@@ -449,7 +449,7 @@
               "a": "God"
             }
           ],
-          "_qi": 2
+          "_qi": 1
         }
       ]
     },
@@ -536,13 +536,16 @@
       "title": "",
       "icon": "package",
       "color": "#888888",
-      "width": 1,
+      "width": 2,
       "height": 1,
       "sections": [
         {
           "id": "sec-xh9qobbmql60ck2",
           "type": "ascii-anim",
-          "label": "ASCII Animation"
+          "label": "ASCII Animation",
+          "speed": 2,
+          "ghost": true,
+          "anim": "life"
         }
       ]
     }
@@ -1310,7 +1313,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 2
+              "_qi": 1
             }
           ]
         },
@@ -1397,13 +1400,16 @@
           "title": "",
           "icon": "package",
           "color": "#888888",
-          "width": 1,
+          "width": 2,
           "height": 1,
           "sections": [
             {
               "id": "sec-xh9qobbmql60ck2",
               "type": "ascii-anim",
-              "label": "ASCII Animation"
+              "label": "ASCII Animation",
+              "speed": 2,
+              "ghost": true,
+              "anim": "life"
             }
           ]
         }
@@ -1578,5 +1584,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-19gesa9mqh2t3u2",
-  "_version": "c94d2b8-dirty"
+  "_version": "f291081-dirty"
 }

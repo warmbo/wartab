@@ -25,20 +25,24 @@ registerModule('ascii-anim', {
     // Returns true if dimensions actually changed
     function sizeFont(){
       if(!pre.parentNode)return false;
-      var pw=pre.clientWidth-8,ph=pre.clientHeight-8;
-      if(pw<10||ph<10)return false;
-      // Comfortable monospace viewing font; W expands to fill width
+      var pad=parseInt(getComputedStyle(pre).paddingLeft)||4;
       var fs=13;
-      var rowsFit=Math.round(ph/(fs*1.12));
-      if(rowsFit<5)fs=Math.max(8,Math.round(ph/(8*1.12)));
-      var newW=Math.max(10,Math.ceil(pw/(fs*0.6)));
+      var rowsFit=Math.round((pre.clientHeight-pad*2)/(fs*1.12));
+      if(rowsFit<5)fs=Math.max(8,Math.round((pre.clientHeight-pad*2)/(8*1.12)));
+      pre.style.fontSize=fs+'px';
+      // Measure actual character width at this font size
+      pre.textContent='A'.repeat(50);
+      var cw=(pre.scrollWidth-pad*2)/50;
+      pre.textContent='';
+      var pw=pre.clientWidth-pad*2,ph=pre.clientHeight-pad*2;
+      if(pw<10||ph<10)return false;
+      var newW=Math.max(10,Math.ceil(pw/cw));
       var newH=Math.max(5,Math.ceil(ph/(fs*1.12)));
       // Prevent tall narrow strips in small-width cards sharing a row
       if(newH>newW*2)newH=Math.round(newW*2);
       if(newW===W&&newH===H&&pre.style.fontSize===fs+'px')return false;
       W=newW;H=newH;
-      pre.style.fontSize=fs+'px';
-      pre.style.padding='4px';
+      pre.style.padding=pad+'px';
       return true;
     }
 
