@@ -2,6 +2,7 @@ registerModule('api-poller', {
   defaults: { url:'', jsonPath:'', label:'API', refreshInterval:60, fields:[] },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='api-widget';
+    w.style.cssText='flex:1;display:flex;flex-direction:column;gap:4px;padding:4px 0;';
     w.dataset.url=sec.url||'';w.dataset.jsonPath=sec.jsonPath||'';
     w.dataset.label=sec.label||'';w.dataset.refresh=sec.refreshInterval||60;
     w.dataset.fields=JSON.stringify(sec.fields||[]);

@@ -1,7 +1,9 @@
 registerModule('lan-scan', {
   defaults: { label:'Network Scan', refreshInterval:60 },
   render: (sec,card,cw)=>{
+    cw.style.cssText='flex:1;display:flex;flex-direction:column;';
     const w=document.createElement('div');w.className='lan-scan-widget';
+    w.style.cssText='flex:1;display:flex;flex-direction:column;';
     w.dataset.refresh=sec.refreshInterval||60;
     const hdr=document.createElement('div');hdr.className='lan-scan-hdr';
     hdr.innerHTML='<span class="lan-scan-dot"></span><span class="lan-scan-title">LAN SCAN</span><span class="lan-scan-count"></span>';

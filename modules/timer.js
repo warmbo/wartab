@@ -1,7 +1,8 @@
 registerModule('timer', {
   defaults: { mode:'interval', duration:300, targetDate:'', label:'' },
   render: (sec,card,cw)=>{
-    const w=document.createElement('div');w.style.cssText='text-align:center;padding:8px 0;';
+    cw.style.cssText='flex:1;display:flex;flex-direction:column;';
+    const w=document.createElement('div');w.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 0;';
     w.dataset.secId=sec.id;
     const display=document.createElement('div');display.className='timer-display';
     display.style.cssText='font-size:var(--text-3xl);font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;font-family:var(--font);padding:8px 0;';
@@ -23,7 +24,8 @@ registerModule('timer', {
         info.textContent=diff>86400000?Math.floor(diff/86400000)+' days until' :'Today!';
       }
       updateCountdown();
-      setInterval(updateCountdown,1000);
+      var _cdInterval=setInterval(updateCountdown,1000);
+      card._cleanup=function(){clearInterval(_cdInterval);};
     } else {
       // ── Interval timer (existing behavior) ──
       const btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:6px;justify-content:center;margin-top:4px;';

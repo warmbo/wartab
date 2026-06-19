@@ -1181,7 +1181,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 2
+              "_qi": 1
             }
           ]
         },
@@ -1262,6 +1262,21 @@
               "label": "Digital Pet"
             }
           ]
+        },
+        {
+          "id": "card-32hpacgmql60ck2",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-xh9qobbmql60ck2",
+              "type": "ascii-anim",
+              "label": "ASCII Animation"
+            }
+          ]
         }
       ]
     },
@@ -1281,13 +1296,13 @@
               "id": "sec-gaju5snmqjk5g90",
               "type": "digital-pet",
               "label": "My Cat",
-              "lastFed": 1781879510998,
+              "lastFed": 1781887901138,
               "hunger": 100,
               "happiness": 100,
               "waste": 0,
-              "lastCleaned": 1781879513114,
+              "lastCleaned": 1781887902285,
               "petName": "Dog",
-              "lastPetted": 1781879511746
+              "lastPetted": 1781887901535
             }
           ]
         },
@@ -1430,5 +1445,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-fjpy1g4mqguw1x3",
-  "_version": "6015e9d-dirty"
+  "_version": "17bfef9-dirty"
 }

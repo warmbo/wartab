@@ -2,7 +2,7 @@ registerModule('quotes', {
   defaults: { quotes:[] },
   render: (sec,card,cw)=>{
     const q=document.createElement('div');q.className='quotes-widget';
-    q.style.cssText='display:flex;flex-direction:column;gap:6px;padding:4px 0;min-height:80px;';
+    q.style.cssText='flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:4px 0;';
     const txt=document.createElement('div');txt.className='quotes-text';
     txt.style.cssText='font-size:var(--text-lg);line-height:1.5;font-style:italic;color:var(--text-primary);position:relative;padding-left:20px;';
     const qm=document.createElement('span');qm.textContent='"';qm.style.cssText='position:absolute;left:0;top:-4px;font-size:var(--text-2xl);color:var(--accent);opacity:0.5;font-style:normal;';txt.appendChild(qm);

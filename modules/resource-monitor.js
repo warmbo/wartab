@@ -300,10 +300,13 @@ registerModule('resource-monitor', {
         hostEl.textContent=hostname;
         tsEl.textContent='↑ '+(uptime.string||'');
         saveCache();
-      }).catch(function(){});
+      }).catch(function(err){
+        console.error('resource-monitor fetch failed:', err);
+      });
     }
     fetchData();
-    setInterval(fetchData,(sec.refreshInterval||3)*1000);
+    var _rmInterval=setInterval(fetchData,(sec.refreshInterval||3)*1000);
+    card._cleanup=function(){clearInterval(_rmInterval);};
   },
   editor: (sec,card,bd)=>{
     bd.appendChild(cpLabel('Data Source'));

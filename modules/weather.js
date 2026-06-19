@@ -1,7 +1,10 @@
 registerModule('weather', {
   defaults: { apiKey:'', zip:'', country:'US', units:'imperial', refreshInterval:600 },
   render: (sec,card,cw)=>{
-    const w=document.createElement('div');w.className='weather-widget';w.style.textAlign='center';w.dataset.apiKey=sec.apiKey||'';w.dataset.zip=sec.zip||'';w.dataset.country=sec.country||'US';w.dataset.units=sec.units||'imperial';w.dataset.refresh=sec.refreshInterval||600;
+    cw.style.cssText='flex:1;display:flex;flex-direction:column;';
+    const w=document.createElement('div');w.className='weather-widget';
+    w.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;';
+    w.dataset.apiKey=sec.apiKey||'';w.dataset.zip=sec.zip||'';w.dataset.country=sec.country||'US';w.dataset.units=sec.units||'imperial';w.dataset.refresh=sec.refreshInterval||600;
     const iconRow=document.createElement('div');iconRow.className='weather-main';
     const iconEl=document.createElement('i');iconEl.className='weather-icon';iconEl.setAttribute('data-lucide','cloud');iconRow.appendChild(iconEl);
     const tempEl=document.createElement('div');tempEl.className='weather-temp';tempEl.textContent='--°';iconRow.appendChild(tempEl);

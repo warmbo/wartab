@@ -1,7 +1,8 @@
 registerModule('iframe', {
   defaults: { url:'', height:300 },
   render: (sec,card,cw)=>{
-    const ifr=document.createElement('iframe');ifr.className='card-iframe';ifr.src=sec.url||'';ifr.style.height=(sec.height||300)+'px';ifr.allow='fullscreen';ifr.loading='lazy';cw.appendChild(ifr);
+    cw.style.cssText='flex:1;display:flex;flex-direction:column;';
+    const ifr=document.createElement('iframe');ifr.className='card-iframe';ifr.src=sec.url||'';ifr.style.cssText='flex:1;width:100%;border:none;background:var(--card-bg-alt);';ifr.allow='fullscreen';ifr.loading='lazy';ifr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups';cw.appendChild(ifr);
   },
   editor: (sec,card,bd)=>{
     bd.appendChild(cpLabel('URL'));
