@@ -254,7 +254,7 @@ body {
 }
 .card:hover { border-color: var(--glass-border-hover); }
 .card::before { content: ''; display: block; height: 3px; background: var(--card-accent, var(--accent)); flex-shrink: 0; }
-.card::after { content: ''; position: absolute; inset: 1px; pointer-events: none; opacity: 0.015; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 128px 128px; }
+.card::after { content: ''; position: absolute; inset: 1px; pointer-events: none; opacity: 0.015; z-index: -1; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 128px 128px; }
 .card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 8px; gap: 8px; flex-shrink: 0; min-width: 0; }
 .card-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: var(--heading-size); text-shadow: var(--emboss-shadow); overflow-wrap: break-word; word-break: break-word; min-width: 0; }
 .card-title .card-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: var(--text-lg); flex-shrink: 0; }
@@ -327,7 +327,7 @@ body {
 .dropdown-toggle .arrow { transition: transform 0.35s ease; font-size: var(--text-2xs); }
 .dropdown-toggle.open .arrow { transform: rotate(90deg); }
 .dropdown-content { overflow: hidden; transition: max-height 0.45s ease, opacity 0.35s ease, padding 0.3s ease, margin 0.3s ease; max-height: 0; opacity: 0; padding: 0; margin: 0; }
-.dropdown-content.open { max-height: 3000px; opacity: 1; padding: 4px 0; margin: 4px 0; }
+.dropdown-content.open { max-height: 3000px; opacity: 1; padding: 4px 0 8px; margin: 4px 0; overflow: visible; }
 /* Unify section toggles with dropdown style */
 /* ── Section toggle: unified with dropdown style ── */
 .api-widget .api-label { color: var(--text-secondary); }
