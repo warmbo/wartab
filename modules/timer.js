@@ -2,7 +2,7 @@ registerModule('timer', {
   defaults: { mode:'interval', duration:300, targetDate:'', label:'' },
   render: (sec,card,cw)=>{
     cw.style.cssText='flex:1;display:flex;flex-direction:column;';
-    const w=document.createElement('div');w.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 0;';
+    const w=document.createElement('div');w.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0;text-align:center;';
     w.dataset.secId=sec.id;
     const display=document.createElement('div');display.className='timer-display';
     display.style.cssText='font-size:var(--text-3xl);font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;font-family:var(--font);padding:8px 0;';
