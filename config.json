@@ -449,7 +449,7 @@
               "a": "God"
             }
           ],
-          "_qi": 1
+          "_qi": 0
         }
       ]
     },
@@ -863,7 +863,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ]
@@ -1310,7 +1310,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 1
+              "_qi": 0
             }
           ]
         },
@@ -1561,7 +1561,10 @@
             {
               "id": "sec-ebh2o18mqkxeg0u",
               "type": "ascii-anim",
-              "label": "ASCII Animation"
+              "label": "ASCII Animation",
+              "anim": "matrix",
+              "speed": 4,
+              "contrast": 16
             }
           ]
         }
@@ -1574,5 +1577,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-19gesa9mqh2t3u2",
-  "_version": "17bfef9-dirty"
+  "_version": "1538403-dirty"
 }
