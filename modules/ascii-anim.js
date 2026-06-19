@@ -28,10 +28,10 @@ registerModule('ascii-anim', {
       var pw=pre.clientWidth-8,ph=pre.clientHeight-8;
       if(pw<10||ph<10)return false;
       var fs=Math.max(5,Math.round(pw/(70*0.6)));
-      var rowsFit=Math.floor(ph/(fs*1.12));
+      var rowsFit=Math.round(ph/(fs*1.12));
       if(rowsFit<10)fs=Math.max(5,Math.round(ph/(12*1.12)));
-      var newW=Math.max(10,Math.floor(pw/(fs*0.6)));
-      var newH=Math.max(5,Math.floor(ph/(fs*1.12)));
+      var newW=Math.max(10,Math.round(pw/(fs*0.6)));
+      var newH=Math.max(5,Math.round(ph/(fs*1.12)));
       if(newW===W&&newH===H&&pre.style.fontSize===fs+'px')return false;
       W=newW;H=newH;
       pre.style.fontSize=fs+'px';
