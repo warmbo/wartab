@@ -31,8 +31,8 @@ registerModule('ascii-anim', {
       var fs=13;
       var rowsFit=Math.round(ph/(fs*1.12));
       if(rowsFit<5)fs=Math.max(8,Math.round(ph/(8*1.12)));
-      var newW=Math.max(10,Math.round(pw/(fs*0.6)));
-      var newH=Math.max(5,Math.round(ph/(fs*1.12)));
+      var newW=Math.max(10,Math.ceil(pw/(fs*0.6)));
+      var newH=Math.max(5,Math.ceil(ph/(fs*1.12)));
       if(newW===W&&newH===H&&pre.style.fontSize===fs+'px')return false;
       W=newW;H=newH;
       pre.style.fontSize=fs+'px';
