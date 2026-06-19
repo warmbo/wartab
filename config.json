@@ -207,8 +207,8 @@
           "type": "ascii-anim",
           "label": "ASCII Animation",
           "anim": "plasma",
-          "speed": 4,
-          "contrast": 3,
+          "speed": 10,
+          "contrast": 16,
           "ghost": true
         }
       ]
@@ -1240,8 +1240,8 @@
               "type": "ascii-anim",
               "label": "ASCII Animation",
               "anim": "plasma",
-              "speed": 4,
-              "contrast": 3,
+              "speed": 10,
+              "contrast": 16,
               "ghost": true
             }
           ]
@@ -1255,5 +1255,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-tf789wmmqiw5bln",
-  "_version": "5683bd1-dirty"
+  "_version": "e72ff27-dirty"
 }

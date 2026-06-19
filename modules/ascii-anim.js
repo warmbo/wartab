@@ -253,11 +253,15 @@ registerModule('ascii-anim', {
       var t=0;
       function frame(){
         if(!running)return;
-        t+=0.05*sp;
+        t+=0.03*sp;
         var out='';
         for(var y=0;y<H;y++){
           for(var x=0;x<W;x++){
-            var v=Math.sin(x*0.2+t)*Math.cos(y*0.15+t*0.7)+Math.sin((x+y)*0.1+t*0.5)*0.5+0.5;
+            var v=Math.sin(x*0.15+t*0.8)*Math.cos(y*0.1+t*0.4)
+                +Math.sin(x*0.08-y*0.12+t*0.6)*0.7
+                +Math.sin((x+y)*0.05+t*0.3)*0.5
+                +Math.sin(Math.sqrt(x*x+y*y)*0.12+t*0.5)*0.4
+                +0.8;
             v=Math.max(0,Math.min(1,v));
             out+=lum[Math.min(11,Math.round(v*11*ct))];
           }
