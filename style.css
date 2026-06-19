@@ -35,6 +35,8 @@
    All Lucide SVGs use currentColor, inheriting accent or font color. */
 i[data-lucide] { display: inline-block; vertical-align: middle; }
 .card-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: var(--text-lg); }
+/* Image card icons need display:block for proper sizing */
+.card-icon img { display: block; width: 24px; height: 24px; object-fit: contain; }
 .link-icon { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; font-size: var(--text-base); }
 .brand-icon { display: inline-flex; align-items: center; justify-content: center; font-size: var(--text-xl); width: 24px; height: 24px; font-family: 'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',var(--font); }
 .stat-icon i[data-lucide] { width: 14px; height: 14px; }
@@ -270,6 +272,7 @@ body {
   flex-shrink: 0; 
   font-size: var(--text-xl); line-height: 1;
 }
+.link-item img.link-icon { display: block; }
 .link-item .link-label { 
   line-height: 1.25; 
   word-break: break-word; overflow-wrap: break-word; 
@@ -278,7 +281,7 @@ body {
   overflow: hidden;
   text-align: center;
 }
-.link-item .link-custom-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
+.link-item .link-custom-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; display: block; }
 /* Lucide SVGs replace <i> elements — ensure they match our fixed icon box */
 .link-item svg { width: 28px; height: 28px; }
 
@@ -286,7 +289,7 @@ body {
 .link-row { display: flex; align-items: center; gap: 6px; padding: 5px 8px; text-decoration: none; color: var(--text-primary); transition: background 0.15s; font-size: var(--text-base); }
 .link-row:hover { background: rgba(255,255,255,0.06); }
 .link-row .link-icon { font-size: 16px; width: 20px; text-align: center; }
-.link-row .link-custom-icon { width: 20px; height: 20px; object-fit: contain; }
+.link-row .link-custom-icon { width: 20px; height: 20px; object-fit: contain; display: block; }
 
 .section-divider { border: none; height: 1px; background: linear-gradient(90deg, var(--glass-border) 0%, transparent 100%); margin: 8px 0; }
 .section-title { font-size: var(--heading-size); font-weight: 600; }

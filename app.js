@@ -1254,10 +1254,10 @@ function renderIconElement(icon, cls) {
     if (icon.startsWith('file:')) return renderLucideEl('package', cls);
     const img = document.createElement('img');
     img.className = cls; img.src = icon; img.alt = '';
-    img.loading = 'lazy';
     img.onerror = function() {
       var fallback = renderLucideEl('package', cls);
       this.parentNode.replaceChild(fallback, this);
+      renderIcons();
     };
     return img;
   }
@@ -1370,11 +1370,11 @@ function renderLinkIcon(icon) {
     if (icon.startsWith('file:')) return renderLinkIcon('');
     const img = document.createElement('img');
     img.className = 'link-custom-icon'; img.src = icon; img.alt = '';
-    img.loading = 'lazy';
     img.onerror = function() {
       var fallback = document.createElement('i');
       fallback.className = 'link-icon'; fallback.setAttribute('data-lucide', 'link');
       this.parentNode.replaceChild(fallback, this);
+      renderIcons();  // render the fallback Lucide icon
     };
     return img;
   }
