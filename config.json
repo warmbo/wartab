@@ -199,17 +199,17 @@
       "title": "",
       "icon": "package",
       "color": "#888888",
-      "width": 2,
+      "width": 3,
       "height": 1,
       "sections": [
         {
           "id": "sec-ebh2o18mqkxeg0u",
           "type": "ascii-anim",
           "label": "ASCII Animation",
-          "anim": "stars",
+          "anim": "life",
           "speed": 2,
-          "contrast": 10,
-          "ghost": false
+          "contrast": 4,
+          "ghost": true
         }
       ]
     }
@@ -1222,17 +1222,17 @@
           "title": "",
           "icon": "package",
           "color": "#888888",
-          "width": 2,
+          "width": 3,
           "height": 1,
           "sections": [
             {
               "id": "sec-ebh2o18mqkxeg0u",
               "type": "ascii-anim",
               "label": "ASCII Animation",
-              "anim": "stars",
+              "anim": "life",
               "speed": 2,
-              "contrast": 10,
-              "ghost": false
+              "contrast": 4,
+              "ghost": true
             }
           ]
         }
@@ -1245,5 +1245,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-tf789wmmqiw5bln",
-  "_version": "0bdadc6-dirty"
+  "_version": "7006c27-dirty"
 }
