@@ -1311,17 +1311,22 @@ function renderSection(section, card) {
       while (c && !c.classList.contains('section-content') && !c.classList.contains('dropdown-content')) c = c.nextElementSibling;
       if (c) {
         if (section.collapsed) {
-          // Collapse: pin to actual height, force reflow, then let CSS animate to 0
+          // Collapse: pin to actual height, animate to 0, remove open class after transition
           c.style.maxHeight = c.scrollHeight + 'px';
           c.offsetHeight;
-          c.classList.remove('open');
-          c.style.maxHeight = '';
+          c.style.maxHeight = '0px';
+          clearTimeout(c._collapseTimer);
+          c._collapseTimer = setTimeout(function() {
+            c.classList.remove('open');
+            c.style.maxHeight = '';
+          }, 450);
           // Stop any running timers in this section
           var timers = c.querySelectorAll('[data-timer-id]');
           timers.forEach(function(t){if(t._timer){clearInterval(t._timer);}});
         } else {
-          // Expand: open class sets max-height:3000px, override to 0, force reflow, then animate to actual height
+          // Expand: add open class (overflow:visible), measure natural height, animate from 0 up
           c.classList.add('open');
+          if(c._collapseTimer){clearTimeout(c._collapseTimer);c._collapseTimer=null;}
           c.style.maxHeight = '';
           var h2 = c.scrollHeight;
           c.style.maxHeight = '0px';

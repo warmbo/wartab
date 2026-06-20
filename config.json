@@ -368,7 +368,8 @@
               "icon": "/uploads/icons/1e53265bc82d49e0b8c8013662f3c655.png"
             }
           ],
-          "collapsed": false
+          "collapsed": false,
+          "listMode": true
         }
       ]
     },
@@ -740,7 +741,8 @@
                   "icon": "/uploads/icons/1e53265bc82d49e0b8c8013662f3c655.png"
                 }
               ],
-              "collapsed": false
+              "collapsed": false,
+              "listMode": true
             }
           ]
         },
@@ -1478,5 +1480,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-fjpy1g4mqguw1x3",
-  "_version": "27b8b47-dirty"
+  "_version": "c9ebe4d-dirty"
 }
