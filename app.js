@@ -2044,44 +2044,56 @@ function onDragMove(e){
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   `;
 
-  // ── Grid simulation preview: compute actual final positions ──
-  // Use simulateGrid to find exactly where the dragged card will land
-  // and which cards will shift, for an accurate preview.
-  var allCards=config.cards;
-  var srcIdx=allCards.findIndex(function(c){return c.id===dragState.cardId;});
-  if(srcIdx>=0){
-    var newOrder=allCards.slice();
-    var moved=newOrder.splice(srcIdx,1)[0];
-    var beforeIdx=dragState._beforeCardId
-      ?newOrder.findIndex(function(c){return c.id===dragState._beforeCardId;})
-      :newOrder.length;
-    if(beforeIdx<0)beforeIdx=newOrder.length;
-    newOrder.splice(beforeIdx,0,moved);
-    var oldPos=simulateGrid(allCards,cols);
-    var newPos=simulateGrid(newOrder,cols);
-    var dragNewPos=newPos[beforeIdx]; // dragged card's new grid position
-    
-    // Position the placeholder card at the correct grid cell
-    insertBar.style.display='';
-    var phLeft=gr.left+dragNewPos.col*(colW+gap);
-    var phTop=gr.top+dragNewPos.row*(140+gap); // 140px base row + gap
-    var phWidth=cw*colW+(cw-1)*gap;
-    var phHeight=(ch||1)*140;
-    var phColor=ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)';
-    insertBar.style.left=phLeft+'px';
-    insertBar.style.top=phTop+'px';
-    insertBar.style.width=phWidth+'px';
-    insertBar.style.height=phHeight+'px';
-    insertBar.style.background='color-mix(in srgb, '+phColor+' 10%, transparent)';
-    insertBar.style.border='2px dashed '+phColor;
-    insertBar.style.borderRadius='0';
-    
-    // Compute drop-shift: highlight cards that change position
-    computeDropShiftFromPositions(allCards, oldPos, newPos, dragState.cardId, newOrder);
+  // ── Insertion point placeholder (DOM-based, visually accurate) ──
+  // Position the placeholder at the exact insertion point in the current
+  // visual layout. Use grid simulation only for drop-shift highlighting.
+  var phColor=ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)';
+  var phWidth=cw*colW+(cw-1)*gap;
+  var phHeight=(ch||1)*140;
+  
+  // Placeholder at insertion point within the current visual grid
+  insertBar.style.display='';
+  if(beforeCard&&targetRow){
+    // Insert before a specific card: place at its left edge
+    var br=beforeCard.getBoundingClientRect();
+    insertBar.style.left=br.left+'px';
+    insertBar.style.top=targetRow.top+'px';
+  }else if(targetRow&&targetRow.cards.length){
+    // Append to end of row: place at right edge of last card
+    var lr=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();
+    insertBar.style.left=lr.right+'px';
+    insertBar.style.top=targetRow.top+'px';
+  }else if(targetRow){
+    // Empty row: place at grid left edge
+    insertBar.style.left=gr.left+'px';
+    insertBar.style.top=targetRow.top+'px';
+  }else if(rows.length){
+    // Between rows or below last row: horizontal bar spanning grid
+    var bottomRow=rows[rows.length-1];
+    insertBar.style.left=gr.left+'px';
+    insertBar.style.top=(bottomRow.bottom+4)+'px';
+    insertBar.style.width=gr.width+'px';
+    insertBar.style.height='4px';
+    insertBar.style.background='var(--accent)';
+    insertBar.style.border='none';
+    insertBar.style.borderRadius='2px';
+    computeDropShift(dragState._beforeCardId);
+    return; // early exit for between-row insertion
   }else{
     insertBar.style.display='none';
     dropZoneClear();
+    return;
   }
+  
+  // Card-sized placeholder
+  insertBar.style.width=phWidth+'px';
+  insertBar.style.height=phHeight+'px';
+  insertBar.style.background='color-mix(in srgb, '+phColor+' 10%, transparent)';
+  insertBar.style.border='2px dashed '+phColor;
+  insertBar.style.borderRadius='0';
+  
+  // Compute drop-shift via grid simulation (which cards actually move)
+  computeDropShift(dragState._beforeCardId);
 }
 
 function dropZoneClear(){$$('.card.drop-shift').forEach(el=>el.classList.remove('drop-shift'));}
