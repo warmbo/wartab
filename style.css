@@ -253,7 +253,7 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--opacity-dim); transition: filter 0.3s, opacity 0.3s; }
 
 /* ══════ Card ══════ */
-.card {
+.card { will-change: transform;
   background: var(--card-bg);
   backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur));
   border: 1px solid var(--glass-border);
@@ -762,7 +762,7 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .ghost-icon { display: inline-flex; align-items: center; font-size: var(--text-lg); opacity: 0.9; }
 
 /* Source card fades while being dragged */
-.card.dragging { opacity: 0.25; transform: scale(0.96); transition: opacity var(--anim-fast), transform var(--anim-fast); }
+.card.dragging { opacity: 0.25; transform: scale(0.96); transition: opacity var(--anim-fast), transform var(--anim-fast); cursor: grabbing !important; }
 .card-transparent { background: transparent !important; border-color: transparent !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 .card-transparent::before { display: none !important; }
 
@@ -887,7 +887,7 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   .stat-bar { width: 40px; }
 
   /* ── Cards: mobile-friendly ── */
-  .card { margin: 0; }
+  .card { will-change: transform; margin: 0; }
   .card-header { padding: 10px 14px 6px; }
   .card-title { font-size: var(--text-base); gap: 6px; }
   .card-body {

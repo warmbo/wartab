@@ -267,6 +267,120 @@
       "height": 1
     },
     {
+      "id": "card-67z1x4omqlmqd84",
+      "title": "Cat",
+      "icon": "Cat",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-hg48983mqlmqd84",
+          "type": "digital-pet",
+          "label": "",
+          "petName": "Cat Named Dog"
+        }
+      ]
+    },
+    {
+      "id": "notes-card",
+      "title": "Notes",
+      "icon": "edit-3",
+      "color": "#bbbbbb",
+      "width": 1,
+      "sections": [
+        {
+          "id": "notes-main",
+          "type": "notes",
+          "label": "Reminders",
+          "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
+          "collapsed": false
+        },
+        {
+          "id": "sec-cqlskrkmqh400ej",
+          "type": "notes",
+          "label": "ToDo List",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
+          "collapsed": false
+        }
+      ],
+      "height": 2
+    },
+    {
+      "id": "card-isayxtbmqlrb4n9",
+      "title": "",
+      "icon": "package",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-hm0fgeqmqlrb4n9",
+          "type": "resource-monitor",
+          "label": "Resources",
+          "graphMode": false
+        }
+      ]
+    },
+    {
+      "id": "card-e4l1uy4mqgvyqyb",
+      "title": "Quotes",
+      "icon": "ScrollText",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-8nfcrfdmqgvyqyb",
+          "type": "quotes",
+          "label": "",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "quotes": [
+            {
+              "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
+              "a": "Some Weirdo"
+            },
+            {
+              "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
+              "a": "Bob Loblaw"
+            }
+          ],
+          "_qi": 0,
+          "collapsed": false
+        },
+        {
+          "id": "sec-rw5ikp9mqlmsbkr",
+          "type": "ascii-anim",
+          "label": "",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "anim": "matrix",
+          "speed": 5,
+          "contrast": 9,
+          "ghost": false
+        }
+      ],
+      "transparent": false
+    },
+    {
       "id": "daily-drivers",
       "title": "Favorites",
       "icon": "Star",
@@ -324,120 +438,6 @@
           ],
           "collapsed": false,
           "listMode": true
-        }
-      ]
-    },
-    {
-      "id": "notes-card",
-      "title": "Notes",
-      "icon": "edit-3",
-      "color": "#bbbbbb",
-      "width": 1,
-      "sections": [
-        {
-          "id": "notes-main",
-          "type": "notes",
-          "label": "Reminders",
-          "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
-          "collapsed": false
-        },
-        {
-          "id": "sec-cqlskrkmqh400ej",
-          "type": "notes",
-          "label": "ToDo List",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
-          "collapsed": false
-        }
-      ],
-      "height": 2
-    },
-    {
-      "id": "card-e4l1uy4mqgvyqyb",
-      "title": "Quotes",
-      "icon": "ScrollText",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-8nfcrfdmqgvyqyb",
-          "type": "quotes",
-          "label": "",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "quotes": [
-            {
-              "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
-              "a": "Some Weirdo"
-            },
-            {
-              "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
-              "a": "Bob Loblaw"
-            }
-          ],
-          "_qi": 1,
-          "collapsed": false
-        },
-        {
-          "id": "sec-rw5ikp9mqlmsbkr",
-          "type": "ascii-anim",
-          "label": "",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "anim": "matrix",
-          "speed": 5,
-          "contrast": 9,
-          "ghost": false
-        }
-      ],
-      "transparent": false
-    },
-    {
-      "id": "card-isayxtbmqlrb4n9",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-hm0fgeqmqlrb4n9",
-          "type": "resource-monitor",
-          "label": "Resources",
-          "graphMode": false
-        }
-      ]
-    },
-    {
-      "id": "card-67z1x4omqlmqd84",
-      "title": "Cat",
-      "icon": "Cat",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-hg48983mqlmqd84",
-          "type": "digital-pet",
-          "label": "",
-          "petName": "Cat Named Dog"
         }
       ]
     }
@@ -657,6 +657,120 @@
           "height": 1
         },
         {
+          "id": "card-67z1x4omqlmqd84",
+          "title": "Cat",
+          "icon": "Cat",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hg48983mqlmqd84",
+              "type": "digital-pet",
+              "label": "",
+              "petName": "Cat Named Dog"
+            }
+          ]
+        },
+        {
+          "id": "notes-card",
+          "title": "Notes",
+          "icon": "edit-3",
+          "color": "#bbbbbb",
+          "width": 1,
+          "sections": [
+            {
+              "id": "notes-main",
+              "type": "notes",
+              "label": "Reminders",
+              "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
+              "collapsed": false
+            },
+            {
+              "id": "sec-cqlskrkmqh400ej",
+              "type": "notes",
+              "label": "ToDo List",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
+              "collapsed": false
+            }
+          ],
+          "height": 2
+        },
+        {
+          "id": "card-isayxtbmqlrb4n9",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hm0fgeqmqlrb4n9",
+              "type": "resource-monitor",
+              "label": "Resources",
+              "graphMode": false
+            }
+          ]
+        },
+        {
+          "id": "card-e4l1uy4mqgvyqyb",
+          "title": "Quotes",
+          "icon": "ScrollText",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-8nfcrfdmqgvyqyb",
+              "type": "quotes",
+              "label": "",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "quotes": [
+                {
+                  "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
+                  "a": "Some Weirdo"
+                },
+                {
+                  "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
+                  "a": "Bob Loblaw"
+                }
+              ],
+              "_qi": 0,
+              "collapsed": false
+            },
+            {
+              "id": "sec-rw5ikp9mqlmsbkr",
+              "type": "ascii-anim",
+              "label": "",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "anim": "matrix",
+              "speed": 5,
+              "contrast": 9,
+              "ghost": false
+            }
+          ],
+          "transparent": false
+        },
+        {
           "id": "daily-drivers",
           "title": "Favorites",
           "icon": "Star",
@@ -714,120 +828,6 @@
               ],
               "collapsed": false,
               "listMode": true
-            }
-          ]
-        },
-        {
-          "id": "notes-card",
-          "title": "Notes",
-          "icon": "edit-3",
-          "color": "#bbbbbb",
-          "width": 1,
-          "sections": [
-            {
-              "id": "notes-main",
-              "type": "notes",
-              "label": "Reminders",
-              "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
-              "collapsed": false
-            },
-            {
-              "id": "sec-cqlskrkmqh400ej",
-              "type": "notes",
-              "label": "ToDo List",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
-              "collapsed": false
-            }
-          ],
-          "height": 2
-        },
-        {
-          "id": "card-e4l1uy4mqgvyqyb",
-          "title": "Quotes",
-          "icon": "ScrollText",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-8nfcrfdmqgvyqyb",
-              "type": "quotes",
-              "label": "",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "quotes": [
-                {
-                  "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
-                  "a": "Some Weirdo"
-                },
-                {
-                  "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
-                  "a": "Bob Loblaw"
-                }
-              ],
-              "_qi": 1,
-              "collapsed": false
-            },
-            {
-              "id": "sec-rw5ikp9mqlmsbkr",
-              "type": "ascii-anim",
-              "label": "",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "anim": "matrix",
-              "speed": 5,
-              "contrast": 9,
-              "ghost": false
-            }
-          ],
-          "transparent": false
-        },
-        {
-          "id": "card-isayxtbmqlrb4n9",
-          "title": "",
-          "icon": "package",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-hm0fgeqmqlrb4n9",
-              "type": "resource-monitor",
-              "label": "Resources",
-              "graphMode": false
-            }
-          ]
-        },
-        {
-          "id": "card-67z1x4omqlmqd84",
-          "title": "Cat",
-          "icon": "Cat",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-hg48983mqlmqd84",
-              "type": "digital-pet",
-              "label": "",
-              "petName": "Cat Named Dog"
             }
           ]
         }

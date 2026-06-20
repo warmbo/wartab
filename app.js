@@ -2044,37 +2044,67 @@ function onDragMove(e){
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   `;
 
-  // ── Gap preview: shift cards aside to show where the card will land ──
-  // Instead of overlaying a placeholder (which overlaps existing cards),
-  // push same-row cards to the right to create a visible empty gap.
+  // ── Ghost height: use card's grid footprint, not row height ──
+  ghost.style.minHeight=Math.min(ghostH, (ch||1)*140+gap)+'px';
+
+  // ── Preview: gap + between-row indicator + grid simulation ──
   var phWidth=cw*colW+(cw-1)*gap;
   var phHeight=(ch||1)*140;
-  var shiftX=phWidth+gap; // how far to push cards to the right
+  var shiftX=phWidth+gap;
   
-  // Clear previous push transforms
+  // Clear previous push transforms (with transition disabled to prevent FLIP conflict)
   document.querySelectorAll('.card.push-preview').forEach(function(el){
+    el.style.transition='none';
     el.classList.remove('push-preview');
     el.style.transform='';
   });
   
-  // Apply push transforms to cards from beforeCard to end of its row
-  if(targetRow&&beforeCard){
+  // Detect between-row insertion
+  var betweenRow=false,betweenTop=0,betweenBottom=0,betweenIdx=-1;
+  if(rows.length>1){
+    for(var ri=0;ri<rows.length-1;ri++){
+      var gt=rows[ri].bottom,gb=rows[ri+1].top;
+      if(e.clientY>=gt&&e.clientY<=gb){
+        betweenRow=true;betweenTop=gt;betweenBottom=gb;betweenIdx=ri;
+        break;
+      }
+    }
+  }
+  
+  if(betweenRow){
+    // Horizontal bar at gap center
+    insertBar.style.display='';
+    insertBar.style.left=gr.left+'px';
+    insertBar.style.top=((betweenTop+betweenBottom)/2-2)+'px';
+    insertBar.style.width=gr.width+'px';
+    insertBar.style.height='4px';
+    insertBar.style.background='var(--accent)';
+    insertBar.style.border='none';
+    insertBar.style.borderRadius='2px';
+    insertBar.style.boxShadow='0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)';
+    // Insert before first card of next row
+    var nextRow=rows[betweenIdx+1];
+    beforeCard=nextRow&&nextRow.cards.length?nextRow.cards[0]:null;
+    dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
+    dropZoneClear();
+    computeDropShift(dragState._beforeCardId);
+  }else if(targetRow&&beforeCard){
+    // Gap preview: shift same-row cards right to show where card lands
+    insertBar.style.display='none';
     var pushing=false;
     targetRow.cards.forEach(function(el){
       if(el===beforeCard)pushing=true;
       if(pushing){
+        el.style.transition='transform 0.12s ease';
         el.classList.add('push-preview');
         el.style.transform='translateX('+shiftX+'px)';
-        el.style.transition='transform 0.12s ease';
       }
     });
+    computeDropShift(dragState._beforeCardId);
+  }else{
+    insertBar.style.display='none';
+    dropZoneClear();
   }
-  
-  // Highlight cards that will change row/column via grid simulation
-  computeDropShift(dragState._beforeCardId);
-  
-  // Remove any old placeholder styling — gap preview only
-  insertBar.style.display='none';
 }
 
 function dropZoneClear(){$$('.card.drop-shift').forEach(el=>el.classList.remove('drop-shift'));}
