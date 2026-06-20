@@ -2204,7 +2204,7 @@ function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrde
       const el = grid.querySelector(`[data-card-id="${c.id}"]`);
       if (el) {
         el.classList.add('drop-shift');
-        // Add directional arrow overlay
+        // Add directional arrow overlay with distance
         var arrow = document.createElement('span');
         arrow.className = 'card-dir-arrow';
         var dir = '';
@@ -2212,7 +2212,9 @@ function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrde
         if (dRow > 0) dir += '↓';
         if (dCol < 0) dir += '←';
         if (dCol > 0) dir += '→';
-        arrow.textContent = dir;
+        // Show distance when >1 cell
+        var dist = Math.abs(dRow) + Math.abs(dCol);
+        arrow.textContent = dist > 1 ? dir + dist : dir;
         el.appendChild(arrow);
       }
     }
