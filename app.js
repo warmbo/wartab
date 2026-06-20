@@ -100,7 +100,7 @@ function bumpVersion(){
 }
 
 /* ── Edit Panel ── */
-let _editingCardId = null, _editPanelOpen = false;
+let _editingCardId = null, _editPanelOpen = false, _slideTimer = null;
 
 function openCardEditPanel(cardId) {
   const card = config.cards.find(c => c.id === cardId);
@@ -149,7 +149,12 @@ function closeCardEditPanel() {
   _editPanelOpen = false;
   $('#edit-panel-overlay').classList.remove('open');
   $('#edit-panel').classList.remove('open');
-  $('#edit-panel').classList.remove('slide-left');
+  // Wait for the close transition (350ms) before removing slide-left class,
+  // so the panel slides out in the same direction it came from
+  clearTimeout(_slideTimer);
+  _slideTimer = setTimeout(function() {
+    $('#edit-panel').classList.remove('slide-left');
+  }, 380);
   updateBlurState();
 }
 
