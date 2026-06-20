@@ -113,16 +113,16 @@ function openCardEditPanel(cardId) {
   // Highlight the edited card above the overlay so it stays sharp
   const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
   if (cardEl) cardEl.classList.add('card-highlight');
-  // Slide panel from the side LEAST likely to cover the card
+  // Slide panel from the SAME side as the card (cover nearby area)
   const panel = $('#edit-panel');
   if (cardEl) {
     const cr = cardEl.getBoundingClientRect();
     const vw = window.innerWidth;
-    // If card center is right-of-center → slide from left; otherwise from right
+    // If card center is right-of-center → slide from right; otherwise from left
     if (cr.left + cr.width / 2 > vw / 2) {
-      panel.classList.add('slide-left');
-    } else {
       panel.classList.remove('slide-left');
+    } else {
+      panel.classList.add('slide-left');
     }
   } else {
     panel.classList.remove('slide-left');
