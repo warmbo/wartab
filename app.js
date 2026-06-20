@@ -260,6 +260,102 @@ function openPageEditPanel(pageId) {
   $('#edit-panel').classList.add('open');
 }
 
+/* ── Page Management Panel (overview of all pages) ── */
+function openPageManagementPanel() {
+  _editingPageId = null;
+  _editingCardId = null;
+  _editPanelOpen = true;
+  const body = $('#edit-panel-body');
+  body.innerHTML = '';
+  const title = $('#edit-panel-title');
+  if (title) title.textContent = '📄 Manage Pages';
+
+  // Create a card for each page
+  (config.pageOrder || []).forEach(function(id) {
+    const p = config.pages[id];
+    if (!p) return;
+    const card = document.createElement('div');
+    card.className = 'cp-config-card';
+    card.style.cssText = 'display:flex;flex-direction:column;gap:10px;';
+
+    // Header with icon + name
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;align-items:center;gap:10px;';
+    const iconSpan = document.createElement('span');
+    iconSpan.style.cssText = 'display:inline-flex;align-items:center;width:28px;height:28px;font-size:var(--text-xl);';
+    if (p.icon && isLucideName(p.icon)) {
+      iconSpan.appendChild(renderLucideEl(p.icon, ''));
+    } else if (p.icon) {
+      iconSpan.textContent = p.icon;
+    } else {
+      iconSpan.appendChild(renderLucideEl('layout', ''));
+    }
+    hdr.appendChild(iconSpan);
+
+    const nm = document.createElement('span');
+    nm.style.cssText = 'flex:1;font-weight:600;color:var(--text-primary);';
+    nm.textContent = p.name;
+    hdr.appendChild(nm);
+
+    // Edit button
+    const eb = cpBtn('✎');
+    eb.style.cssText = 'padding:4px 8px;font-size:var(--text-sm);';
+    eb.title = 'Edit page';
+    eb.addEventListener('click', function() { openPageEditPanel(id); });
+    hdr.appendChild(eb);
+
+    // Delete button
+    const db = cpBtn('✕', true);
+    db.style.cssText = 'padding:4px 8px;font-size:var(--text-sm);';
+    db.title = 'Delete page';
+    db.addEventListener('click', function() {
+      if (config.pageOrder.length <= 1) { toast('Cannot delete last page','warning'); return; }
+      showConfirmModal('Delete page "' + p.name + '"?', function() {
+        deletePage(id);
+        body.innerHTML = '';
+        openPageManagementPanel();
+      });
+    });
+    hdr.appendChild(db);
+
+    card.appendChild(hdr);
+    body.appendChild(card);
+    renderIcons();
+  });
+
+  // Footer with Add + Done
+  const foot = document.createElement('div');
+  foot.className = 'cp-footer';
+  foot.style.cssText = 'display:flex;gap:8px;margin-top:16px;';
+  const addBtn = cpBtn('+ Add Page');
+  addBtn.addEventListener('click', function() {
+    addPage();
+    body.innerHTML = '';
+    openPageManagementPanel();
+  });
+  foot.appendChild(addBtn);
+  const doneBtn = cpBtn('Done');
+  doneBtn.addEventListener('click', closeCardEditPanel);
+  foot.appendChild(doneBtn);
+  body.appendChild(foot);
+
+  // Open panel (same positioning logic as card edit)
+  const panel = $('#edit-panel');
+  panel.classList.remove('slide-left');
+  panel.style.transition = 'none';
+  panel.style.transform = 'translateX(100%)';
+  panel.offsetHeight;
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      panel.style.transition = '';
+      panel.classList.add('open');
+      panel.style.transform = '';
+      $('#edit-panel-overlay').classList.add('open');
+      document.body.classList.add('panel-open');
+    });
+  });
+}
+
 /* ── Edit Panel Form Helpers ── */
 function cpLabel(text) {
   const l = document.createElement('label');
@@ -2875,7 +2971,7 @@ async function init() {
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
   $('#brand-text').addEventListener('click',()=>{location.reload();});
-  $('#btn-add-page').addEventListener('click',()=>{addPage();});
+  $('#btn-manage-pages').addEventListener('click',openPageManagementPanel);
   $('#config-close').addEventListener('click',toggleConfigPanel);
   $('#config-overlay').addEventListener('click',toggleConfigPanel);
   $$('.ip-tab').forEach(t=>t.addEventListener('click',()=>buildIconPicker(t.dataset.tab)));
