@@ -153,7 +153,11 @@ function closeCardEditPanel() {
   // and the panel slides out to the left. Clean up after animation completes.
   clearTimeout(_slideTimer);
   _slideTimer = setTimeout(function() {
-    $('#edit-panel').classList.remove('slide-left');
+    var p=$('#edit-panel');
+    p.style.transition='none';
+    p.classList.remove('slide-left');
+    p.offsetHeight;
+    p.style.transition='';
   }, 380);
   updateBlurState();
 }

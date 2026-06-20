@@ -58,40 +58,6 @@
   },
   "cards": [
     {
-      "id": "clock-card",
-      "title": "Time",
-      "icon": "Clock2",
-      "color": "#aaaaaa",
-      "width": 2,
-      "sections": [
-        {
-          "id": "clock-main",
-          "type": "clock",
-          "format24h": false,
-          "showDate": true,
-          "showCalendar": true
-        }
-      ],
-      "transparent": false,
-      "height": 1
-    },
-    {
-      "id": "card-67z1x4omqlmqd84",
-      "title": "Cat",
-      "icon": "Cat",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-hg48983mqlmqd84",
-          "type": "digital-pet",
-          "label": "",
-          "petName": "Cat Named Dog"
-        }
-      ]
-    },
-    {
       "id": "notes-card",
       "title": "Notes",
       "icon": "edit-3",
@@ -123,20 +89,22 @@
       "height": 2
     },
     {
-      "id": "card-isayxtbmqlrb4n9",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
+      "id": "clock-card",
+      "title": "Time",
+      "icon": "Clock2",
+      "color": "#aaaaaa",
+      "width": 2,
       "sections": [
         {
-          "id": "sec-hm0fgeqmqlrb4n9",
-          "type": "resource-monitor",
-          "label": "Resources",
-          "graphMode": false
+          "id": "clock-main",
+          "type": "clock",
+          "format24h": false,
+          "showDate": true,
+          "showCalendar": true
         }
-      ]
+      ],
+      "transparent": false,
+      "height": 1
     },
     {
       "id": "selfhosted",
@@ -327,58 +295,7 @@
         }
       ],
       "transparent": false,
-      "height": 1
-    },
-    {
-      "id": "card-e4l1uy4mqgvyqyb",
-      "title": "Quotes",
-      "icon": "ScrollText",
-      "color": "#888888",
-      "width": 1,
-      "height": 2,
-      "sections": [
-        {
-          "id": "sec-8nfcrfdmqgvyqyb",
-          "type": "quotes",
-          "label": "",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "quotes": [
-            {
-              "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
-              "a": "Some Weirdo"
-            },
-            {
-              "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
-              "a": "Bob Loblaw"
-            }
-          ],
-          "_qi": 1,
-          "collapsed": false
-        },
-        {
-          "id": "sec-rw5ikp9mqlmsbkr",
-          "type": "ascii-anim",
-          "label": "",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "anim": "plasma",
-          "speed": 5,
-          "contrast": 2,
-          "ghost": false
-        }
-      ],
-      "transparent": false
+      "height": 2
     },
     {
       "id": "daily-drivers",
@@ -440,6 +357,89 @@
           "listMode": true
         }
       ]
+    },
+    {
+      "id": "card-e4l1uy4mqgvyqyb",
+      "title": "Quotes",
+      "icon": "ScrollText",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-8nfcrfdmqgvyqyb",
+          "type": "quotes",
+          "label": "",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "quotes": [
+            {
+              "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
+              "a": "Some Weirdo"
+            },
+            {
+              "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
+              "a": "Bob Loblaw"
+            }
+          ],
+          "_qi": 1,
+          "collapsed": false
+        },
+        {
+          "id": "sec-rw5ikp9mqlmsbkr",
+          "type": "ascii-anim",
+          "label": "",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "anim": "plasma",
+          "speed": 5,
+          "contrast": 2,
+          "ghost": false
+        }
+      ],
+      "transparent": false
+    },
+    {
+      "id": "card-67z1x4omqlmqd84",
+      "title": "Cat",
+      "icon": "Cat",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-hg48983mqlmqd84",
+          "type": "digital-pet",
+          "label": "",
+          "petName": "Cat Named Dog"
+        }
+      ]
+    },
+    {
+      "id": "card-isayxtbmqlrb4n9",
+      "title": "",
+      "icon": "package",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-hm0fgeqmqlrb4n9",
+          "type": "resource-monitor",
+          "label": "Resources",
+          "graphMode": false
+        }
+      ]
     }
   ],
   "pages": {
@@ -447,40 +447,6 @@
       "name": "Home",
       "icon": "layout",
       "cards": [
-        {
-          "id": "clock-card",
-          "title": "Time",
-          "icon": "Clock2",
-          "color": "#aaaaaa",
-          "width": 2,
-          "sections": [
-            {
-              "id": "clock-main",
-              "type": "clock",
-              "format24h": false,
-              "showDate": true,
-              "showCalendar": true
-            }
-          ],
-          "transparent": false,
-          "height": 1
-        },
-        {
-          "id": "card-67z1x4omqlmqd84",
-          "title": "Cat",
-          "icon": "Cat",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-hg48983mqlmqd84",
-              "type": "digital-pet",
-              "label": "",
-              "petName": "Cat Named Dog"
-            }
-          ]
-        },
         {
           "id": "notes-card",
           "title": "Notes",
@@ -513,20 +479,22 @@
           "height": 2
         },
         {
-          "id": "card-isayxtbmqlrb4n9",
-          "title": "",
-          "icon": "package",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
+          "id": "clock-card",
+          "title": "Time",
+          "icon": "Clock2",
+          "color": "#aaaaaa",
+          "width": 2,
           "sections": [
             {
-              "id": "sec-hm0fgeqmqlrb4n9",
-              "type": "resource-monitor",
-              "label": "Resources",
-              "graphMode": false
+              "id": "clock-main",
+              "type": "clock",
+              "format24h": false,
+              "showDate": true,
+              "showCalendar": true
             }
-          ]
+          ],
+          "transparent": false,
+          "height": 1
         },
         {
           "id": "selfhosted",
@@ -717,58 +685,7 @@
             }
           ],
           "transparent": false,
-          "height": 1
-        },
-        {
-          "id": "card-e4l1uy4mqgvyqyb",
-          "title": "Quotes",
-          "icon": "ScrollText",
-          "color": "#888888",
-          "width": 1,
-          "height": 2,
-          "sections": [
-            {
-              "id": "sec-8nfcrfdmqgvyqyb",
-              "type": "quotes",
-              "label": "",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "quotes": [
-                {
-                  "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
-                  "a": "Some Weirdo"
-                },
-                {
-                  "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
-                  "a": "Bob Loblaw"
-                }
-              ],
-              "_qi": 1,
-              "collapsed": false
-            },
-            {
-              "id": "sec-rw5ikp9mqlmsbkr",
-              "type": "ascii-anim",
-              "label": "",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "anim": "plasma",
-              "speed": 5,
-              "contrast": 2,
-              "ghost": false
-            }
-          ],
-          "transparent": false
+          "height": 2
         },
         {
           "id": "daily-drivers",
@@ -828,6 +745,89 @@
               ],
               "collapsed": false,
               "listMode": true
+            }
+          ]
+        },
+        {
+          "id": "card-e4l1uy4mqgvyqyb",
+          "title": "Quotes",
+          "icon": "ScrollText",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-8nfcrfdmqgvyqyb",
+              "type": "quotes",
+              "label": "",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "quotes": [
+                {
+                  "q": "Rock beats scissors, scissors beats paper, paper beats rock.",
+                  "a": "Some Weirdo"
+                },
+                {
+                  "q": "Click the + below the page to add a new one! Each page can have it's own unique set of cards or the same ones in the same or different spots!",
+                  "a": "Bob Loblaw"
+                }
+              ],
+              "_qi": 1,
+              "collapsed": false
+            },
+            {
+              "id": "sec-rw5ikp9mqlmsbkr",
+              "type": "ascii-anim",
+              "label": "",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "anim": "plasma",
+              "speed": 5,
+              "contrast": 2,
+              "ghost": false
+            }
+          ],
+          "transparent": false
+        },
+        {
+          "id": "card-67z1x4omqlmqd84",
+          "title": "Cat",
+          "icon": "Cat",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hg48983mqlmqd84",
+              "type": "digital-pet",
+              "label": "",
+              "petName": "Cat Named Dog"
+            }
+          ]
+        },
+        {
+          "id": "card-isayxtbmqlrb4n9",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hm0fgeqmqlrb4n9",
+              "type": "resource-monitor",
+              "label": "Resources",
+              "graphMode": false
             }
           ]
         }
