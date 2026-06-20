@@ -325,7 +325,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         }
       ],
@@ -379,7 +379,12 @@
             {
               "label": "ZENHAWX",
               "url": "https://zenhawx.org",
-              "icon": "link"
+              "icon": "/uploads/icons/b70efd775c9641639183441eca1c150d.png"
+            },
+            {
+              "label": "Warmbo LLC",
+              "url": "https://warmbo.com",
+              "icon": "/uploads/icons/1e53265bc82d49e0b8c8013662f3c655.png"
             }
           ],
           "collapsed": false
@@ -660,7 +665,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             }
           ],
@@ -714,7 +719,12 @@
                 {
                   "label": "ZENHAWX",
                   "url": "https://zenhawx.org",
-                  "icon": "link"
+                  "icon": "/uploads/icons/b70efd775c9641639183441eca1c150d.png"
+                },
+                {
+                  "label": "Warmbo LLC",
+                  "url": "https://warmbo.com",
+                  "icon": "/uploads/icons/1e53265bc82d49e0b8c8013662f3c655.png"
                 }
               ],
               "collapsed": false
@@ -836,7 +846,7 @@
                   "icon": "link"
                 }
               ],
-              "collapsed": true
+              "collapsed": false
             }
           ]
         },
@@ -1121,7 +1131,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 2
+              "_qi": 1
             }
           ]
         },
@@ -1277,7 +1287,7 @@
                   "path": "joke"
                 }
               ],
-              "collapsed": true
+              "collapsed": false
             },
             {
               "id": "sec-hfr87romqjnflxd",
@@ -1364,10 +1374,10 @@
               "id": "sec-gaju5snmqjk5g90",
               "type": "digital-pet",
               "label": "My Cat",
-              "lastFed": 1781913173031,
+              "lastFed": 1781915005716,
               "hunger": 100,
               "happiness": 100,
-              "waste": 0,
+              "waste": 20,
               "lastCleaned": 1781913174090,
               "petName": "Dog",
               "lastPetted": 1781913173419
@@ -1404,5 +1414,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-fjpy1g4mqguw1x3",
-  "_version": "e70d60c-dirty"
+  "_version": "dd46d87-dirty"
 }
