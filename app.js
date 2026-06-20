@@ -1932,7 +1932,6 @@ function startDrag(e, id, idx){
   const srcEl=grid.querySelector(`[data-card-id="${id}"]`);
   if(!srcEl)return;
   srcEl.classList.add('dragging');
-  srcEl.style.display='none';
 
   const ghost=document.createElement('div');ghost.className='drag-ghost';
   ghost.style.display='none';
@@ -1952,18 +1951,12 @@ function startDrag(e, id, idx){
   insertBar.style.display='none';
   document.body.appendChild(insertBar);
 
-  // Placeholder element that takes the card's grid space during drag
-  var phEl=document.createElement('div');
-  phEl.className='drag-placeholder';
-  phEl.style.cssText='grid-column:span '+cw+';grid-row:span '+(ch||1)+';min-height:'+((ch||1)*140)+'px;';
-  grid.insertBefore(phEl, srcEl.nextElementSibling);
-  dragState._placeholder=phEl;
-
   // Record cursor offset from card's edge at grab time
   const srcRect=srcEl.getBoundingClientRect();
   dragState={cardId:id,srcEl,ghost,insertBar,active:false,_startX:e.clientX,_startY:e.clientY,_beforeCardId:null,
     _cardWidth:cw,_cardHeight:ch,_grabOffs:e.clientX-srcRect.left,_grabOffsY:e.clientY-srcRect.top,
-    _cardLeft:srcRect.left,_cardTop:srcRect.top,_cardW:srcRect.width,_cardH:srcRect.height};
+    _cardLeft:srcRect.left,_cardTop:srcRect.top,_cardW:srcRect.width,_cardH:srcRect.height,
+    _cardRect:srcRect};
   document.addEventListener('pointermove',onDragMove);
   document.addEventListener('pointerup',onDragEnd);
   document.addEventListener('pointercancel',onDragEnd);
@@ -1989,11 +1982,7 @@ function onDragMove(e){
     if(dx*dx+dy*dy<64)return;
     dragState.active=true;
     if(dragState.ghost)dragState.ghost.style.display='';
-    // On activation, also refine grab offset from the actual card position
-    if(dragState.srcEl){
-      const sr=dragState.srcEl.getBoundingClientRect();
-      dragState._grabOffs=e.clientX-sr.left;
-    }
+    // Grab offset was cached at drag start — no need to re-read (card may be hidden)
   }
   if(!dragState.active)return;
 
@@ -2047,12 +2036,14 @@ function onDragMove(e){
   // ── Ghost position: card's original screen position + smooth grid snap via transform ──
   // left/top are always the card's actual position. transform adds the grid-snap offset
   // on subsequent frames so the ghost tracks columns without jumping.
-  var snapDX=ghostLeft-dragState._cardLeft; // how far the grid column is from the card
-  var snapDY=(targetRow?targetRow.top:e.clientY-30)-dragState._cardTop;
+  // ── Ghost uses cached card rect — never reads from hidden DOM elements ──
+  var cr=dragState._cardRect;
+  var snapDX=ghostLeft-cr.left;
+  var snapDY=(targetRow?targetRow.top:e.clientY-30)-cr.top;
   ghost.style.cssText=`
     position:fixed;pointer-events:none;z-index:var(--z-drag);
-    left:${dragState._cardLeft}px;top:${dragState._cardTop}px;
-    width:${ghostW-4}px;min-height:${Math.min(ghostH, (ch||1)*140+gap)}px;
+    left:${cr.left}px;top:${cr.top}px;
+    width:${cr.width-4}px;min-height:${Math.min(ghostH, (ch||1)*140+gap)}px;
     transform:translate(${snapDX}px,${snapDY}px);
     display:flex;align-items:center;justify-content:center;
     background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);
@@ -2060,23 +2051,12 @@ function onDragMove(e){
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   `;
 
-  // ── Move placeholder to insertion point — CSS Grid reflows naturally ──
-  // Clear previous preview transforms
+  // ── Clear previous preview transforms ──
   document.querySelectorAll('.card.push-preview').forEach(function(el){
     el.style.transition='none';
     el.classList.remove('push-preview');
     el.style.transform='';
   });
-  
-  // Move the placeholder to just before beforeCard (or append to grid)
-  var ph=dragState._placeholder;
-  if(ph&&ph.parentNode){
-    if(beforeCard){
-      grid.insertBefore(ph, beforeCard);
-    }else{
-      grid.appendChild(ph);
-    }
-  }
   
   // Grid simulation drop-shift: highlight cards that will change row/col
   computeDropShift(dragState._beforeCardId);
@@ -2213,11 +2193,10 @@ function onDragEnd(e){
     el.style.transition='';
   });
   if(dragState.insertBar&&dragState.insertBar.parentNode)dragState.insertBar.remove();
-  if(dragState._placeholder&&dragState._placeholder.parentNode)dragState._placeholder.remove();
   if(!dragState)return;
   const{cardId,srcEl,ghost,active,_beforeCardId}=dragState;
   if(ghost&&ghost.parentNode)ghost.remove();
-  if(srcEl){srcEl.classList.remove('dragging');srcEl.style.display='';}
+  if(srcEl)srcEl.classList.remove('dragging');
   document.body.style.overflow = '';
 
   if(active){
@@ -2285,7 +2264,7 @@ function onDragEnd(e){
     }
   }
 
-  if(srcEl){srcEl.classList.remove('dragging');srcEl.style.display='';}
+  if(srcEl)srcEl.classList.remove('dragging');
   if(active)renderAll();
   dragState=null;
 }

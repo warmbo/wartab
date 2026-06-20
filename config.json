@@ -328,22 +328,6 @@
       ]
     },
     {
-      "id": "card-67z1x4omqlmqd84",
-      "title": "Cat",
-      "icon": "Cat",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-hg48983mqlmqd84",
-          "type": "digital-pet",
-          "label": "",
-          "petName": "Cat Named Dog"
-        }
-      ]
-    },
-    {
       "id": "notes-card",
       "title": "Notes",
       "icon": "edit-3",
@@ -373,6 +357,22 @@
         }
       ],
       "height": 2
+    },
+    {
+      "id": "card-67z1x4omqlmqd84",
+      "title": "Cat",
+      "icon": "Cat",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-hg48983mqlmqd84",
+          "type": "digital-pet",
+          "label": "",
+          "petName": "Cat Named Dog"
+        }
+      ]
     },
     {
       "id": "card-isayxtbmqlrb4n9",
@@ -419,7 +419,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         },
         {
@@ -718,22 +718,6 @@
           ]
         },
         {
-          "id": "card-67z1x4omqlmqd84",
-          "title": "Cat",
-          "icon": "Cat",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-hg48983mqlmqd84",
-              "type": "digital-pet",
-              "label": "",
-              "petName": "Cat Named Dog"
-            }
-          ]
-        },
-        {
           "id": "notes-card",
           "title": "Notes",
           "icon": "edit-3",
@@ -763,6 +747,22 @@
             }
           ],
           "height": 2
+        },
+        {
+          "id": "card-67z1x4omqlmqd84",
+          "title": "Cat",
+          "icon": "Cat",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hg48983mqlmqd84",
+              "type": "digital-pet",
+              "label": "",
+              "petName": "Cat Named Dog"
+            }
+          ]
         },
         {
           "id": "card-isayxtbmqlrb4n9",
@@ -809,7 +809,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             },
             {
