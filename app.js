@@ -2047,49 +2047,66 @@ function onDragMove(e){
   // ── Ghost height: use card's grid footprint, not row height ──
   ghost.style.minHeight=Math.min(ghostH, (ch||1)*140+gap)+'px';
 
-  // ── Preview: gap + between-row indicator + grid simulation ──
+  // ── Preview: gap + between-row + below-last-row + grid simulation ──
   var phWidth=cw*colW+(cw-1)*gap;
   var phHeight=(ch||1)*140;
   var shiftX=phWidth+gap;
   
-  // Clear previous push transforms (with transition disabled to prevent FLIP conflict)
+  // Clear previous push transforms
   document.querySelectorAll('.card.push-preview').forEach(function(el){
     el.style.transition='none';
     el.classList.remove('push-preview');
     el.style.transform='';
   });
   
-  // Detect between-row insertion
-  var betweenRow=false,betweenTop=0,betweenBottom=0,betweenIdx=-1;
+  // Determine drop zone: between-row, below-last, same-row-insert, or same-row-append
+  var dropZone='none'; // 'between' | 'below' | 'insert' | 'append'
+  var dropY=e.clientY;
+  
+  // Check between-row gaps first
   if(rows.length>1){
     for(var ri=0;ri<rows.length-1;ri++){
-      var gt=rows[ri].bottom,gb=rows[ri+1].top;
-      if(e.clientY>=gt&&e.clientY<=gb){
-        betweenRow=true;betweenTop=gt;betweenBottom=gb;betweenIdx=ri;
+      if(dropY>=rows[ri].bottom&&dropY<=rows[ri+1].top){
+        dropZone='between';betweenIdx=ri;
         break;
       }
     }
   }
+  // Check below last row
+  if(dropZone==='none'&&rows.length&&dropY>rows[rows.length-1].bottom){
+    dropZone='below';
+  }
+  // Check inside a row
+  if(dropZone==='none'&&targetRow){
+    dropZone=beforeCard?'insert':'append';
+  }
   
-  if(betweenRow){
-    // Horizontal bar at gap center
+  // Show preview based on drop zone
+  if(dropZone==='between'||dropZone==='below'){
+    // Horizontal bar spanning the grid
     insertBar.style.display='';
     insertBar.style.left=gr.left+'px';
-    insertBar.style.top=((betweenTop+betweenBottom)/2-2)+'px';
-    insertBar.style.width=gr.width+'px';
-    insertBar.style.height='4px';
-    insertBar.style.background='var(--accent)';
     insertBar.style.border='none';
     insertBar.style.borderRadius='2px';
     insertBar.style.boxShadow='0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)';
-    // Insert before first card of next row
-    var nextRow=rows[betweenIdx+1];
-    beforeCard=nextRow&&nextRow.cards.length?nextRow.cards[0]:null;
+    insertBar.style.background='var(--accent)';
+    insertBar.style.width=gr.width+'px';
+    insertBar.style.height='4px';
+    if(dropZone==='between'){
+      var bgt=rows[betweenIdx].bottom,bgb=rows[betweenIdx+1].top;
+      insertBar.style.top=((bgt+bgb)/2-2)+'px';
+      var nextRow=rows[betweenIdx+1];
+      beforeCard=nextRow&&nextRow.cards.length?nextRow.cards[0]:null;
+    }else{
+      var lastRow=rows[rows.length-1];
+      insertBar.style.top=(lastRow.bottom+gap/2-2)+'px';
+      beforeCard=null; // append
+    }
     dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
     dropZoneClear();
     computeDropShift(dragState._beforeCardId);
-  }else if(targetRow&&beforeCard){
-    // Gap preview: shift same-row cards right to show where card lands
+  }else if(dropZone==='insert'){
+    // Gap preview: shift same-row cards right
     insertBar.style.display='none';
     var pushing=false;
     targetRow.cards.forEach(function(el){
@@ -2101,6 +2118,22 @@ function onDragMove(e){
       }
     });
     computeDropShift(dragState._beforeCardId);
+  }else if(dropZone==='append'){
+    // Append to end of row: card-sized placeholder at right edge of last card
+    insertBar.style.display='';
+    var lr=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();
+    insertBar.style.left=lr.right+'px';
+    insertBar.style.top=targetRow.top+'px';
+    insertBar.style.width=phWidth+'px';
+    insertBar.style.height=phHeight+'px';
+    var phColor=ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)';
+    insertBar.style.background='color-mix(in srgb, '+phColor+' 10%, transparent)';
+    insertBar.style.border='2px dashed '+phColor;
+    insertBar.style.borderRadius='0';
+    insertBar.style.boxShadow='none';
+    dragState._beforeCardId=null;
+    dropZoneClear();
+    computeDropShift(null);
   }else{
     insertBar.style.display='none';
     dropZoneClear();
