@@ -385,11 +385,14 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: 0.55; t
 /* Font picker select */
 
 /* ══════ Card Edit Panel (slide-out) ══════ */
-#edit-panel { z-index: 103; }
+#edit-panel { z-index: 103; --slide-dir: 100%; }
 #edit-panel-overlay { z-index: 102; }
 /* Slide from left when card is on the right side of the viewport */
-#edit-panel.slide-left { left: 0; right: auto; border-left: none; border-right: 1px solid var(--glass-border); transform: translateX(-100%); }
-#edit-panel.slide-left.open { transform: translateX(0); box-shadow: 8px 0 40px rgba(0,0,0,0.5); }
+#edit-panel.slide-left { --slide-dir: -100%; left: 0; right: auto; border-left: none; border-right: 1px solid var(--glass-border); }
+/* Override the base .config-panel translateX with our directional variable */
+#edit-panel { transform: translateX(var(--slide-dir)); }
+#edit-panel.open { transform: translateX(0); box-shadow: -8px 0 40px rgba(0,0,0,0.5); }
+#edit-panel.slide-left.open { box-shadow: 8px 0 40px rgba(0,0,0,0.5); }
 /* Icon picker overlay above edit panel */
 #icon-picker-overlay { z-index: 105; }
 #icon-picker { z-index: 106; }

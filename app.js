@@ -149,8 +149,8 @@ function closeCardEditPanel() {
   _editPanelOpen = false;
   $('#edit-panel-overlay').classList.remove('open');
   $('#edit-panel').classList.remove('open');
-  // Wait for the close transition (350ms) before removing slide-left class,
-  // so the panel slides out in the same direction it came from
+  // Keep slide-left during the close transition so --slide-dir stays -100%
+  // and the panel slides out to the left. Clean up after animation completes.
   clearTimeout(_slideTimer);
   _slideTimer = setTimeout(function() {
     $('#edit-panel').classList.remove('slide-left');
