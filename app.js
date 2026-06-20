@@ -289,12 +289,12 @@ function openPageManagementPanel() {
     // Drag handle
     const dh = document.createElement('span');
     dh.textContent = '⠿';
-    dh.style.cssText = 'cursor:grab;color:var(--text-tertiary);user-select:none;touch-action:none;padding:4px;font-size:var(--text-lg);line-height:1;';
+    dh.className = 'drag-page-handle';
     dh.title = 'Drag to reorder';
     hdr.appendChild(dh);
 
     const iconSpan = document.createElement('span');
-    iconSpan.style.cssText = 'display:inline-flex;align-items:center;width:28px;height:28px;font-size:var(--text-xl);';
+    iconSpan.className = 'icon-box';
     if (p.icon && isLucideName(p.icon)) {
       iconSpan.appendChild(renderLucideEl(p.icon, ''));
     } else if (p.icon) {
@@ -305,20 +305,20 @@ function openPageManagementPanel() {
     hdr.appendChild(iconSpan);
 
     const nm = document.createElement('span');
-    nm.style.cssText = 'flex:1;font-weight:600;color:var(--text-primary);';
+    nm.className = 'text-bold';
     nm.textContent = p.name;
     hdr.appendChild(nm);
 
     // Edit button
     const eb = cpBtn('✎');
-    eb.style.cssText = 'padding:4px 8px;font-size:var(--text-sm);';
+    eb.className = 'btn btn-glass btn-sm';
     eb.title = 'Edit page';
     eb.addEventListener('click', function() { openPageEditPanel(id); });
     hdr.appendChild(eb);
 
     // Delete button
     const db = cpBtn('✕', true);
-    db.style.cssText = 'padding:4px 8px;font-size:var(--text-sm);';
+    db.className = 'btn btn-glass btn-sm btn-danger';
     db.title = 'Delete page';
     db.addEventListener('click', function() {
       if (config.pageOrder.length <= 1) { toast('Cannot delete last page','warning'); return; }
