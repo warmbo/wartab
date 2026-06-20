@@ -36,7 +36,7 @@
     "hostname": true
   },
   "layout": {
-    "cols": 4,
+    "cols": 5,
     "gap": 14,
     "pageWidth": 100,
     "pagePadding": 2,
@@ -62,7 +62,7 @@
       "title": "Time",
       "icon": "Clock2",
       "color": "#aaaaaa",
-      "width": 1,
+      "width": 2,
       "sections": [
         {
           "id": "clock-main",
@@ -416,13 +416,28 @@
               "icon": "link"
             }
           ],
-          "anim": "stars",
-          "speed": 2,
-          "contrast": 10,
+          "anim": "plasma",
+          "speed": 5,
+          "contrast": 2,
           "ghost": false
         }
       ],
       "transparent": false
+    },
+    {
+      "id": "card-isayxtbmqlrb4n9",
+      "title": "",
+      "icon": "package",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-hm0fgeqmqlrb4n9",
+          "type": "resource-monitor",
+          "label": "Resources"
+        }
+      ]
     }
   ],
   "pages": {
@@ -435,7 +450,7 @@
           "title": "Time",
           "icon": "Clock2",
           "color": "#aaaaaa",
-          "width": 1,
+          "width": 2,
           "sections": [
             {
               "id": "clock-main",
@@ -789,13 +804,28 @@
                   "icon": "link"
                 }
               ],
-              "anim": "stars",
-              "speed": 2,
-              "contrast": 10,
+              "anim": "plasma",
+              "speed": 5,
+              "contrast": 2,
               "ghost": false
             }
           ],
           "transparent": false
+        },
+        {
+          "id": "card-isayxtbmqlrb4n9",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hm0fgeqmqlrb4n9",
+              "type": "resource-monitor",
+              "label": "Resources"
+            }
+          ]
         }
       ]
     },
@@ -1480,5 +1510,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-fjpy1g4mqguw1x3",
-  "_version": "c9ebe4d-dirty"
+  "_version": "3368626-dirty"
 }

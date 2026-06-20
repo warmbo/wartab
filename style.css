@@ -229,6 +229,8 @@ body {
 
 /* ══════ Card Grid ══════ */
 #card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; grid-auto-rows: minmax(140px, auto); transition: opacity 0.15s ease; margin-top: 12px; }
+/* Highlighted card sits above the config overlay so it's not blurred/dimmed */
+.card.card-highlight { position: relative; z-index: 106; box-shadow: 0 0 24px var(--accent-glow), var(--glass-shadow); border-color: var(--accent); }
 
 /* ══════ Page Bar ══════ */
 #page-bar { display: flex; align-items: center; gap: 8px; padding: 20px 0 16px; justify-content: center; }
@@ -377,6 +379,9 @@ body {
 /* ══════ Card Edit Panel (slide-out) ══════ */
 #edit-panel { z-index: 103; }
 #edit-panel-overlay { z-index: 102; }
+/* Slide from left when card is on the right side of the viewport */
+#edit-panel.slide-left { left: 0; right: auto; border-left: none; border-right: 1px solid var(--glass-border); transform: translateX(-100%); }
+#edit-panel.slide-left.open { transform: translateX(0); box-shadow: 8px 0 40px rgba(0,0,0,0.5); }
 /* Icon picker overlay above edit panel */
 #icon-picker-overlay { z-index: 105; }
 #icon-picker { z-index: 106; }

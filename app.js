@@ -110,18 +110,41 @@ function openCardEditPanel(cardId) {
   $('#edit-panel-body').innerHTML = '';
   buildCardEditPanel(card);
   renderIcons();
+  // Highlight the edited card above the overlay so it stays sharp
+  const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
+  if (cardEl) cardEl.classList.add('card-highlight');
+  // Slide panel from the side LEAST likely to cover the card
+  const panel = $('#edit-panel');
+  if (cardEl) {
+    const cr = cardEl.getBoundingClientRect();
+    const vw = window.innerWidth;
+    // If card center is right-of-center → slide from left; otherwise from right
+    if (cr.left + cr.width / 2 > vw / 2) {
+      panel.classList.add('slide-left');
+    } else {
+      panel.classList.remove('slide-left');
+    }
+  } else {
+    panel.classList.remove('slide-left');
+  }
   $('#edit-panel-overlay').classList.add('open');
-  $('#edit-panel').classList.add('open');
+  panel.classList.add('open');
   const title = $('#edit-panel-title');
   if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
 }
 
 function closeCardEditPanel() {
+  // Remove highlight from edited card
+  if (_editingCardId) {
+    const el = document.querySelector(`[data-card-id="${_editingCardId}"]`);
+    if (el) el.classList.remove('card-highlight');
+  }
   _editingCardId = null;
   _editingPageId = null;
   _editPanelOpen = false;
   $('#edit-panel-overlay').classList.remove('open');
   $('#edit-panel').classList.remove('open');
+  $('#edit-panel').classList.remove('slide-left');
 }
 
 function saveAndRefresh() {
