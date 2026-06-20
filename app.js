@@ -1951,10 +1951,11 @@ function startDrag(e, id, idx){
   insertBar.style.display='none';
   document.body.appendChild(insertBar);
 
-  // Record cursor offset from card's left edge at grab time
+  // Record cursor offset from card's edge at grab time
   const srcRect=srcEl.getBoundingClientRect();
   dragState={cardId:id,srcEl,ghost,insertBar,active:false,_startX:e.clientX,_startY:e.clientY,_beforeCardId:null,
-    _cardWidth:cw,_cardHeight:ch,_grabOffs:e.clientX-srcRect.left};
+    _cardWidth:cw,_cardHeight:ch,_grabOffs:e.clientX-srcRect.left,_grabOffsY:e.clientY-srcRect.top,
+    _cardW:srcRect.width,_cardH:srcRect.height};
   document.addEventListener('pointermove',onDragMove);
   document.addEventListener('pointerup',onDragEnd);
   document.addEventListener('pointercancel',onDragEnd);
@@ -2003,8 +2004,10 @@ function onDragMove(e){
 
   // Build row map (exclude dragged card for cursor/insertion detection)
   const rows=buildRowMap(grid,dSrc);
+  
+  // Expand row hit zones by 20px above/below for easier targetting
   let targetRow=null,rowIdx=0;
-  for(let i=0;i<rows.length;i++){const row=rows[i];if(e.clientY>=row.top&&e.clientY<=row.bottom){targetRow=row;rowIdx=i;break;}}
+  for(let i=0;i<rows.length;i++){const row=rows[i];if(e.clientY>=row.top-20&&e.clientY<=row.bottom+20){targetRow=row;rowIdx=i;break;}}
   if(!targetRow&&rows.length){
     let best=0,bestD=Infinity;
     for(let i=0;i<rows.length;i++){const d=Math.abs(e.clientY-rows[i].top);if(d<bestD){bestD=d;best=i;}}
@@ -2033,19 +2036,25 @@ function onDragMove(e){
 
   const ghostAccent=config.cards.find(c=>c.id===dragState.cardId);
 
-  // Position ghost
-  ghost.style.cssText=`
-    position:fixed;pointer-events:none;z-index:999;
-    left:${ghostLeft}px;top:${ghostTop}px;
-    width:${ghostW-4}px;min-height:${ghostH-4}px;
-    display:flex;align-items:center;justify-content:center;
-    background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);
-    border:2px dashed ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'};
-    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-  `;
-
-  // ── Ghost height: use card's grid footprint, not row height ──
+  // ── Ghost follows cursor precisely (no grid snap) ──
+  var ghostDX=e.clientX-dragState._startX;
+  var ghostDY=e.clientY-dragState._startY;
+  ghost.style.cssText='';
+  ghost.style.position='fixed';
+  ghost.style.pointerEvents='none';
+  ghost.style.zIndex='var(--z-drag)';
+  ghost.style.left=(dragState._grabOffs)+'px';
+  ghost.style.top=(dragState._grabOffsY)+'px';
+  ghost.style.width=(dragState._cardW-4)+'px';
   ghost.style.minHeight=Math.min(ghostH, (ch||1)*140+gap)+'px';
+  ghost.style.transform='translate('+ghostDX+'px,'+ghostDY+'px)';
+  ghost.style.display='flex';
+  ghost.style.alignItems='center';
+  ghost.style.justifyContent='center';
+  ghost.style.background='color-mix(in srgb, '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)')+' 15%, transparent)';
+  ghost.style.border='2px dashed '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)');
+  ghost.style.backdropFilter='blur(4px)';
+  ghost.style.WebkitBackdropFilter='blur(4px)';
 
   // ── Preview: gap + between-row + below-last-row + grid simulation ──
   var phWidth=cw*colW+(cw-1)*gap;
