@@ -10,7 +10,7 @@
      6. Config Load/Save   — loadConfig, saveConfig, applyChanges, renderAll
      7. Render             — renderCard, renderSection, renderLinkIcon, doSearch
      8. Widgets            — clocks, weather, API poller, quotes, status bars
-     9. Drag & Drop        — card reorder with simGrid preview + FLIP animation
+     9. Drag & Drop        — card reorder with insertion indicator + FLIP animation
     10. Icon Picker        — library/upload/emoji/Lucide tabbed picker
     11. Background Upload  — image upload + compression
     12. Config Panel UI    — theme, branding, layout, status bar settings
@@ -949,7 +949,7 @@ function renderIcons(){
 
 let config = {}, clockInterval = null, weatherIntervals = [], apiPollTimers = [], statsTimer = null;
 let dragState = null, iconPickerCallback = null;
-let uploadedFiles = [], _eqPending = false;
+let uploadedFiles = [];
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 function uid(){return Math.random().toString(36).substring(2,9)+Date.now().toString(36);}
@@ -1143,13 +1143,12 @@ if(!config.cards.length){
 }
 // Ungrouped cards render as normal
 config.cards.forEach((c,i)=>{grid.appendChild(renderCard(c,i));});
-setupWeatherWidgets();setupClocks();scheduleEqualize();const fs=grid.querySelector('.inline-search-wrap input');if(fs)fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
+setupWeatherWidgets();setupClocks();const fs=grid.querySelector('.inline-search-wrap input');if(fs)fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
   // Render Lucide icons for any newly created data-lucide elements
   renderIcons();
 }
-function scheduleEqualize(){if(!_eqPending){_eqPending=true;requestAnimationFrame(()=>{_eqPending=false;equalizeCardHeights();});}}
-function equalizeCardHeights(){const grid=$('#card-grid');const allCards=[...grid.children].filter(el=>el.classList.contains('card'));if(!allCards.length)return;allCards.forEach(c=>c.style.minHeight='');// Skip cards with height>1 (double-height cards control their own size)
-const cards=allCards.filter(c=>{const idx=parseInt(c.dataset.index);const card=config.cards[idx];return !card||!card.height||card.height<=1;});if(!cards.length)return;const rows=[];let curRow=[],curTop=-1;cards.forEach(card=>{const r=card.getBoundingClientRect();if(curTop<0||Math.abs(r.top-curTop)>8){if(curRow.length)rows.push(curRow);curRow=[card];curTop=r.top;}else curRow.push(card);});if(curRow.length)rows.push(curRow);rows.forEach(row=>{if(row.length<2)return;const m=Math.max(...row.map(c=>c.offsetHeight));row.forEach(c=>c.style.minHeight=m+'px');});}
+// Card heights handled by CSS grid-auto-rows + data-height presets
+
 
 function renderCard(card,idx){
   if(card._isGap){
@@ -1190,9 +1189,10 @@ function renderCard(card,idx){
   div.dataset.width = Math.min(card.width || 1, config.layout.cols);
   div.dataset.index = idx;
   div.style.setProperty('--card-accent', card.color || config.theme.glow);
-  if (card.height > 1) {
-    div.style.gridRow = 'span ' + Math.min(card.height, 4);
-    div.style.minHeight = (100 + card.height * 80) + 'px';
+  var ch=Math.min(card.height||1,4);
+  if(ch>1){
+    div.dataset.height=ch;
+    div.style.gridRow='span '+ch;
   }
   if (card.transparent) div.classList.add('card-transparent');
 
@@ -1700,12 +1700,23 @@ function startDrag(e, id, idx){
   ghost.style.display='none';
   const cw=Math.min(card.width||1,config.layout.cols);
   const ch=card.height||1;
-  ghost.innerHTML='<div class="dgh-label">'+((card._isGap?'␣ empty':(card.icon||'')+' '+(card.title||'')).trim()||'Card')+'</div>';
+  if(card._isGap){
+    ghost.innerHTML='<div class="dgh-label">␣ empty gap</div>';
+  }else{
+    var iconHtml=card.icon?'<span class="ghost-icon">'+(isLucideName(card.icon)?'<i data-lucide="'+card.icon+'" style="width:16px;height:16px;"></i>':card.icon)+'</span>':'';
+    ghost.innerHTML='<div class="dgh-label">'+iconHtml+'<span class="ghost-title">'+escHtml(card.title||'Card')+'</span></div>';
+  }
   document.body.appendChild(ghost);
+
+  // Insertion indicator bar
+  const insertBar=document.createElement('div');
+  insertBar.className='drag-insert-bar';
+  insertBar.style.display='none';
+  document.body.appendChild(insertBar);
 
   // Record cursor offset from card's left edge at grab time
   const srcRect=srcEl.getBoundingClientRect();
-  dragState={cardId:id,srcEl,ghost,active:false,_startX:e.clientX,_startY:e.clientY,_beforeCardId:null,
+  dragState={cardId:id,srcEl,ghost,insertBar,active:false,_startX:e.clientX,_startY:e.clientY,_beforeCardId:null,
     _cardWidth:cw,_cardHeight:ch,_grabOffs:e.clientX-srcRect.left};
   document.addEventListener('pointermove',onDragMove);
   document.addEventListener('pointerup',onDragEnd);
@@ -1787,76 +1798,106 @@ function onDragMove(e){
   }
   dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
 
+  const ghostAccent=config.cards.find(c=>c.id===dragState.cardId);
+
   // Position ghost
   ghost.style.cssText=`
     position:fixed;pointer-events:none;z-index:999;
     left:${ghostLeft}px;top:${ghostTop}px;
     width:${ghostW-4}px;min-height:${ghostH-4}px;
     display:flex;align-items:center;justify-content:center;
-    background:var(--accent-glass);border:2px dashed var(--accent);
+    background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);
+    border:2px dashed ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'};
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   `;
 
-  // ── Exact-final-positions preview ──
-  // Compute simGrid for old and new card order, then apply transforms
-  // so every card renders exactly where it will be on drop.
-  pushClear();
-  const allCards=config.cards;
-  const srcIdx2=allCards.findIndex(c=>c.id===dragState.cardId);
-  if(srcIdx2>=0){
-    const newOrder=[...allCards];
-    const [moved]=newOrder.splice(srcIdx2,1);
-    const beforeIdx=beforeCard?newOrder.findIndex(c=>c.id===beforeCard.dataset.cardId):newOrder.length;
-    newOrder.splice(beforeIdx,0,moved);
-
-    const oldSim=simGrid(allCards,cols);
-    const newSim=simGrid(newOrder,cols);
-
-    // Row height estimate for Y positioning
-    const allRows=buildRowMap(grid,null);
-    const avgRowH=allRows.length
-      ? allRows.reduce((s,r)=>s+(r.bottom-r.top),0)/allRows.length
-      : colW*0.6;
-    const rowStep=avgRowH+gap;
-
-    for(let i=0;i<allCards.length;i++){
-      const c=allCards[i];
-      if(c.id===dragState.cardId)continue;
-      const oldP=oldSim[i];
-      const newIdx2=newOrder.findIndex(nc=>nc.id===c.id);
-      if(newIdx2<0)continue;
-      const newP=newSim[newIdx2];
-
-      const dx=(newP.col-oldP.col)*step;
-      const dy=(newP.row-oldP.row)*rowStep;
-
-      if(dx||dy){
-        const el=grid.querySelector(`[data-card-id="${c.id}"]`);
-        if(el){
-          el.classList.add('push-preview');
-          el.style.transform=`translate(${dx}px,${dy}px)`;
-        }
-      }
-    }
+  // ── Insertion indicator + grid simulation preview ──
+  // Vertical bar at the insertion point, height matching card's grid footprint
+  insertBar.style.display='';
+  let barLeft;
+  if(beforeCard){
+    const br=beforeCard.getBoundingClientRect();
+    barLeft=br.left;
+  }else if(targetRow&&targetRow.cards.length){
+    const lastRect=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();
+    barLeft=lastRect.right;
+  }else{
+    barLeft=gr.left;
   }
-  // Drop-shift: highlight the card that will be displaced (beforeCard) + cards right of it
-  dropZoneHighlight(beforeCard,targetRow,ghostLeft);
+  insertBar.style.cssText='';
+  insertBar.style.left=(barLeft-2)+'px';
+  insertBar.style.top=targetRow?targetRow.top+'px':(e.clientY-30)+'px';
+  insertBar.style.width='4px';
+  const barH=Math.max((ch||1)*140, (targetRow?targetRow.bottom-targetRow.top:60));
+  insertBar.style.height=barH+'px';
+  insertBar.style.background='var(--accent)';
+  insertBar.style.borderRadius='2px';
+  // Compute which cards truly change position via grid simulation
+  computeDropShift(dragState._beforeCardId);
 }
 
 function dropZoneClear(){$$('.card.drop-shift').forEach(el=>el.classList.remove('drop-shift'));}
 
-function dropZoneHighlight(beforeCard,targetRow,ghostLeft){
-  dropZoneClear();
-  if(!targetRow||!beforeCard)return;
-  // Highlight all cards from beforeCard to the end of its row
-  let found=false;
-  for(const el of targetRow.cards){
-    if(el===beforeCard)found=true;
-    if(found)el.classList.add('drop-shift');
+// Simulate CSS Grid auto-placement for computing final layout positions.
+function simulateGrid(cards, cols) {
+  const occ = [];
+  const out = [];
+  for (const card of cards) {
+    const w = Math.min(card.width || 1, cols);
+    const h = card.height || 1;
+    let placed = false;
+    for (let row = 0; !placed && row < 100; row++) {
+      if (!occ[row]) occ[row] = [];
+      for (let col = 0; col <= cols - w && !placed; col++) {
+        let free = true;
+        for (let dr = 0; dr < h && free; dr++)
+          for (let dc = 0; dc < w && free; dc++)
+            if (occ[row + dr] && occ[row + dr][col + dc]) free = false;
+        if (free) {
+          for (let dr = 0; dr < h; dr++) {
+            if (!occ[row + dr]) occ[row + dr] = [];
+            for (let dc = 0; dc < w; dc++) occ[row + dr][col + dc] = true;
+          }
+          out.push({ row, col }); placed = true;
+        }
+      }
+    }
+    if (!placed) out.push({ row: 0, col: 0 });
   }
-  if(!found){
-    // beforeCard is in a different row (next row) — just highlight that card
-    beforeCard.classList.add('drop-shift');
+  return out;
+}
+
+// Compute which cards change position after the move using grid simulation.
+function computeDropShift(targetBeforeCardId) {
+  dropZoneClear();
+  const allCards = config.cards;
+  const dragId = dragState.cardId;
+  const cols = config.layout.cols;
+  const srcIdx = allCards.findIndex(c => c.id === dragId);
+  if (srcIdx < 0) return;
+
+  const newOrder = [...allCards];
+  const [moved] = newOrder.splice(srcIdx, 1);
+  const beforeIdx = targetBeforeCardId
+    ? newOrder.findIndex(c => c.id === targetBeforeCardId)
+    : newOrder.length;
+  newOrder.splice(beforeIdx < 0 ? newOrder.length : beforeIdx, 0, moved);
+
+  const oldPos = simulateGrid(allCards, cols);
+  const newPos = simulateGrid(newOrder, cols);
+
+  const grid = document.getElementById('card-grid');
+  for (let i = 0; i < allCards.length; i++) {
+    const c = allCards[i];
+    if (c.id === dragId) continue;
+    const oldP = oldPos[i];
+    const newIdx = newOrder.findIndex(nc => nc.id === c.id);
+    if (newIdx < 0) continue;
+    const newP = newPos[newIdx];
+    if (oldP.row !== newP.row || oldP.col !== newP.col) {
+      const el = grid.querySelector(`[data-card-id="${c.id}"]`);
+      if (el) el.classList.add('drop-shift');
+    }
   }
 }
 
@@ -1865,7 +1906,7 @@ function onDragEnd(e){
   document.removeEventListener('pointerup',onDragEnd);
   document.removeEventListener('pointercancel',onDragEnd);
   dropZoneClear();
-  pushClear();
+  if(dragState.insertBar&&dragState.insertBar.parentNode)dragState.insertBar.remove();
   if(!dragState)return;
   const{cardId,srcEl,ghost,active,_beforeCardId}=dragState;
   if(ghost&&ghost.parentNode)ghost.remove();
@@ -2777,7 +2818,7 @@ async function init() {
     if(e.key==='/'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();showShortcutsOverlay();}
     if(e.key==='Tab'&&(e.ctrlKey||e.metaKey)){e.preventDefault();const order=config.pageOrder||[];if(!order.length)return;const idx=order.indexOf(config.currentPage);const next=order[(idx+1)%order.length];switchPage(next);}
   });
-  let rt=null;window.addEventListener('resize',()=>{if(rt)clearTimeout(rt);rt=setTimeout(()=>{scheduleEqualize();},150);});
+  let rt=null;window.addEventListener('resize',()=>{if(rt)clearTimeout(rt);rt=setTimeout(()=>{},150);});
   // Periodic timestamp updater
   setInterval(()=>{
     $$('.api-ts').forEach(el=>{const t=parseInt(el.dataset.ts);if(t)el.textContent='updated '+timeAgo(t);});

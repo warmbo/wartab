@@ -228,7 +228,7 @@ body {
 .btn-search { padding: 4px 8px; font-size: var(--text-sm); flex-shrink: 0; }
 
 /* ══════ Card Grid ══════ */
-#card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; transition: opacity 0.15s ease; margin-top: 12px; }
+#card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; grid-auto-rows: minmax(140px, auto); transition: opacity 0.15s ease; margin-top: 12px; }
 
 /* ══════ Page Bar ══════ */
 #page-bar { display: flex; align-items: center; gap: 8px; padding: 20px 0 16px; justify-content: center; }
@@ -263,6 +263,9 @@ body {
 .card[data-width="2"] { grid-column: span 2; }
 .card[data-width="3"] { grid-column: span 3; }
 .card[data-width="4"] { grid-column: span 4; }
+.card[data-height="2"] { grid-row: span 2; min-height: 280px; }
+.card[data-height="3"] { grid-row: span 3; min-height: 420px; }
+.card[data-height="4"] { grid-row: span 4; min-height: 560px; }
 .card.card-editing { border-color: var(--accent); box-shadow: 0 0 16px var(--accent-glow), var(--glass-shadow); }
 
 /* ══════ Section Types ══════ */
@@ -326,7 +329,7 @@ body {
 .dropdown-toggle .arrow { transition: transform 0.35s ease; font-size: var(--text-2xs); }
 .dropdown-toggle.open .arrow { transform: rotate(90deg); }
 .dropdown-content { overflow: hidden; transition: max-height 0.45s ease, opacity 0.35s ease, padding 0.3s ease, margin 0.3s ease; max-height: 0; opacity: 0; padding: 0; margin: 0; min-height: 0; }
-.dropdown-content.open { max-height: 3000px; opacity: 1; padding: 4px 0 8px; margin: 4px 0; overflow: visible; flex: 1; display: flex; flex-direction: column; }
+.dropdown-content.open { max-height: 3000px; opacity: 1; padding: 4px 0 8px; margin: 4px 0; overflow: visible; display: flex; flex-direction: column; }
 /* Unify section toggles with dropdown style */
 /* ── Section toggle: unified with dropdown style ── */
 .api-widget .api-label { color: var(--text-secondary); }
@@ -710,12 +713,21 @@ body {
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
 }
+.drag-insert-bar {
+  position: fixed !important; pointer-events: none !important; z-index: 998 !important;
+  background: var(--accent);
+  border-radius: 2px;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
+  transition: opacity 0.08s;
+}
 .dgh-label {
+  display: flex; align-items: center; gap: 8px;
   font-size: var(--text-sm); font-weight: 600;
   color: var(--accent);
   text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent);
-  opacity: 0.8;
+  opacity: 0.85;
 }
+.ghost-icon { display: inline-flex; align-items: center; font-size: var(--text-lg); opacity: 0.9; }
 
 /* Source card fades while being dragged */
 .card.dragging { opacity: 0.25; transform: scale(0.96); transition: opacity 0.2s, transform 0.2s; }
@@ -724,9 +736,11 @@ body {
 
 /* Cards in their simulated final position during drag preview — instant updates for tight cursor tracking */
 
-/* Accent border on cards to the right of the insertion point */
+/* Accent border + glow on cards to the right of the insertion point */
 .card.drop-shift {
-  border-left: 2px solid var(--accent) !important;
+  border-left: 3px solid var(--accent) !important;
+  box-shadow: inset 3px 0 12px color-mix(in srgb, var(--accent) 15%, transparent) !important;
+  background: color-mix(in srgb, var(--accent) 6%, transparent) !important;
 }
 
 /* ══════ Grid Gap (empty cells) ══════ */
@@ -951,6 +965,16 @@ body {
   #card-grid > div[style*="grid-column:1/-1"] div[style*="font-size:var(--heading-size)"] { font-size: calc(var(--heading-size) + 1px) !important; }
   #card-grid > div[style*="grid-column:1/-1"] div[style*="gap:8px"] { gap: 6px !important; }
   #card-grid > div[style*="grid-column:1/-1"] button { font-size: var(--text-sm) !important; padding: 8px 12px !important; }
+}
+
+/* ══════ Tablet: 2-column layout ══════
+   Between mobile single-column and desktop 4-column. */
+@media (min-width: 769px) and (max-width: 1199px) {
+  :root { --grid-cols: 2; --grid-gap: 14px; }
+  #card-grid { gap: var(--grid-gap); }
+  .card[data-width="3"], .card[data-width="4"] {
+    grid-column: span 2 !important;
+  }
 }
 
 /* ══════ Digital Pet (Room Environment) ══════ */
