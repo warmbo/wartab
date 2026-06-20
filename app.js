@@ -2036,15 +2036,17 @@ function onDragMove(e){
   // ── Ghost position: card's original screen position + smooth grid snap via transform ──
   // left/top are always the card's actual position. transform adds the grid-snap offset
   // on subsequent frames so the ghost tracks columns without jumping.
-  // ── Ghost uses cached card rect — never reads from hidden DOM elements ──
+  // ── Ghost uses cached card rect + grid-calculated width ──
   var cr=dragState._cardRect;
   // X: snap to grid column. Y: follow cursor exactly (pixel-perfect vertical tracking)
   var snapDX=ghostLeft-cr.left;
   var snapDY=(e.clientY-cr.top-dragState._grabOffsY);
+  // Use grid-calculated width (ghostW) instead of rendered card width,
+  // and card's actual rendered height for min-height
   ghost.style.cssText=`
     position:fixed;pointer-events:none;z-index:var(--z-drag);
     left:${cr.left}px;top:${cr.top}px;
-    width:${cr.width-4}px;min-height:${cr.height}px;
+    width:${ghostW-4}px;min-height:${cr.height}px;
     transform:translate(${snapDX}px,${snapDY}px);
     display:flex;align-items:center;justify-content:center;
     background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);
@@ -2063,8 +2065,8 @@ function onDragMove(e){
   computeDropShift(dragState._beforeCardId);
   
   // Show insertion indicator based on drop zone
-  var dropZone='none';
-    var dropY=e.clientY;
+  var dropZone='none',betweenIdx=0;
+  var dropY=e.clientY;
   if(rows.length>1){
     for(var ri=0;ri<rows.length-1;ri++){
       if(dropY>=rows[ri].bottom&&dropY<=rows[ri+1].top){dropZone='between';betweenIdx=ri;break;}
