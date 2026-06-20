@@ -261,6 +261,9 @@ function openPageEditPanel(pageId) {
 }
 
 /* ── Page Management Panel (overview of all pages) ── */
+// Simple drag-to-reorder state for page list
+var _pageDrag = null;
+
 function openPageManagementPanel() {
   _editingPageId = null;
   _editingCardId = null;
@@ -276,11 +279,20 @@ function openPageManagementPanel() {
     if (!p) return;
     const card = document.createElement('div');
     card.className = 'cp-config-card';
+    card.dataset.pageId = id;
     card.style.cssText = 'display:flex;flex-direction:column;gap:10px;';
 
     // Header with icon + name
     const hdr = document.createElement('div');
-    hdr.style.cssText = 'display:flex;align-items:center;gap:10px;';
+    hdr.style.cssText = 'display:flex;align-items:center;gap:8px;';
+    
+    // Drag handle
+    const dh = document.createElement('span');
+    dh.textContent = '⠿';
+    dh.style.cssText = 'cursor:grab;color:var(--text-tertiary);user-select:none;touch-action:none;padding:4px;font-size:var(--text-lg);line-height:1;';
+    dh.title = 'Drag to reorder';
+    hdr.appendChild(dh);
+
     const iconSpan = document.createElement('span');
     iconSpan.style.cssText = 'display:inline-flex;align-items:center;width:28px;height:28px;font-size:var(--text-xl);';
     if (p.icon && isLucideName(p.icon)) {
@@ -321,6 +333,19 @@ function openPageManagementPanel() {
     card.appendChild(hdr);
     body.appendChild(card);
     renderIcons();
+
+    // Drag-to-reorder via pointer events
+    dh.addEventListener('pointerdown', function(e) {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      card.style.opacity = '0.4';
+      card.style.transform = 'scale(0.97)';
+      _pageDrag = { card: card, pageId: id, startY: e.clientY };
+      document.addEventListener('pointermove', onPageDragMove);
+      document.addEventListener('pointerup', onPageDragEnd);
+      document.addEventListener('pointercancel', onPageDragEnd);
+    });
   });
 
   // Footer with Add + Done
@@ -354,6 +379,74 @@ function openPageManagementPanel() {
       document.body.classList.add('panel-open');
     });
   });
+}
+
+/* ── Page drag-to-reorder handlers ── */
+function onPageDragMove(e) {
+  if (!_pageDrag) return;
+  e.preventDefault();
+  const body = $('#edit-panel-body');
+  const items = [...body.children].filter(function(el) { return el.classList.contains('cp-config-card') && el !== _pageDrag.card; });
+  // Find insertion point: before the card whose center Y the cursor is above
+  let targetBefore = null;
+  for (const item of items) {
+    const r = item.getBoundingClientRect();
+    if (e.clientY < r.top + r.height / 2) { targetBefore = item; break; }
+  }
+  // Visual indicator: show which card will be displaced
+  items.forEach(function(el) {
+    el.style.borderTopColor = (el === targetBefore) ? 'var(--accent)' : 'var(--glass-border)';
+    el.style.borderTopWidth = (el === targetBefore) ? '3px' : '1px';
+    el.style.transition = 'border-top-color 0.1s, border-top-width 0.1s';
+  });
+  // Move the dragged card with the cursor
+  _pageDrag.card.style.transform = 'translateY(' + (e.clientY - _pageDrag.startY) + 'px)';
+  _pageDrag.card.style.transition = 'transform 0.05s linear';
+}
+
+function onPageDragEnd(e) {
+  if (!_pageDrag) return;
+  document.removeEventListener('pointermove', onPageDragMove);
+  document.removeEventListener('pointerup', onPageDragEnd);
+  document.removeEventListener('pointercancel', onPageDragEnd);
+  _pageDrag.card.style.opacity = '';
+  _pageDrag.card.style.transform = '';
+  // Reset visual indicators
+  const body = $('#edit-panel-body');
+  [...body.children].forEach(function(el) {
+    el.style.transform = '';
+    el.style.transition = '';
+    el.style.borderTopColor = '';
+    el.style.borderTopWidth = '';
+  });
+  // Compute new order from DOM, then move the dragged pageId to its insertion point
+  const items = [...body.children].filter(function(el) { return el.classList.contains('cp-config-card'); });
+  const domOrder = items.map(function(el) { return el.dataset.pageId; });
+  // Remove dragged page from its current DOM position and re-insert at target
+  const dragId = _pageDrag.pageId;
+  const srcIdx = domOrder.indexOf(dragId);
+  if (srcIdx >= 0) {
+    const newOrder = [...domOrder];
+    newOrder.splice(srcIdx, 1);
+    // Find target insertion: the card whose center was crossed
+    let tgtIdx = newOrder.length;
+    for (let i = 0; i < items.length; i++) {
+      const el = items[i];
+      if (el.dataset.pageId === dragId) continue;
+      const r = el.getBoundingClientRect();
+      if (e.clientY < r.top + r.height / 2) {
+        tgtIdx = newOrder.indexOf(el.dataset.pageId);
+        break;
+      }
+    }
+    newOrder.splice(tgtIdx, 0, dragId);
+    if (JSON.stringify(newOrder) !== JSON.stringify(config.pageOrder)) {
+      config.pageOrder = newOrder;
+      saveConfig();
+      renderPageNav();
+    }
+  }
+  _pageDrag = null;
 }
 
 /* ── Edit Panel Form Helpers ── */
