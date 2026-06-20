@@ -1311,13 +1311,14 @@ function renderSection(section, card) {
       while (c && !c.classList.contains('section-content') && !c.classList.contains('dropdown-content')) c = c.nextElementSibling;
       if (c) {
         if (section.collapsed) {
-          // Collapse: pin to actual height, animate to 0, remove open class after transition
+          // Collapse: remove open class (gets overflow:hidden, removes flex:1),
+          // pin to current height, then animate max-height to 0 via CSS transition
           c.style.maxHeight = c.scrollHeight + 'px';
           c.offsetHeight;
-          c.style.maxHeight = '0px';
+          c.classList.remove('open');
+          c.style.maxHeight = '';   // CSS max-height:0 now applies, transition fires
           clearTimeout(c._collapseTimer);
           c._collapseTimer = setTimeout(function() {
-            c.classList.remove('open');
             c.style.maxHeight = '';
           }, 450);
           // Stop any running timers in this section

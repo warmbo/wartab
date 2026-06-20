@@ -325,7 +325,7 @@ body {
 .dropdown-toggle:hover { color: var(--text-primary); }
 .dropdown-toggle .arrow { transition: transform 0.35s ease; font-size: var(--text-2xs); }
 .dropdown-toggle.open .arrow { transform: rotate(90deg); }
-.dropdown-content { overflow: hidden; transition: max-height 0.45s ease, opacity 0.35s ease, padding 0.3s ease, margin 0.3s ease; max-height: 0; opacity: 0; padding: 0; margin: 0; }
+.dropdown-content { overflow: hidden; transition: max-height 0.45s ease, opacity 0.35s ease, padding 0.3s ease, margin 0.3s ease; max-height: 0; opacity: 0; padding: 0; margin: 0; min-height: 0; }
 .dropdown-content.open { max-height: 3000px; opacity: 1; padding: 4px 0 8px; margin: 4px 0; overflow: visible; flex: 1; display: flex; flex-direction: column; }
 /* Unify section toggles with dropdown style */
 /* ── Section toggle: unified with dropdown style ── */
