@@ -131,13 +131,17 @@ function openCardEditPanel(cardId) {
   // Force style resolution so the browser registers the starting off-screen
   // transform position (translateX(-100%) or translateX(100%)) before .open
   // triggers the transition. offsetHeight only reflows layout, not transforms.
+  // Set panel starting position explicitly via inline style (no CSS cascade ambiguity)
+  panel.style.transition='none';
+  panel.style.transform=panel.classList.contains('slide-left')?'translateX(-100%)':'translateX(100%)';
   panel.offsetHeight;
-  // Paint one frame with the panel at its off-screen starting position,
-  // then trigger the open transition on the next frame.
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() {
-      $('#edit-panel-overlay').classList.add('open');
+  // Double rAF: frame 1 paints the starting position, frame 2 triggers the transition
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      panel.style.transition='';
       panel.classList.add('open');
+      panel.style.transform='';  // CSS #edit-panel.open → translateX(0)
+      $('#edit-panel-overlay').classList.add('open');
       document.body.classList.add('panel-open');
     });
   });
