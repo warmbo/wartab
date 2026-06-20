@@ -37,7 +37,7 @@
   },
   "layout": {
     "cols": 4,
-    "gap": 5,
+    "gap": 14,
     "pageWidth": 100,
     "pagePadding": 2,
     "pageWidthPadding": 8
@@ -57,66 +57,6 @@
     "openInNewTab": true
   },
   "cards": [
-    {
-      "id": "daily-drivers",
-      "title": "Favorites",
-      "icon": "Star",
-      "color": "#cccccc",
-      "width": 1,
-      "sections": [
-        {
-          "id": "dev-links",
-          "type": "links",
-          "label": "Frequent",
-          "links": [
-            {
-              "label": "reddit",
-              "url": "https://reddit.com",
-              "icon": "/icons/reddit.svg"
-            },
-            {
-              "label": "YouTube",
-              "url": "https://youtube.com",
-              "icon": "/icons/youtube.svg"
-            },
-            {
-              "label": "GitHub",
-              "url": "https://github.com",
-              "icon": "/icons/github.svg"
-            },
-            {
-              "label": "Twitch",
-              "url": "https://twitch.com",
-              "icon": "/icons/twitch.svg"
-            },
-            {
-              "label": "Wallhaven",
-              "url": "https://wallhaven.cc",
-              "icon": "BrickWall"
-            }
-          ],
-          "collapsed": false
-        },
-        {
-          "id": "media-links",
-          "type": "links",
-          "label": "Projects",
-          "links": [
-            {
-              "label": "ZENHAWX",
-              "url": "https://zenhawx.org",
-              "icon": "/uploads/icons/b70efd775c9641639183441eca1c150d.png"
-            },
-            {
-              "label": "Warmbo LLC",
-              "url": "https://warmbo.com",
-              "icon": "/uploads/icons/1e53265bc82d49e0b8c8013662f3c655.png"
-            }
-          ],
-          "collapsed": false
-        }
-      ]
-    },
     {
       "id": "clock-card",
       "title": "Time",
@@ -327,8 +267,8 @@
     },
     {
       "id": "card-67z1x4omqlmqd84",
-      "title": "",
-      "icon": "package",
+      "title": "Cat",
+      "icon": "Cat",
       "color": "#888888",
       "width": 1,
       "height": 1,
@@ -336,7 +276,8 @@
         {
           "id": "sec-hg48983mqlmqd84",
           "type": "digital-pet",
-          "label": "Digital Pet"
+          "label": "",
+          "petName": "Cat Named Dog"
         }
       ]
     },
@@ -372,9 +313,69 @@
       "height": 2
     },
     {
+      "id": "daily-drivers",
+      "title": "Favorites",
+      "icon": "Star",
+      "color": "#cccccc",
+      "width": 1,
+      "sections": [
+        {
+          "id": "dev-links",
+          "type": "links",
+          "label": "Frequent",
+          "links": [
+            {
+              "label": "reddit",
+              "url": "https://reddit.com",
+              "icon": "/icons/reddit.svg"
+            },
+            {
+              "label": "YouTube",
+              "url": "https://youtube.com",
+              "icon": "/icons/youtube.svg"
+            },
+            {
+              "label": "GitHub",
+              "url": "https://github.com",
+              "icon": "/icons/github.svg"
+            },
+            {
+              "label": "Twitch",
+              "url": "https://twitch.com",
+              "icon": "/icons/twitch.svg"
+            },
+            {
+              "label": "Wallhaven",
+              "url": "https://wallhaven.cc",
+              "icon": "BrickWall"
+            }
+          ],
+          "collapsed": false
+        },
+        {
+          "id": "media-links",
+          "type": "links",
+          "label": "Projects",
+          "links": [
+            {
+              "label": "ZENHAWX",
+              "url": "https://zenhawx.org",
+              "icon": "/uploads/icons/b70efd775c9641639183441eca1c150d.png"
+            },
+            {
+              "label": "Warmbo LLC",
+              "url": "https://warmbo.com",
+              "icon": "/uploads/icons/1e53265bc82d49e0b8c8013662f3c655.png"
+            }
+          ],
+          "collapsed": false
+        }
+      ]
+    },
+    {
       "id": "card-e4l1uy4mqgvyqyb",
       "title": "",
-      "icon": "AlignVerticalSpaceAround",
+      "icon": "",
       "color": "#888888",
       "width": 1,
       "height": 1,
@@ -400,8 +401,24 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
+        },
+        {
+          "id": "sec-rw5ikp9mqlmsbkr",
+          "type": "ascii-anim",
+          "label": "",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "anim": "stars",
+          "speed": 2,
+          "contrast": 10,
+          "ghost": false
         }
       ],
       "transparent": false
@@ -412,66 +429,6 @@
       "name": "Home",
       "icon": "layout",
       "cards": [
-        {
-          "id": "daily-drivers",
-          "title": "Favorites",
-          "icon": "Star",
-          "color": "#cccccc",
-          "width": 1,
-          "sections": [
-            {
-              "id": "dev-links",
-              "type": "links",
-              "label": "Frequent",
-              "links": [
-                {
-                  "label": "reddit",
-                  "url": "https://reddit.com",
-                  "icon": "/icons/reddit.svg"
-                },
-                {
-                  "label": "YouTube",
-                  "url": "https://youtube.com",
-                  "icon": "/icons/youtube.svg"
-                },
-                {
-                  "label": "GitHub",
-                  "url": "https://github.com",
-                  "icon": "/icons/github.svg"
-                },
-                {
-                  "label": "Twitch",
-                  "url": "https://twitch.com",
-                  "icon": "/icons/twitch.svg"
-                },
-                {
-                  "label": "Wallhaven",
-                  "url": "https://wallhaven.cc",
-                  "icon": "BrickWall"
-                }
-              ],
-              "collapsed": false
-            },
-            {
-              "id": "media-links",
-              "type": "links",
-              "label": "Projects",
-              "links": [
-                {
-                  "label": "ZENHAWX",
-                  "url": "https://zenhawx.org",
-                  "icon": "/uploads/icons/b70efd775c9641639183441eca1c150d.png"
-                },
-                {
-                  "label": "Warmbo LLC",
-                  "url": "https://warmbo.com",
-                  "icon": "/uploads/icons/1e53265bc82d49e0b8c8013662f3c655.png"
-                }
-              ],
-              "collapsed": false
-            }
-          ]
-        },
         {
           "id": "clock-card",
           "title": "Time",
@@ -682,8 +639,8 @@
         },
         {
           "id": "card-67z1x4omqlmqd84",
-          "title": "",
-          "icon": "package",
+          "title": "Cat",
+          "icon": "Cat",
           "color": "#888888",
           "width": 1,
           "height": 1,
@@ -691,7 +648,8 @@
             {
               "id": "sec-hg48983mqlmqd84",
               "type": "digital-pet",
-              "label": "Digital Pet"
+              "label": "",
+              "petName": "Cat Named Dog"
             }
           ]
         },
@@ -727,9 +685,69 @@
           "height": 2
         },
         {
+          "id": "daily-drivers",
+          "title": "Favorites",
+          "icon": "Star",
+          "color": "#cccccc",
+          "width": 1,
+          "sections": [
+            {
+              "id": "dev-links",
+              "type": "links",
+              "label": "Frequent",
+              "links": [
+                {
+                  "label": "reddit",
+                  "url": "https://reddit.com",
+                  "icon": "/icons/reddit.svg"
+                },
+                {
+                  "label": "YouTube",
+                  "url": "https://youtube.com",
+                  "icon": "/icons/youtube.svg"
+                },
+                {
+                  "label": "GitHub",
+                  "url": "https://github.com",
+                  "icon": "/icons/github.svg"
+                },
+                {
+                  "label": "Twitch",
+                  "url": "https://twitch.com",
+                  "icon": "/icons/twitch.svg"
+                },
+                {
+                  "label": "Wallhaven",
+                  "url": "https://wallhaven.cc",
+                  "icon": "BrickWall"
+                }
+              ],
+              "collapsed": false
+            },
+            {
+              "id": "media-links",
+              "type": "links",
+              "label": "Projects",
+              "links": [
+                {
+                  "label": "ZENHAWX",
+                  "url": "https://zenhawx.org",
+                  "icon": "/uploads/icons/b70efd775c9641639183441eca1c150d.png"
+                },
+                {
+                  "label": "Warmbo LLC",
+                  "url": "https://warmbo.com",
+                  "icon": "/uploads/icons/1e53265bc82d49e0b8c8013662f3c655.png"
+                }
+              ],
+              "collapsed": false
+            }
+          ]
+        },
+        {
           "id": "card-e4l1uy4mqgvyqyb",
           "title": "",
-          "icon": "AlignVerticalSpaceAround",
+          "icon": "",
           "color": "#888888",
           "width": 1,
           "height": 1,
@@ -755,8 +773,24 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
+            },
+            {
+              "id": "sec-rw5ikp9mqlmsbkr",
+              "type": "ascii-anim",
+              "label": "",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "anim": "stars",
+              "speed": 2,
+              "contrast": 10,
+              "ghost": false
             }
           ],
           "transparent": false
@@ -1444,5 +1478,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-fjpy1g4mqguw1x3",
-  "_version": "30a4673-dirty"
+  "_version": "b3d3bae-dirty"
 }

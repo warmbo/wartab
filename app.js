@@ -347,9 +347,10 @@ function buildCardEditPanel(card) {
     ip.appendChild(img);
   } else if (isLucideName(card.icon)) {
     ip.appendChild(renderLucideEl(card.icon, ''));
-  } else {
-    ip.textContent = card.icon || '📦';
+  } else if (card.icon) {
+    ip.textContent = card.icon;
   }
+  // else: blank — no icon
   iconRow.appendChild(ip);
   const chIcon = cpBtn('Change');
   chIcon.addEventListener('click', () => openIconPicker(url => { card.icon = url; saveAndRefresh(); }));
