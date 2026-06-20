@@ -132,12 +132,14 @@ function openCardEditPanel(cardId) {
   // transform position (translateX(-100%) or translateX(100%)) before .open
   // triggers the transition. offsetHeight only reflows layout, not transforms.
   panel.offsetHeight;
-  // Use rAF to ensure the browser paints the panel at its off-screen position
-  // before we trigger the open transition
+  // Paint one frame with the panel at its off-screen starting position,
+  // then trigger the open transition on the next frame.
   requestAnimationFrame(function() {
-    $('#edit-panel-overlay').classList.add('open');
-    panel.classList.add('open');
-    document.body.classList.add('panel-open');
+    requestAnimationFrame(function() {
+      $('#edit-panel-overlay').classList.add('open');
+      panel.classList.add('open');
+      document.body.classList.add('panel-open');
+    });
   });
   const title = $('#edit-panel-title');
   if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
