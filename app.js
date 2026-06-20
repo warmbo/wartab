@@ -2036,13 +2036,22 @@ function onDragMove(e){
   // ── Ghost position: card's original screen position + smooth grid snap via transform ──
   // left/top are always the card's actual position. transform adds the grid-snap offset
   // on subsequent frames so the ghost tracks columns without jumping.
-  // ── Ghost uses cached card rect + grid-calculated width ──
+  // ── Ghost snaps to grid rows AND columns (like columns) ──
   var cr=dragState._cardRect;
-  // X: snap to grid column. Y: follow cursor exactly (pixel-perfect vertical tracking)
+  // X: snap to column (existing)
   var snapDX=ghostLeft-cr.left;
-  var snapDY=(e.clientY-cr.top-dragState._grabOffsY);
-  // Use grid-calculated width (ghostW) instead of rendered card width,
-  // and card's actual rendered height for min-height
+  
+  // Y: snap to nearest row top (like X snaps to column)
+  var cursorCardTop=e.clientY-dragState._grabOffsY;
+  var bestRowIdx=0,bestRowDist=Infinity;
+  for(var ri=0;ri<rows.length;ri++){
+    var d2=Math.abs(rows[ri].top-cursorCardTop);
+    if(d2<bestRowDist){bestRowDist=d2;bestRowIdx=ri;}
+  }
+  var snapTop=rows.length?rows[bestRowIdx].top:(e.clientY-30);
+  var snapDY=snapTop-cr.top;
+  
+  // Use grid-calculated width (ghostW) and card's actual height for min-height
   ghost.style.cssText=`
     position:fixed;pointer-events:none;z-index:var(--z-drag);
     left:${cr.left}px;top:${cr.top}px;
@@ -2064,16 +2073,23 @@ function onDragMove(e){
   // Grid simulation drop-shift: highlight cards that will change row/col
   computeDropShift(dragState._beforeCardId);
   
-  // Show insertion indicator based on drop zone
-  var dropZone='none',betweenIdx=0;
+  // Show insertion indicator based on drop zone (use strict row bounds, not expanded)
   var dropY=e.clientY;
+  var dropZone='none',betweenIdx=0;
+  // Check between strict row gaps first
   if(rows.length>1){
     for(var ri=0;ri<rows.length-1;ri++){
       if(dropY>=rows[ri].bottom&&dropY<=rows[ri+1].top){dropZone='between';betweenIdx=ri;break;}
     }
   }
+  // Check below last row
   if(dropZone==='none'&&rows.length&&dropY>rows[rows.length-1].bottom)dropZone='below';
-  if(dropZone==='none'&&targetRow)dropZone=beforeCard?'insert':'append';
+  // Check inside a row (strict bounds)
+  if(dropZone==='none'){
+    for(var ri=0;ri<rows.length;ri++){
+      if(dropY>=rows[ri].top&&dropY<=rows[ri].bottom){dropZone=beforeCard?'insert':'append';break;}
+    }
+  }
   
   if(dropZone==='between'||dropZone==='below'){
     insertBar.style.display='';
