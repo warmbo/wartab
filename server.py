@@ -15,6 +15,8 @@ UPLOADS = HERE / "uploads"
 ICONS = HERE / "icons"
 STATIC = HERE / "static"
 UPLOADS.mkdir(exist_ok=True)
+ICONS_DIR = HERE / "uploads" / "icons"
+ICONS_DIR.mkdir(parents=True, exist_ok=True)
 ICONS.mkdir(exist_ok=True)
 NOTES = HERE / "notes"
 NOTES.mkdir(exist_ok=True)
@@ -71,6 +73,21 @@ def process_image(raw_bytes,filename):
     else:
         with open(out_path,"wb") as f: f.write(raw_bytes)
         return {"url":f"/uploads/{out_name}","path":str(out_path),"size":len(raw_bytes),"name":filename}
+def process_icon(raw_bytes,filename):
+    """Resize to 48x48 and save to uploads/icons/."""
+    if not raw_bytes: return {"error":"Empty file"}
+    if len(raw_bytes)>2*1024*1024: return {"error":"File too large"}
+    from PIL import Image, ImageOps
+    try:
+        img=Image.open(io.BytesIO(raw_bytes))
+        if img.mode in("RGBA","P","LA"): img=img.convert("RGBA")
+        else: img=img.convert("RGB")
+        img.thumbnail((48,48),Image.LANCZOS)
+        out_name=f"{uuid.uuid4().hex}.png"
+        out_path=ICONS_DIR/out_name
+        img.save(out_path,format="PNG",optimize=True)
+        return {"url":f"/uploads/icons/{out_name}","size":out_path.stat().st_size}
+    except Exception as e: return {"error":str(e)}
 _last_cpu=None
 def get_cpu_percent():
     global _last_cpu
@@ -311,6 +328,12 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             return self._json({})
         if self.path == "/api/arp":
             return self._json(scan_arp())
+        if self.path == "/api/icons/list":
+            files=[]
+            for f in sorted(ICONS_DIR.iterdir(), key=lambda p:p.stat().st_mtime, reverse=True):
+                if f.is_file() and f.suffix.lower() in('.png','.jpg','.jpeg','.gif','.webp','.svg'):
+                    files.append({"name":f.name,"url":f"/uploads/icons/{f.name}","size":f.stat().st_size})
+            return self._json(files)
         path = self.translate_path(self.path)
         if not Path(path).is_file() or self.path=="/": self.path="/index.html"
         return super().do_GET()
@@ -324,6 +347,21 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             if "error" in result: return self._json(result,400)
             return self._json(result)
         if self.path.startswith("/api/upload/"): return self._handle_delete(self.path)
+        if self.path=="/api/upload-icon":
+            cl=int(self.headers.get("Content-Length",0))
+            if cl>2*1024*1024: return self._json({"error":"too large"},413)
+            raw=self.rfile.read(cl) if cl else b""
+            result=process_icon(raw,"icon.png")
+            if "error" in result: return self._json(result,400)
+            return self._json(result)
+        if self.path.startswith("/api/icons/delete/"):
+            name=self.path.split("/api/icons/delete/")[1]
+            safe=re.sub(r"[^a-zA-Z0-9_.-]","",name)
+            fpath=ICONS_DIR/safe
+            if fpath.exists() and fpath.is_file():
+                fpath.unlink()
+                return self._json({"status":"deleted","file":safe})
+            return self._json({"error":"not found"},404)
         if self.path == "/api/config":
             cl = int(self.headers.get("Content-Length", 0))
             if cl > 1024*1024: return self._json({"error":"too large"},413)

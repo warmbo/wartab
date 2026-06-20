@@ -89,6 +89,18 @@ const storage = (function() {
     uploadFile: uploadFile,
     deleteFile: deleteFile,
     getIconIndex: getIconIndex,
+    uploadIcon: function(file, filename) {
+      return fetch(BASE + '/api/upload-icon', {
+        method: 'POST', headers: { 'X-Filename': filename }, body: file
+      }).then(function(r) { return r.json(); });
+    },
+    listIcons: function() {
+      return api('/api/icons/list', 'GET');
+    },
+    deleteIcon: function(url) {
+      var name = url.split('/').pop();
+      return api('/api/icons/delete/' + encodeURIComponent(name), 'POST');
+    },
     snapshots: {
       list: function() { return api('/api/config/backups', 'GET'); },
       create: function() {

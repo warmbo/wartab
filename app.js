@@ -1950,7 +1950,56 @@ function openIconPicker(cb){iconPickerCallback=cb;iconPickerOpen=true;$('#icon-p
 function closeIconPicker(){iconPickerOpen=false;iconPickerCallback=null;$('#icon-picker-overlay').classList.remove('open');$('#icon-picker').classList.remove('open');}
 function buildIconPicker(t){const c=$('#icon-picker-content');c.innerHTML='';$$('.ip-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));if(t==='library')buildLibraryTab(c);else if(t==='upload')buildUploadTab(c);else if(t==='icons')buildIconsTab(c);else if(t==='url')buildUrlTab(c);}
 function buildLibraryTab(c){const s=document.createElement('input');s.className='icon-search-bar';s.placeholder='Search services...';c.appendChild(s);const g=document.createElement('div');g.className='icon-grid';c.appendChild(g);function ri(f){g.innerHTML='';const fl=(f||'').toLowerCase();if(!ICON_REPO.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">Loading service icons...</div>';return;}const items=fl?ICON_REPO.filter(i=>i.name.toLowerCase().includes(fl)||i.file.toLowerCase().includes(fl)||i.tags.some(t=>t.includes(fl))):ICON_REPO;items.slice(0,120).forEach(item=>{const d=document.createElement('div');d.className='icon-grid-item';const img=document.createElement('img');img.src=`${ICON_CDN}/${item.file}.svg`;img.alt=item.name;img.loading='lazy';img.onerror=function(){this.parentElement.style.display='none';};const l=document.createElement('span');l.textContent=item.name;d.appendChild(img);d.appendChild(l);d.addEventListener('click',()=>selectIcon(`${ICON_CDN}/${item.file}.svg`));g.appendChild(d);});if(!items.length)g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No icons found</div>';}s.addEventListener('input',()=>ri(s.value));ri('');}
-function buildUploadTab(c){const z=document.createElement('div');z.className='upload-zone';z.innerHTML='<div style="font-size:var(--text-3xl);">📁</div><p>Click to upload an icon image</p>';c.appendChild(z);const fi=document.createElement('input');fi.type='file';fi.accept='image/png,image/svg+xml,image/webp,image/jpeg,image/gif';fi.style.display='none';fi.addEventListener('change',e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{selectIcon(ev.target.result);};reader.readAsDataURL(file);});z.addEventListener('click',()=>fi.click());c.appendChild(fi);}
+function buildUploadTab(c){
+  c.innerHTML='';
+  // Upload zone
+  const z=document.createElement('div');z.className='upload-zone';
+  z.innerHTML='<div style="font-size:var(--text-3xl);">📁</div><p>Click to upload an icon (48×48 resized)</p>';c.appendChild(z);
+  const fi=document.createElement('input');fi.type='file';
+  fi.accept='image/png,image/svg+xml,image/webp,image/jpeg,image/gif';fi.style.display='none';
+  fi.addEventListener('change',function(e){
+    const file=e.target.files[0];if(!file)return;
+    z.innerHTML='<div style="padding:20px;color:var(--text-secondary);">Uploading...</div>';
+    storage.uploadIcon(file,file.name).then(function(result){
+      if(result&&!result.error){
+        selectIcon(result.url);
+      }else{
+        toast('Upload failed: '+(result&&result.error?result.error:'Unknown'),'error');
+        buildUploadTab(c);
+      }
+    }).catch(function(err){
+      toast('Upload error: '+err.message,'error');
+      buildUploadTab(c);
+    });
+  });c.appendChild(fi);
+  z.addEventListener('click',function(){fi.click();});
+  // Gallery
+  const gal=document.createElement('div');gal.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;';
+  const loadGal=function(){
+    gal.innerHTML='<div style="grid-column:1/-1;font-size:var(--text-xs);color:var(--text-tertiary);text-align:center;padding:12px;">Loading...</div>';
+    storage.listIcons().then(function(icons){
+      gal.innerHTML='';
+      if(!icons||!icons.length){
+        gal.innerHTML='<div style="grid-column:1/-1;font-size:var(--text-xs);color:var(--text-tertiary);text-align:center;padding:12px;">No uploaded icons yet.</div>';
+        return;
+      }
+      icons.forEach(function(ic){
+        const card=document.createElement('div');card.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border:1px solid var(--surface-border);cursor:pointer;background:rgba(0,0,0,0.1);position:relative;';
+        const img=document.createElement('img');img.src=ic.url;img.style.cssText='width:48px;height:48px;object-fit:contain;display:block;';
+        card.title=ic.name;
+        card.addEventListener('click',function(){selectIcon(ic.url);});
+        const del=document.createElement('button');del.textContent='✕';
+        del.style.cssText='position:absolute;top:2px;right:2px;padding:0 3px;font-size:10px;background:rgba(0,0,0,0.6);border:1px solid var(--surface-border);color:var(--color-error);cursor:pointer;line-height:1.4;';
+        del.addEventListener('click',function(e){e.stopPropagation();
+          storage.deleteIcon(ic.url).then(function(){loadGal();toast('Icon deleted');}).catch(function(){toast('Delete failed','error');});
+        });
+        card.appendChild(img);card.appendChild(del);gal.appendChild(card);
+      });
+    }).catch(function(){gal.innerHTML='<div style="grid-column:1/-1;color:var(--text-tertiary);text-align:center;padding:12px;">Could not load icons.</div>';});
+  };
+  loadGal();
+  c.appendChild(gal);
+}
 function buildIconsTab(c){
   const s=document.createElement('input');s.className='icon-search-bar';s.placeholder='Search icons or emoji...';c.appendChild(s);
   const etab=document.createElement('div');etab.style.cssText='display:flex;gap:4px;margin-bottom:8px;';
