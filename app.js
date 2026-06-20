@@ -2129,7 +2129,10 @@ function onDragMove(e){
   }
 }
 
-function dropZoneClear(){$$('.card.drop-shift').forEach(el=>el.classList.remove('drop-shift'));}
+function dropZoneClear(){
+  $$('.card.drop-shift').forEach(function(el){el.classList.remove('drop-shift');});
+  document.querySelectorAll('.card-dir-arrow').forEach(function(el){el.remove();});
+}
 
 // Simulate CSS Grid auto-placement for computing final layout positions.
 function simulateGrid(cards, cols) {
@@ -2182,9 +2185,11 @@ function computeDropShift(targetBeforeCardId) {
   computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder);
 }
 
-// Shared: apply drop-shift to cards whose (row,col) changes between old and new positions
+// Shared: apply drop-shift + directional arrow to cards whose (row,col) changes
 function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder) {
   dropZoneClear();
+  // Remove old direction arrows
+  document.querySelectorAll('.card-dir-arrow').forEach(function(el){el.remove();});
   const grid = document.getElementById('card-grid');
   for (let i = 0; i < allCards.length; i++) {
     const c = allCards[i];
@@ -2193,9 +2198,23 @@ function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrde
     const newIdx = newOrder ? newOrder.findIndex(nc => nc.id === c.id) : -1;
     if (newIdx < 0) continue;
     const newP = newPos[newIdx];
-    if (oldP.row !== newP.row || oldP.col !== newP.col) {
+    const dRow = newP.row - oldP.row;
+    const dCol = newP.col - oldP.col;
+    if (dRow !== 0 || dCol !== 0) {
       const el = grid.querySelector(`[data-card-id="${c.id}"]`);
-      if (el) el.classList.add('drop-shift');
+      if (el) {
+        el.classList.add('drop-shift');
+        // Add directional arrow overlay
+        var arrow = document.createElement('span');
+        arrow.className = 'card-dir-arrow';
+        var dir = '';
+        if (dRow < 0) dir += '↑';
+        if (dRow > 0) dir += '↓';
+        if (dCol < 0) dir += '←';
+        if (dCol > 0) dir += '→';
+        arrow.textContent = dir;
+        el.appendChild(arrow);
+      }
     }
   }
 }

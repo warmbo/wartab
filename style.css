@@ -774,6 +774,16 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   box-shadow: inset 3px 0 12px color-mix(in srgb, var(--accent) 15%, transparent) !important;
   background: color-mix(in srgb, var(--accent) 6%, transparent) !important;
 }
+/* Directional arrow overlay on cards that will move */
+.card-dir-arrow {
+  position: absolute; top: 4px; right: 4px;
+  font-size: var(--text-lg); line-height: 1;
+  color: var(--accent);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 2;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 50%, transparent);
+}
 
 /* ══════ Grid Gap (empty cells) ══════ */
 .card-edit-btn { background: none !important; background-color: transparent !important; border: none !important; color: var(--text-tertiary); font-size: var(--text-base); cursor: pointer; padding: 4px 8px; transition: opacity 0.15s, color 0.15s; opacity: var(--opacity-hint); appearance: none; -webkit-appearance: none; min-width: 36px; min-height: 36px; }
