@@ -2044,32 +2044,44 @@ function onDragMove(e){
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   `;
 
-  // ── Placeholder card preview + grid simulation ──
-  // Show a card-sized box at the target position with exact dimensions
-  insertBar.style.display='';
-  let barLeft;
-  if(beforeCard){
-    const br=beforeCard.getBoundingClientRect();
-    barLeft=br.left;
-  }else if(targetRow&&targetRow.cards.length){
-    const lastRect=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();
-    barLeft=lastRect.right;
+  // ── Grid simulation preview: compute actual final positions ──
+  // Use simulateGrid to find exactly where the dragged card will land
+  // and which cards will shift, for an accurate preview.
+  var allCards=config.cards;
+  var srcIdx=allCards.findIndex(function(c){return c.id===dragState.cardId;});
+  if(srcIdx>=0){
+    var newOrder=allCards.slice();
+    var moved=newOrder.splice(srcIdx,1)[0];
+    var beforeIdx=dragState._beforeCardId
+      ?newOrder.findIndex(function(c){return c.id===dragState._beforeCardId;})
+      :newOrder.length;
+    if(beforeIdx<0)beforeIdx=newOrder.length;
+    newOrder.splice(beforeIdx,0,moved);
+    var oldPos=simulateGrid(allCards,cols);
+    var newPos=simulateGrid(newOrder,cols);
+    var dragNewPos=newPos[beforeIdx]; // dragged card's new grid position
+    
+    // Position the placeholder card at the correct grid cell
+    insertBar.style.display='';
+    var phLeft=gr.left+dragNewPos.col*(colW+gap);
+    var phTop=gr.top+dragNewPos.row*(140+gap); // 140px base row + gap
+    var phWidth=cw*colW+(cw-1)*gap;
+    var phHeight=(ch||1)*140;
+    var phColor=ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)';
+    insertBar.style.left=phLeft+'px';
+    insertBar.style.top=phTop+'px';
+    insertBar.style.width=phWidth+'px';
+    insertBar.style.height=phHeight+'px';
+    insertBar.style.background='color-mix(in srgb, '+phColor+' 10%, transparent)';
+    insertBar.style.border='2px dashed '+phColor;
+    insertBar.style.borderRadius='0';
+    
+    // Compute drop-shift: highlight cards that change position
+    computeDropShiftFromPositions(allCards, oldPos, newPos, dragState.cardId, newOrder);
   }else{
-    barLeft=gr.left;
+    insertBar.style.display='none';
+    dropZoneClear();
   }
-  insertBar.style.left=barLeft+'px';
-  // Placeholder spans the card\'s exact grid footprint
-  var phWidth=cw*colW+(cw-1)*gap;
-  var phHeight=(ch||1)*140;
-  var phColor=ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)';
-  insertBar.style.top=(targetRow?targetRow.top:e.clientY-30)+'px';
-  insertBar.style.width=phWidth+'px';
-  insertBar.style.height=phHeight+'px';
-  insertBar.style.background='color-mix(in srgb, '+phColor+' 10%, transparent)';
-  insertBar.style.border='2px dashed '+phColor;
-  insertBar.style.borderRadius='0';
-  // Compute which cards truly change position via grid simulation
-  computeDropShift(dragState._beforeCardId);
 }
 
 function dropZoneClear(){$$('.card.drop-shift').forEach(el=>el.classList.remove('drop-shift'));}
@@ -2105,6 +2117,7 @@ function simulateGrid(cards, cols) {
 
 // Compute which cards change position after the move using grid simulation.
 function computeDropShift(targetBeforeCardId) {
+  // Fallback: compute positions inline
   dropZoneClear();
   const allCards = config.cards;
   const dragId = dragState.cardId;
@@ -2121,13 +2134,18 @@ function computeDropShift(targetBeforeCardId) {
 
   const oldPos = simulateGrid(allCards, cols);
   const newPos = simulateGrid(newOrder, cols);
+  computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder);
+}
 
+// Shared: apply drop-shift to cards whose (row,col) changes between old and new positions
+function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder) {
+  dropZoneClear();
   const grid = document.getElementById('card-grid');
   for (let i = 0; i < allCards.length; i++) {
     const c = allCards[i];
     if (c.id === dragId) continue;
     const oldP = oldPos[i];
-    const newIdx = newOrder.findIndex(nc => nc.id === c.id);
+    const newIdx = newOrder ? newOrder.findIndex(nc => nc.id === c.id) : -1;
     if (newIdx < 0) continue;
     const newP = newPos[newIdx];
     if (oldP.row !== newP.row || oldP.col !== newP.col) {

@@ -58,71 +58,6 @@
   },
   "cards": [
     {
-      "id": "notes-card",
-      "title": "Notes",
-      "icon": "edit-3",
-      "color": "#bbbbbb",
-      "width": 1,
-      "sections": [
-        {
-          "id": "notes-main",
-          "type": "notes",
-          "label": "Reminders",
-          "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
-          "collapsed": false
-        },
-        {
-          "id": "sec-cqlskrkmqh400ej",
-          "type": "notes",
-          "label": "ToDo List",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
-          "collapsed": false
-        }
-      ],
-      "height": 2
-    },
-    {
-      "id": "clock-card",
-      "title": "Time",
-      "icon": "Clock2",
-      "color": "#aaaaaa",
-      "width": 2,
-      "sections": [
-        {
-          "id": "clock-main",
-          "type": "clock",
-          "format24h": false,
-          "showDate": true,
-          "showCalendar": true
-        }
-      ],
-      "transparent": false,
-      "height": 1
-    },
-    {
-      "id": "card-67z1x4omqlmqd84",
-      "title": "Cat",
-      "icon": "Cat",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-hg48983mqlmqd84",
-          "type": "digital-pet",
-          "label": "",
-          "petName": "Cat Named Dog"
-        }
-      ]
-    },
-    {
       "id": "selfhosted",
       "title": "Homelab",
       "icon": "ServerCog",
@@ -314,20 +249,22 @@
       "height": 2
     },
     {
-      "id": "card-isayxtbmqlrb4n9",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
+      "id": "clock-card",
+      "title": "Time",
+      "icon": "Clock2",
+      "color": "#aaaaaa",
+      "width": 2,
       "sections": [
         {
-          "id": "sec-hm0fgeqmqlrb4n9",
-          "type": "resource-monitor",
-          "label": "Resources",
-          "graphMode": false
+          "id": "clock-main",
+          "type": "clock",
+          "format24h": false,
+          "showDate": true,
+          "showCalendar": true
         }
-      ]
+      ],
+      "transparent": false,
+      "height": 1
     },
     {
       "id": "daily-drivers",
@@ -391,6 +328,37 @@
       ]
     },
     {
+      "id": "notes-card",
+      "title": "Notes",
+      "icon": "edit-3",
+      "color": "#bbbbbb",
+      "width": 1,
+      "sections": [
+        {
+          "id": "notes-main",
+          "type": "notes",
+          "label": "Reminders",
+          "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
+          "collapsed": false
+        },
+        {
+          "id": "sec-cqlskrkmqh400ej",
+          "type": "notes",
+          "label": "ToDo List",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
+          "collapsed": false
+        }
+      ],
+      "height": 2
+    },
+    {
       "id": "card-e4l1uy4mqgvyqyb",
       "title": "Quotes",
       "icon": "ScrollText",
@@ -440,6 +408,38 @@
         }
       ],
       "transparent": false
+    },
+    {
+      "id": "card-isayxtbmqlrb4n9",
+      "title": "",
+      "icon": "package",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-hm0fgeqmqlrb4n9",
+          "type": "resource-monitor",
+          "label": "Resources",
+          "graphMode": false
+        }
+      ]
+    },
+    {
+      "id": "card-67z1x4omqlmqd84",
+      "title": "Cat",
+      "icon": "Cat",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-hg48983mqlmqd84",
+          "type": "digital-pet",
+          "label": "",
+          "petName": "Cat Named Dog"
+        }
+      ]
     }
   ],
   "pages": {
@@ -447,71 +447,6 @@
       "name": "Home",
       "icon": "layout",
       "cards": [
-        {
-          "id": "notes-card",
-          "title": "Notes",
-          "icon": "edit-3",
-          "color": "#bbbbbb",
-          "width": 1,
-          "sections": [
-            {
-              "id": "notes-main",
-              "type": "notes",
-              "label": "Reminders",
-              "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
-              "collapsed": false
-            },
-            {
-              "id": "sec-cqlskrkmqh400ej",
-              "type": "notes",
-              "label": "ToDo List",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
-              "collapsed": false
-            }
-          ],
-          "height": 2
-        },
-        {
-          "id": "clock-card",
-          "title": "Time",
-          "icon": "Clock2",
-          "color": "#aaaaaa",
-          "width": 2,
-          "sections": [
-            {
-              "id": "clock-main",
-              "type": "clock",
-              "format24h": false,
-              "showDate": true,
-              "showCalendar": true
-            }
-          ],
-          "transparent": false,
-          "height": 1
-        },
-        {
-          "id": "card-67z1x4omqlmqd84",
-          "title": "Cat",
-          "icon": "Cat",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-hg48983mqlmqd84",
-              "type": "digital-pet",
-              "label": "",
-              "petName": "Cat Named Dog"
-            }
-          ]
-        },
         {
           "id": "selfhosted",
           "title": "Homelab",
@@ -704,20 +639,22 @@
           "height": 2
         },
         {
-          "id": "card-isayxtbmqlrb4n9",
-          "title": "",
-          "icon": "package",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
+          "id": "clock-card",
+          "title": "Time",
+          "icon": "Clock2",
+          "color": "#aaaaaa",
+          "width": 2,
           "sections": [
             {
-              "id": "sec-hm0fgeqmqlrb4n9",
-              "type": "resource-monitor",
-              "label": "Resources",
-              "graphMode": false
+              "id": "clock-main",
+              "type": "clock",
+              "format24h": false,
+              "showDate": true,
+              "showCalendar": true
             }
-          ]
+          ],
+          "transparent": false,
+          "height": 1
         },
         {
           "id": "daily-drivers",
@@ -781,6 +718,37 @@
           ]
         },
         {
+          "id": "notes-card",
+          "title": "Notes",
+          "icon": "edit-3",
+          "color": "#bbbbbb",
+          "width": 1,
+          "sections": [
+            {
+              "id": "notes-main",
+              "type": "notes",
+              "label": "Reminders",
+              "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
+              "collapsed": false
+            },
+            {
+              "id": "sec-cqlskrkmqh400ej",
+              "type": "notes",
+              "label": "ToDo List",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
+              "collapsed": false
+            }
+          ],
+          "height": 2
+        },
+        {
           "id": "card-e4l1uy4mqgvyqyb",
           "title": "Quotes",
           "icon": "ScrollText",
@@ -830,6 +798,38 @@
             }
           ],
           "transparent": false
+        },
+        {
+          "id": "card-isayxtbmqlrb4n9",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hm0fgeqmqlrb4n9",
+              "type": "resource-monitor",
+              "label": "Resources",
+              "graphMode": false
+            }
+          ]
+        },
+        {
+          "id": "card-67z1x4omqlmqd84",
+          "title": "Cat",
+          "icon": "Cat",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hg48983mqlmqd84",
+              "type": "digital-pet",
+              "label": "",
+              "petName": "Cat Named Dog"
+            }
+          ]
         }
       ]
     },
@@ -977,6 +977,30 @@
           "transparent": true
         },
         {
+          "id": "card-3k57h8umqirvzad",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 2,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-ff5wt15mqirvzad",
+              "type": "search",
+              "label": "Search",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "placeholder": "Search...",
+              "engine": "DuckDuckGo"
+            }
+          ]
+        },
+        {
           "id": "card-02p38iimqis68md",
           "title": "",
           "icon": "package",
@@ -1061,30 +1085,6 @@
           ]
         },
         {
-          "id": "card-3k57h8umqirvzad",
-          "title": "",
-          "icon": "package",
-          "color": "#888888",
-          "width": 2,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-ff5wt15mqirvzad",
-              "type": "search",
-              "label": "Search",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "placeholder": "Search...",
-              "engine": "DuckDuckGo"
-            }
-          ]
-        },
-        {
           "id": "card-2kt2asqmqiry8y1",
           "title": "",
           "icon": "package",
@@ -1112,6 +1112,26 @@
           ]
         },
         {
+          "id": "card-32hpacgmql60ck2",
+          "title": "",
+          "icon": "package",
+          "color": "#888888",
+          "width": 4,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-xh9qobbmql60ck2",
+              "type": "ascii-anim",
+              "label": "ASCII Animation",
+              "speed": 10,
+              "ghost": false,
+              "anim": "plasma",
+              "contrast": 10
+            }
+          ],
+          "transparent": true
+        },
+        {
           "id": "card-ikh1e6vmqirysg9",
           "title": "",
           "icon": "package",
@@ -1135,26 +1155,6 @@
               "targetDate": "2026-06-27T21:19"
             }
           ]
-        },
-        {
-          "id": "card-32hpacgmql60ck2",
-          "title": "",
-          "icon": "package",
-          "color": "#888888",
-          "width": 4,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-xh9qobbmql60ck2",
-              "type": "ascii-anim",
-              "label": "ASCII Animation",
-              "speed": 10,
-              "ghost": false,
-              "anim": "plasma",
-              "contrast": 10
-            }
-          ],
-          "transparent": true
         },
         {
           "id": "card-bxxeekjmqiryy6i",
