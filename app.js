@@ -129,8 +129,13 @@ function openCardEditPanel(cardId) {
   }
   $('#edit-panel-overlay').classList.add('open');
   panel.classList.add('open');
+  document.body.classList.add('panel-open');
   const title = $('#edit-panel-title');
   if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
+}
+
+function updateBlurState() {
+  document.body.classList.toggle('panel-open', _editPanelOpen || configPanelOpen);
 }
 
 function closeCardEditPanel() {
@@ -145,6 +150,7 @@ function closeCardEditPanel() {
   $('#edit-panel-overlay').classList.remove('open');
   $('#edit-panel').classList.remove('open');
   $('#edit-panel').classList.remove('slide-left');
+  updateBlurState();
 }
 
 function saveAndRefresh() {
@@ -2262,7 +2268,7 @@ function openBgPicker() {
 
 /* ═══════════════════════════════════════════ CONFIG PANEL ═══════════════════════════════════════════ */
 let configPanelOpen=false;
-function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);if(configPanelOpen){buildConfigPanel();renderIcons();}}
+function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);updateBlurState();if(configPanelOpen){buildConfigPanel();renderIcons();}}
 function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   const brand=config.branding||{};
   // Update header title

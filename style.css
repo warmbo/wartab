@@ -231,6 +231,8 @@ body {
 #card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; grid-auto-rows: minmax(140px, auto); transition: opacity 0.15s ease; margin-top: 12px; }
 /* Highlighted card sits above the config overlay so it's not blurred/dimmed */
 .card.card-highlight { position: relative; z-index: 106; box-shadow: 0 0 24px var(--accent-glow), var(--glass-shadow); border-color: var(--accent); }
+/* When a panel is open, blur all non-highlighted cards */
+body.panel-open .card:not(.card-highlight) { filter: blur(3px); transition: filter 0.3s; }
 
 /* ══════ Page Bar ══════ */
 #page-bar { display: flex; align-items: center; gap: 8px; padding: 20px 0 16px; justify-content: center; }
@@ -347,7 +349,7 @@ body {
 .drag-handle:active { cursor: grabbing; }
 
 /* ══════ Config Panel ══════ */
-.config-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.config-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
 .config-overlay.open { opacity: 1; pointer-events: auto; }
 .config-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 520px; max-width: 100vw; z-index: 101; background: linear-gradient(180deg, rgba(16,16,16,0.97) 0%, rgba(10,10,10,0.97) 100%); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-left: 1px solid var(--glass-border); transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; overflow: hidden; }
 .config-panel.open { transform: translateX(0); box-shadow: -8px 0 40px rgba(0,0,0,0.5); }

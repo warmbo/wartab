@@ -402,7 +402,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 0,
+          "_qi": 1,
           "collapsed": false
         },
         {
@@ -435,7 +435,8 @@
         {
           "id": "sec-hm0fgeqmqlrb4n9",
           "type": "resource-monitor",
-          "label": "Resources"
+          "label": "Resources",
+          "graphMode": true
         }
       ]
     }
@@ -790,7 +791,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 0,
+              "_qi": 1,
               "collapsed": false
             },
             {
@@ -823,7 +824,8 @@
             {
               "id": "sec-hm0fgeqmqlrb4n9",
               "type": "resource-monitor",
-              "label": "Resources"
+              "label": "Resources",
+              "graphMode": true
             }
           ]
         }
