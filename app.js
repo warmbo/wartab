@@ -355,7 +355,7 @@ function buildCardEditPanel(card) {
   chIcon.addEventListener('click', () => openIconPicker(url => { card.icon = url; saveAndRefresh(); }));
   iconRow.appendChild(chIcon);
   const clIcon = cpBtn('✕');
-  clIcon.addEventListener('click', () => { card.icon = 'package'; saveAndRefresh(); });
+  clIcon.addEventListener('click', () => { card.icon = ''; saveAndRefresh(); });
   iconRow.appendChild(clIcon);
   iconG.appendChild(iconRow);
   grid.appendChild(iconG);
@@ -1201,7 +1201,7 @@ function renderCard(card,idx){
 
   const title = document.createElement('div');
   title.className = 'card-title';
-  title.appendChild(renderIconElement(card.icon, 'card-icon'));
+  var iconEl=renderIconElement(card.icon, 'card-icon');if(iconEl)title.appendChild(iconEl);
   title.appendChild(document.createTextNode(' ' + (card.title || '')));
   hdr.appendChild(title);
 
@@ -1248,7 +1248,7 @@ function renderCard(card,idx){
  * @returns {HTMLElement}
  */
 function renderIconElement(icon, cls) {
-  if (!icon) return renderLucideEl('package', cls);
+  if (!icon) return null;
   if (icon.startsWith('http') || icon.startsWith('data:') || icon.startsWith('/')) {
     // Reject file: protocol URLs
     if (icon.startsWith('file:')) return renderLucideEl('package', cls);
