@@ -2038,12 +2038,13 @@ function onDragMove(e){
   // on subsequent frames so the ghost tracks columns without jumping.
   // ── Ghost uses cached card rect — never reads from hidden DOM elements ──
   var cr=dragState._cardRect;
+  // X: snap to grid column. Y: follow cursor exactly (pixel-perfect vertical tracking)
   var snapDX=ghostLeft-cr.left;
-  var snapDY=(targetRow?targetRow.top:e.clientY-30)-cr.top;
+  var snapDY=(e.clientY-cr.top-dragState._grabOffsY);
   ghost.style.cssText=`
     position:fixed;pointer-events:none;z-index:var(--z-drag);
     left:${cr.left}px;top:${cr.top}px;
-    width:${cr.width-4}px;min-height:${Math.min(ghostH, (ch||1)*140+gap)}px;
+    width:${cr.width-4}px;min-height:${cr.height}px;
     transform:translate(${snapDX}px,${snapDY}px);
     display:flex;align-items:center;justify-content:center;
     background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);
