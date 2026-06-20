@@ -374,8 +374,8 @@
     },
     {
       "id": "card-e4l1uy4mqgvyqyb",
-      "title": "",
-      "icon": "",
+      "title": "Quotes",
+      "icon": "ScrollText",
       "color": "#888888",
       "width": 1,
       "height": 1,
@@ -746,8 +746,8 @@
         },
         {
           "id": "card-e4l1uy4mqgvyqyb",
-          "title": "",
-          "icon": "",
+          "title": "Quotes",
+          "icon": "ScrollText",
           "color": "#888888",
           "width": 1,
           "height": 1,
@@ -917,7 +917,7 @@
         {
           "id": "card-fo02ycwmqis6fzq",
           "title": "",
-          "icon": "package",
+          "icon": "",
           "color": "#888888",
           "width": 1,
           "height": 2,
@@ -925,7 +925,7 @@
             {
               "id": "sec-i2y3cdrmqis6fzq",
               "type": "image",
-              "label": "Image",
+              "label": "",
               "links": [
                 {
                   "label": "Example",
@@ -1478,5 +1478,5 @@
     "page-tf789wmmqiw5bln"
   ],
   "currentPage": "page-fjpy1g4mqguw1x3",
-  "_version": "b3d3bae-dirty"
+  "_version": "27b8b47-dirty"
 }
