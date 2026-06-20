@@ -135,7 +135,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 0,
+          "_qi": 1,
           "collapsed": false
         },
         {
@@ -525,7 +525,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 0,
+              "_qi": 1,
               "collapsed": false
             },
             {
@@ -1055,7 +1055,8 @@
                   "url": "https://",
                   "icon": "link"
                 }
-              ]
+              ],
+              "listMode": true
             }
           ]
         },
@@ -1231,7 +1232,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 1
+              "_qi": 2
             }
           ]
         },
