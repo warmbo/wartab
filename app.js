@@ -1795,36 +1795,6 @@ function fetchStatusWidget(el){
    Pointer-based drag with floating ghost, grid-simulated live preview, and FLIP
    animation on ALL shifted cards at drop. Touch+mouse via Pointer Events API. */
 
-// Simulate CSS Grid auto-placement (left-to-right, top-to-bottom, multi-row aware)
-// Returns [{row,col}] for each card in same order as input array
-function simGrid(cards, cols) {
-  const occ = []; // occ[row][col] = true
-  const out = [];
-  for (const card of cards) {
-    const w = Math.min(card.width || 1, cols);
-    const h = card.height || 1;
-    let placed = false;
-    for (let row = 0; !placed && row < 100; row++) {
-      if (!occ[row]) occ[row] = [];
-      for (let col = 0; col <= cols - w && !placed; col++) {
-        let free = true;
-        for (let dr = 0; dr < h && free; dr++)
-          for (let dc = 0; dc < w && free; dc++)
-            if (occ[row + dr] && occ[row + dr][col + dc]) free = false;
-        if (free) {
-          for (let dr = 0; dr < h; dr++) {
-            if (!occ[row + dr]) occ[row + dr] = [];
-            for (let dc = 0; dc < w; dc++) occ[row + dr][col + dc] = true;
-          }
-          out.push({ row, col }); placed = true;
-        }
-      }
-    }
-    if (!placed) out.push({ row: 0, col: 0 });
-  }
-  return out;
-}
-
 /* ══════════ Link drag-reorder (within editor) ══════════ */
 let _linkDrag = null;
 
@@ -1991,10 +1961,6 @@ function startDrag(e, id, idx){
   document.body.style.overflow = 'hidden';
 }
 
-function pushClear(){
-  $$('.card.push-preview').forEach(el=>{el.classList.remove('push-preview');el.style.transform='';});
-}
-
 // Group cards by DOM y-position to find rows. Pass excludeEl=null to include all.
 function buildRowMap(grid, excludeEl) {
   const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==excludeEl);
@@ -2078,8 +2044,8 @@ function onDragMove(e){
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   `;
 
-  // ── Insertion indicator + grid simulation preview ──
-  // Vertical bar at the insertion point, height matching card's grid footprint
+  // ── Placeholder card preview + grid simulation ──
+  // Show a card-sized box at the target position with exact dimensions
   insertBar.style.display='';
   let barLeft;
   if(beforeCard){
@@ -2091,14 +2057,17 @@ function onDragMove(e){
   }else{
     barLeft=gr.left;
   }
-  insertBar.style.cssText='';
-  insertBar.style.left=(barLeft-2)+'px';
-  insertBar.style.top=targetRow?targetRow.top+'px':(e.clientY-30)+'px';
-  insertBar.style.width='4px';
-  const barH=Math.max((ch||1)*140, (targetRow?targetRow.bottom-targetRow.top:60));
-  insertBar.style.height=barH+'px';
-  insertBar.style.background='var(--accent)';
-  insertBar.style.borderRadius='2px';
+  insertBar.style.left=barLeft+'px';
+  // Placeholder spans the card\'s exact grid footprint
+  var phWidth=cw*colW+(cw-1)*gap;
+  var phHeight=(ch||1)*140;
+  var phColor=ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)';
+  insertBar.style.top=(targetRow?targetRow.top:e.clientY-30)+'px';
+  insertBar.style.width=phWidth+'px';
+  insertBar.style.height=phHeight+'px';
+  insertBar.style.background='color-mix(in srgb, '+phColor+' 10%, transparent)';
+  insertBar.style.border='2px dashed '+phColor;
+  insertBar.style.borderRadius='0';
   // Compute which cards truly change position via grid simulation
   computeDropShift(dragState._beforeCardId);
 }
