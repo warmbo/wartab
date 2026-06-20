@@ -2036,12 +2036,16 @@ function onDragMove(e){
 
   const ghostAccent=config.cards.find(c=>c.id===dragState.cardId);
 
-  // ── Ghost snaps to grid column (user preference) ──
-  var ghostDX=e.clientX-dragState._startX;
+  // ── Ghost position: card's original screen position + smooth grid snap via transform ──
+  // left/top are always the card's actual position. transform adds the grid-snap offset
+  // on subsequent frames so the ghost tracks columns without jumping.
+  var snapDX=ghostLeft-dragState._cardLeft; // how far the grid column is from the card
+  var snapDY=(targetRow?targetRow.top:e.clientY-30)-dragState._cardTop;
   ghost.style.cssText=`
     position:fixed;pointer-events:none;z-index:var(--z-drag);
-    left:${ghostLeft}px;top:${ghostTop}px;
+    left:${dragState._cardLeft}px;top:${dragState._cardTop}px;
     width:${ghostW-4}px;min-height:${Math.min(ghostH, (ch||1)*140+gap)}px;
+    transform:translate(${snapDX}px,${snapDY}px);
     display:flex;align-items:center;justify-content:center;
     background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);
     border:2px dashed ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'};
@@ -2069,7 +2073,7 @@ function onDragMove(e){
     var oldPos=simulateGrid(allCards,cols);
     var newPos=simulateGrid(newOrder,cols);
     
-    // Apply transforms to ALL shifted cards showing their final grid cell
+    // Apply transforms: X movement is accurate (fixed columns), use drop-shift for Y movement
     for(var ci=0;ci<allCards.length;ci++){
       var c=allCards[ci];
       if(c.id===dragState.cardId)continue;
@@ -2084,7 +2088,12 @@ function onDragMove(e){
         if(el){
           el.style.transition='transform 0.15s ease';
           el.classList.add('push-preview');
-          el.style.transform='translate('+(dCol*step)+'px,'+(dRow*(140+gap))+'px)';
+          // Only apply X transforms (fixed column widths are accurate)
+          // For Y movement, just highlight the card — row heights vary too much
+          el.style.transform='translateX('+(dCol*step)+'px)';
+          if(dRow){
+            el.classList.add('drop-shift');
+          }
         }
       }
     }
