@@ -1932,6 +1932,7 @@ function startDrag(e, id, idx){
   const srcEl=grid.querySelector(`[data-card-id="${id}"]`);
   if(!srcEl)return;
   srcEl.classList.add('dragging');
+  srcEl.style.display='none';
 
   const ghost=document.createElement('div');ghost.className='drag-ghost';
   ghost.style.display='none';
@@ -1950,6 +1951,13 @@ function startDrag(e, id, idx){
   insertBar.className='drag-insert-bar';
   insertBar.style.display='none';
   document.body.appendChild(insertBar);
+
+  // Placeholder element that takes the card's grid space during drag
+  var phEl=document.createElement('div');
+  phEl.className='drag-placeholder';
+  phEl.style.cssText='grid-column:span '+cw+';grid-row:span '+(ch||1)+';min-height:'+((ch||1)*140)+'px;';
+  grid.insertBefore(phEl, srcEl.nextElementSibling);
+  dragState._placeholder=phEl;
 
   // Record cursor offset from card's edge at grab time
   const srcRect=srcEl.getBoundingClientRect();
@@ -2052,99 +2060,73 @@ function onDragMove(e){
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   `;
 
-  // ── Show ALL cards in their final positions after the drop ──
-  // clear previous preview transforms
+  // ── Move placeholder to insertion point — CSS Grid reflows naturally ──
+  // Clear previous preview transforms
   document.querySelectorAll('.card.push-preview').forEach(function(el){
     el.style.transition='none';
     el.classList.remove('push-preview');
     el.style.transform='';
   });
   
-  var allCards=config.cards;
-  var srcIdx=allCards.findIndex(function(c){return c.id===dragState.cardId;});
-  if(srcIdx>=0){
-    var newOrder=allCards.slice();
-    var moved=newOrder.splice(srcIdx,1)[0];
-    var beforeIdx=dragState._beforeCardId
-      ?newOrder.findIndex(function(c){return c.id===dragState._beforeCardId;})
-      :newOrder.length;
-    if(beforeIdx<0)beforeIdx=newOrder.length;
-    newOrder.splice(beforeIdx,0,moved);
-    var oldPos=simulateGrid(allCards,cols);
-    var newPos=simulateGrid(newOrder,cols);
-    
-    // Apply transforms: X movement is accurate (fixed columns), use drop-shift for Y movement
-    for(var ci=0;ci<allCards.length;ci++){
-      var c=allCards[ci];
-      if(c.id===dragState.cardId)continue;
-      var oldP=oldPos[ci];
-      var newIdx2=newOrder.findIndex(function(nc){return nc.id===c.id;});
-      if(newIdx2<0)continue;
-      var newP=newPos[newIdx2];
-      var dCol=newP.col-oldP.col;
-      var dRow=newP.row-oldP.row;
-      if(dCol||dRow){
-        var el=grid.querySelector('[data-card-id="'+c.id+'"]');
-        if(el){
-          el.style.transition='transform 0.15s ease';
-          el.classList.add('push-preview');
-          // Only apply X transforms (fixed column widths are accurate)
-          // For Y movement, just highlight the card — row heights vary too much
-          el.style.transform='translateX('+(dCol*step)+'px)';
-          if(dRow){
-            el.classList.add('drop-shift');
-          }
-        }
-      }
-    }
-    
-    // Show insertion indicator based on drop zone
-    var dropZone='none';
-    var dropY=e.clientY;
-    if(rows.length>1){
-      for(var ri=0;ri<rows.length-1;ri++){
-        if(dropY>=rows[ri].bottom&&dropY<=rows[ri+1].top){dropZone='between';betweenIdx=ri;break;}
-      }
-    }
-    if(dropZone==='none'&&rows.length&&dropY>rows[rows.length-1].bottom)dropZone='below';
-    if(dropZone==='none'&&targetRow)dropZone=beforeCard?'insert':'append';
-    
-    if(dropZone==='between'||dropZone==='below'){
-      insertBar.style.display='';
-      insertBar.style.left=gr.left+'px';
-      insertBar.style.border='none';
-      insertBar.style.borderRadius='2px';
-      insertBar.style.boxShadow='0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)';
-      insertBar.style.background='var(--accent)';
-      insertBar.style.width=gr.width+'px';
-      insertBar.style.height='4px';
-      if(dropZone==='between'){
-        var bgt=rows[betweenIdx].bottom,bgb=rows[betweenIdx+1].top;
-        insertBar.style.top=((bgt+bgb)/2-2)+'px';
-        var nextRow=rows[betweenIdx+1];
-        beforeCard=nextRow&&nextRow.cards.length?nextRow.cards[0]:null;
-      }else{
-        insertBar.style.top=(rows[rows.length-1].bottom+gap/2-2)+'px';
-        beforeCard=null;
-      }
-      dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
-    }else if(dropZone==='append'){
-      insertBar.style.display='';
-      var lr=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();
-      var phWidth=cw*colW+(cw-1)*gap;
-      var phHeight=(ch||1)*140;
-      insertBar.style.left=lr.right+'px';
-      insertBar.style.top=targetRow.top+'px';
-      insertBar.style.width=phWidth+'px';
-      insertBar.style.height=phHeight+'px';
-      insertBar.style.background='color-mix(in srgb, '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)')+' 10%, transparent)';
-      insertBar.style.border='2px dashed '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)');
-      insertBar.style.borderRadius='0';
-      insertBar.style.boxShadow='none';
-      dragState._beforeCardId=null;
+  // Move the placeholder to just before beforeCard (or append to grid)
+  var ph=dragState._placeholder;
+  if(ph&&ph.parentNode){
+    if(beforeCard){
+      grid.insertBefore(ph, beforeCard);
     }else{
-      insertBar.style.display='none';
+      grid.appendChild(ph);
     }
+  }
+  
+  // Grid simulation drop-shift: highlight cards that will change row/col
+  computeDropShift(dragState._beforeCardId);
+  
+  // Show insertion indicator based on drop zone
+  var dropZone='none';
+    var dropY=e.clientY;
+  if(rows.length>1){
+    for(var ri=0;ri<rows.length-1;ri++){
+      if(dropY>=rows[ri].bottom&&dropY<=rows[ri+1].top){dropZone='between';betweenIdx=ri;break;}
+    }
+  }
+  if(dropZone==='none'&&rows.length&&dropY>rows[rows.length-1].bottom)dropZone='below';
+  if(dropZone==='none'&&targetRow)dropZone=beforeCard?'insert':'append';
+  
+  if(dropZone==='between'||dropZone==='below'){
+    insertBar.style.display='';
+    insertBar.style.left=gr.left+'px';
+    insertBar.style.border='none';
+    insertBar.style.borderRadius='2px';
+    insertBar.style.boxShadow='0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)';
+    insertBar.style.background='var(--accent)';
+    insertBar.style.width=gr.width+'px';
+    insertBar.style.height='4px';
+    if(dropZone==='between'){
+      var bgt=rows[betweenIdx].bottom,bgb=rows[betweenIdx+1].top;
+      insertBar.style.top=((bgt+bgb)/2-2)+'px';
+      var nextRow=rows[betweenIdx+1];
+      beforeCard=nextRow&&nextRow.cards.length?nextRow.cards[0]:null;
+    }else{
+      insertBar.style.top=(rows[rows.length-1].bottom+gap/2-2)+'px';
+      beforeCard=null;
+    }
+    dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
+  }else if(dropZone==='append'){
+    insertBar.style.display='';
+    var lr=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();
+    var phWidth=cw*colW+(cw-1)*gap;
+    var phHeight=(ch||1)*140;
+    insertBar.style.left=lr.right+'px';
+    insertBar.style.top=targetRow.top+'px';
+    insertBar.style.width=phWidth+'px';
+    insertBar.style.height=phHeight+'px';
+    insertBar.style.background='color-mix(in srgb, '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)')+' 10%, transparent)';
+    insertBar.style.border='2px dashed '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)');
+    insertBar.style.borderRadius='0';
+    insertBar.style.boxShadow='none';
+    dragState._beforeCardId=null;
+  }else{
+    insertBar.style.display='none';
   }
 }
 
@@ -2231,10 +2213,11 @@ function onDragEnd(e){
     el.style.transition='';
   });
   if(dragState.insertBar&&dragState.insertBar.parentNode)dragState.insertBar.remove();
+  if(dragState._placeholder&&dragState._placeholder.parentNode)dragState._placeholder.remove();
   if(!dragState)return;
   const{cardId,srcEl,ghost,active,_beforeCardId}=dragState;
   if(ghost&&ghost.parentNode)ghost.remove();
-  if(srcEl)srcEl.classList.remove('dragging');
+  if(srcEl){srcEl.classList.remove('dragging');srcEl.style.display='';}
   document.body.style.overflow = '';
 
   if(active){
@@ -2302,7 +2285,7 @@ function onDragEnd(e){
     }
   }
 
-  if(srcEl)srcEl.classList.remove('dragging');
+  if(srcEl){srcEl.classList.remove('dragging');srcEl.style.display='';}
   if(active)renderAll();
   dragState=null;
 }

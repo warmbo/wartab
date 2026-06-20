@@ -295,6 +295,8 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .text-sm { font-size: var(--text-sm); }
 .icon-box { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; font-size: var(--text-xl); }
 .drag-page-handle { cursor: grab; color: var(--text-tertiary); user-select: none; touch-action: none; padding: var(--space-1); font-size: var(--text-lg); line-height: 1; }
+/* Takes the dragged card's grid space during drag — CSS Grid reflows around it */
+.drag-placeholder { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.15); min-width: 0; }
 
 .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
 .link-item { display: flex; flex-direction: column; align-items: center; padding: 10px 6px; background: var(--card-bg-alt); border: 1px solid var(--surface-border); text-decoration: none; color: var(--text-primary); text-align: center; transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; cursor: pointer; box-shadow: var(--deboss-shadow); min-height: 72px; justify-content: space-between; }
