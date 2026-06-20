@@ -164,7 +164,7 @@ body {
 
 /* ══════ Top Bar ══════ */
 #top-bar {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px;
+  display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 24px;
   padding: 8px 20px; background: var(--card-bg);
   backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur));
   border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
@@ -173,6 +173,14 @@ body {
 #top-bar::before { content: ''; display: block; height: 3px; background: var(--accent); position: absolute; top: 0; left: 0; right: 0; }
 #top-bar .brand { display: flex; align-items: center; gap: 10px; font-size: var(--text-lg); font-weight: 700; letter-spacing: 0.5px; text-shadow: var(--emboss-shadow); flex-shrink: 0; cursor: pointer; user-select: none; }
 #top-bar .brand .brand-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: var(--text-xl); font-family: 'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',var(--font); }
+/* Page tabs in top bar */
+#page-tabs { display: flex; gap: 3px; flex: 1; justify-content: flex-start; overflow-x: auto; min-width: 0; padding: 0 4px; }
+#page-tabs::-webkit-scrollbar { height: 0; }
+.page-tab { padding: 4px 10px; font-size: var(--text-xs); cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--text-secondary); transition: background 0.2s, border-color 0.2s, opacity 0.2s; user-select: none; display: inline-flex; align-items: center; gap: 4px; opacity: 0.55; white-space: nowrap; }
+.page-tab:hover { border-color: var(--accent); color: var(--text-primary); opacity: 0.8; background: rgba(255,255,255,0.06); }
+.page-tab.active { border-color: var(--accent); color: var(--text-primary); opacity: 1; background: rgba(255,255,255,0.08); }
+.page-tab .page-tab-icon { display: inline-flex; align-items: center; margin-right: 2px; opacity: 0.6; vertical-align: middle; pointer-events: none; }
+.page-tab .page-tab-icon i, .page-tab .page-tab-icon svg { width: 12px; height: 12px; }
 /* ── Emoji always render in native color, unaffected by theme ── */
 .emoji-icon { color: unset; }
 
@@ -229,22 +237,14 @@ body {
 
 /* ══════ Card Grid ══════ */
 #card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; grid-auto-rows: minmax(140px, auto); transition: opacity 0.15s ease; margin-top: 12px; }
+/* Highlighted card sits above config overlay */
+.card.card-highlight { position: relative; z-index: 106; box-shadow: 0 0 24px var(--accent-glow), var(--glass-shadow); border-color: var(--accent); }
+/* Blur + dim non-highlighted cards when panel is open */
+body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: 0.55; transition: filter 0.3s, opacity 0.3s; }
 /* Highlighted card sits above the config overlay so it's not blurred/dimmed */
 .card.card-highlight { position: relative; z-index: 106; box-shadow: 0 0 24px var(--accent-glow), var(--glass-shadow); border-color: var(--accent); }
 /* When a panel is open, blur + dim all non-highlighted cards */
 body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: 0.55; transition: filter 0.3s, opacity 0.3s; }
-
-/* ══════ Page Bar ══════ */
-#page-bar { display: flex; align-items: center; gap: 8px; padding: 20px 0 16px; justify-content: center; }
-#page-bar .btn-icon { border-color: var(--accent); color: var(--accent); opacity: 0.5; background: rgba(255,255,255,0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-#page-bar .btn-icon:hover { opacity: 0.9; background: rgba(255,255,255,0.08); }
-#page-tabs { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
-.page-tab { padding: 6px 16px; font-size: var(--text-sm); cursor: pointer; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: var(--text-secondary); transition: background 0.2s, border-color 0.2s, opacity 0.2s; user-select: none; display: inline-flex; align-items: center; gap: 4px; opacity: 0.6; }
-.page-tab:hover { border-color: var(--accent); color: var(--text-primary); opacity: 0.8; background: rgba(255,255,255,0.08); }
-.page-tab.active { border-color: var(--accent); color: var(--text-primary); opacity: 1; background: rgba(255,255,255,0.08); }
-.page-tab .page-tab-close { display: none; }
-.page-tab-icon { display: inline-flex; align-items: center; margin-right: 4px; opacity: 0.6; vertical-align: middle; pointer-events: none; }
-.page-tab .page-tab-icon i, .page-tab .page-tab-icon svg { width: 14px; height: 14px; }
 
 /* ══════ Card ══════ */
 .card {
@@ -267,6 +267,9 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: 0.55; t
 .card[data-width="2"] { grid-column: span 2; }
 .card[data-width="3"] { grid-column: span 3; }
 .card[data-width="4"] { grid-column: span 4; }
+.card[data-height="2"] { grid-row: span 2; min-height: 200px; }
+.card[data-height="3"] { grid-row: span 3; min-height: 320px; }
+.card[data-height="4"] { grid-row: span 4; min-height: 440px; }
 .card[data-height="2"] { grid-row: span 2; min-height: 280px; }
 .card[data-height="3"] { grid-row: span 3; min-height: 420px; }
 .card[data-height="4"] { grid-row: span 4; min-height: 560px; }
@@ -334,6 +337,8 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: 0.55; t
 .dropdown-toggle.open .arrow { transform: rotate(90deg); }
 .dropdown-content { overflow: hidden; transition: max-height 0.45s ease, opacity 0.35s ease, padding 0.3s ease, margin 0.3s ease; max-height: 0; opacity: 0; padding: 0; margin: 0; min-height: 0; }
 .dropdown-content.open { max-height: 3000px; opacity: 1; padding: 4px 0 8px; margin: 4px 0; overflow: visible; display: flex; flex-direction: column; }
+/* Section dividers removed — spacing handles visual separation */
+.section-divider { display: none; }
 /* Unify section toggles with dropdown style */
 /* ── Section toggle: unified with dropdown style ── */
 .api-widget .api-label { color: var(--text-secondary); }
@@ -751,12 +756,12 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: 0.55; t
 }
 
 /* ══════ Grid Gap (empty cells) ══════ */
-.card-edit-btn { background: none !important; background-color: transparent !important; border: none !important; color: var(--text-tertiary); font-size: var(--text-base); cursor: pointer; padding: 2px 6px; transition: opacity 0.15s, color 0.15s; opacity: 0.25; appearance: none; -webkit-appearance: none; }
+.card-edit-btn { background: none !important; background-color: transparent !important; border: none !important; color: var(--text-tertiary); font-size: var(--text-base); cursor: pointer; padding: 4px 8px; transition: opacity 0.15s, color 0.15s; opacity: 0.35; appearance: none; -webkit-appearance: none; min-width: 36px; min-height: 36px; }
 .card:hover .card-edit-btn, .card-edit-btn:hover { opacity: 1; }
 .card-edit-btn:hover { color: var(--text-primary); }
 
 /* Drag handle in cards — matches edit button */
-.card .drag-handle { opacity: 0.25; transition: opacity 0.15s, color 0.15s; cursor: pointer; color: var(--text-tertiary); }
+.card .drag-handle { opacity: 0.35; transition: opacity 0.15s, color 0.15s; cursor: grab; color: var(--text-secondary); min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
 .card:hover .drag-handle, .card .drag-handle:hover { opacity: 1; color: var(--text-primary); }
 .card .drag-handle:active { cursor: grabbing; }
 
@@ -795,7 +800,10 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: 0.55; t
 /* ══════ Toast ══════ */
 .toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
 .toast { padding: 10px 20px; background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); color: var(--text-primary); font-size: var(--text-base); font-weight: 500; box-shadow: var(--glass-shadow); animation: toast-in 0.3s ease, toast-out 0.3s ease 2.5s forwards; pointer-events: auto; font-family: var(--font); }
-.toast.error { border-color: rgba(204,102,102,0.4); }
+.toast.success { border-left: 3px solid var(--color-success); }
+.toast.error { border-left: 3px solid var(--color-error); }
+.toast.warning { border-left: 3px solid var(--color-warning); }
+.toast.info { border-left: 3px solid var(--accent); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
 
@@ -864,7 +872,7 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: 0.55; t
   .card-title { font-size: var(--text-base); gap: 6px; }
   .card-body {
   font-family: var(--font), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; padding: 0 14px 12px; }
-  .card-edit-btn, .drag-handle { min-width: 40px; min-height: 40px; font-size: var(--text-lg); display: flex; align-items: center; justify-content: center; }
+  #page-tabs { width: 100%; order: 10; justify-content: flex-start; }
   
   i[data-lucide].card-icon { width: 18px; height: 18px; }
   i[data-lucide].link-icon { width: 18px; height: 18px; }
@@ -976,6 +984,15 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: 0.55; t
 
 /* ══════ Tablet: 2-column layout ══════
    Between mobile single-column and desktop 4-column. */
+@media (min-width: 769px) and (max-width: 1199px) {
+  :root { --grid-cols: 2; --grid-gap: 14px; }
+  #card-grid { gap: var(--grid-gap); }
+  .card[data-width="3"], .card[data-width="4"] {
+    grid-column: span 2 !important;
+  }
+}
+
+/* ══════ Tablet: 2-column layout ══════ */
 @media (min-width: 769px) and (max-width: 1199px) {
   :root { --grid-cols: 2; --grid-gap: 14px; }
   #card-grid { gap: var(--grid-gap); }

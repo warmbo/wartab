@@ -991,7 +991,7 @@ function toast(msg,type='info'){const el=document.createElement('div');el.classN
    The server also has /api/config endpoints for potential server-side syncing.
    ═══════════════════════════════════════════ */
 // Load config from localStorage, merging over DEFAULT_CONFIG
-function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>{if(el.parentNode)el.remove();},6000);}
+function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored','success');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>{if(el.parentNode)el.remove();},6000);}
 
 // Load config from server — called once on page init
 async function loadConfig() {
@@ -1208,7 +1208,7 @@ function renderCard(card,idx){
     h.appendChild(dh);
     div.appendChild(h);
     dh.addEventListener('pointerdown',e=>startDrag(e,card.id,idx));
-    div.addEventListener('dblclick',()=>{config.cards.splice(idx,1);saveConfig();renderAll();toast('Gap removed');});
+    div.addEventListener('dblclick',()=>{config.cards.splice(idx,1);saveConfig();renderAll();toast('Gap removed','success');});
     return div;
   }
   /* ── Regular card ── */
@@ -1233,6 +1233,31 @@ function renderCard(card,idx){
   title.className = 'card-title';
   var iconEl=renderIconElement(card.icon, 'card-icon');if(iconEl)title.appendChild(iconEl);
   title.appendChild(document.createTextNode(' ' + (card.title || '')));
+  // Inline editing: double-click card title to rename
+  title.addEventListener('dblclick', function(e) {
+    e.stopPropagation();
+    const current = card.title || '';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = current;
+    input.className = 'card-title-input';
+    input.style.cssText = 'background:var(--card-input-bg);border:1px solid var(--accent);color:var(--text-primary);font:inherit;font-size:var(--heading-size);font-weight:600;padding:2px 6px;width:100%;outline:none;border-radius:0;';
+    this.innerHTML = '';
+    this.appendChild(input);
+    input.focus();
+    input.select();
+    const finish = function() {
+      const val = input.value.trim() || current;
+      card.title = val;
+      saveConfig();
+      renderAll();
+    };
+    input.addEventListener('blur', finish);
+    input.addEventListener('keydown', function(ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+      if (ev.key === 'Escape') { ev.preventDefault(); input.value = current; input.blur(); }
+    });
+  });
   hdr.appendChild(title);
 
   const actionGroup = document.createElement('div');
@@ -2001,7 +2026,7 @@ function onDragEnd(e){
       cards.splice(insertAt,0,m);
       saveConfig();
       [...grid.children].filter(el=>el.classList.contains('card')).forEach((el,i)=>{el.dataset.index=i;});
-      toast('Card moved');
+      toast('Card moved','success');
       dragState=null;
       return;
     }
@@ -2014,7 +2039,7 @@ function onDragEnd(e){
 
 function addGap(){
   config.cards.push({id:'gap-'+uid(),title:'',icon:'',color:'transparent',width:1,height:1,_isGap:true});
-  saveConfig();renderAll();toast('Gap added');
+  saveConfig();renderAll();toast('Gap added','success');
 }
 function removeGap(idx){
   config.cards.splice(idx,1);
