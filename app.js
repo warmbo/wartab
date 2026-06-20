@@ -118,7 +118,8 @@ function openCardEditPanel(cardId) {
   if (cardEl) {
     const cr = cardEl.getBoundingClientRect();
     const vw = window.innerWidth;
-    // If card center is right-of-center → slide from left (panel on left); otherwise from right
+    // Set slide direction FIRST so the panel starts at the correct off-screen position
+    // before .open triggers the transition
     if (cr.left + cr.width / 2 > vw / 2) {
       panel.classList.add('slide-left');
     } else {
@@ -127,6 +128,9 @@ function openCardEditPanel(cardId) {
   } else {
     panel.classList.remove('slide-left');
   }
+  // Force reflow so the browser registers the starting off-screen position
+  // before we trigger the open transition
+  panel.offsetHeight;
   $('#edit-panel-overlay').classList.add('open');
   panel.classList.add('open');
   document.body.classList.add('panel-open');
