@@ -1955,7 +1955,7 @@ function startDrag(e, id, idx){
   const srcRect=srcEl.getBoundingClientRect();
   dragState={cardId:id,srcEl,ghost,insertBar,active:false,_startX:e.clientX,_startY:e.clientY,_beforeCardId:null,
     _cardWidth:cw,_cardHeight:ch,_grabOffs:e.clientX-srcRect.left,_grabOffsY:e.clientY-srcRect.top,
-    _cardW:srcRect.width,_cardH:srcRect.height};
+    _cardLeft:srcRect.left,_cardTop:srcRect.top,_cardW:srcRect.width,_cardH:srcRect.height};
   document.addEventListener('pointermove',onDragMove);
   document.addEventListener('pointerup',onDragEnd);
   document.addEventListener('pointercancel',onDragEnd);
@@ -2036,116 +2036,106 @@ function onDragMove(e){
 
   const ghostAccent=config.cards.find(c=>c.id===dragState.cardId);
 
-  // ── Ghost follows cursor precisely (no grid snap) ──
+  // ── Ghost snaps to grid column (user preference) ──
   var ghostDX=e.clientX-dragState._startX;
-  var ghostDY=e.clientY-dragState._startY;
-  ghost.style.cssText='';
-  ghost.style.position='fixed';
-  ghost.style.pointerEvents='none';
-  ghost.style.zIndex='var(--z-drag)';
-  ghost.style.left=(dragState._grabOffs)+'px';
-  ghost.style.top=(dragState._grabOffsY)+'px';
-  ghost.style.width=(dragState._cardW-4)+'px';
-  ghost.style.minHeight=Math.min(ghostH, (ch||1)*140+gap)+'px';
-  ghost.style.transform='translate('+ghostDX+'px,'+ghostDY+'px)';
-  ghost.style.display='flex';
-  ghost.style.alignItems='center';
-  ghost.style.justifyContent='center';
-  ghost.style.background='color-mix(in srgb, '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)')+' 15%, transparent)';
-  ghost.style.border='2px dashed '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)');
-  ghost.style.backdropFilter='blur(4px)';
-  ghost.style.WebkitBackdropFilter='blur(4px)';
+  ghost.style.cssText=`
+    position:fixed;pointer-events:none;z-index:var(--z-drag);
+    left:${ghostLeft}px;top:${ghostTop}px;
+    width:${ghostW-4}px;min-height:${Math.min(ghostH, (ch||1)*140+gap)}px;
+    display:flex;align-items:center;justify-content:center;
+    background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);
+    border:2px dashed ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'};
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  `;
 
-  // ── Preview: gap + between-row + below-last-row + grid simulation ──
-  var phWidth=cw*colW+(cw-1)*gap;
-  var phHeight=(ch||1)*140;
-  var shiftX=phWidth+gap;
-  
-  // Clear previous push transforms
+  // ── Show ALL cards in their final positions after the drop ──
+  // clear previous preview transforms
   document.querySelectorAll('.card.push-preview').forEach(function(el){
     el.style.transition='none';
     el.classList.remove('push-preview');
     el.style.transform='';
   });
   
-  // Determine drop zone: between-row, below-last, same-row-insert, or same-row-append
-  var dropZone='none'; // 'between' | 'below' | 'insert' | 'append'
-  var dropY=e.clientY;
-  
-  // Check between-row gaps first
-  if(rows.length>1){
-    for(var ri=0;ri<rows.length-1;ri++){
-      if(dropY>=rows[ri].bottom&&dropY<=rows[ri+1].top){
-        dropZone='between';betweenIdx=ri;
-        break;
+  var allCards=config.cards;
+  var srcIdx=allCards.findIndex(function(c){return c.id===dragState.cardId;});
+  if(srcIdx>=0){
+    var newOrder=allCards.slice();
+    var moved=newOrder.splice(srcIdx,1)[0];
+    var beforeIdx=dragState._beforeCardId
+      ?newOrder.findIndex(function(c){return c.id===dragState._beforeCardId;})
+      :newOrder.length;
+    if(beforeIdx<0)beforeIdx=newOrder.length;
+    newOrder.splice(beforeIdx,0,moved);
+    var oldPos=simulateGrid(allCards,cols);
+    var newPos=simulateGrid(newOrder,cols);
+    
+    // Apply transforms to ALL shifted cards showing their final grid cell
+    for(var ci=0;ci<allCards.length;ci++){
+      var c=allCards[ci];
+      if(c.id===dragState.cardId)continue;
+      var oldP=oldPos[ci];
+      var newIdx2=newOrder.findIndex(function(nc){return nc.id===c.id;});
+      if(newIdx2<0)continue;
+      var newP=newPos[newIdx2];
+      var dCol=newP.col-oldP.col;
+      var dRow=newP.row-oldP.row;
+      if(dCol||dRow){
+        var el=grid.querySelector('[data-card-id="'+c.id+'"]');
+        if(el){
+          el.style.transition='transform 0.15s ease';
+          el.classList.add('push-preview');
+          el.style.transform='translate('+(dCol*step)+'px,'+(dRow*(140+gap))+'px)';
+        }
       }
     }
-  }
-  // Check below last row
-  if(dropZone==='none'&&rows.length&&dropY>rows[rows.length-1].bottom){
-    dropZone='below';
-  }
-  // Check inside a row
-  if(dropZone==='none'&&targetRow){
-    dropZone=beforeCard?'insert':'append';
-  }
-  
-  // Show preview based on drop zone
-  if(dropZone==='between'||dropZone==='below'){
-    // Horizontal bar spanning the grid
-    insertBar.style.display='';
-    insertBar.style.left=gr.left+'px';
-    insertBar.style.border='none';
-    insertBar.style.borderRadius='2px';
-    insertBar.style.boxShadow='0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)';
-    insertBar.style.background='var(--accent)';
-    insertBar.style.width=gr.width+'px';
-    insertBar.style.height='4px';
-    if(dropZone==='between'){
-      var bgt=rows[betweenIdx].bottom,bgb=rows[betweenIdx+1].top;
-      insertBar.style.top=((bgt+bgb)/2-2)+'px';
-      var nextRow=rows[betweenIdx+1];
-      beforeCard=nextRow&&nextRow.cards.length?nextRow.cards[0]:null;
+    
+    // Show insertion indicator based on drop zone
+    var dropZone='none';
+    var dropY=e.clientY;
+    if(rows.length>1){
+      for(var ri=0;ri<rows.length-1;ri++){
+        if(dropY>=rows[ri].bottom&&dropY<=rows[ri+1].top){dropZone='between';betweenIdx=ri;break;}
+      }
+    }
+    if(dropZone==='none'&&rows.length&&dropY>rows[rows.length-1].bottom)dropZone='below';
+    if(dropZone==='none'&&targetRow)dropZone=beforeCard?'insert':'append';
+    
+    if(dropZone==='between'||dropZone==='below'){
+      insertBar.style.display='';
+      insertBar.style.left=gr.left+'px';
+      insertBar.style.border='none';
+      insertBar.style.borderRadius='2px';
+      insertBar.style.boxShadow='0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)';
+      insertBar.style.background='var(--accent)';
+      insertBar.style.width=gr.width+'px';
+      insertBar.style.height='4px';
+      if(dropZone==='between'){
+        var bgt=rows[betweenIdx].bottom,bgb=rows[betweenIdx+1].top;
+        insertBar.style.top=((bgt+bgb)/2-2)+'px';
+        var nextRow=rows[betweenIdx+1];
+        beforeCard=nextRow&&nextRow.cards.length?nextRow.cards[0]:null;
+      }else{
+        insertBar.style.top=(rows[rows.length-1].bottom+gap/2-2)+'px';
+        beforeCard=null;
+      }
+      dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
+    }else if(dropZone==='append'){
+      insertBar.style.display='';
+      var lr=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();
+      var phWidth=cw*colW+(cw-1)*gap;
+      var phHeight=(ch||1)*140;
+      insertBar.style.left=lr.right+'px';
+      insertBar.style.top=targetRow.top+'px';
+      insertBar.style.width=phWidth+'px';
+      insertBar.style.height=phHeight+'px';
+      insertBar.style.background='color-mix(in srgb, '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)')+' 10%, transparent)';
+      insertBar.style.border='2px dashed '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)');
+      insertBar.style.borderRadius='0';
+      insertBar.style.boxShadow='none';
+      dragState._beforeCardId=null;
     }else{
-      var lastRow=rows[rows.length-1];
-      insertBar.style.top=(lastRow.bottom+gap/2-2)+'px';
-      beforeCard=null; // append
+      insertBar.style.display='none';
     }
-    dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
-    dropZoneClear();
-    computeDropShift(dragState._beforeCardId);
-  }else if(dropZone==='insert'){
-    // Gap preview: shift same-row cards right
-    insertBar.style.display='none';
-    var pushing=false;
-    targetRow.cards.forEach(function(el){
-      if(el===beforeCard)pushing=true;
-      if(pushing){
-        el.style.transition='transform 0.12s ease';
-        el.classList.add('push-preview');
-        el.style.transform='translateX('+shiftX+'px)';
-      }
-    });
-    computeDropShift(dragState._beforeCardId);
-  }else if(dropZone==='append'){
-    // Append to end of row: card-sized placeholder at right edge of last card
-    insertBar.style.display='';
-    var lr=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();
-    insertBar.style.left=lr.right+'px';
-    insertBar.style.top=targetRow.top+'px';
-    insertBar.style.width=phWidth+'px';
-    insertBar.style.height=phHeight+'px';
-    var phColor=ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)';
-    insertBar.style.background='color-mix(in srgb, '+phColor+' 10%, transparent)';
-    insertBar.style.border='2px dashed '+phColor;
-    insertBar.style.borderRadius='0';
-    insertBar.style.boxShadow='none';
-    dragState._beforeCardId=null;
-    dropZoneClear();
-    computeDropShift(null);
-  }else{
-    insertBar.style.display='none';
-    dropZoneClear();
   }
 }
 
