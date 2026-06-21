@@ -2205,7 +2205,12 @@ function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrde
       var sNewIdx = newOrder.findIndex(function(nc){return nc.id===sc.id;});
       if(sNewIdx<0) continue;
       var sNewP = newPos[sNewIdx];
-      if(sNewP.row===dragOldPos.row && sNewP.col===dragOldPos.col){
+      // Check if this card's new footprint SPANS the dragged card's old position
+      var sW = Math.min(sc.width || 1, cols);
+      var sH = sc.height || 1;
+      var inCol = (sNewP.col <= dragOldPos.col && dragOldPos.col < sNewP.col + sW);
+      var inRow = (sNewP.row <= dragOldPos.row && dragOldPos.row < sNewP.row + sH);
+      if(inRow && inCol){
         swapPartnerId = sc.id;
         break;
       }
