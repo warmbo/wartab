@@ -2188,7 +2188,7 @@ function computeDropShift(targetBeforeCardId) {
 // Shared: apply drop-shift + directional arrow to cards whose (row,col) changes
 function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder) {
   dropZoneClear();
-  // Remove old direction arrows
+  // Remove old direction arrows from body
   document.querySelectorAll('.card-dir-arrow').forEach(function(el){el.remove();});
   const grid = document.getElementById('card-grid');
   for (let i = 0; i < allCards.length; i++) {
@@ -2204,7 +2204,7 @@ function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrde
       const el = grid.querySelector(`[data-card-id="${c.id}"]`);
       if (el) {
         el.classList.add('drop-shift');
-        // Add directional arrow overlay with distance
+        // Append arrow to body (not card) so it's in the root stacking context
         var arrow = document.createElement('span');
         arrow.className = 'card-dir-arrow';
         var dir = '';
@@ -2212,10 +2212,12 @@ function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrde
         if (dRow > 0) dir += '↓';
         if (dCol < 0) dir += '←';
         if (dCol > 0) dir += '→';
-        // Show distance when >1 cell
         var dist = Math.abs(dRow) + Math.abs(dCol);
         arrow.textContent = dist > 1 ? dir + dist : dir;
-        el.appendChild(arrow);
+        // Position relative to the card's screen position
+        var er = el.getBoundingClientRect();
+        arrow.style.cssText = 'position:fixed;top:'+(er.top+6)+'px;right:'+(document.body.clientWidth-er.right+6)+'px;z-index:1000;';
+        document.body.appendChild(arrow);
       }
     }
   }

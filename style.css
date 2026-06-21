@@ -774,20 +774,16 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   box-shadow: inset 3px 0 12px color-mix(in srgb, var(--accent) 15%, transparent) !important;
   background: color-mix(in srgb, var(--accent) 6%, transparent) !important;
 }
-/* Directional arrow overlay on cards that will move — topmost layer */
+/* Directional arrow overlay on cards that will move — fixed-position body child */
 .card-dir-arrow {
-  position: absolute; top: 6px; right: 6px;
   font-size: var(--text-sm); line-height: 1;
   font-weight: 700;
   color: var(--accent);
-  opacity: 1;
   pointer-events: none;
-  z-index: 1000;
   padding: 3px 6px;
   background: color-mix(in srgb, var(--accent) 18%, rgba(0,0,0,0.8));
   border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
   border-radius: 3px;
-  text-shadow: none;
   box-shadow: 0 0 8px rgba(0,0,0,0.5);
 }
 
