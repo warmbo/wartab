@@ -774,6 +774,19 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   box-shadow: inset 3px 0 12px color-mix(in srgb, var(--accent) 15%, transparent) !important;
   background: color-mix(in srgb, var(--accent) 6%, transparent) !important;
 }
+/* Swap indicator — card that takes the dragged card's original position */
+.card-swap-arrow {
+  font-size: var(--text-base); line-height: 1;
+  font-weight: 700;
+  color: #ffcc00;
+  pointer-events: none;
+  padding: 3px 6px;
+  background: rgba(0,0,0,0.8);
+  border: 1px solid rgba(255,204,0,0.5);
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(255,204,0,0.4);
+}
+
 /* Directional arrow overlay on cards that will move — fixed-position body child */
 .card-dir-arrow {
   font-size: var(--text-sm); line-height: 1;

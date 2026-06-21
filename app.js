@@ -2188,9 +2188,30 @@ function computeDropShift(targetBeforeCardId) {
 // Shared: apply drop-shift + directional arrow to cards whose (row,col) changes
 function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder) {
   dropZoneClear();
-  // Remove old direction arrows from body
   document.querySelectorAll('.card-dir-arrow').forEach(function(el){el.remove();});
+  document.querySelectorAll('.card-swap-arrow').forEach(function(el){el.remove();});
   const grid = document.getElementById('card-grid');
+  
+  // Find the dragged card's original position
+  var dragOldIdx = allCards.findIndex(function(c){return c.id===dragId;});
+  var dragOldPos = dragOldIdx>=0?oldPos[dragOldIdx]:null;
+  
+  // Find which card ends up at the dragged card's original position (swap partner)
+  var swapPartnerId = null;
+  if(dragOldPos){
+    for(var si=0;si<allCards.length;si++){
+      var sc = allCards[si];
+      if(sc.id===dragId) continue;
+      var sNewIdx = newOrder.findIndex(function(nc){return nc.id===sc.id;});
+      if(sNewIdx<0) continue;
+      var sNewP = newPos[sNewIdx];
+      if(sNewP.row===dragOldPos.row && sNewP.col===dragOldPos.col){
+        swapPartnerId = sc.id;
+        break;
+      }
+    }
+  }
+  
   for (let i = 0; i < allCards.length; i++) {
     const c = allCards[i];
     if (c.id === dragId) continue;
@@ -2204,17 +2225,20 @@ function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrde
       const el = grid.querySelector(`[data-card-id="${c.id}"]`);
       if (el) {
         el.classList.add('drop-shift');
-        // Append arrow to body (not card) so it's in the root stacking context
         var arrow = document.createElement('span');
-        arrow.className = 'card-dir-arrow';
-        var dir = '';
-        if (dRow < 0) dir += '↑';
-        if (dRow > 0) dir += '↓';
-        if (dCol < 0) dir += '←';
-        if (dCol > 0) dir += '→';
-        var dist = Math.abs(dRow) + Math.abs(dCol);
-        arrow.textContent = dist > 1 ? dir + dist : dir;
-        // Position relative to the card's screen position
+        var isSwap = (c.id === swapPartnerId);
+        arrow.className = isSwap ? 'card-swap-arrow' : 'card-dir-arrow';
+        if(isSwap){
+          arrow.textContent = '⇄';
+        }else{
+          var dir = '';
+          if (dRow < 0) dir += '↑';
+          if (dRow > 0) dir += '↓';
+          if (dCol < 0) dir += '←';
+          if (dCol > 0) dir += '→';
+          var dist = Math.abs(dRow) + Math.abs(dCol);
+          arrow.textContent = dist > 1 ? dir + dist : dir;
+        }
         var er = el.getBoundingClientRect();
         arrow.style.cssText = 'position:fixed;top:'+(er.top+6)+'px;right:'+(document.body.clientWidth-er.right+6)+'px;z-index:1000;';
         document.body.appendChild(arrow);
