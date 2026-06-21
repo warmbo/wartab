@@ -1502,8 +1502,37 @@ function renderCard(card,idx){
   });
   div.appendChild(body);
 
+  /* Footer: optional actions row */
+  if (card.sections && card.sections.some(function(s){return s._footer;})){
+    var footer = renderCardFooter(card);
+    if (footer) div.appendChild(footer);
+  }
+
   dragHandle.addEventListener('pointerdown', function(e) { startDrag(e, card.id, idx); });
   return div;
+}
+
+/**
+ * Create a standardized card footer element.
+ * Modules call addFooter(sec, html) in their render function to push footer content.
+ */
+function renderCardFooter(card) {
+  var frags = [];
+  (card.sections || []).forEach(function(s){
+    if (s._footer) frags.push(s._footer);
+  });
+  if (!frags.length) return null;
+  var ft = document.createElement('div');
+  ft.className = 'card-footer';
+  frags.forEach(function(h){ ft.insertAdjacentHTML('beforeend', h); });
+  return ft;
+}
+
+/**
+ * Add footer HTML to a section. Called from module render functions.
+ */
+function addSectionFooter(sec, html) {
+  sec._footer = html;
 }
 
 /**
@@ -1798,812 +1827,48 @@ function fetchStatusWidget(el){
 /* ══════════ Link drag-reorder (within editor) ══════════ */
 let _linkDrag = null;
 
-function startLinkDrag(e, row, sec, srcIdx) {
-  if (e.button !== 0) return;
-  e.preventDefault();
 
-  row.classList.add('me-link-dragging');
-  const label = (sec.links[srcIdx] || {}).label || 'Link';
-
-  const ghost = document.createElement('div');
-  ghost.className = 'me-link-ghost';
-  ghost.textContent = '⠿ ' + label;
-  ghost.style.display = 'none';
-  document.body.appendChild(ghost);
-
-  _linkDrag = { srcRow: row, srcIdx, sec, ghost, active: false, _startX: e.clientX, _startY: e.clientY };
-
-  document.addEventListener('pointermove', onLinkDragMove);
-  document.addEventListener('pointerup', onLinkDragEnd);
-  document.addEventListener('pointercancel', onLinkDragEnd);
-}
-
-function linkDropClear() {
-  document.querySelectorAll('.me-link-tr.drop-above, .me-link-tr.drop-below').forEach(el => {
-    el.classList.remove('drop-above', 'drop-below');
-  });
-}
-
-function onLinkDragMove(e) {
-  if (!_linkDrag) return;
-  if (!_linkDrag.active) {
-    const dx = e.clientX - _linkDrag._startX, dy = e.clientY - _linkDrag._startY;
-    if (dx * dx + dy * dy < 64) return;
-    _linkDrag.active = true;
-    if (_linkDrag.ghost) _linkDrag.ghost.style.display = '';
-  }
-  if (!_linkDrag.active || !_linkDrag.ghost) return;
-
-  // Move ghost to cursor
-  _linkDrag.ghost.style.cssText = `
-    position:fixed; pointer-events:none; z-index:9999;
-    left:${e.clientX + 10}px; top:${e.clientY - 16}px;
-    display:flex; align-items:center; gap:6px;
-    padding:8px 14px;
-    background:var(--accent-glass);
-    border:2px dashed var(--accent);
-    backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
-    font-size:var(--text-sm); font-weight:600;
-    color:var(--accent); white-space:nowrap;
-  `;
-
-  // Remove previous indicators
-  linkDropClear();
-
-  // Find which row the cursor is over
-  const rows = _linkDrag.srcRow.parentElement.querySelectorAll('.me-link-tr');
-  let targetRow = null;
-  let insertBefore = false;  // true = above, false = below
-
-  for (const r of rows) {
-    if (r === _linkDrag.srcRow) continue;
-    const rect = r.getBoundingClientRect();
-    if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
-      targetRow = r;
-      // Insert above if cursor is in upper half
-      const midY = rect.top + rect.height / 2;
-      insertBefore = e.clientY < midY;
-      break;
-    }
-  }
-
-  // If cursor is below the last row, target the last row as "below"
-  if (!targetRow && rows.length > 0) {
-    const lastRow = rows[rows.length - 1];
-    const rect = lastRow.getBoundingClientRect();
-    if (e.clientY > rect.bottom) {
-      targetRow = lastRow;
-      insertBefore = false;
-    } else if (e.clientY < rows[0].getBoundingClientRect().top) {
-      targetRow = rows[0];
-      insertBefore = true;
-    }
-  }
-
-  if (targetRow) {
-    targetRow.classList.add(insertBefore ? 'drop-above' : 'drop-below');
-    _linkDrag._targetRow = targetRow;
-    _linkDrag._insertBefore = insertBefore;
-  } else {
-    _linkDrag._targetRow = null;
-  }
-}
-
-function onLinkDragEnd(e) {
-  document.removeEventListener('pointermove', onLinkDragMove);
-  document.removeEventListener('pointerup', onLinkDragEnd);
-  document.removeEventListener('pointercancel', onLinkDragEnd);
-
-  if (!_linkDrag) return;
-  const { srcRow, srcIdx, sec, ghost, active, _targetRow, _insertBefore } = _linkDrag;
-
-  // Clean up
-  if (ghost && ghost.parentNode) ghost.remove();
-  if (srcRow) srcRow.classList.remove('me-link-dragging');
-  linkDropClear();
-
-  if (active && _targetRow) {
-    const rows = [...srcRow.parentElement.querySelectorAll('.me-link-tr')];
-    const tgtIdxStr = _targetRow.dataset.linkIdx;
-    const tgtIdx = tgtIdxStr !== undefined ? parseInt(tgtIdxStr, 10) : -1;
-
-    if (tgtIdx >= 0 && tgtIdx !== srcIdx) {
-      const links = sec.links || [];
-      const [moved] = links.splice(srcIdx, 1);
-      // Adjust target index after removal
-      let insertAt = tgtIdx;
-      if (tgtIdx > srcIdx) insertAt = tgtIdx - 1;
-      if (!_insertBefore) insertAt = insertAt + 1;
-      insertAt = Math.min(insertAt, links.length);
-      links.splice(insertAt, 0, moved);
-      saveAndRefresh();
-    }
-  }
-
-  _linkDrag = null;
-}
-
-function startDrag(e, id, idx){
-  if(e.button!==0)return;
-  e.preventDefault();
-  const card=config.cards.find(x=>x.id===id);
-  if(!card)return;
-  const grid=$('#card-grid');
-  const srcEl=grid.querySelector(`[data-card-id="${id}"]`);
-  if(!srcEl)return;
-  srcEl.classList.add('dragging');
-
-  const ghost=document.createElement('div');ghost.className='drag-ghost';
-  ghost.style.display='none';
-  const cw=Math.min(card.width||1,config.layout.cols);
-  const ch=card.height||1;
-  if(card._isGap){
-    ghost.innerHTML='<div class="dgh-label">␣ empty gap</div>';
-  }else{
-    var iconHtml=card.icon?'<span class="ghost-icon">'+(isLucideName(card.icon)?'<i data-lucide="'+card.icon+'" style="width:16px;height:16px;"></i>':card.icon)+'</span>':'';
-    ghost.innerHTML='<div class="dgh-label">'+iconHtml+'<span class="ghost-title">'+escHtml(card.title||'Card')+'</span></div>';
-  }
-  document.body.appendChild(ghost);
-
-  // Insertion indicator bar
-  const insertBar=document.createElement('div');
-  insertBar.className='drag-insert-bar';
-  insertBar.style.display='none';
-  document.body.appendChild(insertBar);
-
-  // Record cursor offset from card's edge at grab time
-  const srcRect=srcEl.getBoundingClientRect();
-  dragState={cardId:id,srcEl,ghost,insertBar,active:false,_startX:e.clientX,_startY:e.clientY,_beforeCardId:null,
-    _cardWidth:cw,_cardHeight:ch,_grabOffs:e.clientX-srcRect.left,_grabOffsY:e.clientY-srcRect.top,
-    _cardLeft:srcRect.left,_cardTop:srcRect.top,_cardW:srcRect.width,_cardH:srcRect.height,
-    _cardRect:srcRect};
-  document.addEventListener('pointermove',onDragMove);
-  document.addEventListener('pointerup',onDragEnd);
-  document.addEventListener('pointercancel',onDragEnd);
-  document.body.style.overflow = 'hidden';
-}
-
-// Group cards by DOM y-position to find rows. Pass excludeEl=null to include all.
-function buildRowMap(grid, excludeEl) {
-  const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==excludeEl);
-  const rows=[];
-  for(const el of items){
-    const r=el.getBoundingClientRect();let found=false;
-    for(const row of rows){if(Math.abs(row.top-r.top)<10){row.cards.push(el);row.right=Math.max(row.right,r.right);row.bottom=Math.max(row.bottom,r.bottom);found=true;break;}}
-    if(!found)rows.push({top:r.top,bottom:r.bottom,cards:[el],right:r.right});
-  }
-  return rows;
-}
-
-function onDragMove(e){
-  if(!dragState)return;
-  if(!dragState.active){
-    const dx=e.clientX-dragState._startX,dy=e.clientY-dragState._startY;
-    if(dx*dx+dy*dy<64)return;
-    dragState.active=true;
-    if(dragState.ghost)dragState.ghost.style.display='';
-    // Grab offset was cached at drag start — no need to re-read (card may be hidden)
-  }
-  if(!dragState.active)return;
-
-  const grid=$('#card-grid'),ghost=dragState.ghost,dSrc=dragState.srcEl;
-  if(!ghost||!grid)return;
-  const gr=grid.getBoundingClientRect(),cols=config.layout.cols,gap=(config.layout.gap||16);
-  const colW=(gr.width-(cols-1)*gap)/cols,step=colW+gap;
-  const cw=dragState._cardWidth,ch=dragState._cardHeight;
-  const grabOffs=dragState._grabOffs||colW*0.33;
-
-  // Snap to column: preserve grab offset so cursor points to the same relative spot on the card
-  // Use step (colW+gap) because column left-edges are step apart in the actual grid
-  const relX=e.clientX-gr.left;
-  let targetCol=Math.round((relX-grabOffs)/step);
-  targetCol=Math.max(0,Math.min(cols-cw,targetCol));
-
-  // Build row map (exclude dragged card for cursor/insertion detection)
-  const rows=buildRowMap(grid,dSrc);
-  
-  // Expand row hit zones by 20px above/below for easier targetting
-  let targetRow=null,rowIdx=0;
-  for(let i=0;i<rows.length;i++){const row=rows[i];if(e.clientY>=row.top-20&&e.clientY<=row.bottom+20){targetRow=row;rowIdx=i;break;}}
-  if(!targetRow&&rows.length){
-    let best=0,bestD=Infinity;
-    for(let i=0;i<rows.length;i++){const d=Math.abs(e.clientY-rows[i].top);if(d<bestD){bestD=d;best=i;}}
-    targetRow=rows[best];rowIdx=best;
-  }
-
-  const ghostLeft=gr.left+targetCol*(colW+gap);
-  const ghostW=cw*colW+(cw-1)*gap;
-  const ghostTop=targetRow?targetRow.top:(e.clientY-30);
-  const ghostH=targetRow?(targetRow.bottom-targetRow.top):60;
-
-  // Find insertion point: first card whose LEFT EDGE is at or past the ghost's left edge
-  let beforeCard=null;
-  if(targetRow){
-    for(const el of targetRow.cards){
-      const r=el.getBoundingClientRect();
-      if(r.left>=ghostLeft-5){beforeCard=el;break;}
-    }
-    // Past all cards in row — use next DOM sibling (next row's first card, or null → append)
-    if(!beforeCard&&targetRow.cards.length){
-      const ns=targetRow.cards[targetRow.cards.length-1].nextElementSibling;
-      beforeCard=(ns&&ns.classList.contains('card'))?ns:null;
-    }
-  }
-  dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
-
-  const ghostAccent=config.cards.find(c=>c.id===dragState.cardId);
-
-  // ── Ghost position: card's original screen position + smooth grid snap via transform ──
-  // left/top are always the card's actual position. transform adds the grid-snap offset
-  // on subsequent frames so the ghost tracks columns without jumping.
-  // ── Ghost snaps to grid rows AND columns (like columns) ──
-  var cr=dragState._cardRect;
-  // X: snap to column (existing)
-  var snapDX=ghostLeft-cr.left;
-  
-  // Y: snap to nearest row top (like X snaps to column)
-  var cursorCardTop=e.clientY-dragState._grabOffsY;
-  var bestRowIdx=0,bestRowDist=Infinity;
-  for(var ri=0;ri<rows.length;ri++){
-    var d2=Math.abs(rows[ri].top-cursorCardTop);
-    if(d2<bestRowDist){bestRowDist=d2;bestRowIdx=ri;}
-  }
-  var snapTop=rows.length?rows[bestRowIdx].top:(e.clientY-30);
-  var snapDY=snapTop-cr.top;
-  
-  // Use grid-calculated width (ghostW) and card's actual height for min-height
-  ghost.style.cssText=`
-    position:fixed;pointer-events:none;z-index:var(--z-drag);
-    left:${cr.left}px;top:${cr.top}px;
-    width:${ghostW-4}px;min-height:${cr.height}px;
-    transform:translate(${snapDX}px,${snapDY}px);
-    display:flex;align-items:center;justify-content:center;
-    background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);
-    border:2px dashed ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'};
-    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-  `;
-
-  // ── Clear previous preview transforms ──
-  document.querySelectorAll('.card.push-preview').forEach(function(el){
-    el.style.transition='none';
-    el.classList.remove('push-preview');
-    el.style.transform='';
-  });
-  
-  // Grid simulation drop-shift: highlight cards that will change row/col
-  computeDropShift(dragState._beforeCardId);
-  
-  // Show insertion indicator based on drop zone (use strict row bounds, not expanded)
-  var dropY=e.clientY;
-  var dropZone='none',betweenIdx=0;
-  // Check between strict row gaps first
-  if(rows.length>1){
-    for(var ri=0;ri<rows.length-1;ri++){
-      if(dropY>=rows[ri].bottom&&dropY<=rows[ri+1].top){dropZone='between';betweenIdx=ri;break;}
-    }
-  }
-  // Check below last row
-  if(dropZone==='none'&&rows.length&&dropY>rows[rows.length-1].bottom)dropZone='below';
-  // Check inside a row (strict bounds)
-  if(dropZone==='none'){
-    for(var ri=0;ri<rows.length;ri++){
-      if(dropY>=rows[ri].top&&dropY<=rows[ri].bottom){dropZone=beforeCard?'insert':'append';break;}
-    }
-  }
-  
-  if(dropZone==='between'||dropZone==='below'){
-    insertBar.style.display='';
-    insertBar.style.left=gr.left+'px';
-    insertBar.style.border='none';
-    insertBar.style.borderRadius='2px';
-    insertBar.style.boxShadow='0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)';
-    insertBar.style.background='var(--accent)';
-    insertBar.style.width=gr.width+'px';
-    insertBar.style.height='4px';
-    if(dropZone==='between'){
-      var bgt=rows[betweenIdx].bottom,bgb=rows[betweenIdx+1].top;
-      insertBar.style.top=((bgt+bgb)/2-2)+'px';
-      var nextRow=rows[betweenIdx+1];
-      beforeCard=nextRow&&nextRow.cards.length?nextRow.cards[0]:null;
-    }else{
-      insertBar.style.top=(rows[rows.length-1].bottom+gap/2-2)+'px';
-      beforeCard=null;
-    }
-    dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
-  }else if(dropZone==='append'){
-    insertBar.style.display='';
-    var lr=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();
-    var phWidth=cw*colW+(cw-1)*gap;
-    var phHeight=(ch||1)*140;
-    insertBar.style.left=lr.right+'px';
-    insertBar.style.top=targetRow.top+'px';
-    insertBar.style.width=phWidth+'px';
-    insertBar.style.height=phHeight+'px';
-    insertBar.style.background='color-mix(in srgb, '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)')+' 10%, transparent)';
-    insertBar.style.border='2px dashed '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)');
-    insertBar.style.borderRadius='0';
-    insertBar.style.boxShadow='none';
-    dragState._beforeCardId=null;
-  }else{
-    insertBar.style.display='none';
-  }
-}
-
-function dropZoneClear(){
-  $$('.card.drop-shift').forEach(function(el){el.classList.remove('drop-shift');});
-  document.querySelectorAll('.card-dir-arrow').forEach(function(el){el.remove();});
-}
-
-// Simulate CSS Grid auto-placement for computing final layout positions.
-function simulateGrid(cards, cols) {
-  const occ = [];
-  const out = [];
-  for (const card of cards) {
-    const w = Math.min(card.width || 1, cols);
-    const h = card.height || 1;
-    let placed = false;
-    for (let row = 0; !placed && row < 100; row++) {
-      if (!occ[row]) occ[row] = [];
-      for (let col = 0; col <= cols - w && !placed; col++) {
-        let free = true;
-        for (let dr = 0; dr < h && free; dr++)
-          for (let dc = 0; dc < w && free; dc++)
-            if (occ[row + dr] && occ[row + dr][col + dc]) free = false;
-        if (free) {
-          for (let dr = 0; dr < h; dr++) {
-            if (!occ[row + dr]) occ[row + dr] = [];
-            for (let dc = 0; dc < w; dc++) occ[row + dr][col + dc] = true;
-          }
-          out.push({ row, col }); placed = true;
-        }
-      }
-    }
-    if (!placed) out.push({ row: 0, col: 0 });
-  }
-  return out;
-}
-
-// Compute which cards change position after the move using grid simulation.
-function computeDropShift(targetBeforeCardId) {
-  // Fallback: compute positions inline
-  dropZoneClear();
-  const allCards = config.cards;
-  const dragId = dragState.cardId;
-  const cols = config.layout.cols;
-  const srcIdx = allCards.findIndex(c => c.id === dragId);
-  if (srcIdx < 0) return;
-
-  const newOrder = [...allCards];
-  const [moved] = newOrder.splice(srcIdx, 1);
-  const beforeIdx = targetBeforeCardId
-    ? newOrder.findIndex(c => c.id === targetBeforeCardId)
-    : newOrder.length;
-  newOrder.splice(beforeIdx < 0 ? newOrder.length : beforeIdx, 0, moved);
-
-  const oldPos = simulateGrid(allCards, cols);
-  const newPos = simulateGrid(newOrder, cols);
-  computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder);
-}
-
-// Shared: apply drop-shift + directional arrow to cards whose (row,col) changes
-function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder) {
-  dropZoneClear();
-  document.querySelectorAll('.card-dir-arrow').forEach(function(el){el.remove();});
-  document.querySelectorAll('.card-swap-arrow').forEach(function(el){el.remove();});
-  const grid = document.getElementById('card-grid');
-  
-  // Find the dragged card's original position
-  var dragOldIdx = allCards.findIndex(function(c){return c.id===dragId;});
-  var dragOldPos = dragOldIdx>=0?oldPos[dragOldIdx]:null;
-  
-  // Find which card ends up at the dragged card's original position (swap partner)
-  var swapPartnerId = null;
-  if(dragOldPos){
-    for(var si=0;si<allCards.length;si++){
-      var sc = allCards[si];
-      if(sc.id===dragId) continue;
-      var sNewIdx = newOrder.findIndex(function(nc){return nc.id===sc.id;});
-      if(sNewIdx<0) continue;
-      var sNewP = newPos[sNewIdx];
-      // Check if this card's new footprint SPANS the dragged card's old position
-      var sW = Math.min(sc.width || 1, cols);
-      var sH = sc.height || 1;
-      var inCol = (sNewP.col <= dragOldPos.col && dragOldPos.col < sNewP.col + sW);
-      var inRow = (sNewP.row <= dragOldPos.row && dragOldPos.row < sNewP.row + sH);
-      if(inRow && inCol){
-        swapPartnerId = sc.id;
-        break;
-      }
-    }
-  }
-  
-  for (let i = 0; i < allCards.length; i++) {
-    const c = allCards[i];
-    if (c.id === dragId) continue;
-    const oldP = oldPos[i];
-    const newIdx = newOrder ? newOrder.findIndex(nc => nc.id === c.id) : -1;
-    if (newIdx < 0) continue;
-    const newP = newPos[newIdx];
-    const dRow = newP.row - oldP.row;
-    const dCol = newP.col - oldP.col;
-    if (dRow !== 0 || dCol !== 0) {
-      const el = grid.querySelector(`[data-card-id="${c.id}"]`);
-      if (el) {
-        el.classList.add('drop-shift');
-        var arrow = document.createElement('span');
-        var isSwap = (c.id === swapPartnerId);
-        arrow.className = isSwap ? 'card-swap-arrow' : 'card-dir-arrow';
-        if(isSwap){
-          arrow.textContent = '⇄';
-        }else{
-          var dir = '';
-          if (dRow < 0) dir += '↑';
-          if (dRow > 0) dir += '↓';
-          if (dCol < 0) dir += '←';
-          if (dCol > 0) dir += '→';
-          var dist = Math.abs(dRow) + Math.abs(dCol);
-          arrow.textContent = dist > 1 ? dir + dist : dir;
-        }
-        var er = el.getBoundingClientRect();
-        arrow.style.cssText = 'position:fixed;top:'+(er.top+6)+'px;right:'+(document.body.clientWidth-er.right+6)+'px;z-index:1000;';
-        document.body.appendChild(arrow);
-      }
-    }
-  }
-}
-
-function onDragEnd(e){
-  document.removeEventListener('pointermove',onDragMove);
-  document.removeEventListener('pointerup',onDragEnd);
-  document.removeEventListener('pointercancel',onDragEnd);
-  dropZoneClear();
-  // Clean up push transforms
-  document.querySelectorAll('.card.push-preview').forEach(function(el){
-    el.classList.remove('push-preview');
-    el.style.transform='';
-    el.style.transition='';
-  });
-  if(dragState.insertBar&&dragState.insertBar.parentNode)dragState.insertBar.remove();
-  if(!dragState)return;
-  const{cardId,srcEl,ghost,active,_beforeCardId}=dragState;
-  if(ghost&&ghost.parentNode)ghost.remove();
-  if(srcEl)srcEl.classList.remove('dragging');
-  document.body.style.overflow = '';
-
-  if(active){
-    const grid=$('#card-grid');
-    const cards=config.cards;
-    const srcIdx=cards.findIndex(c=>c.id===cardId);
-    if(srcIdx<0){renderAll();dragState=null;return;}
-    let tgtIdx=-1;
-
-    if(_beforeCardId){
-      tgtIdx=cards.findIndex(c=>c.id===_beforeCardId);
-    }else{
-      // Append to end
-      tgtIdx=cards.length;
-    }
-
-    if(tgtIdx>=0&&srcIdx!==tgtIdx){
-      // FLIP ALL shifted cards — snapshot before DOM move
-      const allCards=[...grid.children].filter(el=>el.classList.contains('card'));
-      const snaps=allCards.map(el=>({el,first:el.getBoundingClientRect()}));
-
-      if(_beforeCardId){
-        const bdom=grid.querySelector(`[data-card-id="${_beforeCardId}"]`);
-        if(bdom)grid.insertBefore(srcEl,bdom);
-        else grid.appendChild(srcEl);
-      }else{
-        grid.appendChild(srcEl);
-      }
-
-      // Capture last positions (forces reflow)
-      const flips=snaps.map(({el,first})=>{
-        const last=el.getBoundingClientRect();
-        return{el,dx:first.left-last.left,dy:first.top-last.top};
-      });
-      const moved=flips.filter(f=>f.dx||f.dy);
-
-      if(moved.length){
-        for(const{el,dx,dy}of moved){
-          el.style.transition='none';
-          el.style.transform=`translate(${dx}px,${dy}px)`;
-        }
-        requestAnimationFrame(()=>{
-          for(const{el,dx,dy}of moved){
-            if(dx||dy){
-              el.style.transition='transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
-              el.style.transform='translate(0,0)';
-            }
-          }
-          setTimeout(()=>{
-            for(const{el}of moved){
-              el.style.transition='';el.style.transform='';
-            }
-          },450);
-        });
-      }
-
-      const[m]=cards.splice(srcIdx,1);
-      const insertAt=tgtIdx>(srcIdx)?tgtIdx-1:tgtIdx;
-      cards.splice(insertAt,0,m);
-      saveConfig();
-      [...grid.children].filter(el=>el.classList.contains('card')).forEach((el,i)=>{el.dataset.index=i;});
-      toast('Card moved','success');
-      dragState=null;
-      return;
-    }
-  }
-
-  if(srcEl)srcEl.classList.remove('dragging');
-  if(active)renderAll();
-  dragState=null;
-}
-
-function addGap(){
-  config.cards.push({id:'gap-'+uid(),title:'',icon:'',color:'transparent',width:1,height:1,_isGap:true});
-  saveConfig();renderAll();toast('Gap added','success');
-}
-function removeGap(idx){
-  config.cards.splice(idx,1);
-  saveConfig();renderAll();
-}
-
-/* ═══════════════════════════════════════════ ICON PICKER ═══════════════════════════════════════════ */
-let iconPickerOpen=false;
-function openIconPicker(cb){iconPickerCallback=cb;iconPickerOpen=true;$('#icon-picker-overlay').classList.add('open');$('#icon-picker').classList.add('open');buildIconPicker('icons');}
-function closeIconPicker(){iconPickerOpen=false;iconPickerCallback=null;$('#icon-picker-overlay').classList.remove('open');$('#icon-picker').classList.remove('open');}
-function buildIconPicker(t){const c=$('#icon-picker-content');c.innerHTML='';$$('.ip-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));if(t==='library')buildLibraryTab(c);else if(t==='upload')buildUploadTab(c);else if(t==='icons')buildIconsTab(c);else if(t==='url')buildUrlTab(c);}
-function buildLibraryTab(c){const s=document.createElement('input');s.className='icon-search-bar';s.placeholder='Search services...';c.appendChild(s);const g=document.createElement('div');g.className='icon-grid';c.appendChild(g);function ri(f){g.innerHTML='';const fl=(f||'').toLowerCase();if(!ICON_REPO.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">Loading service icons...</div>';return;}const items=fl?ICON_REPO.filter(i=>i.name.toLowerCase().includes(fl)||i.file.toLowerCase().includes(fl)||i.tags.some(t=>t.includes(fl))):ICON_REPO;items.slice(0,120).forEach(item=>{const d=document.createElement('div');d.className='icon-grid-item';const img=document.createElement('img');img.src=`${ICON_CDN}/${item.file}.svg`;img.alt=item.name;img.loading='lazy';img.onerror=function(){this.parentElement.style.display='none';};const l=document.createElement('span');l.textContent=item.name;d.appendChild(img);d.appendChild(l);d.addEventListener('click',()=>selectIcon(`${ICON_CDN}/${item.file}.svg`));g.appendChild(d);});if(!items.length)g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No icons found</div>';}s.addEventListener('input',()=>ri(s.value));ri('');}
-function buildUploadTab(c){
-  c.innerHTML='';
-  // Upload zone
-  const z=document.createElement('div');z.className='upload-zone';
-  z.innerHTML='<div style="font-size:var(--text-3xl);">📁</div><p>Click to upload an icon (48×48 resized)</p>';c.appendChild(z);
-  const fi=document.createElement('input');fi.type='file';
-  fi.accept='image/png,image/svg+xml,image/webp,image/jpeg,image/gif';fi.style.display='none';
-  fi.addEventListener('change',function(e){
-    const file=e.target.files[0];if(!file)return;
-    z.innerHTML='<div style="padding:20px;color:var(--text-secondary);">Uploading...</div>';
-    storage.uploadIcon(file,file.name).then(function(result){
-      if(result&&!result.error){
-        selectIcon(result.url);
-      }else{
-        toast('Upload failed: '+(result&&result.error?result.error:'Unknown'),'error');
-        buildUploadTab(c);
-      }
-    }).catch(function(err){
-      toast('Upload error: '+err.message,'error');
-      buildUploadTab(c);
-    });
-  });c.appendChild(fi);
-  z.addEventListener('click',function(){fi.click();});
-  // Gallery
-  const gal=document.createElement('div');gal.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;';
-  const loadGal=function(){
-    gal.innerHTML='<div style="grid-column:1/-1;font-size:var(--text-xs);color:var(--text-tertiary);text-align:center;padding:12px;">Loading...</div>';
-    storage.listIcons().then(function(icons){
-      gal.innerHTML='';
-      if(!icons||!icons.length){
-        gal.innerHTML='<div style="grid-column:1/-1;font-size:var(--text-xs);color:var(--text-tertiary);text-align:center;padding:12px;">No uploaded icons yet.</div>';
-        return;
-      }
-      icons.forEach(function(ic){
-        const card=document.createElement('div');card.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border:1px solid var(--surface-border);cursor:pointer;background:rgba(0,0,0,0.1);position:relative;';
-        const img=document.createElement('img');img.src=ic.url;img.style.cssText='width:48px;height:48px;object-fit:contain;display:block;';
-        card.title=ic.name;
-        card.addEventListener('click',function(){selectIcon(ic.url);});
-        const del=document.createElement('button');del.textContent='✕';
-        del.style.cssText='position:absolute;top:2px;right:2px;padding:0 3px;font-size:10px;background:rgba(0,0,0,0.6);border:1px solid var(--surface-border);color:var(--color-error);cursor:pointer;line-height:1.4;';
-        del.addEventListener('click',function(e){e.stopPropagation();
-          storage.deleteIcon(ic.url).then(function(){loadGal();toast('Icon deleted');}).catch(function(){toast('Delete failed','error');});
-        });
-        card.appendChild(img);card.appendChild(del);gal.appendChild(card);
-      });
-    }).catch(function(){gal.innerHTML='<div style="grid-column:1/-1;color:var(--text-tertiary);text-align:center;padding:12px;">Could not load icons.</div>';});
-  };
-  loadGal();
-  c.appendChild(gal);
-}
-function buildIconsTab(c){
-  const s=document.createElement('input');s.className='icon-search-bar';s.placeholder='Search icons or emoji...';c.appendChild(s);
-  const etab=document.createElement('div');etab.style.cssText='display:flex;gap:4px;margin-bottom:8px;';
-  const btnSvg=document.createElement('button');btnSvg.className='btn btn-glass btn-sm';btnSvg.textContent='SVG Icons';btnSvg.style.cssText='flex:1;';
-  const btnEmoji=document.createElement('button');btnEmoji.className='btn btn-glass btn-sm';btnEmoji.textContent='Emoji';btnEmoji.style.cssText='flex:1;';
-  etab.appendChild(btnSvg);etab.appendChild(btnEmoji);c.appendChild(etab);
-  const g=document.createElement('div');g.className='icon-grid';g.style.gridTemplateColumns='repeat(auto-fill,minmax(52px,1fr))';c.appendChild(g);
-  var _mode='svg';
-  // Get all available Lucide icon names from the loaded library (dynamic, always complete)
-  function getAllLucideIcons(){
-    if(typeof lucide!=='undefined'&&lucide.icons)return Object.keys(lucide.icons).sort();
-    return LUCIDE_ICONS; // fallback
-  }
-  function ri(f){
-    g.innerHTML='';const fl=(f||'').toLowerCase();
-    if(_mode==='svg'){
-      var allIcons=getAllLucideIcons();
-      var items=fl?allIcons.filter(function(n){return n.toLowerCase().includes(fl);}):allIcons;
-      if(!items.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No icons found</div>';return;}
-      // Batch-render icons in chunks for performance (keeps UI responsive with 600+ icons)
-      var batchSize=80;
-      var idx=0;
-      function renderBatch(){
-        var end=Math.min(idx+batchSize,items.length);
-        for(;idx<end;idx++){
-          var name=items[idx];
-          var d=document.createElement('div');d.className='icon-grid-item';d.style.cssText='flex-direction:column;gap:2px;padding:6px 2px;';
-          var i=document.createElement('i');i.setAttribute('data-lucide',name);i.style.cssText='width:20px;height:20px;';
-          var l=document.createElement('span');l.style.cssText='font-size:var(--text-3xs);text-align:center;overflow:hidden;text-overflow:ellipsis;max-width:52px;white-space:nowrap;';l.textContent=name;
-          d.appendChild(i);d.appendChild(l);
-          d.addEventListener('click',function(n){return function(){selectIcon(n);};}(name));g.appendChild(d);
-        }
-        if(idx<items.length)requestAnimationFrame(renderBatch);
-        else setTimeout(renderIcons,50); // render icons after all batches done
-      }
-      requestAnimationFrame(renderBatch);
-    }else{
-      var items=fl?EMOJIS.filter(function(e){return e.includes(fl);}):EMOJIS;
-      if(!items.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No emoji found</div>';return;}
-      items.forEach(function(emo){var d=document.createElement('div');d.className='icon-grid-item';d.innerHTML='<span class="ip-emoji">'+emo+'</span>';d.addEventListener('click',function(){selectIcon(emo);});g.appendChild(d);});
-    }
-  }
-  function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);}
-  btnSvg.addEventListener('click',function(){setMode('svg');});btnEmoji.addEventListener('click',function(){setMode('emoji');});
-  s.addEventListener('input',function(){ri(s.value);});setMode('svg');
-}
-function buildUrlTab(c){c.innerHTML=`<div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:6px;">Enter a direct URL:</div><input class="icon-search-bar" id="icon-url-input" placeholder="https://example.com/icon.png"><button class="btn btn-glass btn-sm" id="icon-url-btn">Use</button><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:12px;" id="icon-url-examples"></div>`;const inp=$('#icon-url-input');['jellyfin','plex','homeassistant','portainer','pihole','grafana','sonarr','radarr'].forEach(n=>{const tag=document.createElement('button');tag.className='btn btn-glass btn-sm';tag.style.fontSize='10px';tag.textContent=n;tag.addEventListener('click',()=>selectIcon(`${ICON_CDN}/${n}.png`));$('#icon-url-examples').appendChild(tag);});inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim())selectIcon(inp.value.trim());});$('#icon-url-btn').addEventListener('click',()=>{if(inp.value.trim())selectIcon(inp.value.trim());});}
-function selectIcon(u){if(iconPickerCallback)iconPickerCallback(u);closeIconPicker();}
-
-/* ═══════════════════════════════════════════ BACKGROUND UPLOAD ═══════════════════════════════════════════ */
-function openBgUpload() {
-  toast('Processing image...');
-  const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.style.display = 'none';
-  fi.addEventListener('change', async e => {
-    const file = e.target.files[0]; if (!file) return;
-    try {
-      // Compress & resize via canvas
-      const blob = await compressImage(file, 1920, 1080, 0.85);
-      if (blob.size > 5 * 1024 * 1024) { toast('Image too large after compression', 'error'); return; }
-
-      // Upload to server
-      var blobFile = new File([blob], file.name, { type: file.type });
-      const result = await storage.uploadFile(blobFile, file.name);
-      if (result.error) { toast('Upload failed: ' + result.error, 'error'); return; }
-
-      config.theme.bgType = 'image';
-      config.theme.bgValue = result.url;
-      applyChanges(); saveConfig();
-      uploadedFiles.unshift(result);
-      buildConfigPanel();
-      toast('Background set (' + (result.width||'') + 'x' + (result.height||'') + ' @ ' + fmtSize(result.size) + ')');
-    } catch(err) {
-      toast('Upload error: ' + err.message, 'error');
-    }
-  });
-  fi.click();
-}
-
-function compressImage(file, maxW, maxH, quality) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      let w = img.width, h = img.height;
-      // Resize if needed
-      if (w > maxW || h > maxH) {
-        const ratio = Math.min(maxW / w, maxH / h);
-        w = Math.round(w * ratio);
-        h = Math.round(h * ratio);
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, w, h);
-      canvas.toBlob(b => resolve(b), 'image/jpeg', quality);
-      URL.revokeObjectURL(img.src);
-    };
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-async function deleteUpload(url) {
-  const name = url.split('/').pop();
-  if (!name) return;
-  try {
-    const result = await storage.deleteFile(url);
-    if (result && result.status === 'deleted') {
-      uploadedFiles = uploadedFiles.filter(f => f.url !== url);
-      toast('Deleted');
-      // If this was the current background, reset
-      if (config.theme.bgType === 'image' && config.theme.bgValue === url) {
-        config.theme.bgType = 'gradient';
-        config.theme.bgValue = DEFAULT_CONFIG.theme.bgValue;
-        applyChanges(); saveConfig();
-      }
-      buildConfigPanel();
-    } else {
-      toast('Delete failed', 'error');
-    }
-  } catch(err) {
-    toast('Delete error: ' + err.message, 'error');
-  }
-}
-
-function fmtSize(bytes) {
-  if (bytes < 1024) return bytes + 'B';
-  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + 'KB';
-  return (bytes / 1048576).toFixed(1) + 'MB';
-}
-
-async function fetchUploads() {
-  try {
-    uploadedFiles = await storage.listUploads();
-  } catch(e) { /* server might not be available */ }
-}
-
-function openBgPicker() {
-  const overlay = $('#bg-picker-overlay');
-  const picker = $('#bg-picker');
-  overlay.classList.add('open'); picker.classList.add('open');
-  const content = $('#bg-picker-content'); content.innerHTML = '';
-
-  if (!uploadedFiles.length) {
-    content.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No uploaded backgrounds yet. Upload one from the config panel.</div>';
-    $('#bg-picker-close').onclick = () => { overlay.classList.remove('open'); picker.classList.remove('open'); };
-    overlay.onclick = () => { overlay.classList.remove('open'); picker.classList.remove('open'); };
-    return;
-  }
-
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display:grid;grid-template-columns:1fr;gap:8px;';
-
-  uploadedFiles.forEach(f => {
-    const card = document.createElement('div');
-    card.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--surface-border);cursor:pointer;transition:all 0.1s;';
-    card.innerHTML = `
-      <img src="${f.url}" style="width:80px;height:45px;object-fit:cover;flex-shrink:0;" alt="">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:var(--text-sm);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(f.name)}</div>
-        <div style="font-size:var(--text-2xs);color:var(--text-tertiary);">${fmtSize(f.size)}</div>
-      </div>
-      <button class="btn btn-glass btn-sm btn-danger" style="flex-shrink:0;" data-action="delete">Delete</button>
-    `;
-    // Click to set as background
-    card.addEventListener('click', e => {
-      if (e.target.dataset.action === 'delete') return;
-      config.theme.bgType = 'image';
-      config.theme.bgValue = f.url;
-      applyChanges(); saveConfig();
-      overlay.classList.remove('open'); picker.classList.remove('open');
-      buildConfigPanel();
-      toast('Background set');
-    });
-    // Delete button
-    const delBtn = card.querySelector('[data-action="delete"]');
-    delBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      deleteUpload(f.url).then(function(){openBgPicker();}).catch(function(){openBgPicker();});
-    });
-    grid.appendChild(card);
-  });
-
-  content.appendChild(grid);
-  $('#bg-picker-close').onclick = () => { overlay.classList.remove('open'); picker.classList.remove('open'); };
-  overlay.onclick = () => { overlay.classList.remove('open'); picker.classList.remove('open'); };
-}
 
 /* ═══════════════════════════════════════════ CONFIG PANEL ═══════════════════════════════════════════ */
 let configPanelOpen=false;
-function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);updateBlurState();if(configPanelOpen){buildConfigPanel();renderIcons();}}
-function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
-  const brand=config.branding||{};
-  // Update header title
-  const ht=$('#config-header-title');
-  if(ht)ht.innerHTML='<i data-lucide="Settings" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i><span style="vertical-align:middle;">'+(brand.title||'WarTab')+' Config</span>';
+let _configTab='dashboard'; // 'dashboard' | 'appearance' | 'system'
 
-  /* ── Page ── */
+function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);updateBlurState();if(configPanelOpen){buildConfigPanel();renderIcons();}}
+
+function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
+  const ht=$('#config-header-title');
+  if(ht)ht.innerHTML='<i data-lucide="Settings" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i><span style="vertical-align:middle;">WarTab Config</span>';
+
+  // Build tab bar
+  const tabBar=el('div','display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--glass-border);padding-bottom:10px;');
+  const tabs=[
+    {id:'dashboard',label:'Dashboard',icon:'layout-dashboard'},
+    {id:'appearance',label:'Appearance',icon:'palette'},
+    {id:'system',label:'System',icon:'settings-2'},
+  ];
+  tabs.forEach(t=>{
+    const btn=el('button','',t.label);
+    btn.className='btn btn-glass btn-sm';
+    btn.style.cssText=_configTab===t.id
+      ? 'border-color:var(--accent);background:var(--accent-glass);color:var(--text-primary);font-weight:700;'
+      : 'opacity:0.7;';
+    btn.addEventListener('click',()=>{_configTab=t.id;buildConfigPanel();renderIcons();});
+    tabBar.appendChild(btn);
+  });
+  body.appendChild(tabBar);
+
+  // Call the appropriate sub-panel builder
+  if(_configTab==='dashboard')buildDashboardPanel(body);
+  else if(_configTab==='appearance')buildAppearancePanel(body);
+  else buildSystemPanel(body);
+
+  wrapConfigCards(body);
+}
+
+/* ── Dashboard tab: Page + Layout ── */
+function buildDashboardPanel(body){
+  const brand=config.branding||{};
+
   body.appendChild(ps('Page'));
   const br=el('div','display:flex;gap:8px;align-items:flex-start;');
   const tg=el('div','flex:1;');tg.appendChild(el('label','display:block;font-size:var(--text-sm);font-weight:600;color:var(--text-secondary);margin-bottom:4px;','Page Title'));
@@ -2622,12 +1887,20 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   ib.addEventListener('click',()=>openIconPicker(url=>{if(!config.branding)config.branding={};config.branding.icon=url;applyTheme();saveConfig();buildConfigPanel();}));
   ir2.appendChild(ib);ig.appendChild(ir2);br.appendChild(ig);body.appendChild(br);
 
-  /* ── Background ── */
+  body.appendChild(ps('Layout'));
+  body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
+  body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
+  body.appendChild(pf('range','','Page Width Padding (%)',null,parseInt(config.layout.pageWidthPadding)||2,v=>{config.layout.pageWidthPadding=parseInt(v);applyChanges();renderAll();},{min:0,max:15}));
+  body.appendChild(pf('range','','Page Height Padding (%)',null,config.layout.pagePadding||2,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:0,max:15}));
+}
+
+/* ── Appearance tab: Background + Appearance + Typography ── */
+function buildAppearancePanel(body){
+  /* Background */
   body.appendChild(ps('Background'));
   const bgType=config.theme.bgType;
   body.appendChild(pf('select','','Type',[{value:'gradient',label:'Gradient'},{value:'solid',label:'Solid'},{value:'image',label:'Image'}],bgType,v=>{config.theme.bgType=v;applyChanges();renderAll();buildConfigPanel();}));
 
-  // Value field — color picker for solid, dual pickers for gradient, text for image
   if(bgType==='gradient'){
     const parts=config.theme.bgValue.split(',').map(s=>s.trim());
     const c1=parts[0]||'#0a0a0a';
@@ -2648,16 +1921,13 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
     gr.appendChild(p);body.appendChild(gr);
   } else if(bgType==='image'){
     bgValueRow(body);
-    // Background image controls — blur + dim
     body.appendChild(pf('range','','Image Blur (px)',null,parseInt(config.theme.bgBlur)||0,v=>{config.theme.bgBlur=parseInt(v);applyChanges();},{min:0,max:20}));
     body.appendChild(pf('range','','Image Dim (%)',null,parseInt(config.theme.bgDim)||0,v=>{config.theme.bgDim=parseInt(v);applyChanges();},{min:0,max:100}));
   }
 
-  // Upload + Previous Images buttons
   const bgr=el('div','display:flex;gap:6px;flex-wrap:wrap;');
   const ub=el('button','','Upload Image');ub.className='btn btn-glass btn-sm';ub.addEventListener('click',()=>openBgUpload());bgr.appendChild(ub);
   if(uploadedFiles.length){const sb=el('button','','Previous Images ('+uploadedFiles.length+')');sb.className='btn btn-glass btn-sm';sb.addEventListener('click',()=>openBgPicker());bgr.appendChild(sb);}
-  // Set URL button (always visible for image type)
   if(bgType==='image'){
     const setUrlBtn=el('button','','Set URL');setUrlBtn.className='btn btn-glass btn-sm';
     setUrlBtn.addEventListener('click',()=>{buildConfigPanel();});bgr.appendChild(setUrlBtn);
@@ -2667,10 +1937,9 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
     bgr.appendChild(setUrlBtn);
   }
   body.appendChild(el('div','margin-bottom:10px;',null,bgr));
-
   body.appendChild(chk('Random background on load',config.theme.bgRotate,v=>{config.theme.bgRotate=v;saveConfig();}));
 
-  /* ── Appearance ── */
+  /* Appearance */
   body.appendChild(ps('Appearance'));
   body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark'},{value:'light',label:'Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
   body.appendChild(pf('range','','Card Transparency',null,Math.round((1-(config.theme.cardOpacity||1))*100),v=>{config.theme.cardOpacity=1-(parseInt(v)/100);applyChanges();},{min:0,max:100}));
@@ -2679,82 +1948,58 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   body.appendChild(chk('Animated transitions',config.theme.animations!==false,v=>{config.theme.animations=v;applyChanges();renderAll();}));
   body.appendChild(chk('Card accent bar',config.theme.showAccentBar!==false,v=>{config.theme.showAccentBar=v;applyChanges();renderAll();}));
 
-  /* ── Typography ── */
+  /* Typography */
   body.appendChild(ps('Typography'));
   body.appendChild(pf('color','','Font Color',null,config.theme.fontColor||'#cccccc',v=>{config.theme.fontColor=v;applyChanges();document.body.style.setProperty('--text-primary',hexToRgba(v,0.92));}));
-  body.appendChild(pf('range','','Body Text Size (px)',null,config.theme.fontSizeText,v=>{config.theme.fontSizeText=parseInt(v);applyChanges();},{min:10,max:28}));
-  body.appendChild(pf('range','','Heading Size (px)',null,config.theme.fontSizeHeading,v=>{config.theme.fontSizeHeading=parseInt(v);applyChanges();},{min:10,max:28}));
+  body.appendChild(pf('range','','Body Text Size',null,config.theme.fontSizeText,v=>{config.theme.fontSizeText=parseInt(v);applyChanges();},{min:10,max:28}));
+  body.appendChild(pf('range','','Heading Size',null,config.theme.fontSizeHeading,v=>{config.theme.fontSizeHeading=parseInt(v);applyChanges();},{min:10,max:28}));
   const curFont=config.theme.fontFamily||'Inter';
   const TOP_FONTS = [
-    {name:'Inter',sample:'The quick brown fox jumps'},
-    {name:'Space Grotesk',sample:'The quick brown fox jumps'},
-    {name:'JetBrains Mono',sample:'console.log(42)'},
-    {name:'Fraunces',sample:'The quick brown fox jumps'},
-    {name:'Plus Jakarta Sans',sample:'The quick brown fox jumps'},
-    {name:'DM Sans',sample:'The quick brown fox jumps'},
-    {name:'Outfit',sample:'The quick brown fox jumps'},
-    {name:'Sora',sample:'The quick brown fox jumps'},
-    {name:'Manrope',sample:'The quick brown fox jumps'},
-    {name:'Rubik',sample:'The quick brown fox jumps'},
-    {name:'Nunito',sample:'The quick brown fox jumps'},
-    {name:'Poppins',sample:'The quick brown fox jumps'},
-    {name:'Raleway',sample:'The quick brown fox jumps'},
-    {name:'Work Sans',sample:'The quick brown fox jumps'},
-    {name:'Montserrat',sample:'The quick brown fox jumps'},
-    {name:'Fira Sans',sample:'The quick brown fox jumps'},
-    {name:'Barlow',sample:'The quick brown fox jumps'},
-    {name:'Figtree',sample:'The quick brown fox jumps'},
-    {name:'Archivo',sample:'The quick brown fox jumps'},
-    {name:'Chivo',sample:'The quick brown fox jumps'},
-    {name:'Epilogue',sample:'The quick brown fox jumps'},
-    {name:'Josefin Sans',sample:'The quick brown fox jumps'},
-    {name:'Karla',sample:'The quick brown fox jumps'},
-    {name:'Lexend',sample:'The quick brown fox jumps'},
-    {name:'Quicksand',sample:'The quick brown fox jumps'},
-    {name:'Urbanist',sample:'The quick brown fox jumps'},
-    {name:'Onest',sample:'The quick brown fox jumps'},
-    {name:'Be Vietnam Pro',sample:'The quick brown fox jumps'},
-    {name:'IBM Plex Sans',sample:'The quick brown fox jumps'},
-    {name:'DM Mono',sample:'const x = 1;'},
+    {name:'Inter',sample:'The quick brown fox jumps'},{name:'Space Grotesk',sample:'The quick brown fox jumps'},
+    {name:'JetBrains Mono',sample:'console.log(42)'},{name:'Fraunces',sample:'The quick brown fox jumps'},
+    {name:'Plus Jakarta Sans',sample:'The quick brown fox jumps'},{name:'DM Sans',sample:'The quick brown fox jumps'},
+    {name:'Outfit',sample:'The quick brown fox jumps'},{name:'Sora',sample:'The quick brown fox jumps'},
+    {name:'Manrope',sample:'The quick brown fox jumps'},{name:'Rubik',sample:'The quick brown fox jumps'},
+    {name:'Nunito',sample:'The quick brown fox jumps'},{name:'Poppins',sample:'The quick brown fox jumps'},
+    {name:'Raleway',sample:'The quick brown fox jumps'},{name:'Work Sans',sample:'The quick brown fox jumps'},
+    {name:'Montserrat',sample:'The quick brown fox jumps'},{name:'Fira Sans',sample:'The quick brown fox jumps'},
+    {name:'Barlow',sample:'The quick brown fox jumps'},{name:'Figtree',sample:'The quick brown fox jumps'},
+    {name:'Archivo',sample:'The quick brown fox jumps'},{name:'Chivo',sample:'The quick brown fox jumps'},
+    {name:'Epilogue',sample:'The quick brown fox jumps'},{name:'Josefin Sans',sample:'The quick brown fox jumps'},
+    {name:'Karla',sample:'The quick brown fox jumps'},{name:'Lexend',sample:'The quick brown fox jumps'},
+    {name:'Quicksand',sample:'The quick brown fox jumps'},{name:'Urbanist',sample:'The quick brown fox jumps'},
+    {name:'Onest',sample:'The quick brown fox jumps'},{name:'Be Vietnam Pro',sample:'The quick brown fox jumps'},
+    {name:'IBM Plex Sans',sample:'The quick brown fox jumps'},{name:'DM Mono',sample:'const x = 1;'},
   ];
-  // Ensure current font is in the list
   if(!TOP_FONTS.find(f=>f.name===curFont)) TOP_FONTS.push({name:curFont,sample:'The quick brown fox jumps'});
   const fg=document.createElement('div');fg.style.cssText='margin-bottom:10px;';
   fg.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;','Font'));
   const fsel=document.createElement('select');
   fsel.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;cursor:pointer;';
   fsel.style.fontFamily=`'${curFont}',sans-serif`;
-  // Preload all font options so dropdown renders them correctly
   TOP_FONTS.forEach(f=>loadGoogleFont(f.name));
   TOP_FONTS.forEach(f=>{
     const o=document.createElement('option');o.value=f.name;
-    o.textContent=f.name;
-    o.style.fontFamily=`'${f.name}',sans-serif`;
+    o.textContent=f.name;o.style.fontFamily=`'${f.name}',sans-serif`;
     o.style.fontSize='15px';
     if(f.name===curFont)o.selected=true;fsel.appendChild(o);
   });
-  fsel.addEventListener('change',()=>{
-    config.theme.fontFamily=fsel.value;
-    fsel.style.fontFamily=`'${fsel.value}',sans-serif`;
-    saveConfig();applyTheme();renderAll();
-  });
+  fsel.addEventListener('change',()=>{config.theme.fontFamily=fsel.value;fsel.style.fontFamily=`'${fsel.value}',sans-serif`;saveConfig();applyTheme();renderAll();});
   fg.appendChild(fsel);body.appendChild(fg);
+}
 
-  /* ── Status Bar ── */
+/* ── System tab: Status Bar + Data + Snapshots + API Keys + Credits ── */
+function buildSystemPanel(body){
+  /* Status Bar */
   body.appendChild(ps('Status Bar'));
-  body.appendChild(chk('Show',config.statusBar.enabled,v=>{config.statusBar.enabled=v;saveConfig();applyTheme();initStatusBar();renderAll();buildConfigPanel();}));
-  body.appendChild(pf('select','','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],config.statusBar.source,v=>{config.statusBar.source=v;saveConfig();initStatusBar();buildConfigPanel();}));
-
-  // Conditional: Glances URL
+  body.appendChild(chk('Show',config.statusBar.enabled,v=>{config.statusBar.enabled=v;saveConfig();applyTheme();initStatusBar();renderAll();_configTab='system';buildConfigPanel();}));
+  body.appendChild(pf('select','','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],config.statusBar.source,v=>{config.statusBar.source=v;saveConfig();initStatusBar();_configTab='system';buildConfigPanel();}));
   const gl=el('div','','',pf('text','','Glances URL',null,config.statusBar.glancesUrl,v=>{config.statusBar.glancesUrl=v;saveConfig();initStatusBar();}));
   gl.className='cfg-conditional'+(config.statusBar.source==='glances'?'':' hidden');
   body.appendChild(gl);
-
-  // Conditional: Custom URL
   const cu=el('div','','',pf('text','','Custom URL',null,config.statusBar.customUrl||'',v=>{config.statusBar.customUrl=v;saveConfig();initStatusBar();}));
   cu.className='cfg-conditional'+(config.statusBar.source==='custom'?'':' hidden');
   body.appendChild(cu);
-
   body.appendChild(pf('range','','Refresh (s)',null,config.statusBar.refreshInterval,v=>{config.statusBar.refreshInterval=parseInt(v);saveConfig();initStatusBar();},{min:5,max:120}));
   const itemsRow=document.createElement('div');itemsRow.style.cssText='display:flex;gap:8px;flex-wrap:wrap;padding:4px 0;';
   ['hostname','cpu','memory','disk','uptime'].forEach(item=>{
@@ -2766,14 +2011,7 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   const itemsG=el('div','margin-bottom:10px;');itemsG.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:4px;','Show items:'));
   itemsG.appendChild(itemsRow);body.appendChild(itemsG);
 
-  /* ── Layout ── */
-  body.appendChild(ps('Layout'));
-  body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
-  body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
-  body.appendChild(pf('range','','Page Width Padding (%)',null,parseInt(config.layout.pageWidthPadding)||2,v=>{config.layout.pageWidthPadding=parseInt(v);applyChanges();renderAll();},{min:0,max:15}));
-  body.appendChild(pf('range','','Page Height Padding (%)',null,config.layout.pagePadding||2,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:0,max:15}));
-
-  /* ── Data ── */
+  /* Data */
   body.appendChild(ps('Data'));
   const acts=el('div','display:flex;gap:8px;flex-wrap:wrap;');
   ['Export','Import','Reset'].forEach(label=>{
@@ -2781,15 +2019,16 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
     b.addEventListener('click',()=>{
       if(label==='Export'){const d=new Date();const bb=new Blob([JSON.stringify(config,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='wartab-config-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';a.click();URL.revokeObjectURL(a.href);toast('Exported');}
       else if(label==='Import'){$('#import-file-input2').click();}
-      else if(label==='Reset'){showConfirmModal('Reset all settings to defaults? This cannot be undone.',()=>{const snap=cloneObj(config);config=cloneObj(DEFAULT_CONFIG);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toastWithUndo('Reset',()=>{config=snap;saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();});},'Reset');}
+      else if(label==='Reset'){showConfirmModal('Reset all settings to defaults? This cannot be undone.',()=>{const snap=cloneObj(config);config=cloneObj(DEFAULT_CONFIG);saveConfig();applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();toastWithUndo('Reset',()=>{config=snap;saveConfig();applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();});},'Reset');}
     });
     acts.appendChild(b);
   });
   body.appendChild(acts);
   const fi2=document.createElement('input');fi2.type='file';fi2.accept='.json';fi2.style.display='none';fi2.id='import-file-input2';
-  fi2.addEventListener('change',e=>{if(e.target.files[0]){const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);showConfirmModal('Import config from '+e.target.files[0].name+'? This will replace your current configuration.',()=>{config=deepMerge(cloneObj(DEFAULT_CONFIG),d);saveConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toast('Imported');});}catch(e){toast('Failed: '+e.message,'error');}};r.readAsText(e.target.files[0]);}});
+  fi2.addEventListener('change',e=>{if(e.target.files[0]){const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);showConfirmModal('Import config from '+e.target.files[0].name+'? This will replace your current configuration.',()=>{config=deepMerge(cloneObj(DEFAULT_CONFIG),d);saveConfig();applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();toast('Imported');});}catch(e){toast('Failed: '+e.message,'error');}};r.readAsText(e.target.files[0]);}});
+  body.appendChild(fi2);
 
-  /* ── Snapshots ── */
+  /* Snapshots */
   body.appendChild(ps('Snapshots'));
   const snapHint=el('div','font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:6px;','Auto-saved on every config change. Last 20 kept.');
   body.appendChild(snapHint);
@@ -2811,7 +2050,7 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
         const lbl=el('span','flex:1;font-size:var(--text-xs);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;',ts);
         const sz=el('span','font-size:var(--text-2xs);color:var(--text-tertiary);flex-shrink:0;',fmtSize(s.size));
         const rst=el('button','','Restore');rst.className='btn btn-glass btn-sm';rst.style.cssText='padding:2px 8px;font-size:var(--text-2xs);';
-        rst.addEventListener('click',()=>{showConfirmModal('Restore snapshot from '+ts+'? Current config will be replaced.',async()=>{await storage.snapshots.restore(s.name);await loadConfig();applyTheme();renderAll();buildConfigPanel();initStatusBar();toast('Restored: '+ts);},'Restore')});
+        rst.addEventListener('click',()=>{showConfirmModal('Restore snapshot from '+ts+'? Current config will be replaced.',async()=>{await storage.snapshots.restore(s.name);await loadConfig();applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();toast('Restored: '+ts);},'Restore')});
         r.appendChild(lbl);r.appendChild(sz);r.appendChild(rst);
         snapList.appendChild(r);
       });
@@ -2819,8 +2058,8 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   }
   renderSnapshots();
   body.appendChild(snapList);
-  
-  /* ── API Keys ── */
+
+  /* API Keys */
   body.appendChild(ps('API Keys'));
   const apibox=el('div','font-size:var(--text-sm);line-height:1.7;padding:0 0 8px;');
   apibox.innerHTML='<div style="margin-bottom:10px;color:var(--text-secondary);">Some modules need a free API key. Get yours here:</div>'+
@@ -2828,19 +2067,17 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
     '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:rgba(0,0,0,0.2);"><span style="font-size:16px;">🌤</span><div><div style="font-weight:600;font-size:var(--text-sm);">Weather (OpenWeatherMap)</div><div style="font-size:var(--text-2xs);color:var(--text-tertiary);">Free tier, 60 calls/min. Sign up at <a href="https://openweathermap.org/api" target="_blank" style="color:var(--accent);">openweathermap.org/api</a></div></div></div>'+
     '</div>';
   body.appendChild(apibox);
-/* ── Credits ── */
-body.appendChild(ps('Credits'));
-const cbox=el('div','font-size:var(--text-xs);line-height:1.7;padding:0 0 8px;color:var(--text-secondary);');
-cbox.innerHTML='<div style="display:flex;flex-direction:column;gap:6px;">'+
-  '<div style="display:flex;gap:8px;align-items:center;"><span style="font-size:14px;">📦</span><span>Service icons by <a href="https://selfh.st/icons/" target="_blank" style="color:var(--accent);">selfh.st/icons</a></span></div>'+
-  '<div style="display:flex;gap:8px;align-items:center;"><span style="font-size:14px;">🎯</span><span>UI icons by <a href="https://lucide.dev/" target="_blank" style="color:var(--accent);">Lucide</a> (ISC License)</span></div>'+
-  '</div>';
-body.appendChild(cbox);
-body.appendChild(fi2);
-// Wrap each config section in a card
-wrapConfigCards(body);
-}
 
+  /* Credits */
+  body.appendChild(ps('Credits'));
+  const cbox=el('div','font-size:var(--text-xs);line-height:1.7;padding:0 0 8px;color:var(--text-secondary);');
+  cbox.innerHTML='<div style="display:flex;flex-direction:column;gap:6px;">'+
+    '<div style="display:flex;gap:8px;align-items:center;"><span style="font-size:14px;">📦</span><span>Service icons by <a href="https://selfh.st/icons/" target="_blank" style="color:var(--accent);">selfh.st/icons</a></span></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;"><span style="font-size:14px;">🎯</span><span>UI icons by <a href="https://lucide.dev/" target="_blank" style="color:var(--accent);">Lucide</a> (ISC License)</span></div>'+
+    '</div>';
+  body.appendChild(cbox);
+  body.appendChild(fi2);
+}
 /* Wrap config panel sections in card containers */
 function wrapConfigCards(body) {
   var sections = [], cur = null;
