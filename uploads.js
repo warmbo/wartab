@@ -11,7 +11,10 @@ function openBgUpload() {
       storage.uploadFile(blob, file.name).then(function(result){
         if(result.url){
           config.theme.bgType='image';config.theme.bgValue=result.url;
-          applyChanges();saveConfig();renderAll();openBgPicker();toast('Uploaded');
+          applyTheme();saveConfig();renderAll();
+          // Refresh file list then open picker
+          fetchUploads().then(function(){ openBgPicker(); });
+          toast('Uploaded');
         }else{toast('Upload failed','error');}
       }).catch(function(){toast('Upload error','error');});
     }).catch(function(){toast('Image processing failed','error');});
