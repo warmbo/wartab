@@ -1362,17 +1362,52 @@ var oldCards=grid.querySelectorAll('.card');oldCards.forEach(function(c){if(c._c
   appEl.style.paddingTop=yPad+'%';appEl.style.paddingBottom=yPad+'%';
 }const _scrollY=window.scrollY;
 if(!config.cards.length){
-  grid.innerHTML=`<div class="card" style="grid-column:1/-1;padding:0;"><div class="card-body" style="display:flex;flex-direction:column;align-items:center;padding:40px 24px;text-align:center;">
-    <div style="font-size:var(--text-3xl);margin-bottom:12px;opacity:0.5;"><i data-lucide="layout" style="width:36px;height:36px;"></i></div>
-    <div style="font-size:var(--heading-size);font-weight:600;margin-bottom:4px;color:var(--text-primary);">This page is empty</div>
-    <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:20px;">Add your first card to get started</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-      <button class="btn btn-glass" id="empty-add-card"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add Card</button>
-      <button class="btn btn-glass" id="empty-add-clock"><i data-lucide="clock" style="width:14px;height:14px;"></i> Add Clock</button>
-      <button class="btn btn-glass" id="empty-add-links"><i data-lucide="link" style="width:14px;height:14px;"></i> Add Links</button>
-      <button class="btn btn-glass" id="empty-config"><i data-lucide="settings" style="width:14px;height:14px;"></i> Settings</button>
-    </div>
-  </div></div>`;
+  grid.innerHTML='';
+  const emptyCard=document.createElement('div');
+  emptyCard.className='card empty-state';
+  const emptyBody=document.createElement('div');
+  emptyBody.className='card-body';
+  
+  const iconWrap=document.createElement('div');
+  iconWrap.className='empty-state-icon';
+  const iconEl=document.createElement('i');
+  iconEl.setAttribute('data-lucide','layout');
+  iconEl.style.width='36px';iconEl.style.height='36px';
+  iconWrap.appendChild(iconEl);
+  emptyBody.appendChild(iconWrap);
+  
+  const titleEl=document.createElement('div');
+  titleEl.className='empty-state-title';
+  titleEl.textContent='This page is empty';
+  emptyBody.appendChild(titleEl);
+  
+  const descEl=document.createElement('div');
+  descEl.className='empty-state-desc';
+  descEl.textContent='Add your first card to get started';
+  emptyBody.appendChild(descEl);
+  
+  const actions=document.createElement('div');
+  actions.className='empty-state-actions';
+  
+  const b1=document.createElement('button');b1.className='btn btn-glass';b1.id='empty-add-card';
+  const i1=document.createElement('i');i1.setAttribute('data-lucide','plus');i1.style.width='14px';i1.style.height='14px';
+  b1.appendChild(i1);b1.appendChild(document.createTextNode(' Add Card'));actions.appendChild(b1);
+  
+  const b2=document.createElement('button');b2.className='btn btn-glass';b2.id='empty-add-clock';
+  const i2=document.createElement('i');i2.setAttribute('data-lucide','clock');i2.style.width='14px';i2.style.height='14px';
+  b2.appendChild(i2);b2.appendChild(document.createTextNode(' Add Clock'));actions.appendChild(b2);
+  
+  const b3=document.createElement('button');b3.className='btn btn-glass';b3.id='empty-add-links';
+  const i3=document.createElement('i');i3.setAttribute('data-lucide','link');i3.style.width='14px';i3.style.height='14px';
+  b3.appendChild(i3);b3.appendChild(document.createTextNode(' Add Links'));actions.appendChild(b3);
+  
+  const b4=document.createElement('button');b4.className='btn btn-glass';b4.id='empty-config';
+  const i4=document.createElement('i');i4.setAttribute('data-lucide','settings');i4.style.width='14px';i4.style.height='14px';
+  b4.appendChild(i4);b4.appendChild(document.createTextNode(' Settings'));actions.appendChild(b4);
+  
+  emptyBody.appendChild(actions);
+  emptyCard.appendChild(emptyBody);
+  grid.appendChild(emptyCard);
   setTimeout(()=>{
     const a=document.getElementById('empty-add-card');if(a)a.addEventListener('click',addNewCard);
     const b=document.getElementById('empty-add-clock');if(b)b.addEventListener('click',()=>{addNewCard();const c=config.cards[config.cards.length-1];if(c){c.title='Clock';c.icon='🕐';c.color='#aaaaaa';c.width=1;c.sections=[{id:'sec-'+uid(),type:'clock',format24h:false,showDate:true}];saveConfig();renderAll();}});
@@ -1397,29 +1432,21 @@ function renderCard(card,idx){
     const div=document.createElement('div');div.className='card grid-gap-card';div.dataset.cardId=card.id;
     div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;
     div.style.gridColumn='span '+div.dataset.width;
-    if(card.height>1)div.style.gridRow='span '+card.height;
-    // Subtle boundary so the gap space is visible
-    div.style.cssText+=';background:none!important;box-shadow:none!important;outline:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;min-width:0;display:block;position:relative;border:1px dashed rgba(255,255,255,0.12)!important;';
-    if(card.minHeight){var sp=document.createElement('div');sp.style.cssText='min-height:'+card.minHeight+'px;pointer-events:none;';div.appendChild(sp);}
-    div.style.setProperty('--card-accent','transparent');
-    div.style.setProperty('--card-bg','transparent');
-    // Header at same position as regular cards (top-right)
+    if(card.height>1){div.style.gridRow='span '+card.height;div.dataset.height=card.height;}
+    if(card.minHeight){var sp=document.createElement('div');sp.className='grid-gap-minh';sp.style.setProperty('--gap-minh',card.minHeight+'px');div.appendChild(sp);}
+    // Controls overlay
     const h=document.createElement('div');
-    h.style.cssText='position:absolute;top:8px;right:8px;display:flex;align-items:center;gap:4px;opacity:0;transition:opacity 0.15s;z-index:2;';
-    div.addEventListener('mouseenter',()=>h.style.opacity='1');
-    div.addEventListener('mouseleave',()=>h.style.opacity='0');
-    // Shadow behind controls on hover
-    const shadow=document.createElement('div');
-    shadow.style.cssText='position:absolute;top:4px;right:4px;width:50px;height:30px;border-radius:4px;background:rgba(0,0,0,0.4);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity 0.15s;z-index:1;pointer-events:none;';
-    div.addEventListener('mouseenter',()=>shadow.style.opacity='1');
-    div.addEventListener('mouseleave',()=>shadow.style.opacity='0');
-    div.appendChild(shadow);
+    h.className='grid-gap-controls';
     const eb2=document.createElement('button');eb2.className='card-edit-btn';eb2.textContent='✎';eb2.title='Edit gap';
     eb2.addEventListener('click',e=>{e.stopPropagation();openCardEditPanel(card.id);});
     h.appendChild(eb2);
     const dh=document.createElement('span');dh.className='drag-handle';dh.textContent='⠿';dh.title='Drag';dh.style.touchAction='none';
     h.appendChild(dh);
     div.appendChild(h);
+    // Shadow behind controls on hover
+    const shadow=document.createElement('div');
+    shadow.className='grid-gap-shadow';
+    div.appendChild(shadow);
     dh.addEventListener('pointerdown',e=>startDrag(e,card.id,idx));
     div.addEventListener('dblclick',()=>{config.cards.splice(idx,1);saveConfig();renderAll();toast('Gap removed','success');});
     return div;
@@ -1474,7 +1501,7 @@ function renderCard(card,idx){
   hdr.appendChild(title);
 
   const actionGroup = document.createElement('div');
-  actionGroup.style.cssText = 'display:flex;align-items:center;gap:4px;';
+  actionGroup.className = 'flex-row gap-1';
 
   const editBtn = document.createElement('button');
   editBtn.className = 'card-edit-btn';
@@ -1502,38 +1529,13 @@ function renderCard(card,idx){
   });
   div.appendChild(body);
 
-  /* Footer: optional actions row */
-  if (card.sections && card.sections.some(function(s){return s._footer;})){
-    var footer = renderCardFooter(card);
-    if (footer) div.appendChild(footer);
-  }
+  
 
   dragHandle.addEventListener('pointerdown', function(e) { startDrag(e, card.id, idx); });
   return div;
 }
 
-/**
- * Create a standardized card footer element.
- * Modules call addFooter(sec, html) in their render function to push footer content.
- */
-function renderCardFooter(card) {
-  var frags = [];
-  (card.sections || []).forEach(function(s){
-    if (s._footer) frags.push(s._footer);
-  });
-  if (!frags.length) return null;
-  var ft = document.createElement('div');
-  ft.className = 'card-footer';
-  frags.forEach(function(h){ ft.insertAdjacentHTML('beforeend', h); });
-  return ft;
-}
 
-/**
- * Add footer HTML to a section. Called from module render functions.
- */
-function addSectionFooter(sec, html) {
-  sec._footer = html;
-}
 
 /**
  * Render a card/section icon element. Supports three formats:
@@ -1594,9 +1596,9 @@ function renderSection(section, card) {
     labelSpan.textContent = section.label;
     titleRow.appendChild(labelSpan);
 
-    const arrow = document.createElement('span');
+    const arrow = document.createElement('i');
     arrow.className = 'arrow';
-    arrow.textContent = '▶';
+    arrow.setAttribute('data-lucide', 'chevron-right');
     titleRow.appendChild(arrow);
 
     titleRow.addEventListener('click', (e) => {
@@ -1849,9 +1851,10 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   tabs.forEach(t=>{
     const btn=el('button','',t.label);
     btn.className='btn btn-glass btn-sm';
-    btn.style.cssText=_configTab===t.id
-      ? 'border-color:var(--accent);background:var(--accent-glass);color:var(--text-primary);font-weight:700;'
-      : 'opacity:0.7;';
+    btn.classList.toggle('config-tab',true);
+    btn.classList.toggle('active',_configTab===t.id);
+    if(_configTab!==t.id)btn.style.opacity='0.7';
+    else btn.style.opacity='';
     btn.addEventListener('click',()=>{_configTab=t.id;buildConfigPanel();renderIcons();});
     tabBar.appendChild(btn);
   });
