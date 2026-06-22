@@ -6,9 +6,9 @@
   },
   "theme": {
     "bgType": "image",
-    "bgValue": "/uploads/527047650f5846f19ae1bbf81d7f65c4.png",
-    "bgBlur": 0,
-    "bgDim": 54,
+    "bgValue": "/uploads/2229f7d022b64017a561894e40d45319.png",
+    "bgBlur": 7,
+    "bgDim": 50,
     "blur": 4,
     "glow": "#cad3d8",
     "fontSizeText": 15,

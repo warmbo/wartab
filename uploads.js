@@ -88,14 +88,19 @@ function openBgPicker() {
   uploadedFiles.forEach(function(f){
     const c=document.createElement('div');c.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;position:relative;';
     const img=document.createElement('img');img.src=f.url;img.style.cssText='width:80px;height:56px;object-fit:cover;border:1px solid var(--surface-border);display:block;';
-    c.addEventListener('click',function(){config.theme.bgType='image';config.theme.bgValue=f.url;applyChanges();saveConfig();renderAll();$('#bg-picker-overlay').classList.remove('open');$('#bg-picker').classList.remove('open');toast('Background set');});
+    c.addEventListener('click',function(){config.theme.bgType='image';config.theme.bgValue=f.url;applyTheme();saveConfig();renderAll();$('#bg-picker-overlay').classList.remove('open');$('#bg-picker').classList.remove('open');toast('Background set');});
     // Delete button
     const del=document.createElement('button');del.textContent='✕';
-    del.style.cssText='position:absolute;top:0;right:0;padding:0 3px;font-size:10px;background:rgba(0,0,0,0.6);border:1px solid var(--surface-border);color:var(--color-error);cursor:pointer;line-height:1.2;';
+    del.style.cssText='position:absolute;top:0;right:0;padding:0 4px;font-size:11px;background:#000;border:1px solid rgba(255,80,80,0.5);color:#ff4444;cursor:pointer;line-height:1.4;font-weight:700;';
     del.addEventListener('click',function(e){
       e.stopPropagation();
-      storage.deleteUpload(f.url).then(function(){
+      storage.deleteFile(f.url).then(function(){
         uploadedFiles=uploadedFiles.filter(function(u){return u.url!==f.url;});
+        // If this was the active background, reset to default
+        if(config.theme.bgType==='image'&&config.theme.bgValue===f.url){
+          config.theme.bgType='gradient';config.theme.bgValue=DEFAULT_CONFIG.theme.bgValue;
+          applyTheme();saveConfig();
+        }
         openBgPicker();
         toast('Deleted');
       }).catch(function(){toast('Delete failed','error');});
