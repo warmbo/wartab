@@ -240,9 +240,9 @@
               "icon": "link"
             }
           ],
-          "source": "local",
-          "glancesUrl": "http://localhost:61209",
-          "refreshInterval": 2,
+          "source": "glances",
+          "glancesUrl": "http://localhost:61208",
+          "refreshInterval": 1,
           "graphMode": true
         }
       ]
@@ -596,10 +596,32 @@
       "sections": [
         {
           "id": "sec-6nfvy80mqp4foar",
-          "type": "sonarr",
-          "label": "Sonarr",
+          "type": "media",
+          "label": "",
           "key": "3ffcaaa4813f46f9b508ef23b4fdae27",
-          "url": "http://10.0.0.124:8989/"
+          "url": "http://10.0.0.124:8989/",
+          "services": [
+            {
+              "type": "sonarr",
+              "url": "http://10.0.0.124:8989/",
+              "key": "3ffcaaa4813f46f9b508ef23b4fdae27",
+              "label": "Sonarr",
+              "enableQueue": true
+            },
+            {
+              "type": "radarr",
+              "url": "",
+              "key": "",
+              "label": "Radarr",
+              "enableQueue": false
+            },
+            {
+              "type": "plex",
+              "url": "",
+              "key": "",
+              "label": "Plex"
+            }
+          ]
         }
       ]
     }
@@ -1187,9 +1209,9 @@
                   "icon": "link"
                 }
               ],
-              "source": "local",
-              "glancesUrl": "http://localhost:61209",
-              "refreshInterval": 2,
+              "source": "glances",
+              "glancesUrl": "http://localhost:61208",
+              "refreshInterval": 1,
               "graphMode": true
             }
           ]
@@ -1543,10 +1565,32 @@
           "sections": [
             {
               "id": "sec-6nfvy80mqp4foar",
-              "type": "sonarr",
-              "label": "Sonarr",
+              "type": "media",
+              "label": "",
               "key": "3ffcaaa4813f46f9b508ef23b4fdae27",
-              "url": "http://10.0.0.124:8989/"
+              "url": "http://10.0.0.124:8989/",
+              "services": [
+                {
+                  "type": "sonarr",
+                  "url": "http://10.0.0.124:8989/",
+                  "key": "3ffcaaa4813f46f9b508ef23b4fdae27",
+                  "label": "Sonarr",
+                  "enableQueue": true
+                },
+                {
+                  "type": "radarr",
+                  "url": "",
+                  "key": "",
+                  "label": "Radarr",
+                  "enableQueue": false
+                },
+                {
+                  "type": "plex",
+                  "url": "",
+                  "key": "",
+                  "label": "Plex"
+                }
+              ]
             }
           ]
         }

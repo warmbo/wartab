@@ -776,7 +776,9 @@ function buildSectionEditor(sec, card, si) {
       {value:'lan-scan',label:'LAN Scan'},
       {value:'digital-pet',label:'Digital Pet'},
       {value:'ascii-anim',label:'ASCII Animation'},
-      {value:'media',label:'Media (Sonarr/Radarr/Plex)'},
+      {value:'media',label:'Media Card'},
+      {value:'proxmox',label:'Proxmox'},
+      {value:'git',label:'Git Repo'},
     ],
     sec.type,
     v => {
@@ -2158,7 +2160,9 @@ function addNewCard(){
     {type:'lan-scan', label:'LAN Scan', icon:'radio'},
     {type:'digital-pet', label:'Digital Pet', icon:'heart'},
     {type:'ascii-anim', label:'ASCII Animation', icon:'monitor'},
-    {type:'media', label:'Media (Sonarr/Radarr/Plex)', icon:'film'},
+    {type:'media', label:'Media Card', icon:'film'},
+    {type:'proxmox', label:'Proxmox', icon:'server'},
+    {type:'git', label:'Git Repo', icon:'github'},
   ];
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
