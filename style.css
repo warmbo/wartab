@@ -826,6 +826,11 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 #footer a:hover { color: rgba(255,255,255,0.9); }
 #footer-sep { color: rgba(255,255,255,0.2); }
 
+/* ══════ Modal overlay ══════ */
+.modal-overlay { position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center; }
+.modal-box { background:#151515;border:1px solid var(--glass-border);padding:24px;min-width:320px;max-width:90vw;max-height:80vh;overflow-y:auto; }
+.modal-title { font-size:var(--heading-size);font-weight:600;color:var(--text-primary);margin-bottom:16px; }
+
 /* ══════ Mobile ══════ */
 @media (max-width: 768px) {
   :root { --grid-cols: 1; --grid-gap: var(--space-3); }

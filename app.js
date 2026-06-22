@@ -45,33 +45,33 @@ const API_PRESETS = [
 /* ── LAN Scan — terminal-style ARP table viewer ── */
 
 function fetchLanScan(el){
-  var body=el.querySelector('.lan-scan-body');
+  const body=el.querySelector('.lan-scan-body');
   if(!body)return;
-  var dot=el.querySelector('.lan-scan-dot');
+  const dot=el.querySelector('.lan-scan-dot');
   if(dot)dot.style.background='var(--accent)';
   fetch('/api/arp').then(function(r){return r.json();}).then(function(d){
     if(dot){dot.style.background='';}
-    var now=Date.now(),ts=new Date();
-    var timeStr=String(ts.getHours()).padStart(2,'0')+':'+String(ts.getMinutes()).padStart(2,'0')+':'+String(ts.getSeconds()).padStart(2,'0');
-    var countEl=el.querySelector('.lan-scan-count');
+    const now=Date.now(),ts=new Date();
+    const timeStr=String(ts.getHours()).padStart(2,'0')+':'+String(ts.getMinutes()).padStart(2,'0')+':'+String(ts.getSeconds()).padStart(2,'0');
+    const countEl=el.querySelector('.lan-scan-count');
     if(countEl)countEl.textContent=d.count+' hosts';
     // Load last 3 scans from localStorage to compare for new devices
     var histKey='wartab_lan_history';
-    var history=[];
+    let history=[];
     try{history=JSON.parse(localStorage.getItem(histKey)||'[]');}catch(e){}
     if(!Array.isArray(history))history=[];
     // Collect all MACs seen in the last 3 scans
-    var seenInLast3={};
+    const seenInLast3={};
     history.forEach(function(h){(h.macs||[]).forEach(function(m){seenInLast3[m]=true;});});
-    var html='';
-    var currentMacs=[];
+    let html='';
+    const currentMacs=[];
     html+='<div class="lan-scan-line lan-scan-ts">['+timeStr+'] scan '+((history.length||0)+1)+' \u2014 '+d.count+' device'+(d.count!==1?'s':'')+' on network</div>';
     (d.devices||[]).forEach(function(dev){
       currentMacs.push(dev.mac);
-      var isNew=!seenInLast3[dev.mac];
-      var cls=isNew?'lan-scan-new':'lan-scan-line';
-      var tag=isNew?' \u25c2 NEW':'';
-      var hn = dev.hostname ? ' <span class="lan-scan-hostname">' + escHtml(dev.hostname) + '</span>' : '';
+      const isNew=!seenInLast3[dev.mac];
+      const cls=isNew?'lan-scan-new':'lan-scan-line';
+      const tag=isNew?' \u25c2 NEW':'';
+      const hn = dev.hostname ? ' <span class="lan-scan-hostname">' + escHtml(dev.hostname) + '</span>' : '';
       html+='<div class="'+cls+'">['+timeStr+'] <span class="lan-scan-ip">'+dev.ip+'</span> \u2192 '+dev.mac+'  <span class="lan-scan-vendor">'+escHtml(dev.vendor)+'</span>'+hn+tag+'</div>';
     });
     // Push this scan into history, keep last 3
@@ -79,12 +79,12 @@ function fetchLanScan(el){
     if(history.length>3)history=history.slice(-3);
     try{localStorage.setItem(histKey,JSON.stringify(history));}catch(e){}
     body.innerHTML=html;
-    var iv=parseInt(el.dataset.refresh)*1000;
+    const iv=parseInt(el.dataset.refresh)*1000;
     if(iv>0)setTimeout(function(){fetchLanScan(el);},iv);
   }).catch(function(e){
     if(dot){dot.style.background='';}
     body.innerHTML='<div class="lan-scan-line lan-scan-err">[ --:--:-- ] error: '+escHtml(e.message)+'</div>';
-    var iv=parseInt(el.dataset.refresh)*1000;
+    const iv=parseInt(el.dataset.refresh)*1000;
     if(iv>0)setTimeout(function(){fetchLanScan(el);},iv);
   });
 }
@@ -168,7 +168,7 @@ function closeCardEditPanel() {
   // and the panel slides out to the left. Clean up after animation completes.
   clearTimeout(_slideTimer);
   _slideTimer = setTimeout(function() {
-    var p=$('#edit-panel');
+    const p=$('#edit-panel');
     p.style.transition='none';
     p.classList.remove('slide-left');
     p.offsetHeight;
@@ -262,7 +262,7 @@ function openPageEditPanel(pageId) {
 
 /* ── Page Management Panel (overview of all pages) ── */
 // Simple drag-to-reorder state for page list
-var _pageDrag = null;
+let _pageDrag = null;
 
 function openPageManagementPanel() {
   _editingPageId = null;
@@ -812,15 +812,6 @@ function buildSectionEditor(sec, card, si) {
   return cardEl;
 }
 
-function moveSection(cid, si, dir) {
-  const c = config.cards.find(x => x.id === cid);
-  if (!c) return;
-  const t = si + dir, secs = c.sections;
-  if (t < 0 || t >= secs.length) return;
-  [secs[si], secs[t]] = [secs[t], secs[si]];
-  saveAndRefresh();
-}
-
 /* ── Section drag-and-drop (vertical reorder in edit panel) ── */
 let secDragState = null;
 
@@ -834,7 +825,6 @@ function startSectionDrag(e, cardId, secIdx, srcEl) {
     ghost: null,
     active: false,
     _startY: e.clientY,
-    _insertAfter: null,
   };
   document.addEventListener('pointermove', onSecDragMove);
   document.addEventListener('pointerup', onSecDragEnd);
@@ -1120,15 +1110,15 @@ function loadIconRepo() {
       }
     });
     // Also re-render if picker is open
-    var picker = document.getElementById('icon-picker-content');
+    const picker = document.getElementById('icon-picker-content');
     if (picker && picker.parentElement.classList.contains('open')) {
-      var activeTab = document.querySelector('.ip-tab.active');
+      const activeTab = document.querySelector('.ip-tab.active');
       if (activeTab && activeTab.dataset.tab === 'library') buildLibraryTab(picker);
     }
   }).catch(function(e){
     console.error('loadIconRepo failed:', e);
     // Flag for re-render of library tab if open
-    var picker = document.getElementById('icon-picker-content');
+    const picker = document.getElementById('icon-picker-content');
     if (picker && picker.parentElement.classList.contains('open')) {
       picker.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">Failed to load service icons. Check server connection.</div>';
     }
@@ -1179,14 +1169,14 @@ function migrateConfigEmojis(cfg){
    SECTION 5: UTILITIES
    Helper functions for the entire app.
    ═══════════════════════════════════════════ */
-function isLucideName(s){if(!s||typeof s!=='string')return false;if(s.startsWith('http')||s.startsWith('data:')||s.startsWith('/'))return false;if(typeof lucide!=='undefined'&&lucide.icons){var p=s.split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join('');return p in lucide.icons;}return LUCIDE_ICONS.includes(s);}
+function isLucideName(s){if(!s||typeof s!=='string')return false;if(s.startsWith('http')||s.startsWith('data:')||s.startsWith('/'))return false;if(typeof lucide!=='undefined'&&lucide.icons){const p=s.split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join('');return p in lucide.icons;}return LUCIDE_ICONS.includes(s);}
 // Render a Lucide icon element (data-lucide attribute for auto-replacement by lucide.createIcons())
-function renderLucideEl(name,cls){var i=document.createElement('i');i.className=cls;i.setAttribute('data-lucide',name);return i;}
+function renderLucideEl(name,cls){const i=document.createElement('i');i.className=cls;i.setAttribute('data-lucide',name);return i;}
 
 // Safe icon render — calls lucide.createIcons with console.warn suppression
 function renderIcons(){
   if(typeof lucide==='undefined')return;
-  var _lw=console.warn;console.warn=function(m){
+  const _lw=console.warn;console.warn=function(m){
     if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);
   };try{lucide.createIcons();}catch(e){}
   console.warn=_lw;
@@ -1212,7 +1202,7 @@ function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.cla
 // Load config from server — called once on page init
 async function loadConfig() {
   try {
-    var parsed = await storage.getConfig();
+    const parsed = await storage.getConfig();
     if (parsed && Object.keys(parsed).length > 0) {
       if (!parsed.version || parsed.version < '0.2.0') { migrateConfigEmojis(parsed); parsed.version = WARTAB_VERSION; }
       // Migrate old 'small'/'medium'/'large' string fontSize to numeric px
@@ -1232,7 +1222,7 @@ async function loadConfig() {
 }
 // Save config to server — fire-and-forget POST
 function saveConfig() {
-  var cfg = cloneObj(config);
+  const cfg = cloneObj(config);
   try {
     storage.saveConfig(cfg).then(function(){}, function(err){
       console.error('saveConfig failed:', err);
@@ -1308,7 +1298,7 @@ function applyTheme(){
 
   // Branding
   const brand=$('#brand-text');
-  if(brand){const b2=config.branding||DEFAULT_CONFIG.branding;var bi=b2.icon||'sword';brand.innerHTML=(isLucideName(bi)?'<span class="brand-icon"><i data-lucide="'+bi+'"></i></span>':'<span class="brand-icon emoji-icon">'+bi+'</span>')+'<span>'+escHtml(b2.title||'WarTab')+'</span>';}
+  if(brand){const b2=config.branding||DEFAULT_CONFIG.branding;const bi=b2.icon||'sword';brand.innerHTML=(isLucideName(bi)?'<span class="brand-icon"><i data-lucide="'+bi+'"></i></span>':'<span class="brand-icon emoji-icon">'+bi+'</span>')+'<span>'+escHtml(b2.title||'WarTab')+'</span>';}
   document.title=(config.branding||DEFAULT_CONFIG.branding).title||'WarTab';
   // Toggles
   document.documentElement.dataset.animations=config.theme.animations!==false?'on':'off';
@@ -1317,22 +1307,29 @@ function applyTheme(){
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
 function loadGoogleFont(fn,allowReplace){
   if(fn==='Inter')return; // Inter loaded from local inter.css
-  var id='wartab-font-'+fn.replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
+  const id='wartab-font-'+fn.replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
   if(document.getElementById(id))return;
   if(!allowReplace){
-    var l=document.createElement('link');l.id=id;l.dataset.font=fn;l.rel='stylesheet';
+    const l=document.createElement('link');l.id=id;l.dataset.font=fn;l.rel='stylesheet';
     l.href='https://fonts.googleapis.com/css2?family='+fn.replace(/ /g,'+')+':wght@200..700&display=swap';
     document.head.appendChild(l);
   }else{
-    var oe=document.getElementById('wartab-font');
+    const oe=document.getElementById('wartab-font');
     if(oe&&oe.dataset.font===fn)return;
     if(oe)oe.remove();
-    var l=document.createElement('link');l.id='wartab-font';l.dataset.font=fn;l.rel='stylesheet';
+    const l=document.createElement('link');l.id='wartab-font';l.dataset.font=fn;l.rel='stylesheet';
     l.href='https://fonts.googleapis.com/css2?family='+fn.replace(/ /g,'+')+':wght@200..700&display=swap';
     document.head.appendChild(l);
   }
 }
-function escHtml(s){if(typeof s!=='string')return'';const d=document.createElement('div');d.textContent=s;var h=d.innerHTML;return h.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function escHtml(s){if(typeof s!=='string')return'';const d=document.createElement('div');d.textContent=s;const h=d.innerHTML;return h.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+function fetchWithTimeout(url, options, timeoutMs) {
+  timeoutMs = timeoutMs || 10000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
 
 /* ── Status Bar ── */
 function initStatusBar(){renderStatusBar();clearInterval(statsTimer);const sb=config.statusBar;if(!sb||!sb.enabled)return;const ms=(sb.refreshInterval||15)*1000;statsTimer=setInterval(fetchStats,ms);fetchStats();}
@@ -1340,15 +1337,15 @@ function renderStatusBar(){const bar=$('#top-stats'),sb=config.statusBar;if(!sb|
 function fetchStats(){const sb=config.statusBar;if(!sb||!sb.enabled)return;storage.getStats(sb.source,sb.glancesUrl).then(function(d){renderStats(d,sb);}).catch(function(){const el=$('#stat-loading');if(el)el.textContent='Stats offline';});}
 // Build stat DOM elements from data and items array — shared by both top-bar and widget renderers
 function buildStatItems(data, items){
-  var parts=[];
-  if(items.includes('hostname')&&data.hostname)parts.push(stItem('🖥️','',data.hostname,null));
-  if(items.includes('cpu')){var p=typeof data.cpu==='number'?data.cpu:(data.cpu&&data.cpu.total)?data.cpu.total:0;parts.push(stItem('⚡','CPU',p+'%',p));}
-  if(items.includes('memory')){var m=data.memory||{};parts.push(stItem('🧠','RAM',(m.percent||0)+'%',m.percent||0));}
-  if(items.includes('disk')){var disks=data.disks||[],r=disks.find(function(d2){return d2.mount==='/'})||disks[0];if(r)parts.push(stItem('💾',r.mount,r.percent+'%',r.percent));}
-  if(items.includes('uptime')){var u=data.uptime||{};parts.push(stItem('⏱️','Up',u.string||'--'));}
+  const parts=[];
+  if(items.includes('hostname')&&data.hostname)parts.push(stItem('\uD83D\uDDA5\uFE0F','',data.hostname,null));
+  if(items.includes('cpu')){const p=typeof data.cpu==='number'?data.cpu:(data.cpu&&data.cpu.total)?data.cpu.total:0;parts.push(stItem('\u26A1','CPU',p+'%',p));}
+  if(items.includes('memory')){const m=data.memory||{};parts.push(stItem('\uD83E\uDDE0','RAM',(m.percent||0)+'%',m.percent||0));}
+  if(items.includes('disk')){const disks=data.disks||[],r=disks.find(function(d2){return d2.mount==='/'})||disks[0];if(r)parts.push(stItem('\uD83D\uDCBE',r.mount,r.percent+'%',r.percent));}
+  if(items.includes('uptime')){const u=data.uptime||{};parts.push(stItem('\u23F1\uFE0F','Up',u.string||'--'));}
   return parts;
 }
-function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';var parts=buildStatItems(data,sb.items||[]);parts.forEach(function(el,i){if(i>0){var s=document.createElement('span');s.className='stat-sep';s.textContent='·';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';}
+function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const parts=buildStatItems(data,sb.items||[]);parts.forEach(function(el,i){if(i>0){const s=document.createElement('span');s.className='stat-sep';s.textContent='\u00B7';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';}
 // Build a status bar stat element (icon + label + optional progress bar + value)
 function stItem(icon,label,value,pct){const div=document.createElement('span');div.className='stat-item';div.innerHTML=`<span class="stat-icon">${icon}</span>`;if(label){const l=document.createElement('span');l.className='stat-label';l.textContent=label;div.appendChild(l);}if(pct!==null&&pct!==undefined){const b=document.createElement('span');b.className='stat-bar';const f=document.createElement('span');f.className='stat-bar-fill'+(pct>80?' high':pct>60?' mid':'');f.style.width=pct+'%';b.appendChild(f);div.appendChild(b);}const v=document.createElement('span');v.className='stat-value';v.textContent=value;div.appendChild(v);return div;}
 
@@ -2135,13 +2132,13 @@ function ps(t){return el('div','','',el('h3','font-size:var(--text-sm);font-weig
 function addNewCard(){
   // Card type picker modal — Lucide icons, glass style
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
   overlay.setAttribute('tabindex','-1');
   const box = document.createElement('div');
-  box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px;min-width:320px;';
+  box.className = 'modal-box';
   const label = document.createElement('div');
   label.textContent = 'New Card';
-  label.style.cssText = 'font-size:var(--heading-size);font-weight:600;color:var(--text-primary);margin-bottom:16px;';
+  label.className = 'modal-title';
   box.appendChild(label);
   const types = [
     {type:'links', label:'Links', icon:'link'},
@@ -2272,9 +2269,10 @@ function renderPageNav() {
 function showConfirmModal(msg, onConfirm, okText) {
   okText = okText || 'Delete';
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
   const box = document.createElement('div');
-  box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px;min-width:280px;text-align:center;';
+  box.className = 'modal-box';
+  box.style.textAlign = 'center';
   const label = document.createElement('div');
   label.textContent = msg;
   label.style.cssText = 'font-size:var(--text-base);color:var(--text-primary);margin-bottom:16px;';
@@ -2303,9 +2301,10 @@ function showShortcutsOverlay() {
   if (existing) { existing.remove(); return; }
   var overlay = document.createElement('div');
   overlay.id = 'shortcuts-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
   var box = document.createElement('div');
-  box.style.cssText = 'background:#151515;border:1px solid var(--glass-border);padding:24px 32px;min-width:300px;max-width:420px;';
+  box.className = 'modal-box';
+  box.style.maxWidth = '420px';
   box.innerHTML = '<div style="font-size:var(--heading-size);font-weight:700;color:var(--text-primary);margin-bottom:16px;">Keyboard Shortcuts</div>' +
     '<div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:12px;">Press a key while this window is open:</div>' +
     '<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:var(--text-sm);line-height:1.8;">' +

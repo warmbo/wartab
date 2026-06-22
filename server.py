@@ -62,7 +62,7 @@ def process_image(raw_bytes,filename):
             ow,oh=img.size
             if ow>MAX_W or oh>MAX_H: img.thumbnail((MAX_W,MAX_H),Image.LANCZOS)
             try: img=ImageOps.exif_transpose(img) or img
-            except Exception: pass
+            except Exception as e: log.debug("exif_transpose failed: %s", e)
             kw={"format":fmt}
             if fmt=="JPEG": kw["quality"]=80; kw["optimize"]=True
             elif fmt=="PNG": kw["optimize"]=True
@@ -202,13 +202,13 @@ _arp_cache = None
 _arp_cache_ts = 0
 _arp_lock = Lock()
 
-GIT_VERSION = ""
+GIT_VERSION = ''
 try:
-    out = subprocess.run(["git","describe","--always","--tags","--dirty"],
+    out = subprocess.run(['git','describe','--always','--tags','--dirty'],
         capture_output=True,text=True,timeout=2,cwd=HERE)
     if out.returncode==0:
         GIT_VERSION = out.stdout.strip()
-except Exception: pass
+except Exception as e: log.debug('git version detection failed: %s', e)
 
 def scan_arp():
     import csv, io, socket, subprocess
@@ -270,9 +270,9 @@ def scan_arp():
             if ip not in seen: targets.append(ip)
             if len(targets) >= 8: break
         for ip in targets:
-            try: subprocess.run(["ping", "-c1", "-W1", ip], capture_output=True, timeout=2)
-            except Exception: pass
-    except Exception: pass
+            try: subprocess.run(['ping', '-c1', '-W1', ip], capture_output=True, timeout=2)
+            except Exception as e: log.debug('arp ping %s failed: %s', ip, e)
+    except Exception as e: log.debug('arp ping batch failed: %s', e)
     # Read refreshed ARP table
     try:
         with open("/proc/net/arp") as f:
@@ -289,9 +289,9 @@ def scan_arp():
                         try:
                             hn = socket.gethostbyaddr(ip)
                             hostname = hn[0] if hn and hn[0] else ""
-                        except Exception: pass
+                        except Exception as e: log.debug('hostname lookup failed: %s', e)
                         result.append({"ip": ip, "mac": hw, "vendor": vendor, "hostname": hostname, "iface": iface})
-    except Exception: pass
+    except Exception as e: log.debug('arp result reading failed: %s', e)
     _arp_cache = {"devices": result, "timestamp": time.time(), "count": len(result)}
     _arp_cache_ts = time.time()
     return _arp_cache
@@ -601,10 +601,10 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
         print(f"  {prefix} {a[0]} {self.path}")
 def get_local_ips():
     ips=[]
-    try: s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.settimeout(0.1); s.connect(("10.254.254.254",1)); ips.append(s.getsockname()[0]); s.close()
-    except Exception: pass
+    try: s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.settimeout(0.1); s.connect(('10.254.254.254',1)); ips.append(s.getsockname()[0]); s.close()
+    except Exception as e: log.debug('get_local_ips failed: %s', e)
     try: ips.extend(a for a in socket.gethostbyname_ex(socket.gethostname())[2] if a not in ips)
-    except Exception: pass
+    except Exception as e: log.debug('get_local_ips failed: %s', e)
     return ips or ["127.0.0.1"]
 def main():
     ap=argparse.ArgumentParser(description="WarTab Server")
