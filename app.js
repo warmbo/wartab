@@ -776,6 +776,9 @@ function buildSectionEditor(sec, card, si) {
       {value:'lan-scan',label:'LAN Scan'},
       {value:'digital-pet',label:'Digital Pet'},
       {value:'ascii-anim',label:'ASCII Animation'},
+      {value:'sonarr',label:'Sonarr'},
+      {value:'radarr',label:'Radarr'},
+      {value:'plex',label:'Plex'},
     ],
     sec.type,
     v => {
@@ -2157,6 +2160,9 @@ function addNewCard(){
     {type:'lan-scan', label:'LAN Scan', icon:'radio'},
     {type:'digital-pet', label:'Digital Pet', icon:'heart'},
     {type:'ascii-anim', label:'ASCII Animation', icon:'monitor'},
+    {type:'sonarr', label:'Sonarr', icon:'tv'},
+    {type:'radarr', label:'Radarr', icon:'film'},
+    {type:'plex', label:'Plex', icon:'monitor-play'},
   ];
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
