@@ -1830,7 +1830,6 @@ function fetchStatusWidget(el){
    animation on ALL shifted cards at drop. Touch+mouse via Pointer Events API. */
 
 /* ══════════ Link drag-reorder (within editor) ══════════ */
-let _linkDrag = null;
 
 
 
@@ -2421,7 +2420,6 @@ async function init() {
     if(e.key==='/'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();showShortcutsOverlay();}
     if(e.key==='Tab'&&(e.ctrlKey||e.metaKey)){e.preventDefault();const order=config.pageOrder||[];if(!order.length)return;const idx=order.indexOf(config.currentPage);const next=order[(idx+1)%order.length];switchPage(next);}
   });
-  let rt=null;window.addEventListener('resize',()=>{if(rt)clearTimeout(rt);rt=setTimeout(()=>{},150);});
   // Periodic timestamp updater
   setInterval(()=>{
     $$('.api-ts').forEach(el=>{const t=parseInt(el.dataset.ts);if(t)el.textContent='updated '+timeAgo(t);});
