@@ -508,7 +508,8 @@
             }
           ],
           "display": "block",
-          "headers": {}
+          "headers": {},
+          "useProxy": true
         }
       ]
     },
@@ -545,7 +546,7 @@
               "a": "God"
             }
           ],
-          "_qi": 2
+          "_qi": 1
         }
       ]
     },
@@ -596,7 +597,9 @@
         {
           "id": "sec-6nfvy80mqp4foar",
           "type": "sonarr",
-          "label": "Sonarr"
+          "label": "Sonarr",
+          "key": "3ffcaaa4813f46f9b508ef23b4fdae27",
+          "url": "http://10.0.0.124:8989/"
         }
       ]
     }
@@ -1452,7 +1455,8 @@
                 }
               ],
               "display": "block",
-              "headers": {}
+              "headers": {},
+              "useProxy": true
             }
           ]
         },
@@ -1489,7 +1493,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 2
+              "_qi": 1
             }
           ]
         },
@@ -1540,7 +1544,9 @@
             {
               "id": "sec-6nfvy80mqp4foar",
               "type": "sonarr",
-              "label": "Sonarr"
+              "label": "Sonarr",
+              "key": "3ffcaaa4813f46f9b508ef23b4fdae27",
+              "url": "http://10.0.0.124:8989/"
             }
           ]
         }
