@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """WarTab Server — new tab page + /api/stats + image upload + icon save."""
-import argparse, http.server, io, json, logging, os, re, socket, subprocess, sys, time, uuid, webbrowser
+import argparse, http.server, io, json, logging, os, re, socket, subprocess, sys, time, uuid, webbrowser, urllib.request, urllib.error, urllib.parse, ssl
 from pathlib import Path
 from threading import Lock
 
@@ -296,6 +296,130 @@ def scan_arp():
     _arp_cache_ts = time.time()
     return _arp_cache
 
+# ═══════════════════════════════════════════
+# Proxy & Utility API Handlers
+# ═══════════════════════════════════════════
+
+PROXY_TIMEOUT = 15
+PROXY_MAX_RESPONSE = 5 * 1024 * 1024  # 5MB
+
+def handle_proxy(body):
+    """Generic HTTP proxy. POST /api/proxy with {url, method?, headers?, body?, timeout?}
+    Returns the proxied response. Bypasses CORS — designed for LAN use."""
+    url = body.get("url", "").strip()
+    if not url:
+        return {"error": "missing url"}, 400
+    if not url.startswith(("http://", "https://")):
+        return {"error": "invalid protocol"}, 400
+    method = body.get("method", "GET").upper()
+    req_headers = body.get("headers", {}) or {}
+    req_body = body.get("body", None)
+    timeout = min(body.get("timeout", PROXY_TIMEOUT), PROXY_TIMEOUT)
+    try:
+        req = urllib.request.Request(url, method=method)
+        for k, v in req_headers.items():
+            req.add_header(k, str(v))
+        if req_body is not None:
+            if isinstance(req_body, (dict, list)):
+                req_body = json.dumps(req_body).encode()
+                if "Content-Type" not in req_headers:
+                    req.add_header("Content-Type", "application/json")
+            elif isinstance(req_body, str):
+                req_body = req_body.encode()
+            req.data = req_body
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+            raw = resp.read(PROXY_MAX_RESPONSE)
+            ct = resp.headers.get("Content-Type", "")
+            is_json = "json" in ct
+            result = {
+                "status": resp.status,
+                "headers": dict(resp.headers),
+                "body": json.loads(raw.decode("utf-8", "replace")) if is_json else raw.decode("utf-8", "replace"),
+                "content_type": ct,
+            }
+            return result, 200
+    except urllib.error.HTTPError as e:
+        raw = e.read()
+        return {"status": e.code, "error": str(e), "body": raw.decode("utf-8", "replace")}, 502
+    except urllib.error.URLError as e:
+        return {"error": f"connection failed: {e.reason}"}, 502
+    except Exception as e:
+        return {"error": str(e)}, 502
+
+def handle_cert_check(params):
+    host = params.get("host", "")
+    if not host: return {"error": "missing host"}, 400
+    port = int(params.get("port", 443))
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = True
+    ctx.verify_mode = ssl.CERT_REQUIRED
+    try:
+        with socket.create_connection((host, port), timeout=8) as sock:
+            with ctx.wrap_socket(sock, server_hostname=host) as ssock:
+                cert = ssock.getpeercert()
+                from datetime import datetime
+                expiry = datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y %Z')
+                days_left = (expiry - datetime.now()).days
+                issuer = dict(x[0] for x in cert.get('issuer', []))
+                subject = dict(x[0] for x in cert.get('subject', []))
+                return {"host": host, "port": port, "expires": cert['notAfter'],
+                        "days_left": days_left, "issuer": issuer,
+                        "subject": subject.get("CN", ""), "valid": days_left > 0}, 200
+    except Exception as e:
+        return {"host": host, "port": port, "error": str(e), "days_left": -1, "valid": False}, 200
+
+def handle_ping(params):
+    host = params.get("host", "")
+    count = min(int(params.get("count", 3)), 10)
+    if not host: return {"error": "missing host"}, 400
+    try:
+        out = subprocess.run(["ping", "-c", str(count), "-W", "3", host],
+                             capture_output=True, text=True, timeout=15)
+        if out.returncode != 0:
+            return {"host": host, "alive": False, "error": out.stderr.strip() or "no reply"}, 200
+        m = re.search(r"min/avg/max/(?:stddev|mdev) = ([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+)", out.stdout)
+        if m:
+            return {"host": host, "alive": True, "min_ms": float(m.group(1)),
+                    "avg_ms": float(m.group(2)), "max_ms": float(m.group(3)),
+                    "mdev_ms": float(m.group(4)), "packets": count}, 200
+        times = [float(x) for x in re.findall(r"time[<=](\d+(?:\.\d+)?)\s*ms", out.stdout)]
+        if times:
+            return {"host": host, "alive": True, "min_ms": min(times),
+                    "avg_ms": sum(times)/len(times), "max_ms": max(times), "packets": len(times)}, 200
+        return {"host": host, "alive": True, "packets": count}, 200
+    except subprocess.TimeoutExpired:
+        return {"host": host, "alive": False, "error": "timeout"}, 200
+    except Exception as e:
+        return {"host": host, "alive": False, "error": str(e)}, 200
+
+def handle_docker():
+    socket_path = "/var/run/docker.sock"
+    if not os.path.exists(socket_path):
+        return {"error": "Docker socket not found", "containers": []}, 200
+    try:
+        req = urllib.request.Request("http://localhost/containers/json?all=true")
+        with urllib.request.urlopen(req, timeout=5) as r:
+            data = json.loads(r.read())
+        containers = []
+        for c in data:
+            name = c.get("Names", [""])[0].lstrip("/") if c.get("Names") else c.get("Id", "")[:12]
+            state = c.get("State", "unknown")
+            containers.append({
+                "id": c.get("Id", "")[:12], "name": name,
+                "image": c.get("Image", ""), "state": state,
+                "status": c.get("Status", ""),
+                "ports": c.get("Ports", []),
+                "created": c.get("Created", 0)
+            })
+        running = sum(1 for c in containers if c["state"] == "running")
+        return {"containers": containers, "total": len(containers),
+                "running": running, "stopped": len(containers) - running}, 200
+    except Exception as e:
+        return {"error": str(e), "containers": []}, 200
+
 class WarTabHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self,*a,**kw): super().__init__(*a,directory=str(HERE),**kw)
     def do_OPTIONS(self): self.send_response(204); self._cors(); self.end_headers()
@@ -328,6 +452,17 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             return self._json({})
         if self.path == "/api/arp":
             return self._json(scan_arp())
+        if self.path.startswith("/api/ping"):
+            params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            result, status = handle_ping({k: v[0] for k, v in params.items()})
+            return self._json(result, status)
+        if self.path.startswith("/api/cert-check"):
+            params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            result, status = handle_cert_check({k: v[0] for k, v in params.items()})
+            return self._json(result, status)
+        if self.path == "/api/docker":
+            result, status = handle_docker()
+            return self._json(result, status)
         if self.path == "/api/icons/list":
             files=[]
             for f in sorted(ICONS_DIR.iterdir(), key=lambda p:p.stat().st_mtime, reverse=True):
@@ -411,7 +546,15 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             note_path = NOTES / f"{safe}.md"
             note_path.write_text(body)
             return self._json({"status":"saved","id":safe})
-        import urllib.parse
+        if self.path == "/api/proxy":
+            cl = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(cl) if cl else b"{}"
+            try:
+                data = json.loads(body)
+                result, status = handle_proxy(data)
+                return self._json(result, status)
+            except json.JSONDecodeError:
+                return self._json({"error": "invalid json"}, 400)
         if self.path.startswith("/api/save-icon"):
             qs=urllib.parse.urlparse(self.path).query
             params=urllib.parse.parse_qs(qs)

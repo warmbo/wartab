@@ -31,7 +31,8 @@
       "cpu",
       "memory",
       "disk",
-      "uptime"
+      "uptime",
+      "hostname"
     ],
     "hostname": true
   },
@@ -249,24 +250,6 @@
       "height": 2
     },
     {
-      "id": "clock-card",
-      "title": "Time",
-      "icon": "Clock2",
-      "color": "#aaaaaa",
-      "width": 2,
-      "sections": [
-        {
-          "id": "clock-main",
-          "type": "clock",
-          "format24h": false,
-          "showDate": true,
-          "showCalendar": true
-        }
-      ],
-      "transparent": false,
-      "height": 1
-    },
-    {
       "id": "daily-drivers",
       "title": "Favorites",
       "icon": "Star",
@@ -328,6 +311,24 @@
       ]
     },
     {
+      "id": "clock-card",
+      "title": "Time",
+      "icon": "Clock2",
+      "color": "#aaaaaa",
+      "width": 2,
+      "sections": [
+        {
+          "id": "clock-main",
+          "type": "clock",
+          "format24h": false,
+          "showDate": true,
+          "showCalendar": true
+        }
+      ],
+      "transparent": false,
+      "height": 1
+    },
+    {
       "id": "notes-card",
       "title": "Notes",
       "icon": "edit-3",
@@ -370,7 +371,13 @@
           "id": "sec-hg48983mqlmqd84",
           "type": "digital-pet",
           "label": "",
-          "petName": "Cat Named Dog"
+          "petName": "Cat Named Dog",
+          "lastFed": 1782098726956,
+          "hunger": 100,
+          "happiness": 100,
+          "waste": 0,
+          "lastPetted": 1782098727402,
+          "lastCleaned": 1782098727899
         }
       ]
     },
@@ -639,24 +646,6 @@
           "height": 2
         },
         {
-          "id": "clock-card",
-          "title": "Time",
-          "icon": "Clock2",
-          "color": "#aaaaaa",
-          "width": 2,
-          "sections": [
-            {
-              "id": "clock-main",
-              "type": "clock",
-              "format24h": false,
-              "showDate": true,
-              "showCalendar": true
-            }
-          ],
-          "transparent": false,
-          "height": 1
-        },
-        {
           "id": "daily-drivers",
           "title": "Favorites",
           "icon": "Star",
@@ -718,6 +707,24 @@
           ]
         },
         {
+          "id": "clock-card",
+          "title": "Time",
+          "icon": "Clock2",
+          "color": "#aaaaaa",
+          "width": 2,
+          "sections": [
+            {
+              "id": "clock-main",
+              "type": "clock",
+              "format24h": false,
+              "showDate": true,
+              "showCalendar": true
+            }
+          ],
+          "transparent": false,
+          "height": 1
+        },
+        {
           "id": "notes-card",
           "title": "Notes",
           "icon": "edit-3",
@@ -760,7 +767,13 @@
               "id": "sec-hg48983mqlmqd84",
               "type": "digital-pet",
               "label": "",
-              "petName": "Cat Named Dog"
+              "petName": "Cat Named Dog",
+              "lastFed": 1782098726956,
+              "hunger": 100,
+              "happiness": 100,
+              "waste": 0,
+              "lastPetted": 1782098727402,
+              "lastCleaned": 1782098727899
             }
           ]
         },
@@ -1300,7 +1313,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 0
+              "_qi": 2
             }
           ]
         },
