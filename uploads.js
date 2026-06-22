@@ -57,28 +57,6 @@ async function fetchUploads() {
   } catch(e) { /* server might not be available */ }
 }
 
-async function deleteUpload(url) {
-  const name = url.split('/').pop();
-  if (!name) return;
-  try {
-    const result = await storage.deleteFile(url);
-    if (result && result.status === 'deleted') {
-      uploadedFiles = uploadedFiles.filter(f => f.url !== url);
-      toast('Deleted');
-      if (config.theme.bgType === 'image' && config.theme.bgValue === url) {
-        config.theme.bgType = 'gradient';
-        config.theme.bgValue = DEFAULT_CONFIG.theme.bgValue;
-        applyChanges(); saveConfig();
-      }
-      buildConfigPanel();
-    } else {
-      toast('Delete failed', 'error');
-    }
-  } catch(err) {
-    toast('Delete error: ' + err.message, 'error');
-  }
-}
-
 function openBgPicker() {
   // Refresh uploaded files list from server
   fetchUploads().then(function() {

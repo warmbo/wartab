@@ -56,7 +56,7 @@ function fetchLanScan(el){
     const countEl=el.querySelector('.lan-scan-count');
     if(countEl)countEl.textContent=d.count+' hosts';
     // Load last 3 scans from localStorage to compare for new devices
-    var histKey='wartab_lan_history';
+    const histKey='wartab_lan_history';
     let history=[];
     try{history=JSON.parse(localStorage.getItem(histKey)||'[]');}catch(e){}
     if(!Array.isArray(history))history=[];
@@ -1366,7 +1366,7 @@ function stItem(icon,label,value,pct){const div=document.createElement('span');d
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
 // Full page re-render: destroys and rebuilds grid from config
 function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];weatherIntervals.forEach(clearInterval);weatherIntervals=[];const grid=$('#card-grid');// Cleanup old card modules before destroying DOM
-var oldCards=grid.querySelectorAll('.card');oldCards.forEach(function(c){if(c._cleanup)c._cleanup();});grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';var appEl=$('#app');if(appEl){
+const oldCards=grid.querySelectorAll('.card');oldCards.forEach(function(c){if(c._cleanup)c._cleanup();});grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';const appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width
   appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
   const xPad=parseInt(config.layout.pageWidthPadding)||2;
@@ -1447,7 +1447,7 @@ function renderCard(card,idx){
     div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;
     div.style.gridColumn='span '+div.dataset.width;
     if(card.height>1){div.style.gridRow='span '+card.height;div.dataset.height=card.height;}
-    if(card.minHeight){var sp=document.createElement('div');sp.className='grid-gap-minh';sp.style.setProperty('--gap-minh',card.minHeight+'px');div.appendChild(sp);}
+    if(card.minHeight){const sp=document.createElement('div');sp.className='grid-gap-minh';sp.style.setProperty('--gap-minh',card.minHeight+'px');div.appendChild(sp);}
     // Controls overlay
     const h=document.createElement('div');
     h.className='grid-gap-controls';
@@ -1472,7 +1472,7 @@ function renderCard(card,idx){
   div.dataset.width = Math.min(card.width || 1, config.layout.cols);
   div.dataset.index = idx;
   div.style.setProperty('--card-accent', card.color || config.theme.glow);
-  var ch=Math.min(card.height||1,4);
+  const ch=Math.min(card.height||1,4);
   if(ch>1){
     div.dataset.height=ch;
     div.style.gridRow='span '+ch;
@@ -1485,7 +1485,7 @@ function renderCard(card,idx){
 
   const title = document.createElement('div');
   title.className = 'card-title';
-  var iconEl=renderIconElement(card.icon, 'card-icon');if(iconEl)title.appendChild(iconEl);
+  const iconEl=renderIconElement(card.icon, 'card-icon');if(iconEl)title.appendChild(iconEl);
   title.appendChild(document.createTextNode(' ' + (card.title || '')));
   // Inline editing: double-click card title to rename
   title.addEventListener('dblclick', function(e) {
@@ -1568,7 +1568,7 @@ function renderIconElement(icon, cls) {
     const img = document.createElement('img');
     img.className = cls; img.src = icon; img.alt = '';
     img.onerror = function() {
-      var fallback = renderLucideEl('package', cls);
+      const fallback = renderLucideEl('package', cls);
       this.parentNode.replaceChild(fallback, this);
       renderIcons();
     };
@@ -1619,7 +1619,7 @@ function renderSection(section, card) {
       e.stopPropagation();
       section.collapsed = !section.collapsed;
       titleRow.classList.toggle('open');
-      var c = titleRow.nextElementSibling;
+      let c = titleRow.nextElementSibling;
       while (c && !c.classList.contains('section-content') && !c.classList.contains('dropdown-content')) c = c.nextElementSibling;
       if (c) {
         if (section.collapsed) {
@@ -1634,14 +1634,14 @@ function renderSection(section, card) {
             c.style.maxHeight = '';
           }, 450);
           // Stop any running timers in this section
-          var timers = c.querySelectorAll('[data-timer-id]');
+          const timers = c.querySelectorAll('[data-timer-id]');
           timers.forEach(function(t){if(t._timer){clearInterval(t._timer);}});
         } else {
           // Expand: add open class (overflow:visible), measure natural height, animate from 0 up
           c.classList.add('open');
           if(c._collapseTimer){clearTimeout(c._collapseTimer);c._collapseTimer=null;}
           c.style.maxHeight = '';
-          var h2 = c.scrollHeight;
+          const h2 = c.scrollHeight;
           c.style.maxHeight = '0px';
           c.offsetHeight;
           c.style.maxHeight = h2 + 'px';
@@ -1690,7 +1690,7 @@ function renderLinkIcon(icon) {
     const img = document.createElement('img');
     img.className = 'link-custom-icon'; img.src = icon; img.alt = '';
     img.onerror = function() {
-      var fallback = document.createElement('i');
+      const fallback = document.createElement('i');
       fallback.className = 'link-icon'; fallback.setAttribute('data-lucide', 'link');
       this.parentNode.replaceChild(fallback, this);
       renderIcons();  // render the fallback Lucide icon
@@ -1718,8 +1718,7 @@ function setupClocks(){if(clockInterval)clearInterval(clockInterval);if($$('.clo
 function updateClocks(){$$('.clock-widget').forEach(el=>{const n=new Date(),f24=el.dataset.format24==='1',sd=el.dataset.showDate==='1';let h=n.getHours();const m=String(n.getMinutes()).padStart(2,'0');el.querySelector('.clock-time').textContent=f24?String(h).padStart(2,'0')+':'+m:(h%12||12)+':'+m+' '+(h>=12?'PM':'AM');if(sd)el.querySelector('.clock-date').textContent=n.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});if(el.dataset.showCalendar==='1'){const cal=el.querySelector('.calendar-widget');if(cal)renderCalendar(cal,n);}});}
 function renderCalendar(el,date){const y=date.getFullYear(),m=date.getMonth();const fd=new Date(y,m,1).getDay();const ld=new Date(y,m+1,0).getDate();const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];let h=`<div class="calendar-month">${mn[m]} ${y}</div><div class="calendar-grid">`;['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{h+=`<div class="calendar-day-header">${d}</div>`;});for(let i=0;i<fd;i++)h+='<div class="calendar-day other-month"></div>';const today=new Date();for(let d=1;d<=ld;d++){const is=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();h+=`<div class="calendar-day${is?' today':''}">${d}</div>`;}h+='</div>';el.innerHTML=h;}
 function setupWeatherWidgets(){weatherIntervals.forEach(clearInterval);weatherIntervals=[];$$('.weather-widget').forEach(fetchWeather);}
-function fetchWeather(el){const k=el.dataset.apiKey,z=el.dataset.zip,c=el.dataset.country||'US';if(!k||!z){el.querySelector('.weather-detail').textContent='Set API key & zip code in config';return;}const ts=Date.now();fetch(`https://api.openweathermap.org/data/2.5/weather?zip=${encodeURIComponent(z)},${encodeURIComponent(c)}&units=${el.dataset.units}&appid=${k}`).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);var iconEl=el.querySelector('.weather-icon');if(iconEl){var lname=wIcon(d.weather[0].id);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';var windEl=el.querySelector('.weather-wind-val');if(windEl){var ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}var tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);
-}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;var tsEl=el.querySelector('.weather-ts');if(tsEl){var lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});var wi=parseInt(el.dataset.refresh)*1000;if(wi>0)weatherIntervals.push(setInterval(()=>fetchWeather(el),Math.max(5000,wi)));}
+function fetchWeather(el){const k=el.dataset.apiKey,z=el.dataset.zip,c=el.dataset.country||'US';if(!k||!z){el.querySelector('.weather-detail').textContent='Set API key & zip code in config';return;}const ts=Date.now();fetchWithTimeout(`https://api.openweathermap.org/data/2.5/weather?zip=${encodeURIComponent(z)},${encodeURIComponent(c)}&units=${el.dataset.units}&appid=${k}`, null, 8000).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);const iconEl=el.querySelector('.weather-icon');if(iconEl){const lname=wIcon(d.weather[0].id);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';const windEl=el.querySelector('.weather-wind-val');if(windEl){const ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}const tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;const tsEl=el.querySelector('.weather-ts');if(tsEl){const lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});const wi=parseInt(el.dataset.refresh)*1000;if(wi>0)weatherIntervals.push(setInterval(()=>fetchWeather(el),Math.max(5000,wi)));}
 function wIcon(id){if(id<300)return'cloud-lightning';if(id<400)return'cloud-drizzle';if(id<600)return'cloud-rain';if(id<700)return'cloud-snow';if(id<800)return'cloud-fog';if(id===800)return'sun';return'cloud';}
 function renderApiWidget(el){renderApiFetch(el);}
 function renderApiFetch(el){
@@ -1728,29 +1727,29 @@ function renderApiFetch(el){
   el.innerHTML='<div class="api-row"><span class="api-label">'+escHtml(el.dataset.label||'')+'</span><span class="api-value">Loading...</span></div><div class="api-ts">fetching...</div>';
   const ts=Date.now();
   fetch(u).then(function(r){if(!r.ok)throw Error(r.status+' '+r.statusText);return r.json();}).then(function(d){
-    var fields=[];
+    let fields=[];
     try{fields=JSON.parse(el.dataset.fields||'[]');}catch(e){}
-    var html='';
+    let html='';
     if(fields&&fields.length){
       fields.forEach(function(f){
-        var v=f.path?getNested(d,f.path):'';
-        var vs=v!==undefined&&v!==null?String(v):'\u2014';
+        const v=f.path?getNested(d,f.path):'';
+        const vs=v!==undefined&&v!==null?String(v):'\u2014';
         html+='<div class="api-row"><span class="api-label">'+escHtml(f.label)+'</span><span class="api-value">'+escHtml(vs)+'</span></div>';
       });
     } else {
-      var jp=el.dataset.jsonPath;
-      var v=jp?getNested(d,jp):JSON.stringify(d,null,2);
+      const jp=el.dataset.jsonPath;
+      const v=jp?getNested(d,jp):JSON.stringify(d,null,2);
       html+='<div class="api-row"><span class="api-label">'+label+'</span><span class="api-value">'+escHtml(String(v))+'</span></div>';
     }
     html+='<div class="api-ts" data-ts="'+ts+'">updated just now</div>';
     el.innerHTML=html;
     el.dataset.lastOk=String(ts);
-    var iv=parseInt(el.dataset.refresh)*1000;
+    const iv=parseInt(el.dataset.refresh)*1000;
     if(iv>0){apiPollTimers.push(setTimeout(function(){renderApiFetch(el);},iv));}
   }).catch(function(e){
-    var lo=el.dataset.lastOk;
+    const lo=el.dataset.lastOk;
     el.innerHTML='<div class="api-row"><span class="api-label">'+escHtml(el.dataset.label||'')+'</span><span class="api-value api-error">'+escHtml(e.message)+'</span></div><div class="api-ts" data-ts="'+(lo||ts)+'">'+(lo?'last ok: '+timeAgo(parseInt(lo)):'')+'</div>';
-    var iv=parseInt(el.dataset.refresh)*1000;
+    const iv=parseInt(el.dataset.refresh)*1000;
     if(iv>0){apiPollTimers.push(setTimeout(function(){renderApiFetch(el);},iv));}
   });
 }
@@ -1763,7 +1762,7 @@ function shrinkLabels(container) {
     if (!container || !container.parentNode) return;
     container.querySelectorAll('.link-label').forEach(function(el) {
       if (el.scrollWidth > el.clientWidth) {
-        var fs = parseInt(window.getComputedStyle(el).fontSize);
+        let fs = parseInt(window.getComputedStyle(el).fontSize);
         while (el.scrollWidth > el.clientWidth && fs > 8) {
           el.style.fontSize = (--fs) + 'px';
         }
@@ -1798,10 +1797,10 @@ const LOCAL_QUOTES=[
   {q:'Computers are fast; programmers keep it slow.',a:'Anonymous'},
 ];
 function fetchQuote(el, sec) {
-  var txt = el.querySelector('.quotes-content'),
+  const txt = el.querySelector('.quotes-content'),
       auth = el.querySelector('.quotes-author-name');
   if (!txt || !auth) return;
-  var pool = sec.quotes || [];
+  const pool = sec.quotes || [];
   if (!pool.length) {
     txt.textContent = 'Add quotes in settings';
     auth.textContent = '';
@@ -1809,7 +1808,7 @@ function fetchQuote(el, sec) {
   }
   if (typeof sec._qi !== 'number') sec._qi = -1;
   sec._qi = (sec._qi + 1) % pool.length;
-  var pick = pool[sec._qi];
+  const pick = pool[sec._qi];
   txt.textContent = pick.q;
   auth.textContent = '— ' + pick.a;
 }
@@ -1817,17 +1816,17 @@ function fetchQuote(el, sec) {
 
 // Fetch and render system stats for the status-bar card module
 function fetchStatusWidget(el){
-  var content=el.querySelector('.sw-content'),ts=el.querySelector('.sw-ts');
+  const content=el.querySelector('.sw-content'),ts=el.querySelector('.sw-ts');
   if(!content)return;
-  var src=el.dataset.source,items;
+  const src=el.dataset.source; let items;
   try{items=JSON.parse(el.dataset.items||'[]');}catch(e){items=['cpu','memory','disk','uptime'];}
   function render(d){
-    content.innerHTML='';var parts=buildStatItems(d,items);
-    parts.forEach(function(el2,i){if(i>0){var sep=document.createElement('span');sep.className='stat-sep';sep.textContent='·';content.appendChild(sep);}content.appendChild(el2);});
+    content.innerHTML='';const parts=buildStatItems(d,items);
+    parts.forEach(function(el2,i){if(i>0){const sep=document.createElement('span');sep.className='stat-sep';sep.textContent='·';content.appendChild(sep);}content.appendChild(el2);});
     if(!parts.length)content.innerHTML='<div style="font-size:var(--text-sm);color:var(--text-tertiary);">No stats</div>';
     if(ts){ts.textContent='updated';ts.dataset.ts=String(Date.now());}
   }
-  var url;
+  let url;
   if(src==='local')url='/api/stats';
   else if(src==='glances')url=el.dataset.glancesUrl+'/api/4';
   else if(src==='custom'&&el.dataset.customUrl)url=el.dataset.customUrl;
@@ -1897,7 +1896,7 @@ function buildDashboardPanel(body){
   const ir2=el('div','display:flex;gap:4px;align-items:center;');
   const ip=el('span','font-size:var(--text-xl);width:30px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);');
   const bi=brand.icon||'sword';
-  if(bi.startsWith('http')||bi.startsWith('data:')||bi.startsWith('/')){const img=document.createElement('img');img.src=bi;img.style.cssText='width:22px;height:22px;object-fit:contain;';ip.appendChild(img);}else if(isLucideName(bi)){var li=document.createElement('i');li.setAttribute('data-lucide',bi);li.style.cssText='width:22px;height:22px;';ip.appendChild(li);}else{ip.textContent=bi;ip.className+=' emoji-icon';}
+  if(bi.startsWith('http')||bi.startsWith('data:')||bi.startsWith('/')){const img=document.createElement('img');img.src=bi;img.style.cssText='width:22px;height:22px;object-fit:contain;';ip.appendChild(img);}else if(isLucideName(bi)){const li=document.createElement('i');li.setAttribute('data-lucide',bi);li.style.cssText='width:22px;height:22px;';ip.appendChild(li);}else{ip.textContent=bi;ip.className+=' emoji-icon';}
   ir2.appendChild(ip);
   const ib=el('button','','Change');ib.className='btn btn-glass btn-sm';
   ib.addEventListener('click',()=>openIconPicker(url=>{if(!config.branding)config.branding={};config.branding.icon=url;applyTheme();saveConfig();buildConfigPanel();}));
@@ -2096,9 +2095,9 @@ function buildSystemPanel(body){
 }
 /* Wrap config panel sections in card containers */
 function wrapConfigCards(body) {
-  var sections = [], cur = null;
+  const sections = []; let cur = null;
   Array.from(body.children).forEach(function(el) {
-    var h3 = el.querySelector('h3');
+    const h3 = el.querySelector('h3');
     if (h3 && !el.querySelector('input,select,button')) {
       if (cur) sections.push(cur);
       cur = { header: el, fields: [] };
@@ -2108,7 +2107,7 @@ function wrapConfigCards(body) {
   });
   if (cur) sections.push(cur);
   sections.forEach(function(s) {
-    var wrap = document.createElement('div');
+    const wrap = document.createElement('div');
     wrap.className = 'cs-panel cp-config-card';
     s.header.parentNode.insertBefore(wrap, s.header);
     wrap.appendChild(s.header);
@@ -2183,7 +2182,7 @@ function addNewCard(){
     btn.addEventListener('click', () => {
       overlay.remove();
       const colMax=config.layout.cols;
-      var sec = {id:'sec-'+uid(),type:t.type,label:t.label};
+      const sec = {id:'sec-'+uid(),type:t.type,label:t.label};
       if(t.type==='links'||t.type==='link-list') sec.links=[{label:'Example',url:'https://example.com',icon:'link'}];
       if(t.type==='api-poller') {sec.url='https://api.github.com/repos/nousresearch/wartab';sec.fields=[{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}];sec.refreshInterval=120;}
       config.cards.push({
@@ -2311,12 +2310,12 @@ function showConfirmModal(msg, onConfirm, okText) {
 
 /* ══════════ Keyboard Shortcuts Overlay ══════════ */
 function showShortcutsOverlay() {
-  var existing = document.querySelector('#shortcuts-overlay');
+  const existing = document.querySelector('#shortcuts-overlay');
   if (existing) { existing.remove(); return; }
-  var overlay = document.createElement('div');
+  const overlay = document.createElement('div');
   overlay.id = 'shortcuts-overlay';
   overlay.className = 'modal-overlay';
-  var box = document.createElement('div');
+  const box = document.createElement('div');
   box.className = 'modal-box';
   box.style.maxWidth = '420px';
   box.innerHTML = '<div style="font-size:var(--heading-size);font-weight:700;color:var(--text-primary);margin-bottom:16px;">Keyboard Shortcuts</div>' +
@@ -2337,9 +2336,9 @@ function showShortcutsOverlay() {
   overlay.focus();
   // Listen for single-key commands on the overlay itself
   function onShortcutKey(e) {
-    var key = e.key.toLowerCase();
+    const key = e.key.toLowerCase();
     if (key === 'n') { e.preventDefault(); overlay.remove(); addNewCard(); }
-    else if (key === 's') { e.preventDefault(); overlay.remove(); var fs=$('#card-grid .inline-search-wrap input'); if(fs)fs.focus(); }
+    else if (key === 's') { e.preventDefault(); overlay.remove(); const fs=$('#card-grid .inline-search-wrap input'); if(fs)fs.focus(); }
     else if (key === 'p') { e.preventDefault(); overlay.remove(); addPage(); }
     else if (key === 'c') { e.preventDefault(); overlay.remove(); toggleConfigPanel(); }
     else if (e.key === '?') { e.preventDefault(); overlay.remove(); }
@@ -2349,7 +2348,7 @@ function showShortcutsOverlay() {
   // Also capture keys globally while overlay is visible (in case focus shifts)
   document.addEventListener('keydown', onShortcutKey);
   // Clean up global listener when overlay closes
-  var origRemove = overlay.remove.bind(overlay);
+  const origRemove = overlay.remove.bind(overlay);
   overlay.remove = function() {
     document.removeEventListener('keydown', onShortcutKey);
     origRemove();
@@ -2461,6 +2460,6 @@ async function init() {
   }
 }
 // Safety net: hide spinner after 10s even if init function fails silently
-setTimeout(function(){var pl=document.getElementById('page-loader');if(pl)pl.classList.add('hidden');},10000);
+setTimeout(function(){const pl=document.getElementById('page-loader');if(pl)pl.classList.add('hidden');},10000);
 document.addEventListener('DOMContentLoaded', init);
 
