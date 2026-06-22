@@ -446,8 +446,6 @@ function onPageDragEnd(e) {
       }
     }
     newOrder.splice(tgtIdx, 0, dragId);
-    // Debug: show computed order
-    setTimeout(function(){ toast('Reorder: ' + domOrder.join(' → ') + ', drop ' + dragId + ' at idx=' + tgtIdx + ' → ' + newOrder.join(', '), 'info'); }, 100);
     if (JSON.stringify(newOrder) !== JSON.stringify(config.pageOrder)) {
       config.pageOrder = newOrder;
       saveConfig();
