@@ -22,26 +22,6 @@ let WARTAB_VERSION = '';
 /* ══════ Card Type Modules ══════
    Each module defines { render, editor, defaults } for a section type.
    Add new types here without touching core rendering. */
-const CARD_MODULES = {};
-
-function registerModule(type, module){
-  CARD_MODULES[type]=module;
-}
-
-// Built-in modules — each owns { defaults, render(sec,card,cw), editor(sec,card,bd) }
-
-/* ── Public API presets for API Poller ── */
-const API_PRESETS = [
-  { label:'GitHub Repo', url:'https://api.github.com/repos/warmbo/wartab', fields:[{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}], icon:'github' },
-  { label:'Bitcoin Price', url:'https://api.coinbase.com/v2/prices/BTC-USD/spot', fields:[{label:'BTC/USD',path:'data.amount'}], icon:'bitcoin' },
-  { label:'Dog API', url:'https://dog.ceo/api/breeds/image/random', fields:[{label:'Breed Image',path:'message'}], icon:'dog' },
-  { label:'IP Info', url:'http://ip-api.com/json/', fields:[{label:'IP',path:'query'},{label:'ISP',path:'isp'},{label:'City',path:'city'},{label:'Country',path:'country'}], icon:'map-pin' },
-  { label:'Random User', url:'https://randomuser.me/api/', fields:[{label:'Name',path:'results.0.name.first'},{label:'Country',path:'results.0.location.country'}], icon:'users' },
-  { label:'Open-Meteo (NYC)', url:'https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true', fields:[{label:'Temp °C',path:'current_weather.temperature'},{label:'Wind km/h',path:'current_weather.windspeed'}], icon:'cloud-sun' },
-  { label:'Joke', url:'https://v2.jokeapi.dev/joke/Any?type=single', fields:[{label:'Joke',path:'joke'}], icon:'message-circle' },
-  { label:'ISS Location', url:'http://api.open-notify.org/iss-now.json', fields:[{label:'Lat',path:'iss_position.latitude'},{label:'Lon',path:'iss_position.longitude'}], icon:'globe' },
-];
-
 /* ── LAN Scan — terminal-style ARP table viewer ── */
 
 function fetchLanScan(el){
@@ -1179,31 +1159,9 @@ function migrateConfigEmojis(cfg){
   return cfg;
 }
 
-/* ═══════════════════════════════════════════
-   SECTION 5: UTILITIES
-   Helper functions for the entire app.
-   ═══════════════════════════════════════════ */
-function isLucideName(s){if(!s||typeof s!=='string')return false;if(s.startsWith('http')||s.startsWith('data:')||s.startsWith('/'))return false;if(typeof lucide!=='undefined'&&lucide.icons){const p=s.split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join('');return p in lucide.icons;}return LUCIDE_ICONS.includes(s);}
-// Render a Lucide icon element (data-lucide attribute for auto-replacement by lucide.createIcons())
-function renderLucideEl(name,cls){const i=document.createElement('i');i.className=cls;i.setAttribute('data-lucide',name);return i;}
-
-// Safe icon render — calls lucide.createIcons with console.warn suppression
-function renderIcons(){
-  if(typeof lucide==='undefined')return;
-  const _lw=console.warn;console.warn=function(m){
-    if(m&&m.indexOf&&m.indexOf('not found')<0)_lw.apply(console,arguments);
-  };try{lucide.createIcons();}catch(e){}
-  console.warn=_lw;
-}
-
 let config = {}, clockInterval = null, weatherIntervals = [], apiPollTimers = [], statsTimer = null;
 let dragState = null, iconPickerCallback = null;
 let uploadedFiles = [];
-const $ = s => document.querySelector(s);
-const $$ = s => document.querySelectorAll(s);
-function uid(){return Math.random().toString(36).substring(2,9)+Date.now().toString(36);}
-function cloneObj(o){return JSON.parse(JSON.stringify(o));}
-function toast(msg,type='info'){const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;$('#toast-container').appendChild(el);setTimeout(()=>el.remove(),3000);}
 
 /* ═══════════════════════════════════════════
    SECTION 6: CONFIG LOAD / SAVE
@@ -1211,7 +1169,6 @@ function toast(msg,type='info'){const el=document.createElement('div');el.classN
    The server also has /api/config endpoints for potential server-side syncing.
    ═══════════════════════════════════════════ */
 // Load config from localStorage, merging over DEFAULT_CONFIG
-function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored','success');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>{if(el.parentNode)el.remove();},6000);}
 
 // Load config from server — called once on page init
 async function loadConfig() {
@@ -1334,9 +1291,8 @@ function loadGoogleFont(fn,allowReplace){
     const l=document.createElement('link');l.id='wartab-font';l.dataset.font=fn;l.rel='stylesheet';
     l.href='https://fonts.googleapis.com/css2?family='+fn.replace(/ /g,'+')+':wght@200..700&display=swap';
     document.head.appendChild(l);
-  }
 }
-function escHtml(s){if(typeof s!=='string')return'';const d=document.createElement('div');d.textContent=s;const h=d.innerHTML;return h.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+}
 
 function fetchWithTimeout(url, options, timeoutMs) {
   timeoutMs = timeoutMs || 10000;
@@ -1751,11 +1707,9 @@ function renderApiFetch(el){
     el.innerHTML='<div class="api-row"><span class="api-label">'+escHtml(el.dataset.label||'')+'</span><span class="api-value api-error">'+escHtml(e.message)+'</span></div><div class="api-ts" data-ts="'+(lo||ts)+'">'+(lo?'last ok: '+timeAgo(parseInt(lo)):'')+'</div>';
     const iv=parseInt(el.dataset.refresh)*1000;
     if(iv>0){apiPollTimers.push(setTimeout(function(){renderApiFetch(el);},iv));}
-  });
+});
 }
-function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
-function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
-
+/* ── Local quote library ── */
 // Shrink link labels that overflow their container — keeps buttons single-line
 function shrinkLabels(container) {
   setTimeout(function() {

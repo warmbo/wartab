@@ -9,7 +9,7 @@
     "bgValue": "/uploads/2229f7d022b64017a561894e40d45319.png",
     "bgBlur": 7,
     "bgDim": 50,
-    "blur": 4,
+    "blur": 20,
     "glow": "#cad3d8",
     "fontSizeText": 15,
     "fontSizeHeading": 16,
@@ -280,12 +280,12 @@
           "type": "digital-pet",
           "label": "",
           "petName": "Cat Named Dog",
-          "lastFed": 1782156500531,
+          "lastFed": 1782160345833,
           "hunger": 100,
           "happiness": 100,
           "waste": 0,
-          "lastPetted": 1782156501006,
-          "lastCleaned": 1782156501590
+          "lastPetted": 1782160346182,
+          "lastCleaned": 1782160346725
         }
       ]
     },
@@ -676,12 +676,12 @@
               "type": "digital-pet",
               "label": "",
               "petName": "Cat Named Dog",
-              "lastFed": 1782156500531,
+              "lastFed": 1782160345833,
               "hunger": 100,
               "happiness": 100,
               "waste": 0,
-              "lastPetted": 1782156501006,
-              "lastCleaned": 1782156501590
+              "lastPetted": 1782160346182,
+              "lastCleaned": 1782160346725
             }
           ]
         },
@@ -1338,7 +1338,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 0
+              "_qi": 2
             }
           ]
         },
