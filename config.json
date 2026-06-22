@@ -280,12 +280,12 @@
           "type": "digital-pet",
           "label": "",
           "petName": "Cat Named Dog",
-          "lastFed": 1782134860762,
+          "lastFed": 1782149684642,
           "hunger": 100,
           "happiness": 100,
-          "waste": 20,
-          "lastPetted": 1782134861148,
-          "lastCleaned": 1782132796321
+          "waste": 0,
+          "lastPetted": 1782149685037,
+          "lastCleaned": 1782149685638
         }
       ]
     },
@@ -676,12 +676,12 @@
               "type": "digital-pet",
               "label": "",
               "petName": "Cat Named Dog",
-              "lastFed": 1782134860762,
+              "lastFed": 1782149684642,
               "hunger": 100,
               "happiness": 100,
-              "waste": 20,
-              "lastPetted": 1782134861148,
-              "lastCleaned": 1782132796321
+              "waste": 0,
+              "lastPetted": 1782149685037,
+              "lastCleaned": 1782149685638
             }
           ]
         },
