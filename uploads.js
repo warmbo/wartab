@@ -8,8 +8,7 @@ function openBgUpload() {
   hi.addEventListener('change',function(e){
     const file=e.target.files[0];if(!file)return;
     compressImage(file,1920,1080,0.8).then(function(blob){
-      const fd=new FormData();fd.append('file',blob,file.name);
-      fetch('/api/upload',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(result){
+      storage.uploadFile(blob, file.name).then(function(result){
         if(result.url){
           config.theme.bgType='image';config.theme.bgValue=result.url;
           applyChanges();saveConfig();renderAll();openBgPicker();toast('Uploaded');
