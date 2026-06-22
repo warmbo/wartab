@@ -2420,11 +2420,24 @@ async function init() {
   $('#icon-picker-overlay').addEventListener('click',closeIconPicker);
   $('#edit-panel-close').addEventListener('click',closeCardEditPanel);
   $('#edit-panel-overlay').addEventListener('click',closeCardEditPanel);
+  // Background picker close handlers
+  $('#bg-picker-close').addEventListener('click',function(){
+    $('#bg-picker-overlay').classList.remove('open');
+    $('#bg-picker').classList.remove('open');
+  });
+  $('#bg-picker-overlay').addEventListener('click',function(){
+    $('#bg-picker-overlay').classList.remove('open');
+    $('#bg-picker').classList.remove('open');
+  });
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'&&configPanelOpen)toggleConfigPanel();
     if(e.key==='Escape'&&iconPickerOpen)closeIconPicker();
     if(e.key==='Escape'&&_editPanelOpen)closeCardEditPanel();
     if(e.key==='Escape'&&document.querySelector('#shortcuts-overlay'))document.querySelector('#shortcuts-overlay').remove();
+    if(e.key==='Escape'&&document.querySelector('#bg-picker.open')){
+      $('#bg-picker-overlay').classList.remove('open');
+      $('#bg-picker').classList.remove('open');
+    }
     if(e.key==='C'&&e.ctrlKey&&e.shiftKey){e.preventDefault();toggleConfigPanel();}
     if((e.key==='l'||e.key==='k')&&(e.ctrlKey||e.metaKey)){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
     // ? opens shortcuts overlay

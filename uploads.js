@@ -79,6 +79,8 @@ async function deleteUpload(url) {
 }
 
 function openBgPicker() {
+  // Refresh uploaded files list from server
+  fetchUploads().then(function() {
   $('#bg-picker-content').innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;padding:8px 0;"></div>';
   const g=$('#bg-picker-content>div');
   if(!uploadedFiles.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text-tertiary);">No uploaded images</div>';}
@@ -104,4 +106,5 @@ function openBgPicker() {
     g.appendChild(c);
   });
   $('#bg-picker-overlay').classList.add('open');$('#bg-picker').classList.add('open');
+  });
 }
