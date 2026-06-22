@@ -422,23 +422,26 @@ function onPageDragEnd(e) {
     el.style.borderTopColor = '';
     el.style.borderTopWidth = '';
   });
-  // Compute new order from DOM, then move the dragged pageId to its insertion point
-  const items = [...body.children].filter(function(el) { return el.classList.contains('cp-config-card'); });
-  const domOrder = items.map(function(el) { return el.dataset.pageId; });
-  // Remove dragged page from its current DOM position and re-insert at target
+  // Compute new order: find where the cursor is relative to non-dragged cards
   const dragId = _pageDrag.pageId;
+  // Get all page cards EXCLUDING the dragged one (same as onPageDragMove)
+  const items = [...body.children].filter(function(el) {
+    return el.classList.contains('cp-config-card') && el.dataset.pageId !== dragId;
+  });
+  // The current DOM order (before reorder) tells us the starting arrangement
+  const allCards = [...body.children].filter(function(el) { return el.classList.contains('cp-config-card'); });
+  const domOrder = allCards.map(function(el) { return el.dataset.pageId; });
   const srcIdx = domOrder.indexOf(dragId);
   if (srcIdx >= 0) {
     const newOrder = [...domOrder];
     newOrder.splice(srcIdx, 1);
-    // Find target insertion: the card whose center was crossed
-    let tgtIdx = newOrder.length;
-    for (let i = 0; i < items.length; i++) {
-      const el = items[i];
-      if (el.dataset.pageId === dragId) continue;
-      const r = el.getBoundingClientRect();
+    // Find target insertion point: first non-dragged card whose center the cursor is above
+    let tgtIdx = newOrder.length; // default: append at end
+    for (const item of items) {
+      const r = item.getBoundingClientRect();
       if (e.clientY < r.top + r.height / 2) {
-        tgtIdx = newOrder.indexOf(el.dataset.pageId);
+        const found = newOrder.indexOf(item.dataset.pageId);
+        if (found >= 0) { tgtIdx = found; }
         break;
       }
     }
