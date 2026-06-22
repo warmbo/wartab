@@ -12,8 +12,6 @@ function openBgUpload() {
         if(result.url){
           config.theme.bgType='image';config.theme.bgValue=result.url;
           applyTheme();saveConfig();renderAll();
-          // Refresh file list then open picker
-          fetchUploads().then(function(){ openBgPicker(); });
           toast('Uploaded');
         }else{toast('Upload failed','error');}
       }).catch(function(){toast('Upload error','error');});

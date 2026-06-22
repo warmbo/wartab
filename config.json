@@ -6,9 +6,9 @@
   },
   "theme": {
     "bgType": "image",
-    "bgValue": "/uploads/ed181666659c4500ab8deb1c72028be4.jpg",
-    "bgBlur": 10,
-    "bgDim": 20,
+    "bgValue": "/uploads/527047650f5846f19ae1bbf81d7f65c4.png",
+    "bgBlur": 0,
+    "bgDim": 54,
     "blur": 4,
     "glow": "#cad3d8",
     "fontSizeText": 15,
@@ -410,7 +410,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 1,
+          "_qi": 0,
           "collapsed": false
         },
         {
@@ -806,7 +806,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 1,
+              "_qi": 0,
               "collapsed": false
             },
             {
