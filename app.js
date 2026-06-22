@@ -1118,46 +1118,6 @@ function loadIconRepo() {
     }
   });
 }
-const EMOJIS = ['🔍','🕐','🌐','🖥️','📖','📝','🏠','🎬','🛡️','📊','🐳','🔐','🐙','🦊','📚','📦','🐍','💬','▶️','🎮','🐦','🌍','⚛️','📘','⚔️','⚙️','🔄','✕','🔗','🌟','🔥','💡','🚀','⚡','🎯','🧩','🎨','📡','🔧','🗄️','💾','🖨️','📷','🎥','🎵','🎙️','📻','📺','💻','⌨️','🖱️','📱','💽','💿','📀','🔌','🔋','💎','🧊','⛅','☀️','🌙','⭐','✨','💫','🎆','🌈','☁️','🌊','🔥','🍃','🌱','🌿','☘️','🍀','🏆','🥇','🥈','🥉','🏅','🎖️','🏁','🚩','🎌','📌','📍','🎪','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎸','🎺','🎻','🎲','♟️','🎯','🎳','🎮','🕹️','🎰','🎲','🧩','♠️','♥️','♦️','♣️'];
-const LUCIDE_ICONS = ['search', 'clock', 'globe', 'monitor', 'book-open', 'edit-3', 'sword', 'home', 'film', 'shield', 'bar-chart-3', 'container', 'lock', 'github', 'gitlab', 'package', 'code-2', 'message-circle', 'play', 'gamepad-2', 'twitter', 'book', 'settings', 'plus', 'x', 'link', 'star', 'zap', 'flag', 'compass', 'map-pin', 'server', 'database', 'external-link', 'mail', 'music', 'image', 'cpu', 'hard-drive', 'activity', 'wifi', 'radio', 'smartphone', 'tablet', 'laptop', 'watch', 'camera', 'video', 'headphones', 'volume-2', 'monitor-speaker', 'tv', 'layers', 'grid', 'list', 'columns', 'layout', 'panel-top', 'panel-bottom', 'panel-left', 'panel-right', 'square', 'circle', 'triangle', 'hexagon', 'diamond', 'box', 'archive', 'folder', 'file', 'file-text', 'clipboard', 'check-square', 'check', 'x-square', 'trash-2', 'refresh-cw', 'rotate-cw', 'rotate-ccw', 'download', 'upload', 'cloud', 'cloud-drizzle', 'cloud-snow', 'cloud-lightning', 'sun', 'moon', 'thermometer', 'wind', 'droplets', 'umbrella', 'user', 'users', 'user-plus', 'user-check', 'user-x', 'bell', 'bell-ring', 'bell-off', 'eye', 'eye-off', 'lock', 'unlock', 'key', 'fingerprint', 'shield-off', 'alert-triangle', 'alert-circle', 'alert-octagon', 'info', 'help-circle', 'thumbs-up', 'thumbs-down', 'smile', 'frown', 'meh', 'heart', 'calendar', 'calendar-check', 'calendar-x', 'alarm-clock', 'timer', 'hourglass', 'stopwatch', 'map', 'navigation', 'navigation-2', 'crosshair', 'target', 'locate', 'send', 'inbox', 'mail', 'mail-open', 'at-sign', 'phone', 'message-square', 'message-text', 'chat', 'printer', 'scanner', 'bluetooth', 'battery', 'battery-charging', 'power', 'plug', 'bookmark', 'tag', 'award', 'trending-up', 'trending-down', 'pie-chart', 'sliders', 'filter', 'tool', 'wrench', 'hammer', 'paintbrush', 'palette', 'pen-tool', 'eraser', 'scissors', 'copy', 'paste', 'undo', 'redo', 'bold', 'italic', 'underline', 'type', 'hash', 'percent', 'chevron-up', 'chevron-down', 'chevron-left', 'chevron-right', 'chevrons-up', 'chevrons-down', 'chevrons-left', 'chevrons-right', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'arrow-up-right', 'arrow-down-left', 'external-link', 'maximize', 'minimize', 'expand', 'shrink', 'fullscreen', 'dock', 'sidebar', 'menu', 'more-horizontal', 'more-vertical', 'chrome', 'codepen', 'figma', 'slack', 'trello', 'youtube'];
-
-// Detect if a string is a Lucide icon name (not URL, not emoji)
-// Emoji → Lucide name migration map for existing configs
-const EMOJI_TO_LUCIDE={
-'🔍':'search','🕐':'clock','🌐':'globe','🖥️':'monitor','📖':'book-open',
-'📝':'edit-3','📦':'package','🏠':'home','🎬':'film','🛡️':'shield',
-'📊':'bar-chart-3','🐳':'container','🔐':'lock','🐙':'github','🦊':'gitlab',
-'📚':'book','🐍':'code-2','💬':'message-circle','▶️':'play','🎮':'gamepad-2',
-'🐦':'x','🌍':'globe','⚛️':'atom','📘':'book','⚔️':'sword','🔗':'link',
-'⚙️':'settings','🌟':'star','🔥':'flame','💡':'lightbulb','🚀':'rocket',
-'⚡':'zap','🎯':'target','🧩':'puzzle','🎨':'palette','📡':'satellite',
-'🔧':'wrench','🗄️':'server','💾':'save','🖨️':'printer','📷':'camera',
-'🎥':'video','🎵':'music','🎙️':'mic','📻':'radio','📺':'tv','💻':'laptop',
-'⌨️':'keyboard','🖱️':'mouse','📱':'smartphone','💽':'disc','💿':'disc',
-'📀':'disc','🔌':'plug','🔋':'battery','💎':'diamond','🧊':'snowflake',
-'⛅':'cloud-sun','☀️':'sun','🌙':'moon','⭐':'star','✨':'sparkles',
-'💫':'star','🎆':'sparkles','🌈':'rainbow','☁️':'cloud','🌊':'waves',
-'🔥':'flame','🍃':'wind','🌱':'sprout','🌿':'sprout','☘️':'sprout',
-'🍀':'sprout','🏆':'trophy','🥇':'award','🥈':'award','🥉':'award',
-'🏅':'award','🎖️':'award','🏁':'flag','🚩':'flag','🎌':'flag',
-'📌':'pin','📍':'map-pin','🎪':'tent','🎭':'theater','🎬':'film',
-'🎤':'mic','🎧':'headphones','🎼':'music','🎹':'piano','🥁':'drum',
-'🎷':'saxophone','🎸':'guitar','🎺':'trumpet','🎻':'violin','🎲':'dice',
-'♟️':'chess','🎳':'bowling','🎮':'gamepad-2','🕹️':'joystick','🎰':'slot',
-'🧩':'puzzle','♠️':'spade','♥️':'heart','♦️':'diamond','♣️':'club',
-'✕':'x','🔄':'refresh-cw','🐍':'code-2'};
-function migrateConfigEmojis(cfg){
-  if(cfg.branding&&cfg.branding.icon&&EMOJI_TO_LUCIDE[cfg.branding.icon])cfg.branding.icon=EMOJI_TO_LUCIDE[cfg.branding.icon];if(cfg.branding&&cfg.branding.icon==='twitter')cfg.branding.icon='x';
-  if(cfg.cards)cfg.cards.forEach(function(card){
-    if(card.icon&&EMOJI_TO_LUCIDE[card.icon])card.icon=EMOJI_TO_LUCIDE[card.icon];if(card.icon==='twitter')card.icon='x';
-    if(card.sections)card.sections.forEach(function(sec){
-      if(sec.links)sec.links.forEach(function(link){
-        if(link.icon&&EMOJI_TO_LUCIDE[link.icon])link.icon=EMOJI_TO_LUCIDE[link.icon];if(link.icon==='twitter')link.icon='x';
-      });
-    });
-  });
-  return cfg;
-}
 
 let config = {}, clockInterval = null, weatherIntervals = [], apiPollTimers = [], statsTimer = null;
 let dragState = null, iconPickerCallback = null;
