@@ -250,6 +250,77 @@
       "height": 2
     },
     {
+      "id": "clock-card",
+      "title": "Time",
+      "icon": "Clock2",
+      "color": "#aaaaaa",
+      "width": 2,
+      "sections": [
+        {
+          "id": "clock-main",
+          "type": "clock",
+          "format24h": false,
+          "showDate": true,
+          "showCalendar": true
+        }
+      ],
+      "transparent": false,
+      "height": 1
+    },
+    {
+      "id": "card-67z1x4omqlmqd84",
+      "title": "Cat",
+      "icon": "Cat",
+      "color": "#888888",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sec-hg48983mqlmqd84",
+          "type": "digital-pet",
+          "label": "",
+          "petName": "Cat Named Dog",
+          "lastFed": 1782134860762,
+          "hunger": 100,
+          "happiness": 100,
+          "waste": 20,
+          "lastPetted": 1782134861148,
+          "lastCleaned": 1782132796321
+        }
+      ]
+    },
+    {
+      "id": "notes-card",
+      "title": "Notes",
+      "icon": "edit-3",
+      "color": "#bbbbbb",
+      "width": 1,
+      "sections": [
+        {
+          "id": "notes-main",
+          "type": "notes",
+          "label": "Reminders",
+          "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
+          "collapsed": false
+        },
+        {
+          "id": "sec-cqlskrkmqh400ej",
+          "type": "notes",
+          "label": "ToDo List",
+          "links": [
+            {
+              "label": "Example",
+              "url": "https://example.com",
+              "icon": "link"
+            }
+          ],
+          "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
+          "collapsed": false
+        }
+      ],
+      "height": 2
+    },
+    {
       "id": "daily-drivers",
       "title": "Favorites",
       "icon": "Star",
@@ -311,55 +382,6 @@
       ]
     },
     {
-      "id": "clock-card",
-      "title": "Time",
-      "icon": "Clock2",
-      "color": "#aaaaaa",
-      "width": 2,
-      "sections": [
-        {
-          "id": "clock-main",
-          "type": "clock",
-          "format24h": false,
-          "showDate": true,
-          "showCalendar": true
-        }
-      ],
-      "transparent": false,
-      "height": 1
-    },
-    {
-      "id": "notes-card",
-      "title": "Notes",
-      "icon": "edit-3",
-      "color": "#bbbbbb",
-      "width": 1,
-      "sections": [
-        {
-          "id": "notes-main",
-          "type": "notes",
-          "label": "Reminders",
-          "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
-          "collapsed": false
-        },
-        {
-          "id": "sec-cqlskrkmqh400ej",
-          "type": "notes",
-          "label": "ToDo List",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
-          "collapsed": false
-        }
-      ],
-      "height": 2
-    },
-    {
       "id": "card-e4l1uy4mqgvyqyb",
       "title": "Quotes",
       "icon": "ScrollText",
@@ -388,7 +410,7 @@
               "a": "Bob Loblaw"
             }
           ],
-          "_qi": 0,
+          "_qi": 1,
           "collapsed": false
         },
         {
@@ -409,28 +431,6 @@
         }
       ],
       "transparent": false
-    },
-    {
-      "id": "card-67z1x4omqlmqd84",
-      "title": "Cat",
-      "icon": "Cat",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-hg48983mqlmqd84",
-          "type": "digital-pet",
-          "label": "",
-          "petName": "Cat Named Dog",
-          "lastFed": 1782134860762,
-          "hunger": 100,
-          "happiness": 100,
-          "waste": 20,
-          "lastPetted": 1782134861148,
-          "lastCleaned": 1782132796321
-        }
-      ]
     },
     {
       "id": "card-isayxtbmqlrb4n9",
@@ -646,6 +646,77 @@
           "height": 2
         },
         {
+          "id": "clock-card",
+          "title": "Time",
+          "icon": "Clock2",
+          "color": "#aaaaaa",
+          "width": 2,
+          "sections": [
+            {
+              "id": "clock-main",
+              "type": "clock",
+              "format24h": false,
+              "showDate": true,
+              "showCalendar": true
+            }
+          ],
+          "transparent": false,
+          "height": 1
+        },
+        {
+          "id": "card-67z1x4omqlmqd84",
+          "title": "Cat",
+          "icon": "Cat",
+          "color": "#888888",
+          "width": 1,
+          "height": 1,
+          "sections": [
+            {
+              "id": "sec-hg48983mqlmqd84",
+              "type": "digital-pet",
+              "label": "",
+              "petName": "Cat Named Dog",
+              "lastFed": 1782134860762,
+              "hunger": 100,
+              "happiness": 100,
+              "waste": 20,
+              "lastPetted": 1782134861148,
+              "lastCleaned": 1782132796321
+            }
+          ]
+        },
+        {
+          "id": "notes-card",
+          "title": "Notes",
+          "icon": "edit-3",
+          "color": "#bbbbbb",
+          "width": 1,
+          "sections": [
+            {
+              "id": "notes-main",
+              "type": "notes",
+              "label": "Reminders",
+              "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
+              "collapsed": false
+            },
+            {
+              "id": "sec-cqlskrkmqh400ej",
+              "type": "notes",
+              "label": "ToDo List",
+              "links": [
+                {
+                  "label": "Example",
+                  "url": "https://example.com",
+                  "icon": "link"
+                }
+              ],
+              "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
+              "collapsed": false
+            }
+          ],
+          "height": 2
+        },
+        {
           "id": "daily-drivers",
           "title": "Favorites",
           "icon": "Star",
@@ -707,55 +778,6 @@
           ]
         },
         {
-          "id": "clock-card",
-          "title": "Time",
-          "icon": "Clock2",
-          "color": "#aaaaaa",
-          "width": 2,
-          "sections": [
-            {
-              "id": "clock-main",
-              "type": "clock",
-              "format24h": false,
-              "showDate": true,
-              "showCalendar": true
-            }
-          ],
-          "transparent": false,
-          "height": 1
-        },
-        {
-          "id": "notes-card",
-          "title": "Notes",
-          "icon": "edit-3",
-          "color": "#bbbbbb",
-          "width": 1,
-          "sections": [
-            {
-              "id": "notes-main",
-              "type": "notes",
-              "label": "Reminders",
-              "content": "\u2022 WarTab is running!\n\u2022 Click \u270e on any card to edit it inline.\n\u2022 Drag \u283f to reorder cards.\n\n\n",
-              "collapsed": false
-            },
-            {
-              "id": "sec-cqlskrkmqh400ej",
-              "type": "notes",
-              "label": "ToDo List",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "content": "\u2022 Oops I did it again.\n\u2022 I played with your heart.\n\n\n",
-              "collapsed": false
-            }
-          ],
-          "height": 2
-        },
-        {
           "id": "card-e4l1uy4mqgvyqyb",
           "title": "Quotes",
           "icon": "ScrollText",
@@ -784,7 +806,7 @@
                   "a": "Bob Loblaw"
                 }
               ],
-              "_qi": 0,
+              "_qi": 1,
               "collapsed": false
             },
             {
@@ -805,28 +827,6 @@
             }
           ],
           "transparent": false
-        },
-        {
-          "id": "card-67z1x4omqlmqd84",
-          "title": "Cat",
-          "icon": "Cat",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-hg48983mqlmqd84",
-              "type": "digital-pet",
-              "label": "",
-              "petName": "Cat Named Dog",
-              "lastFed": 1782134860762,
-              "hunger": 100,
-              "happiness": 100,
-              "waste": 20,
-              "lastPetted": 1782134861148,
-              "lastCleaned": 1782132796321
-            }
-          ]
         },
         {
           "id": "card-isayxtbmqlrb4n9",
@@ -1338,7 +1338,7 @@
                   "a": "God"
                 }
               ],
-              "_qi": 1
+              "_qi": 2
             }
           ]
         },
@@ -1646,8 +1646,8 @@
   },
   "pageOrder": [
     "page-fjpy1g4mqguw1x3",
-    "page-19gesa9mqh2t3u2",
-    "page-tf789wmmqiw5bln"
+    "page-tf789wmmqiw5bln",
+    "page-19gesa9mqh2t3u2"
   ],
   "currentPage": "page-fjpy1g4mqguw1x3",
   "_version": "b1d252d-dirty"

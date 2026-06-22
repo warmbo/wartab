@@ -258,6 +258,7 @@ function openPageEditPanel(pageId) {
   // Open panel
   $('#edit-panel-overlay').classList.add('open');
   $('#edit-panel').classList.add('open');
+  renderIcons();
 }
 
 /* ── Page Management Panel (overview of all pages) ── */
@@ -332,7 +333,6 @@ function openPageManagementPanel() {
 
     card.appendChild(hdr);
     body.appendChild(card);
-    renderIcons();
 
     // Drag-to-reorder via pointer events
     dh.addEventListener('pointerdown', function(e) {
@@ -347,6 +347,9 @@ function openPageManagementPanel() {
       document.addEventListener('pointercancel', onPageDragEnd);
     });
   });
+
+  // Render icons for all page cards
+  renderIcons();
 
   // Footer with Add + Done
   const foot = document.createElement('div');
@@ -444,6 +447,14 @@ function onPageDragEnd(e) {
       config.pageOrder = newOrder;
       saveConfig();
       renderPageNav();
+      // Reorder DOM to match new page order
+      const cards = body.querySelectorAll('.cp-config-card');
+      const cardMap = {};
+      cards.forEach(c => { cardMap[c.dataset.pageId] = c; });
+      cards.forEach(c => c.remove());
+      newOrder.forEach(id => {
+        if (cardMap[id]) body.insertBefore(cardMap[id], body.lastChild);
+      });
     }
   }
   _pageDrag = null;
@@ -1347,7 +1358,7 @@ function buildStatItems(data, items){
 }
 function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const parts=buildStatItems(data,sb.items||[]);parts.forEach(function(el,i){if(i>0){const s=document.createElement('span');s.className='stat-sep';s.textContent='\u00B7';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';}
 // Build a status bar stat element (icon + label + optional progress bar + value)
-function stItem(icon,label,value,pct){const div=document.createElement('span');div.className='stat-item';div.innerHTML=`<span class="stat-icon">${icon}</span>`;if(label){const l=document.createElement('span');l.className='stat-label';l.textContent=label;div.appendChild(l);}if(pct!==null&&pct!==undefined){const b=document.createElement('span');b.className='stat-bar';const f=document.createElement('span');f.className='stat-bar-fill'+(pct>80?' high':pct>60?' mid':'');f.style.width=pct+'%';b.appendChild(f);div.appendChild(b);}const v=document.createElement('span');v.className='stat-value';v.textContent=value;div.appendChild(v);return div;}
+function stItem(icon,label,value,pct){const div=document.createElement('span');div.className='stat-item';const ic=document.createElement('span');ic.className='stat-icon';ic.textContent=icon;div.appendChild(ic);if(label){const l=document.createElement('span');l.className='stat-label';l.textContent=label;div.appendChild(l);}if(pct!==null&&pct!==undefined){const b=document.createElement('span');b.className='stat-bar';const f=document.createElement('span');f.className='stat-bar-fill'+(pct>80?' high':pct>60?' mid':'');f.style.width=pct+'%';b.appendChild(f);div.appendChild(b);}const v=document.createElement('span');v.className='stat-value';v.textContent=value;div.appendChild(v);return div;}
 
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
 // Full page re-render: destroys and rebuilds grid from config
@@ -1709,9 +1720,9 @@ function fetchWeather(el){const k=el.dataset.apiKey,z=el.dataset.zip,c=el.datase
 function wIcon(id){if(id<300)return'cloud-lightning';if(id<400)return'cloud-drizzle';if(id<600)return'cloud-rain';if(id<700)return'cloud-snow';if(id<800)return'cloud-fog';if(id===800)return'sun';return'cloud';}
 function renderApiWidget(el){renderApiFetch(el);}
 function renderApiFetch(el){
-  const u=el.dataset.url,label=escHtml(el.dataset.label||'');
+  const u=el.dataset.url;
   if(!u){el.innerHTML='<div class="api-row"><span class="api-label">No API URL set</span></div>';return;}
-  el.innerHTML='<div class="api-row"><span class="api-label">'+label+'</span><span class="api-value">Loading...</span></div><div class="api-ts">fetching...</div>';
+  el.innerHTML='<div class="api-row"><span class="api-label">'+escHtml(el.dataset.label||'')+'</span><span class="api-value">Loading...</span></div><div class="api-ts">fetching...</div>';
   const ts=Date.now();
   fetch(u).then(function(r){if(!r.ok)throw Error(r.status+' '+r.statusText);return r.json();}).then(function(d){
     var fields=[];
@@ -1735,7 +1746,7 @@ function renderApiFetch(el){
     if(iv>0){apiPollTimers.push(setTimeout(function(){renderApiFetch(el);},iv));}
   }).catch(function(e){
     var lo=el.dataset.lastOk;
-    el.innerHTML='<div class="api-row"><span class="api-label">'+label+'</span><span class="api-value api-error">'+escHtml(e.message)+'</span></div><div class="api-ts" data-ts="'+(lo||ts)+'">'+(lo?'last ok: '+timeAgo(parseInt(lo)):'')+'</div>';
+    el.innerHTML='<div class="api-row"><span class="api-label">'+escHtml(el.dataset.label||'')+'</span><span class="api-value api-error">'+escHtml(e.message)+'</span></div><div class="api-ts" data-ts="'+(lo||ts)+'">'+(lo?'last ok: '+timeAgo(parseInt(lo)):'')+'</div>';
     var iv=parseInt(el.dataset.refresh)*1000;
     if(iv>0){apiPollTimers.push(setTimeout(function(){renderApiFetch(el);},iv));}
   });
@@ -2158,7 +2169,7 @@ function addNewCard(){
     {type:'ascii-anim', label:'ASCII Animation', icon:'monitor'},
     {type:'media', label:'Media Card', icon:'film'},
     {type:'proxmox', label:'Proxmox', icon:'server'},
-    {type:'git', label:'Git Repo', icon:'github'},
+    {type:'git', label:'Git Repo', icon:'code-2'},
   ];
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
