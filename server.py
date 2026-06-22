@@ -470,7 +470,21 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
                     files.append({"name":f.name,"url":f"/uploads/icons/{f.name}","size":f.stat().st_size})
             return self._json(files)
         path = self.translate_path(self.path)
-        if not Path(path).is_file() or self.path=="/": self.path="/index.html"
+        if not Path(path).is_file() or self.path=="/":
+            self.path="/index.html"
+            path = HERE / "index.html"
+            if path.exists():
+                html = path.read_text()
+                # Inject git version as cache-busting param on all script/link tags
+                if GIT_VERSION:
+                    html = html.replace('?v=BUILD', '?v=' + GIT_VERSION)
+                self.send_response(200)
+                self._cors()
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", str(len(html.encode())))
+                self.end_headers()
+                self.wfile.write(html.encode())
+                return
         return super().do_GET()
     def do_POST(self):
         if self.path=="/api/upload":

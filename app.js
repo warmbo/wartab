@@ -17,13 +17,6 @@
     13. Init               — page load sequence
    ═══════════════════════════════════════════ */
 
-let WARTAB_VERSION = '';
-
-/* ══════ Card Type Modules ══════
-   Each module defines { render, editor, defaults } for a section type.
-   Add new types here without touching core rendering. */
-/* ── LAN Scan — terminal-style ARP table viewer ── */
-
 function fetchLanScan(el){
   const body=el.querySelector('.lan-scan-body');
   if(!body)return;
@@ -2311,9 +2304,10 @@ async function init() {
     if(pick){config.theme.bgType='image';config.theme.bgValue=pick.url;saveConfig();applyTheme();}
   }
   renderAll(); renderPageNav(); initStatusBar();
-  // Footer — git version from config, or "dev" if not available
-  WARTAB_VERSION = config._version || 'dev';
-  $('#footer-text').textContent='WarTab '+WARTAB_VERSION+'  [?] shortcuts';
+  // Build version from config metadata (set by server as git hash)
+  WARTAB_BUILD = config._version || WARTAB_VERSION;
+  // Footer — build version from config
+  $('#footer-text').textContent='WarTab '+WARTAB_BUILD+'  [?] shortcuts';
   loadIconRepo();
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});

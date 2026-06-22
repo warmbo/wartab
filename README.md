@@ -230,3 +230,43 @@ Single-page app — no framework, no build step, no node_modules. Just open and 
   all togglable from the UI. Dark/light modes with dynamic opacity blending.
 - **Drag & Drop**: Pointer Events API, simGrid CSS Grid auto-placement simulation,
   FLIP animations, column-snap logic with grab-offset tracking.
+
+---
+
+## Development Workflow
+
+### Dual-Remote Push
+
+Every commit must be pushed to **both** remotes:
+
+```bash
+git push github <branch>
+git push origin <branch>   # Forgejo
+```
+
+The alias `origin` points to the self-hosted Forgejo at `10.0.0.253:3000/cody/wartab`.
+The alias `github` points to `github.com/warmbo/wartab`.
+
+### Versioning & Cache Busting
+
+All `<script src>` and `<link rel="stylesheet">` tags in `index.html` use `?v=BUILD` as a
+placeholder. The server (`server.py`) automatically replaces `BUILD` with the current
+`git describe --always --tags --dirty` output at serve time.
+
+This means:
+- Every deploy automatically gets a unique cache-busting version
+- No manual version string updates needed
+- Browsers always fetch fresh assets after a server restart
+- The footer displays the same git hash as the build version
+
+The server reads `GIT_VERSION` at startup from `git describe`. If git is unavailable,
+the fallback is `'dev'`.
+
+### Adding a Module
+
+1. Create `modules/<type>.js` with a `registerModule('type', { defaults, render, editor })` call
+2. Add the type to both picker lists in `app.js`:
+   - Section editor type selector (around line 760)
+   - New card modal (around line 2140)
+3. Add a `<script src="modules/<type>.js?v=BUILD" defer>` to `index.html`
+4. Commit and dual-push to both remotes
