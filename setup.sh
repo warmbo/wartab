@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
-# WarTab — Debian Install Script  v0.5.0
+# WarTab — Debian Install Script  v0.6.0
 # ═══════════════════════════════════════════════════════════════
 # Usage:
 #   curl -sL https://raw.githubusercontent.com/warmbo/wartab/main/setup.sh | bash
@@ -19,7 +19,7 @@
 # ═══════════════════════════════════════════════════════════════
 set -euo pipefail
 
-VERSION="0.5.0"
+VERSION="0.6.0"
 
 # ── Defaults ──
 PORT="${PORT:-8081}"
@@ -47,206 +47,296 @@ while [[ $# -gt 0 ]]; do
     --no-mdns)    NO_MDNS=true; shift ;;
     --skip-deps)  SKIP_DEPS=true; shift ;;
     --uninstall)  UNINSTALL=true; shift ;;
-    --help|-h)    sed -n '3,17p' "$0"; exit 0 ;;
+    --help|-h)    sed -n '5,21p' "$0"; exit 0 ;;
     *)            echo "Unknown: $1 (use --help)"; exit 1 ;;
   esac
 done
 
-# ── Colors ──
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
-BOLD='\033[1m'; DIM='\033[2m'
-info()  { echo -e "  ${BLUE}•${NC} $1"; }
-ok()    { echo -e "  ${GREEN}✓${NC} $1"; }
-warn()  { echo -e "  ${YELLOW}⚠${NC} $1"; }
-err()   { echo -e "  ${RED}✗${NC} $1"; exit 1; }
-fail()  { echo -e "  ${RED}✗${NC} $1"; return 1; }
+# ═══════════════════════════════════════════════════════════════
+# TUI Helpers
+# ═══════════════════════════════════════════════════════════════
 
-# ── Uninstall mode ──
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
+BOLD='\033[1m'; DIM='\033[2m'; CLR='\033[2K\r'
+UP='\033[1A'
+
+TOTAL_STEPS=8
+CURRENT_STEP=0
+
+draw_progress() {
+  local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+  local filled=$((pct * 20 / 100))
+  local bar=""
+  for ((i=0; i<filled; i++)); do bar+="█"; done
+  for ((i=filled; i<20; i++)); do bar+="░"; done
+  printf "${CLR}${BLUE}  Progress: [${bar}${BLUE}] ${CYAN}${CURRENT_STEP}/${TOTAL_STEPS}${NC}"
+}
+
+step_header() {
+  CURRENT_STEP=$((CURRENT_STEP + 1))
+  local desc="$1"
+  draw_progress
+  echo ""
+  echo ""
+  echo -e "  ${BOLD}Step ${CURRENT_STEP}.${NC} ${desc}"
+  echo ""
+}
+
+# Run a command with an animated spinner while suppressed.
+# Usage: spin "message" command arg1 arg2 ...
+spin() {
+  local msg="$1"
+  shift
+  # Suppress all output, run in background
+  "$@" >/dev/null 2>&1 &
+  local pid=$!
+  local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+  local i=0
+  while kill -0 $pid 2>/dev/null; do
+    local c="${chars:$i:1}"
+    printf "\r  ${CYAN}${c}${NC} ${msg}..."
+    i=$(( (i + 1) % 10 ))
+    sleep 0.08
+  done
+  wait $pid 2>/dev/null || true
+  local rc=$?
+  if [ "$rc" -eq 0 ]; then
+    printf "\r  ${GREEN}✓${NC} ${msg}                    \n"
+  else
+    printf "\r  ${RED}✗${NC} ${msg}                    \n"
+  fi
+  return "$rc"
+}
+
+# Run a command showing stdout in real-time (for short commands)
+run() {
+  local msg="$1"
+  shift
+  printf "\r  ${CYAN}⠿${NC} ${msg}..."
+  if "$@" 2>&1; then
+    printf "\r  ${GREEN}✓${NC} ${msg}                    \n"
+  else
+    local rc=$?
+    printf "\r  ${RED}✗${NC} ${msg}                    \n"
+    return "$rc"
+  fi
+}
+
+ok_msg()   { echo -e "  ${GREEN}✓${NC} $1"; }
+warn_msg() { echo -e "  ${YELLOW}⚠${NC} $1"; }
+fail_msg() { echo -e "  ${RED}✗${NC} $1"; exit 1; }
+info_msg() { echo -e "  ${BLUE}ℹ${NC} $1"; }
+
+# ═══════════════════════════════════════════════════════════════
+# Uninstall mode
+# ═══════════════════════════════════════════════════════════════
+
 if [ "$UNINSTALL" = true ]; then
   echo ""
-  echo -e "  ${CYAN}WarTab — Uninstall${NC}"
+  echo -e "  ${CYAN}╔══════════════════════════════════════╗${NC}"
+  echo -e "  ${CYAN}║  WarTab — Uninstall                  ║${NC}"
+  echo -e "  ${CYAN}╚══════════════════════════════════════╝${NC}"
   echo ""
   if systemctl --user is-active --quiet wartab.service 2>/dev/null; then
     systemctl --user stop wartab.service
     systemctl --user disable wartab.service
-    ok "Service stopped and disabled"
+    ok_msg "Service stopped and disabled"
   fi
   rm -f "${HOME}/.config/systemd/user/wartab.service"
   systemctl --user daemon-reload
   if [ -d "$INSTALL_DIR" ]; then
     rm -rf "$INSTALL_DIR"
-    ok "Files removed from ${INSTALL_DIR}"
+    ok_msg "Files removed from ${INSTALL_DIR}"
   fi
   echo ""
-  echo -e "  ${GREEN}WarTab has been uninstalled.${NC}"
+  echo -e "  ${GREEN}✓ WarTab uninstalled.${NC}"
   exit 0
 fi
 
-# ── Header ──
-SEP="${CYAN}───────────────────────────────────────────${NC}"
+# ═══════════════════════════════════════════════════════════════
+# Header
+# ═══════════════════════════════════════════════════════════════
+
 echo ""
-echo -e "${SEP}"
-echo -e "${CYAN}  WarTab v${VERSION} — Installer${NC}"
-echo -e "${SEP}"
+echo -e "  ${CYAN}╔══════════════════════════════════════╗${NC}"
+echo -e "  ${CYAN}║  ${BOLD}WarTab v${VERSION} — Setup${NC}${CYAN}              ║${NC}"
+echo -e "  ${CYAN}╚══════════════════════════════════════╝${NC}"
+echo ""
+draw_progress
 echo ""
 
-# ── Install system dependencies (clean Debian) ──
+# ═══════════════════════════════════════════════════════════════
+# Step 1 — Install system dependencies
+# ═══════════════════════════════════════════════════════════════
+
+step_header "Installing system dependencies"
+
 install_deps() {
-  [ "$SKIP_DEPS" = true ] && { info "Skipping apt install (--skip-deps)"; return 0; }
+  [ "$SKIP_DEPS" = true ] && { ok_msg "Skipped (--skip-deps)"; return 0; }
 
   local need=""
   command -v python3 &>/dev/null || need="$need python3"
   command -v git &>/dev/null    || need="$need git"
   python3 -c "from PIL import Image" &>/dev/null || need="$need python3-pil"
   command -v avahi-publish-service &>/dev/null || command -v avahi-daemon &>/dev/null || need="$need avahi-daemon avahi-utils"
-  # systemctl --user requires libpam-systemd on clean Debian
   systemctl --user &>/dev/null || need="$need libpam-systemd"
 
   if [ -z "$need" ]; then
-    ok "All system dependencies already present"
+    ok_msg "All dependencies already present"
     return 0
   fi
 
-  info "Installing:${need} ..."
-  sudo apt-get update -qq || fail "apt update failed — check network or run --skip-deps"
-  # shellcheck disable=SC2086  # intentional word-splitting
-  sudo apt-get install -y -qq $need || fail "apt install failed — run with --skip-deps and install manually"
-  ok "System dependencies installed"
+  info_msg "Packages to install:${need}"
+  spin "Updating apt package lists" sudo apt-get update -qq || fail_msg "apt update failed (check network)"
 
-  # After installing libpam-systemd, bootstrap the user systemd session.
-  # On a clean install the user won't have XDG_RUNTIME_DIR until they log
-  # out and back in. We can force it with loginctl enable-linger:
+  # shellcheck disable=SC2086
+  spin "Installing:${need}" sudo apt-get install -y -qq $need || fail_msg "apt install failed"
+
+  # Bootstrap user systemd session if needed
   if ! systemctl --user &>/dev/null; then
-    info "Bootstrapping user systemd session..."
-    if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
-      # Create runtime dir manually and start the user manager
-      sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null || true
-      sleep 1
-      # Check if linger created the directory
-      local uid
-      uid=$(id -u "${INSTALL_USER}" 2>/dev/null || echo "1000")
-      if [ ! -d "/run/user/${uid}" ]; then
-        # Last resort — dbus-launch to bootstrap
-        export XDG_RUNTIME_DIR="/run/user/${uid}"
-        sudo mkdir -p "${XDG_RUNTIME_DIR}" 2>/dev/null || true
-        sudo chown "${INSTALL_USER}" "${XDG_RUNTIME_DIR}" 2>/dev/null || true
-        chmod 700 "${XDG_RUNTIME_DIR}" 2>/dev/null || true
-        systemctl --user daemon-reload 2>/dev/null || true
-      fi
-    fi
-  fi
-}
-
-# ── Preflight checks ──
-preflight() {
-  local fatal=0
-
-  command -v python3 &>/dev/null \
-    && ok "Python: $(python3 --version 2>&1)" \
-    || { warn "python3 not found"; fatal=1; }
-
-  command -v git &>/dev/null \
-    && ok "Git: $(git --version 2>&1)" \
-    || { warn "git not found"; fatal=1; }
-
-  # Systemd user mode: check and attempt recovery
-  if systemctl --user &>/dev/null; then
-    ok "systemd (user mode) available"
-  else
-    warn "systemd user mode not available"
-    info "  Attempting to start user session..."
+    info_msg "Starting systemd user session..."
     sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null || true
     sleep 1
+    local uid
+    uid=$(id -u "${INSTALL_USER}" 2>/dev/null || echo "1000")
+    if [ ! -d "/run/user/${uid}" ]; then
+      XDG_RUNTIME_DIR="/run/user/${uid}"
+      sudo mkdir -p "${XDG_RUNTIME_DIR}" 2>/dev/null || true
+      sudo chown "${INSTALL_USER}" "${XDG_RUNTIME_DIR}" 2>/dev/null || true
+      chmod 700 "${XDG_RUNTIME_DIR}" 2>/dev/null || true
+    fi
     if systemctl --user &>/dev/null; then
-      ok "systemd user session started via linger"
+      ok_msg "Systemd user session ready"
     else
-      warn "Could not start systemd user session automatically"
-      warn "  After install, run these commands:"
-      warn "    sudo loginctl enable-linger ${INSTALL_USER}"
-      warn "    loginctl show-user ${INSTALL_USER}  # verify Linger=yes"
-      warn "    exec su - ${INSTALL_USER}            # new login to create session"
+      warn_msg "Could not start systemd user session"
+      warn_msg "  After install: sudo loginctl enable-linger ${INSTALL_USER}"
     fi
   fi
-
-  ss -tlnp 2>/dev/null | grep -q ":${PORT} " \
-    && warn "Port ${PORT} is already in use — pick another with --port" \
-    || ok "Port ${PORT} is available"
-
-  python3 -c "from PIL import Image" &>/dev/null \
-    && HAS_PIL=true \
-    || HAS_PIL=false
-
-  [ "$fatal" -eq 1 ] && err "Install python3 and git, then re-run."
-  return 0
 }
 
 install_deps
-preflight
 
-# ── Clone / Update ──
-info "Setting up WarTab in ${INSTALL_DIR}..."
+# ═══════════════════════════════════════════════════════════════
+# Step 2 — Preflight checks
+# ═══════════════════════════════════════════════════════════════
+
+step_header "Running preflight checks"
+
+preflight_ok=true
+
+command -v python3 &>/dev/null \
+  && ok_msg "Python: $(python3 --version 2>&1)" \
+  || { warn_msg "python3 not found"; preflight_ok=false; }
+
+command -v git &>/dev/null \
+  && ok_msg "Git: $(git --version 2>&1)" \
+  || { warn_msg "git not found"; preflight_ok=false; }
+
+if systemctl --user &>/dev/null; then
+  ok_msg "systemd (user mode) available"
+else
+  warn_msg "systemd user mode not available — service won't auto-start"
+fi
+
+ss -tlnp 2>/dev/null | grep -q ":${PORT} " \
+  && warn_msg "Port ${PORT} in use — pick another with --port" \
+  || ok_msg "Port ${PORT} is available"
+
+python3 -c "from PIL import Image" &>/dev/null \
+  && HAS_PIL=true \
+  || HAS_PIL=false
+
+[ "$preflight_ok" = false ] && fail_msg "Install python3 and git, then re-run."
+
+# ═══════════════════════════════════════════════════════════════
+# Step 3 — Clone repository
+# ═══════════════════════════════════════════════════════════════
+
+step_header "Cloning repository"
 
 if [ -d "${INSTALL_DIR}/.git" ]; then
-  info "Updating existing installation..."
-  cd "${INSTALL_DIR}"
-  git pull --ff-only || warn "git pull failed — continuing with existing code"
-  ok "Repository updated"
+  spin "Updating existing repository" bash -c "cd '${INSTALL_DIR}' && git pull --ff-only"
+  ok_msg "Repository updated"
 elif [ -d "${INSTALL_DIR}" ]; then
-  err "${INSTALL_DIR} exists but is not a git repo. Remove it: rm -rf ${INSTALL_DIR}"
+  fail_msg "${INSTALL_DIR} exists but is not a git repo. Remove it: rm -rf ${INSTALL_DIR}"
 else
   sudo mkdir -p "$(dirname "${INSTALL_DIR}")" 2>/dev/null || true
-  git clone "${REPO_URL}" "${INSTALL_DIR}" || err "git clone failed — check network and URL"
+  spin "Cloning from ${REPO_URL}" git clone "${REPO_URL}" "${INSTALL_DIR}"
   sudo chown -R "${INSTALL_USER}:${INSTALL_USER}" "${INSTALL_DIR}" 2>/dev/null || true
-  ok "Repository cloned from ${REPO_URL}"
+  ok_msg "Repository cloned"
 fi
 
 cd "${INSTALL_DIR}"
 
-# ── Data directories ──
-mkdir -p notes uploads snapshots
-ok "Data directories created"
+# ═══════════════════════════════════════════════════════════════
+# Step 4 — Create data directories and initial config
+# ═══════════════════════════════════════════════════════════════
 
-# ── First-run config ──
-if [ ! -f "config.json" ]; then
-  if [ -f "config.example.json" ]; then
-    cp config.example.json config.json
-    ok "Default config created from config.example.json"
-  else
-    warn "config.example.json not found — server will use built-in defaults"
+step_header "Creating data directories"
+
+run "Creating notes/ uploads/ snapshots/" mkdir -p notes uploads snapshots
+
+run "Creating initial config" bash -c "
+  if [ ! -f config.json ]; then
+    if [ -f config.example.json ]; then
+      cp config.example.json config.json
+    else
+      echo 'no example' >/dev/null
+    fi
   fi
+"
+
+if [ ! -f config.json ] && [ -f config.example.json ]; then
+  cp config.example.json config.json
+  ok_msg "Default config created"
+elif [ -f config.json ]; then
+  ok_msg "Config file already exists"
 else
-  ok "Config file already exists"
+  warn_msg "No config.example.json — server will use built-in defaults"
 fi
 
-# ── Download service icons (skippable, cosmetic) ──
+# ═══════════════════════════════════════════════════════════════
+# Step 5 — Download service icons
+# ═══════════════════════════════════════════════════════════════
+
+step_header "Downloading service icons"
+
 if [ ! -f "icons/selfhst-index.json" ]; then
-  info "Downloading service icons..."
-  if python3 download_icons.sh; then
-    ok "Service icons downloaded"
+  if spin "Downloading from selfh.st CDN" python3 download_icons.sh; then
+    ok_msg "Service icons downloaded (icons/)"
   else
-    warn "Icon download failed — the Services tab will be unavailable until re-run"
-    warn "  Run later: python3 ${INSTALL_DIR}/download_icons.sh"
+    warn_msg "Icon download failed — run later: python3 ${INSTALL_DIR}/download_icons.sh"
   fi
 else
-  ok "Service icons already present"
+  ok_msg "Service icons already present"
 fi
 
-# ── Install Pillow if still missing ──
+# ═══════════════════════════════════════════════════════════════
+# Step 6 — Install Pillow (image resize)
+# ═══════════════════════════════════════════════════════════════
+
+step_header "Installing Pillow (image compression)"
+
 if [ "${HAS_PIL:-false}" = false ]; then
-  if sudo apt-get install -y python3-pil 2>/dev/null; then
-    ok "Pillow installed (python3-pil)"
+  if spin "Installing python3-pil" sudo apt-get install -y python3-pil; then
+    ok_msg "Pillow installed"
   else
-    warn "Pillow not installed — image uploads won't be resized"
-    warn "  Install: sudo apt install python3-pil"
+    warn_msg "Pillow not installed — image uploads won't be resized"
+    warn_msg "  Install: sudo apt install python3-pil"
   fi
+else
+  ok_msg "Pillow already available"
 fi
 
-# ── mDNS flag ──
+# ═══════════════════════════════════════════════════════════════
+# Step 7 — Configure systemd service + mDNS + linger
+# ═══════════════════════════════════════════════════════════════
+
+step_header "Configuring systemd service"
+
 MDNS_FLAG=""
 [ "$NO_MDNS" = false ] && MDNS_FLAG=" --mdns"
 
-# ── systemd user service ──
-info "Configuring systemd service..."
 SERVICE_DIR="${HOME}/.config/systemd/user"
 mkdir -p "${SERVICE_DIR}"
 PYTHON_BIN="$(command -v python3)"
@@ -272,20 +362,31 @@ Environment=PYTHONUNBUFFERED=1
 WantedBy=default.target
 SERVICE
 
-systemctl --user daemon-reload
-systemctl --user enable wartab.service || warn "systemd enable failed"
-systemctl --user restart wartab.service || warn "systemd restart failed — check journalctl --user -u wartab"
-ok "Systemd service installed and started"
+run "Installing systemd unit" systemctl --user daemon-reload
+systemctl --user enable wartab.service 2>/dev/null && ok_msg "Service enabled" || warn_msg "systemd enable failed"
+spin "Starting service" systemctl --user restart wartab.service
 
-# ── Linger (keep running after logout) ──
-if ! loginctl show-user "${INSTALL_USER}" 2>/dev/null | grep -q "Linger=yes"; then
-  sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null \
-    && ok "Linger enabled — service stays running after logout" \
-    || warn "Linger not enabled — service stops when you log out"
+if [ "$MDNS_FLAG" != "" ]; then
+  ok_msg "mDNS advertisement enabled (avahi)"
 fi
 
-# ── Health check ──
-info "Waiting for server to respond..."
+# Linger
+if ! loginctl show-user "${INSTALL_USER}" 2>/dev/null | grep -q "Linger=yes"; then
+  if sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null; then
+    ok_msg "Linger enabled — service stays running after logout"
+  else
+    warn_msg "Linger not enabled — service stops when you log out"
+  fi
+else
+  ok_msg "Linger already enabled"
+fi
+
+# ═══════════════════════════════════════════════════════════════
+# Step 8 — Health check
+# ═══════════════════════════════════════════════════════════════
+
+step_header "Running health check"
+
 SERVER_OK=false
 for i in 1 2 3 4 5; do
   sleep 1
@@ -294,39 +395,49 @@ for i in 1 2 3 4 5; do
     SERVER_OK=true
     break
   fi
+  if [ "$i" -eq 3 ]; then
+    draw_progress
+    echo ""
+    warn_msg "Server still starting... (attempt ${i}/5)"
+  fi
 done
 
 if [ "$SERVER_OK" = true ]; then
-  ok "Server is live (HTTP 200)"
+  ok_msg "Server is live (HTTP 200)"
   # Quick API smoke test
   CONFIG_OK=$(curl -s "http://localhost:${PORT}/api/config" | python3 -c "
 import json,sys
 try:
     d = json.load(sys.stdin)
     v = d.get('version', '') or d.get('_version', '')
-    print('ok' if v else 'empty')
+    print('ok')
 except Exception:
     print('fail')
 " 2>/dev/null || echo 'fail')
-  [ "$CONFIG_OK" = "ok" ] && ok "Config API responding" || warn "Config API check returned unexpected data"
+  [ "$CONFIG_OK" = "ok" ] && ok_msg "Config API responding" || warn_msg "Config API check returned unexpected data"
 else
-  warn "Server did not respond within 5 seconds"
-  warn "  Check logs: journalctl --user -u wartab -n 30 --no-pager"
-  err "Setup incomplete — fix the issue above and re-run"
+  draw_progress
+  echo ""
+  warn_msg "Server did not respond within 5 seconds"
+  warn_msg "  Check logs: journalctl --user -u wartab -n 30 --no-pager"
+  fail_msg "Setup incomplete — fix the issue above and re-run"
 fi
 
 # ── Firewall hint ──
 if command -v ufw &>/dev/null && ! ufw status 2>/dev/null | grep -q "${PORT}/tcp"; then
-  warn "UFW may block external access"
-  warn "  sudo ufw allow ${PORT}/tcp"
+  warn_msg "UFW may block external access"
+  warn_msg "  sudo ufw allow ${PORT}/tcp"
 fi
 
-# ── Derive hostname for final output ──
+# ═══════════════════════════════════════════════════════════════
+# Done
+# ═══════════════════════════════════════════════════════════════
+
 HOSTNAME_SHORT=$(hostname -s 2>/dev/null || echo "localhost")
 HOSTNAME_FQDN=$(hostname -f 2>/dev/null || echo "$HOSTNAME_SHORT.local")
 
 echo ""
-echo -e "${GREEN}  ┌──────────────────────────────────────────┐${NC}"
+echo -e "${CLR}${GREEN}  ┌──────────────────────────────────────────┐${NC}"
 echo -e "${GREEN}  │  ${BOLD}WarTab is up and ready to configure${NC}${GREEN}    │${NC}"
 echo -e "${GREEN}  └──────────────────────────────────────────┘${NC}"
 echo ""
@@ -342,6 +453,4 @@ echo ""
 echo -e "  ${DIM}Manage:  systemctl --user status wartab${NC}"
 echo -e "  ${DIM}Logs:    journalctl --user -u wartab -f${NC}"
 echo -e "  ${DIM}Config:  ${INSTALL_DIR}/config.json${NC}"
-echo ""
-echo -e "${SEP}"
 echo ""
