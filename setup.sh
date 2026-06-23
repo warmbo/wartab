@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
-# WarTab — Debian Install Script  v0.4.0
+# WarTab — Debian Install Script  v0.5.0
 # ═══════════════════════════════════════════════════════════════
 # Usage:
-#   curl -sL https://raw.githubusercontent.com/warmbo/wartab/main/setup.sh | sudo bash
+#   curl -sL https://raw.githubusercontent.com/warmbo/wartab/main/setup.sh | bash
 #   bash setup.sh [options]
-#
-# One-command install for clean Debian:
-#   curl -sL https://github.com/warmbo/wartab/raw/main/setup.sh | bash
 #
 # Options:
 #   --port 8081         Server port (default: 8081)
@@ -22,7 +19,7 @@
 # ═══════════════════════════════════════════════════════════════
 set -euo pipefail
 
-VERSION="0.4.0"
+VERSION="0.5.0"
 
 # ── Defaults ──
 PORT="${PORT:-8081}"
@@ -57,14 +54,18 @@ done
 
 # ── Colors ──
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
-info()  { echo -e "${BLUE}::${NC} $1"; }
-ok()    { echo -e "${GREEN}✓${NC} $1"; }
-warn()  { echo -e "${YELLOW}⚠${NC} $1"; }
-err()   { echo -e "${RED}✗${NC} $1"; exit 1; }
+BOLD='\033[1m'; DIM='\033[2m'
+info()  { echo -e "  ${BLUE}•${NC} $1"; }
+ok()    { echo -e "  ${GREEN}✓${NC} $1"; }
+warn()  { echo -e "  ${YELLOW}⚠${NC} $1"; }
+err()   { echo -e "  ${RED}✗${NC} $1"; exit 1; }
+fail()  { echo -e "  ${RED}✗${NC} $1"; return 1; }
 
 # ── Uninstall mode ──
 if [ "$UNINSTALL" = true ]; then
-  info "Uninstalling WarTab..."
+  echo ""
+  echo -e "  ${CYAN}WarTab — Uninstall${NC}"
+  echo ""
   if systemctl --user is-active --quiet wartab.service 2>/dev/null; then
     systemctl --user stop wartab.service
     systemctl --user disable wartab.service
@@ -73,95 +74,72 @@ if [ "$UNINSTALL" = true ]; then
   rm -f "${HOME}/.config/systemd/user/wartab.service"
   systemctl --user daemon-reload
   if [ -d "$INSTALL_DIR" ]; then
-    warn "Removing $INSTALL_DIR ..."
     rm -rf "$INSTALL_DIR"
-    ok "Files removed"
+    ok "Files removed from ${INSTALL_DIR}"
   fi
-  echo -e "${GREEN}WarTab uninstalled.${NC}"
+  echo ""
+  echo -e "  ${GREEN}WarTab has been uninstalled.${NC}"
   exit 0
 fi
 
-# ── Preflight ──
-SEP="${CYAN}────────────────────────────────────────────${NC}"
-echo -e "\n${SEP}"
-echo -e "${CYAN}  WarTab Installer v${VERSION}${NC}"
-echo -e "${SEP}\n"
+# ── Header ──
+SEP="${CYAN}───────────────────────────────────────────${NC}"
+echo ""
+echo -e "${SEP}"
+echo -e "${CYAN}  WarTab v${VERSION} — Installer${NC}"
+echo -e "${SEP}"
+echo ""
 
 # ── Install system dependencies (clean Debian) ──
 install_deps() {
-  if [ "$SKIP_DEPS" = true ]; then
-    info "Skipping apt dependency installation (--skip-deps)"
-    return
-  fi
+  [ "$SKIP_DEPS" = true ] && { info "Skipping apt install (--skip-deps)"; return 0; }
 
-  local pkgs=""
-  command -v python3 &>/dev/null || pkgs="$pkgs python3"
-  command -v git &>/dev/null    || pkgs="$pkgs git"
-  python3 -c "from PIL import Image; print('ok')" &>/dev/null || pkgs="$pkgs python3-pil"
-  command -v avahi-publish-service &>/dev/null || command -v avahi-daemon &>/dev/null || pkgs="$pkgs avahi-daemon avahi-utils"
+  local need=""
+  command -v python3 &>/dev/null || need="$need python3"
+  command -v git &>/dev/null    || need="$need git"
+  python3 -c "from PIL import Image" &>/dev/null || need="$need python3-pil"
+  command -v avahi-publish-service &>/dev/null || command -v avahi-daemon &>/dev/null || need="$need avahi-daemon avahi-utils"
 
-  if [ -n "$pkgs" ]; then
-    info "Installing dependencies:${pkgs}..."
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq $pkgs
-    ok "System dependencies installed"
-  else
+  if [ -z "$need" ]; then
     ok "All system dependencies already present"
+    return 0
   fi
+
+  info "Installing:${need} ..."
+  sudo apt-get update -qq || fail "apt update failed — check network or run --skip-deps"
+  # shellcheck disable=SC2086  # intentional word-splitting
+  sudo apt-get install -y -qq $need || fail "apt install failed — run with --skip-deps and install manually"
+  ok "System dependencies installed"
 }
 
-# Run preflight checks
+# ── Preflight checks ──
 preflight() {
-  local fail=0
+  local fatal=0
 
-  # Python
-  if command -v python3 &>/dev/null; then
-    ok "Python: $(python3 --version 2>&1)"
-    # Check pip3 availability
-    if command -v pip3 &>/dev/null; then
-      HAS_PIP=true
-    else
-      HAS_PIP=false
-      warn "pip3 not found — Pillow install will use apt instead"
-    fi
-  else
-    warn "Python 3 not found — install: sudo apt install python3"
-    fail=1
-  fi
+  command -v python3 &>/dev/null \
+    && ok "Python: $(python3 --version 2>&1)" \
+    || { warn "python3 not found"; fatal=1; }
 
-  # Git
-  if command -v git &>/dev/null; then
-    ok "Git: $(git --version 2>&1)"
-  else
-    warn "Git not found — install: sudo apt install git"
-    fail=1
-  fi
+  command -v git &>/dev/null \
+    && ok "Git: $(git --version 2>&1)" \
+    || { warn "git not found"; fatal=1; }
 
-  # Systemd (user mode)
-  if systemctl --user &>/dev/null; then
-    ok "systemd (user mode) available"
-  else
-    warn "systemd user mode not available — service won't auto-start"
-  fi
+  systemctl --user &>/dev/null \
+    && ok "systemd (user mode) available" \
+    || warn "systemd user mode not available — service won't auto-start"
 
-  # Port check
-  if ss -tlnp 2>/dev/null | grep -q ":${PORT} "; then
-    warn "Port ${PORT} is already in use — pick another with --port"
-  else
-    ok "Port ${PORT} is available"
-  fi
+  ss -tlnp 2>/dev/null | grep -q ":${PORT} " \
+    && warn "Port ${PORT} is already in use — pick another with --port" \
+    || ok "Port ${PORT} is available"
 
-  # Pillow
-  if python3 -c "from PIL import Image; print('ok')" &>/dev/null; then
-    HAS_PIL=true
-    ok "Pillow (PIL) available — images will be compressed on upload"
-  else
-    HAS_PIL=false
-    warn "Pillow not installed — image uploads won't be resized"
-  fi
+  python3 -c "from PIL import Image" &>/dev/null \
+    && HAS_PIL=true \
+    || HAS_PIL=false
 
-  [ "$fail" -eq 1 ] && err "Fix the above issues and re-run."
+  [ "$fatal" -eq 1 ] && err "Install python3 and git, then re-run."
+  return 0
 }
+
 install_deps
 preflight
 
@@ -171,63 +149,61 @@ info "Setting up WarTab in ${INSTALL_DIR}..."
 if [ -d "${INSTALL_DIR}/.git" ]; then
   info "Updating existing installation..."
   cd "${INSTALL_DIR}"
-  git pull --ff-only
+  git pull --ff-only || warn "git pull failed — continuing with existing code"
   ok "Repository updated"
 elif [ -d "${INSTALL_DIR}" ]; then
-  warn "${INSTALL_DIR} exists but is not a git repo"
-  warn "  Remove it first: rm -rf ${INSTALL_DIR}"
-  exit 1
+  err "${INSTALL_DIR} exists but is not a git repo. Remove it: rm -rf ${INSTALL_DIR}"
 else
   sudo mkdir -p "$(dirname "${INSTALL_DIR}")" 2>/dev/null || true
-  git clone "${REPO_URL}" "${INSTALL_DIR}"
-  ok "Repository cloned from ${REPO_URL}"
+  git clone "${REPO_URL}" "${INSTALL_DIR}" || err "git clone failed — check network and URL"
   sudo chown -R "${INSTALL_USER}:${INSTALL_USER}" "${INSTALL_DIR}" 2>/dev/null || true
+  ok "Repository cloned from ${REPO_URL}"
 fi
 
 cd "${INSTALL_DIR}"
 
-# ── Data dirs ──
+# ── Data directories ──
 mkdir -p notes uploads snapshots
-ok "Data directories: notes/ uploads/ snapshots/"
+ok "Data directories created"
 
 # ── First-run config ──
-if [ ! -f "${INSTALL_DIR}/config.json" ]; then
-  if [ -f "${INSTALL_DIR}/config.example.json" ]; then
-    cp "${INSTALL_DIR}/config.example.json" "${INSTALL_DIR}/config.json"
-    ok "config.json created from config.example.json"
+if [ ! -f "config.json" ]; then
+  if [ -f "config.example.json" ]; then
+    cp config.example.json config.json
+    ok "Default config created from config.example.json"
   else
-    warn "config.example.json not found — config.json will be served from server defaults"
+    warn "config.example.json not found — server will use built-in defaults"
   fi
 else
-  ok "config.json already exists"
+  ok "Config file already exists"
 fi
 
-# ── Download icons ──
-if [ ! -f "${INSTALL_DIR}/icons/selfhst-index.json" ]; then
-  info "Downloading service icons (selfh.st)..."
-  python3 "${INSTALL_DIR}/download_icons.sh" && ok "Icons downloaded" || warn "Icon download failed — run download_icons.sh manually"
-else
-  ok "Icons already present (${INSTALL_DIR}/icons/)"
-fi
-
-# ── Install Pillow if needed ──
-if [ "$HAS_PIL" = false ]; then
-  # Try apt first (more reliable on Debian)
-  if sudo apt-get install -y python3-pil 2>/dev/null; then
-    ok "Pillow installed via apt (python3-pil)"
-  elif [ "$HAS_PIP" = true ] && pip3 install --user Pillow 2>/dev/null; then
-    ok "Pillow installed via pip"
+# ── Download service icons (skippable, cosmetic) ──
+if [ ! -f "icons/selfhst-index.json" ]; then
+  info "Downloading service icons..."
+  if python3 download_icons.sh; then
+    ok "Service icons downloaded"
   else
-    warn "Pillow install failed — image uploads won't be resized"
-    warn "  Run: sudo apt install python3-pil"
+    warn "Icon download failed — the Services tab will be unavailable until re-run"
+    warn "  Run later: python3 ${INSTALL_DIR}/download_icons.sh"
+  fi
+else
+  ok "Service icons already present"
+fi
+
+# ── Install Pillow if still missing ──
+if [ "${HAS_PIL:-false}" = false ]; then
+  if sudo apt-get install -y python3-pil 2>/dev/null; then
+    ok "Pillow installed (python3-pil)"
+  else
+    warn "Pillow not installed — image uploads won't be resized"
+    warn "  Install: sudo apt install python3-pil"
   fi
 fi
 
 # ── mDNS flag ──
 MDNS_FLAG=""
-if [ "$NO_MDNS" = false ]; then
-  MDNS_FLAG=" --mdns"
-fi
+[ "$NO_MDNS" = false ] && MDNS_FLAG=" --mdns"
 
 # ── systemd user service ──
 info "Configuring systemd service..."
@@ -257,15 +233,15 @@ WantedBy=default.target
 SERVICE
 
 systemctl --user daemon-reload
-systemctl --user enable wartab.service
-systemctl --user restart wartab.service
-ok "systemd service installed and started"
+systemctl --user enable wartab.service || warn "systemd enable failed"
+systemctl --user restart wartab.service || warn "systemd restart failed — check journalctl --user -u wartab"
+ok "Systemd service installed and started"
 
 # ── Linger (keep running after logout) ──
 if ! loginctl show-user "${INSTALL_USER}" 2>/dev/null | grep -q "Linger=yes"; then
   sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null \
     && ok "Linger enabled — service stays running after logout" \
-    || warn "Could not enable linger — run: sudo loginctl enable-linger ${INSTALL_USER}"
+    || warn "Linger not enabled — service stops when you log out"
 fi
 
 # ── Health check ──
@@ -275,52 +251,57 @@ for i in 1 2 3 4 5; do
   sleep 1
   HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${PORT}/" 2>/dev/null || true)
   if [ "$HTTP_CODE" = "200" ]; then
-    ok "Server responded with HTTP ${HTTP_CODE}"
     SERVER_OK=true
     break
   fi
-  if [ "$i" -eq 5 ]; then
-    warn "Server didn't respond in time — check: journalctl --user -u wartab -n 20"
-  fi
 done
-# Verify API is functional
+
 if [ "$SERVER_OK" = true ]; then
-  CONFIG_TEST=$(curl -s "http://localhost:${PORT}/api/config" | python3 -c "import json,sys; d=json.load(sys.stdin); print('ok' if 'version' in d or not d else 'empty')" 2>/dev/null || echo 'fail')
-  if [ "$CONFIG_TEST" = 'ok' ] || [ "$CONFIG_TEST" = 'empty' ]; then
-    ok "API config endpoint responding"
-  else
-    warn "API config check failed — config may not load"
-  fi
+  ok "Server is live (HTTP 200)"
+  # Quick API smoke test
+  CONFIG_OK=$(curl -s "http://localhost:${PORT}/api/config" | python3 -c "
+import json,sys
+try:
+    d = json.load(sys.stdin)
+    v = d.get('version', '') or d.get('_version', '')
+    print('ok' if v else 'empty')
+except Exception:
+    print('fail')
+" 2>/dev/null || echo 'fail')
+  [ "$CONFIG_OK" = "ok" ] && ok "Config API responding" || warn "Config API check returned unexpected data"
+else
+  warn "Server did not respond within 5 seconds"
+  warn "  Check logs: journalctl --user -u wartab -n 30 --no-pager"
+  err "Setup incomplete — fix the issue above and re-run"
 fi
 
-# ── Firewall ──
+# ── Firewall hint ──
 if command -v ufw &>/dev/null && ! ufw status 2>/dev/null | grep -q "${PORT}/tcp"; then
-  warn "Port ${PORT} not open in UFW. To allow external access:"
+  warn "UFW may block external access"
   warn "  sudo ufw allow ${PORT}/tcp"
 fi
 
-# ── Done ──
-HOSTNAME_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+# ── Derive hostname for final output ──
 HOSTNAME_SHORT=$(hostname -s 2>/dev/null || echo "localhost")
+HOSTNAME_FQDN=$(hostname -f 2>/dev/null || echo "$HOSTNAME_SHORT.local")
+
 echo ""
-echo -e "${GREEN}════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  WarTab v${VERSION} installed successfully!${NC}"
-echo -e "${GREEN}════════════════════════════════════════════════${NC}"
+echo -e "${GREEN}  ┌──────────────────────────────────────────┐${NC}"
+echo -e "${GREEN}  │  ${BOLD}WarTab is up and ready to configure${NC}${GREEN}    │${NC}"
+echo -e "${GREEN}  └──────────────────────────────────────────┘${NC}"
 echo ""
-echo -e "  ${BLUE}Local:${NC}    http://localhost:${PORT}"
-[ -n "${HOSTNAME_IP}" ] && echo -e "  ${BLUE}Network:${NC}  http://${HOSTNAME_IP}:${PORT}"
+echo -e "  ${BOLD}${CYAN}→${NC}  ${BOLD}http://${HOSTNAME_FQDN}:${PORT}${NC}"
 if [ "$NO_MDNS" = false ]; then
-  echo -e "  ${BLUE}mDNS:${NC}     http://${HOSTNAME_SHORT}.local:${PORT}"
-  echo ""
-  echo -e "  Set as browser new tab:"
-  echo -e "    Firefox: New Tab Override extension → http://${HOSTNAME_SHORT}.local:${PORT}"
-  echo -e "    Chrome:  New Tab Redirect extension  → http://${HOSTNAME_SHORT}.local:${PORT}"
+  echo -e "  ${DIM}   http://${HOSTNAME_SHORT}.local:${PORT}${NC}"
 fi
 echo ""
-echo "  Manage:  systemctl --user status wartab"
-echo "  Logs:    journalctl --user -u wartab -f"
-echo "  Config:  ${INSTALL_DIR}/config.json"
-echo "  Data:    ${INSTALL_DIR}/{notes,snapshots,uploads}/"
+echo -e "  ${DIM}Set as browser new tab:${NC}"
+echo -e "  ${DIM}  Firefox: New Tab Override → http://${HOSTNAME_SHORT}.local:${PORT}${NC}"
+echo -e "  ${DIM}  Chrome:  New Tab Redirect  → http://${HOSTNAME_SHORT}.local:${PORT}${NC}"
+echo ""
+echo -e "  ${DIM}Manage:  systemctl --user status wartab${NC}"
+echo -e "  ${DIM}Logs:    journalctl --user -u wartab -f${NC}"
+echo -e "  ${DIM}Config:  ${INSTALL_DIR}/config.json${NC}"
 echo ""
 echo -e "${SEP}"
 echo ""
