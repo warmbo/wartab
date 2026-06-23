@@ -40,13 +40,13 @@ registerModule('links', {
       const ui=document.createElement('input');ui.className='cp-input';ui.placeholder='https://';ui.value=link.url;
       ui.addEventListener('change',()=>{sec.links[li2].url=ui.value;saveAndRefresh();});
       const rm = cpBtn('✕', true); rm.title = '';
-      rm.addEventListener('click',()=>{sec.links.splice(li2,1);saveAndRefresh();});
+      rm.addEventListener('click',()=>{sec.links.splice(li2,1);saveAndRefreshStructural();});
       row.appendChild(gh);row.appendChild(li2_i);row.appendChild(ic);row.appendChild(ui);row.appendChild(rm);
       container.appendChild(row);
     });
     bd.appendChild(container);
     const al=document.createElement('button');al.className='me-link-add';al.textContent='+ Add Link';
-    al.addEventListener('click',()=>{sec.links=sec.links||[];sec.links.push({label:'New',url:'https://',icon:'link'});saveAndRefresh();});
+    al.addEventListener('click',()=>{sec.links=sec.links||[];sec.links.push({label:'New',url:'https://',icon:'link'});saveAndRefreshStructural();});
     bd.appendChild(al);
   },
 });

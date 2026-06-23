@@ -111,19 +111,40 @@ function closeCardEditPanel() {
   updateBlurState();
 }
 
-function saveAndRefresh() {
+function saveAndRefresh(structural) {
   saveConfig();
-  if (_editingCardId) {
+  if (structural && _editingCardId) {
+    // Structural change — full re-render needed
     renderAll();
     if (config.cards.find(c => c.id === _editingCardId)) {
       openCardEditPanel(_editingCardId);
     }
+  } else if (_editingCardId) {
+    // Soft save — update the card element in-place without rebuilding the
+    // entire page or re-opening the edit panel. The panel body stays stable,
+    // no scroll jump, no slide animation.
+    const card = config.cards.find(c => c.id === _editingCardId);
+    if (card) {
+      const oldEl = document.querySelector(`[data-card-id="${_editingCardId}"]`);
+      if (oldEl) {
+        const idx = config.cards.indexOf(card);
+        const newEl = renderCard(card, idx);
+        oldEl.replaceWith(newEl);
+      }
+      const title = $('#edit-panel-title');
+      if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
+    }
+    renderIcons();
   } else if (_editingPageId) {
     renderAll();
     renderPageNav();
   } else {
     renderAll();
   }
+}
+
+function saveAndRefreshStructural() {
+  saveAndRefresh(true);
 }
 
 let _editingPageId = null;
@@ -498,7 +519,7 @@ function buildCardEditPanel(card) {
     body.appendChild(cpCheck('Empty gap (no content)', true, v => {
       if (!v) { card.sections = card._savedSections || [{ id: 'sec-' + uid(), type: 'links', label: 'Links', links: [{ label: 'Example', url: 'https://example.com', icon: 'link' }] }]; }
       card._isGap = v;
-      saveAndRefresh();
+      saveAndRefreshStructural();
     }));
     const foot = document.createElement('div');
     foot.className = 'cp-footer';
@@ -564,7 +585,7 @@ function buildCardEditPanel(card) {
   ct.className = 'cp-input';
   ct.type = 'text'; ct.value = card.color || config.theme.glow;
   const syncColor = v => { cp.value = v; ct.value = v; card.color = v; saveAndRefresh(); };
-  cp.addEventListener('input', () => syncColor(cp.value));
+  cp.addEventListener('change', () => syncColor(cp.value));
   ct.addEventListener('change', () => syncColor(ct.value));
   colorRow.appendChild(cp);
   colorRow.appendChild(ct);
@@ -590,7 +611,7 @@ function buildCardEditPanel(card) {
     card._isGap = v;
     if (v) { card._savedSections = card.sections; card.sections = []; }
     else { card.sections = card._savedSections || []; }
-    saveAndRefresh();
+    saveAndRefreshStructural();
   }));
   grid.appendChild(gapG);
 
@@ -617,7 +638,7 @@ function buildCardEditPanel(card) {
   addSecBtn.addEventListener('click', () => {
     card.sections = card.sections || [];
     card.sections.push({ id: 'sec-' + uid(), type: 'links', label: 'Links', links: [{ label: 'Example', url: 'https://example.com', icon: 'link' }] });
-    saveAndRefresh();
+    saveAndRefreshStructural();
     toast('Section added');
   });
   body.appendChild(addSecBtn);
@@ -684,7 +705,7 @@ function buildSectionEditor(sec, card, si) {
     const c = config.cards.find(x => x.id === card.id);
     if (!c) return;
     c.sections.splice(si, 1);
-    saveAndRefresh();
+    saveAndRefreshStructural();
     toast('Section deleted');
   });
   acts.appendChild(del);
@@ -738,7 +759,7 @@ function buildSectionEditor(sec, card, si) {
       // Merge defaults for the new type
       const mod = CARD_MODULES[v];
       if (mod && mod.defaults) Object.assign(sec, cloneObj(mod.defaults));
-      saveAndRefresh();
+      saveAndRefreshStructural();
     }
   );
   tg.appendChild(sel);
