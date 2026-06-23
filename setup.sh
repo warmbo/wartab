@@ -99,11 +99,11 @@ step_header() {
   local desc="$1"
   clear_body                          # cursor now on progress bar line
   draw_progress                       # overwrite progress bar in place
-  echo ""                             # first line of new body
+  echo ""                             # body starts here
   echo ""
   echo -e "  ${BOLD}Step ${CURRENT_STEP}.${NC} ${desc}"
   echo ""
-  BODY_LINES=3
+  BODY_LINES=4
 }
 
 # Run a command with an animated spinner while suppressed.
@@ -158,8 +158,14 @@ echo -e "  ${CYAN}╔═══════════════════�
 echo -e "  ${CYAN}║  ${BOLD}WarTab v${VERSION} — Setup${NC}${CYAN}              ║${NC}"
 echo -e "  ${CYAN}╚══════════════════════════════════════╝${NC}"
 echo ""
-draw_progress
-echo ""
+
+# ── Detect re-run / upgrade mode ──
+# If server.py already exists at the install target, treat this as an
+# upgrade/fix — skip full dep install, just pull code + repair + restart.
+UPGRADE_MODE=false
+if [ -f "${INSTALL_DIR}/server.py" ]; then
+  UPGRADE_MODE=true
+fi
 
 # ═══════════════════════════════════════════════════════════════
 # Uninstall mode
@@ -204,6 +210,7 @@ fi
 # ═══════════════════════════════════════════════════════════════
 
 step_header "Installing system dependencies"
+[ "$UPGRADE_MODE" = true ] && info_msg "Existing install detected — upgrade/fix mode"
 
 install_deps() {
   [ "$SKIP_DEPS" = true ] && { ok_msg "Skipped (--skip-deps)"; return 0; }
@@ -216,6 +223,14 @@ install_deps() {
 
   if [ -z "$need" ]; then
     ok_msg "All dependencies already present"
+    return 0
+  fi
+
+  # In upgrade mode, don't install missing packages — just report them.
+  # They should have been installed on first run.
+  if [ "$UPGRADE_MODE" = true ]; then
+    warn_msg "Missing packages (skip in upgrade mode):${need}"
+    warn_msg "  Run: sudo apt install${need}"
     return 0
   fi
 
