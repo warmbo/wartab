@@ -21,10 +21,19 @@ set -euo pipefail
 
 VERSION="0.6.0"
 
+# ── Root detection ──
+IS_ROOT=false
+[ "$(id -u)" -eq 0 ] && IS_ROOT=true
+
 # ── Defaults ──
 PORT="${PORT:-8081}"
 BIND="${BIND:-0.0.0.0}"
-INSTALL_USER="${INSTALL_USER:-$(whoami)}"
+INSTALL_USER="$(whoami)"
+# When running under sudo, prefer the original user
+if [ "$IS_ROOT" = true ] && [ -n "${SUDO_USER:-}" ]; then
+  INSTALL_USER="$SUDO_USER"
+fi
+INSTALL_USER="${INSTALL_USER:-root}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/wartab}"
 REPO_URL="${REPO_URL:-https://github.com/warmbo/wartab.git}"
 NO_MDNS=false
@@ -137,13 +146,25 @@ if [ "$UNINSTALL" = true ]; then
   echo -e "  ${CYAN}║  WarTab — Uninstall                  ║${NC}"
   echo -e "  ${CYAN}╚══════════════════════════════════════╝${NC}"
   echo ""
-  if systemctl --user is-active --quiet wartab.service 2>/dev/null; then
-    systemctl --user stop wartab.service
-    systemctl --user disable wartab.service
-    ok_msg "Service stopped and disabled"
+  if [ "$IS_ROOT" = true ]; then
+    # System-level service
+    if systemctl is-active --quiet wartab.service 2>/dev/null; then
+      systemctl stop wartab.service
+      systemctl disable wartab.service
+      ok_msg "Service stopped and disabled"
+    fi
+    rm -f "/etc/systemd/system/wartab.service"
+    systemctl daemon-reload
+  else
+    # User-level service
+    if systemctl --user is-active --quiet wartab.service 2>/dev/null; then
+      systemctl --user stop wartab.service
+      systemctl --user disable wartab.service
+      ok_msg "Service stopped and disabled"
+    fi
+    rm -f "${HOME}/.config/systemd/user/wartab.service"
+    systemctl --user daemon-reload
   fi
-  rm -f "${HOME}/.config/systemd/user/wartab.service"
-  systemctl --user daemon-reload
   if [ -d "$INSTALL_DIR" ]; then
     rm -rf "$INSTALL_DIR"
     ok_msg "Files removed from ${INSTALL_DIR}"
@@ -179,7 +200,6 @@ install_deps() {
   command -v git &>/dev/null    || need="$need git"
   python3 -c "from PIL import Image" &>/dev/null || need="$need python3-pil"
   command -v avahi-publish-service &>/dev/null || command -v avahi-daemon &>/dev/null || need="$need avahi-daemon avahi-utils"
-  systemctl --user &>/dev/null || need="$need libpam-systemd"
 
   if [ -z "$need" ]; then
     ok_msg "All dependencies already present"
@@ -191,27 +211,6 @@ install_deps() {
 
   # shellcheck disable=SC2086
   spin "Installing:${need}" sudo apt-get install -y -qq $need || fail_msg "apt install failed"
-
-  # Bootstrap user systemd session if needed
-  if ! systemctl --user &>/dev/null; then
-    info_msg "Starting systemd user session..."
-    sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null || true
-    sleep 1
-    local uid
-    uid=$(id -u "${INSTALL_USER}" 2>/dev/null || echo "1000")
-    if [ ! -d "/run/user/${uid}" ]; then
-      XDG_RUNTIME_DIR="/run/user/${uid}"
-      sudo mkdir -p "${XDG_RUNTIME_DIR}" 2>/dev/null || true
-      sudo chown "${INSTALL_USER}" "${XDG_RUNTIME_DIR}" 2>/dev/null || true
-      chmod 700 "${XDG_RUNTIME_DIR}" 2>/dev/null || true
-    fi
-    if systemctl --user &>/dev/null; then
-      ok_msg "Systemd user session ready"
-    else
-      warn_msg "Could not start systemd user session"
-      warn_msg "  After install: sudo loginctl enable-linger ${INSTALL_USER}"
-    fi
-  fi
 }
 
 install_deps
@@ -232,10 +231,18 @@ command -v git &>/dev/null \
   && ok_msg "Git: $(git --version 2>&1)" \
   || { warn_msg "git not found"; preflight_ok=false; }
 
-if systemctl --user &>/dev/null; then
-  ok_msg "systemd (user mode) available"
+if [ "$IS_ROOT" = true ]; then
+  if command -v systemctl &>/dev/null && systemctl is-system-running &>/dev/null 2>&1; then
+    ok_msg "systemd available (system mode)"
+  else
+    warn_msg "systemd not detected — service won't auto-start"
+  fi
 else
-  warn_msg "systemd user mode not available — service won't auto-start"
+  if systemctl --user &>/dev/null; then
+    ok_msg "systemd (user mode) available"
+  else
+    warn_msg "systemd user mode not available"
+  fi
 fi
 
 ss -tlnp 2>/dev/null | grep -q ":${PORT} " \
@@ -339,10 +346,23 @@ step_header "Configuring systemd service"
 
 MDNS_FLAG=""
 [ "$NO_MDNS" = false ] && MDNS_FLAG=" --mdns"
-
-SERVICE_DIR="${HOME}/.config/systemd/user"
-mkdir -p "${SERVICE_DIR}"
 PYTHON_BIN="$(command -v python3)"
+
+# ── Detect service mode ──
+if [ "$IS_ROOT" = true ]; then
+  SERVICE_DIR="/etc/systemd/system"
+  SERVICE_USER="${INSTALL_USER}"
+  SYSTEMD_CMD="systemctl"
+  LINGER_NEEDED=false
+  info_msg "Installing system-level service (running as root)"
+else
+  SERVICE_DIR="${HOME}/.config/systemd/user"
+  SERVICE_USER=""
+  SYSTEMD_CMD="systemctl --user"
+  LINGER_NEEDED=true
+fi
+
+mkdir -p "${SERVICE_DIR}"
 
 cat > "${SERVICE_DIR}/wartab.service" << SERVICE
 [Unit]
@@ -353,6 +373,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+${SERVICE_USER:+User=${SERVICE_USER}}
 ExecStart=${PYTHON_BIN} ${INSTALL_DIR}/server.py --port ${PORT} --bind ${BIND}${MDNS_FLAG}
 WorkingDirectory=${INSTALL_DIR}
 Restart=always
@@ -362,26 +383,49 @@ StandardError=journal
 Environment=PYTHONUNBUFFERED=1
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
 SERVICE
 
-run "Installing systemd unit" systemctl --user daemon-reload
-systemctl --user enable wartab.service 2>/dev/null && ok_msg "Service enabled" || warn_msg "systemd enable failed"
-spin "Starting service" systemctl --user restart wartab.service
+run "Installing systemd unit" ${SYSTEMD_CMD} daemon-reload
+${SYSTEMD_CMD} enable wartab.service 2>/dev/null && ok_msg "Service enabled" || warn_msg "systemd enable failed"
+spin "Starting service" ${SYSTEMD_CMD} restart wartab.service
 
 if [ "$MDNS_FLAG" != "" ]; then
   ok_msg "mDNS advertisement enabled (avahi)"
 fi
 
-# Linger
-if ! loginctl show-user "${INSTALL_USER}" 2>/dev/null | grep -q "Linger=yes"; then
-  if sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null; then
-    ok_msg "Linger enabled — service stays running after logout"
-  else
-    warn_msg "Linger not enabled — service stops when you log out"
+# ── Non-root: bootstrap user session and enable linger ──
+if [ "$LINGER_NEEDED" = true ]; then
+  if ! systemctl --user &>/dev/null; then
+    info_msg "Starting systemd user session..."
+    sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null || true
+    sleep 1
+    if ! systemctl --user &>/dev/null; then
+      uid=$(id -u "${INSTALL_USER}" 2>/dev/null || echo "1000")
+      if [ ! -d "/run/user/${uid}" ]; then
+        sudo mkdir -p "/run/user/${uid}" 2>/dev/null || true
+        sudo chown "${INSTALL_USER}" "/run/user/${uid}" 2>/dev/null || true
+        chmod 700 "/run/user/${uid}" 2>/dev/null || true
+      fi
+    fi
+    if systemctl --user &>/dev/null; then
+      ok_msg "Systemd user session ready"
+    else
+      warn_msg "Could not start systemd user session"
+      warn_msg "  Log out and back in, then re-run setup"
+    fi
   fi
-else
-  ok_msg "Linger already enabled"
+
+  # Linger
+  if ! loginctl show-user "${INSTALL_USER}" 2>/dev/null | grep -q "Linger=yes"; then
+    if sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null; then
+      ok_msg "Linger enabled — service stays running after logout"
+    else
+      warn_msg "Linger not enabled — service stops when you log out"
+    fi
+  else
+    ok_msg "Linger already enabled"
+  fi
 fi
 
 # ═══════════════════════════════════════════════════════════════
@@ -422,7 +466,11 @@ else
   draw_progress
   echo ""
   warn_msg "Server did not respond within 5 seconds"
+  if [ "$IS_ROOT" = true ]; then
+  warn_msg "  Check logs: journalctl -u wartab -n 30 --no-pager"
+else
   warn_msg "  Check logs: journalctl --user -u wartab -n 30 --no-pager"
+fi
   fail_msg "Setup incomplete — fix the issue above and re-run"
 fi
 
@@ -453,7 +501,12 @@ echo -e "  ${DIM}Set as browser new tab:${NC}"
 echo -e "  ${DIM}  Firefox: New Tab Override → http://${HOSTNAME_SHORT}.local:${PORT}${NC}"
 echo -e "  ${DIM}  Chrome:  New Tab Redirect  → http://${HOSTNAME_SHORT}.local:${PORT}${NC}"
 echo ""
-echo -e "  ${DIM}Manage:  systemctl --user status wartab${NC}"
-echo -e "  ${DIM}Logs:    journalctl --user -u wartab -f${NC}"
+if [ "$IS_ROOT" = true ]; then
+  echo -e "  ${DIM}Manage:  systemctl status wartab${NC}"
+  echo -e "  ${DIM}Logs:    journalctl -u wartab -f${NC}"
+else
+  echo -e "  ${DIM}Manage:  systemctl --user status wartab${NC}"
+  echo -e "  ${DIM}Logs:    journalctl --user -u wartab -f${NC}"
+fi
 echo -e "  ${DIM}Config:  ${INSTALL_DIR}/config.json${NC}"
 echo ""
