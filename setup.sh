@@ -87,9 +87,8 @@ draw_progress() {
 step_header() {
   CURRENT_STEP=$((CURRENT_STEP + 1))
   local desc="$1"
-  printf "\033[u\033[J"          # restore to anchor, clear to end
+  printf "\033[u\033[J"          # restore to fixed anchor, clear below
   draw_progress
-  printf "\033[s"                 # save new anchor (after progress bar)
   echo ""
   echo -e "  ${BOLD}Step ${CURRENT_STEP}.${NC} ${desc}"
   echo ""
@@ -327,7 +326,12 @@ if [ -f "icons/selfhst-index.json" ]; then
   ok_msg "Service icons already present"
 elif [ -f "icons.tar.gz" ]; then
   spin "Extracting from bundled archive" tar xzf icons.tar.gz
-  ok_msg "Service icons extracted (icons/)"
+  if [ -f "icons/selfhst-index.json" ]; then
+    ok_msg "Service icons extracted (icons/)"
+  else
+    warn_msg "Archive extraction failed — expected icons/selfhst-index.json not found"
+    warn_msg "  Run: cd ${INSTALL_DIR} && tar xzf icons.tar.gz"
+  fi
 else
   if spin "Downloading from selfh.st CDN" python3 download_icons.sh; then
     ok_msg "Service icons downloaded"
