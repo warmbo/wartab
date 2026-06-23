@@ -21,27 +21,13 @@ except Exception as e:
 
 print(f"Manifest has {len(data)} entries")
 
-# Save manifest locally
-with open(ICONS / "manifest.json", "w") as f:
-    json.dump(data, f, indent=2)
-print("Saved manifest.json")
-
-# Build and save selfhst-index.json (same format app.js expects)
-index = []
-for item in data:
-    ref = item.get("Reference", "").strip()
-    name = item.get("Name", ref)
-    tagsRaw = item.get("Tags", "")
-    tags = [t.strip().lower() for t in tagsRaw.split(",") if t.strip()] if isinstance(tagsRaw, str) else (tagsRaw or [])
-    if ref:
-        safe = "".join(c for c in ref if c.isalnum() or c in "-_.").lower().rstrip(".") or ref
-        index.append({"name": name, "file": safe, "tags": tags})
-
+# Save raw manifest as selfhst-index.json (app.js reads this and expects
+# capitalized keys: Name, Reference, SVG, Category, etc.)
 with open(ICONS / "selfhst-index.json", "w") as f:
-    json.dump(index, f, indent=2)
-print(f"Saved selfhst-index.json ({len(index)} entries)")
+    json.dump(data, f, indent=2)
+print(f"Saved selfhst-index.json ({len(data)} entries)")
 
-# Filter to SVG-capable entries
+# Filter to SVG-capable entries for download
 svgs = [item for item in data if item.get("SVG") == "Yes"]
 print(f"{len(svgs)} icons have SVG format")
 
