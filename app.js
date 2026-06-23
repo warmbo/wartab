@@ -1077,8 +1077,8 @@ const ICON_CDN = '/icons';
 const ICON_REPO = [];
 // Load service icons from selfhst index (complete, accurate filenames)
 function loadIconRepo() {
-  if (ICON_REPO.length > 0) return;
-  storage.getIconIndex().then(function(data){
+  if (ICON_REPO.length > 0) return Promise.resolve();
+  return storage.getIconIndex().then(function(data){
     data.forEach(function(item){
       if (item.SVG === 'Yes') {
         ICON_REPO.push({name: item.Name, file: item.Reference, tags: [item.Category || '']});

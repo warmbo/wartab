@@ -70,44 +70,32 @@ BOLD='\033[1m'; DIM='\033[2m'
 
 TOTAL_STEPS=8
 CURRENT_STEP=0
-BODY_LINES=0        # number of lines in the current step body (below progress bar)
 
-# Draw overall progress bar on the CURRENT line. Uses \r to overwrite in place.
+# Uses ANSI save/restore cursor + clear-to-end-of-display.
+# After the header box, one \033[s saves the anchor position.
+# Each step restores to that anchor, clears everything below (\033[J),
+# redraws progress bar, saves the new anchor, then prints step body.
 draw_progress() {
   local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
   local filled=$((pct * 20 / 100))
   local bar=""
   for ((i=0; i<filled; i++)); do bar+="█"; done
   for ((i=filled; i<20; i++)); do bar+="░"; done
-  printf "\r  ${BLUE}Progress: [${bar}${BLUE}] ${CYAN}${CURRENT_STEP}/${TOTAL_STEPS}${NC}   \033[K"
+  echo -e "  ${BLUE}Progress: [${bar}${BLUE}] ${CYAN}${CURRENT_STEP}/${TOTAL_STEPS}${NC}"
 }
 
-# Clear all lines from the current step body, leaving cursor on the
-# progress bar line so the next draw_progress overwrites it.
-clear_body() {
-  local n=$BODY_LINES
-  while [ "$n" -gt 0 ]; do
-    printf "\033[1A\033[2K"    # cursor up 1, erase entire line
-    n=$((n - 1))
-  done
-  BODY_LINES=0
-}
-
-# Begin a new step: clear previous body, update progress bar, print header.
 step_header() {
   CURRENT_STEP=$((CURRENT_STEP + 1))
   local desc="$1"
-  clear_body                          # cursor now on progress bar line
-  draw_progress                       # overwrite progress bar in place
-  echo ""                             # body starts here
+  printf "\033[u\033[J"          # restore to anchor, clear to end
+  draw_progress
+  printf "\033[s"                 # save new anchor (after progress bar)
   echo ""
   echo -e "  ${BOLD}Step ${CURRENT_STEP}.${NC} ${desc}"
   echo ""
-  BODY_LINES=4
 }
 
 # Run a command with an animated spinner while suppressed.
-# Output replaces itself on a single line until completion.
 spin() {
   local msg="$1"
   shift
@@ -129,11 +117,10 @@ spin() {
   else
     printf "\r  ${RED}✗${NC} ${msg}    \n"
   fi
-  BODY_LINES=$((BODY_LINES + 1))
   return "$rc"
 }
 
-# Run a short command, showing output live (no spinner).
+# Run a short command, output live (no spinner).
 run() {
   local msg="$1"
   shift
@@ -145,19 +132,19 @@ run() {
     printf "\r  ${RED}✗${NC} ${msg}    \n"
     return "$rc"
   fi
-  BODY_LINES=$((BODY_LINES + 1))
 }
 
-ok_msg()   { echo -e "  ${GREEN}✓${NC} $1"; BODY_LINES=$((BODY_LINES + 1)); }
-warn_msg() { echo -e "  ${YELLOW}⚠${NC} $1"; BODY_LINES=$((BODY_LINES + 1)); }
+ok_msg()   { echo -e "  ${GREEN}✓${NC} $1"; }
+warn_msg() { echo -e "  ${YELLOW}⚠${NC} $1"; }
 fail_msg() { echo -e "  ${RED}✗${NC} $1"; exit 1; }
-info_msg() { echo -e "  ${BLUE}ℹ${NC} $1"; BODY_LINES=$((BODY_LINES + 1)); }
+info_msg() { echo -e "  ${BLUE}ℹ${NC} $1"; }
 
 echo ""
 echo -e "  ${CYAN}╔══════════════════════════════════════╗${NC}"
 echo -e "  ${CYAN}║  ${BOLD}WarTab v${VERSION} — Setup${NC}${CYAN}              ║${NC}"
 echo -e "  ${CYAN}╚══════════════════════════════════════╝${NC}"
 echo ""
+printf "\033[s"   # ← anchor saved here, just after header box
 
 # ── Detect re-run / upgrade mode ──
 # If server.py already exists at the install target, treat this as an
@@ -515,8 +502,8 @@ fi
 HOSTNAME_SHORT=$(hostname -s 2>/dev/null || echo "localhost")
 HOSTNAME_FQDN=$(hostname -f 2>/dev/null || echo "$HOSTNAME_SHORT.local")
 
-# Clear step 8 body before showing final output
-clear_body
+# Clear last step body before showing final output
+printf "\033[u\033[J"
 echo ""
 echo -e "${GREEN}  ┌──────────────────────────────────────────┐${NC}"
 echo -e "${GREEN}  │  ${BOLD}WarTab is up and ready to configure${NC}${GREEN}    │${NC}"
