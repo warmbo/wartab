@@ -205,91 +205,130 @@ const storage = (function() {
     });
   }
 
-  // ── Uploads (stored as data URLs in chrome.storage.local) ──
+  // ── IndexedDB for large file storage (uploads) ──
+  // chrome.storage.local has tight quotas; IndexedDB handles binary blobs
+  // at scale (hundreds of MB+), making it ideal for high-res uploads.
+
+  var _dbPromise = null;
+  var _objectUrls = {};
+
+  function idbOpen() {
+    if (_dbPromise) return _dbPromise;
+    _dbPromise = new Promise(function(resolve, reject) {
+      var req = indexedDB.open('wartab', 1);
+      req.onupgradeneeded = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('uploads')) {
+          db.createObjectStore('uploads', { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = function(e) { resolve(e.target.result); };
+      req.onerror = function(e) { reject(e.target.error); };
+    });
+    return _dbPromise;
+  }
+
+  // Migrate legacy data-URL uploads from chrome.storage.local to IndexedDB
+  function migrateLegacyUploads() {
+    return chromeLocalGet(UPLOADS_KEY).then(function(data) {
+      var legacy = data[UPLOADS_KEY];
+      if (!legacy || !legacy.length) return;
+      return idbOpen().then(function(db) {
+        var tx = db.transaction('uploads', 'readwrite');
+        var store = tx.objectStore('uploads');
+        var promises = legacy.map(function(entry) {
+          // Convert data URL back to blob for IndexedDB storage
+          return fetch(entry.url).then(function(r) { return r.blob(); }).then(function(blob) {
+            store.put({ id: 'up-' + entry.ts, name: entry.name, blob: blob, ts: entry.ts });
+          }).catch(function() { /* skip entries that can't be converted */ });
+        });
+        return Promise.all(promises).then(function() {
+          // Clear legacy storage
+          var clearObj = {}; clearObj[UPLOADS_KEY] = [];
+          return chromeLocalSet(clearObj);
+        });
+      });
+    });
+  }
 
   function listUploads() {
-    return new Promise(function(resolve, reject) {
-      if (_uploadCache !== null) { resolve(_uploadCache); return; }
-      chromeLocalGet(UPLOADS_KEY).then(function(data) {
-        _uploadCache = data[UPLOADS_KEY] || [];
-        resolve(_uploadCache);
-      }).catch(reject);
+    if (_uploadCache !== null) { return Promise.resolve(_uploadCache); }
+    // Attempt legacy migration once on first list
+    return migrateLegacyUploads().then(function() {
+      return idbOpen().then(function(db) {
+        return new Promise(function(resolve, reject) {
+          var tx = db.transaction('uploads', 'readonly');
+          var store = tx.objectStore('uploads');
+          var req = store.getAll();
+          req.onsuccess = function() {
+            var entries = (req.result || []).map(function(entry) {
+              if (_objectUrls[entry.id]) {
+                URL.revokeObjectURL(_objectUrls[entry.id]);
+              }
+              var url = URL.createObjectURL(entry.blob);
+              _objectUrls[entry.id] = url;
+              return {
+                id: entry.id,
+                name: entry.name,
+                url: url,
+                ts: entry.ts,
+                size: entry.blob.size,
+                type: entry.blob.type
+              };
+            });
+            _uploadCache = entries;
+            resolve(entries);
+          };
+          req.onerror = function(e) { reject(e.target.error); };
+        });
+      });
     });
   }
 
   function uploadFile(file, filename) {
     return new Promise(function(resolve, reject) {
-      // Compress images before storing as data URLs to avoid bloat
-      var processFile = function(blob) {
-        var reader = new FileReader();
-        reader.onload = function() {
-          var dataUrl = reader.result;
-          listUploads().then(function(uploads) {
-            var entry = {
-              name: filename,
-              url: dataUrl,
-              ts: Date.now(),
-              size: blob.size
-            };
-            uploads.push(entry);
-            _uploadCache = uploads;
-            var obj = {};
-            obj[UPLOADS_KEY] = uploads;
-            chromeLocalSet(obj).then(function() {
-              resolve(entry);
-            }).catch(function(err) {
-              if (err && err.message && err.message.indexOf('QUOTA') !== -1) {
-                reject(new Error('Storage full — delete unused uploads or background images'));
-              } else {
-                reject(err);
-              }
-            });
-          }).catch(reject);
-        };
-        reader.onerror = function() {
-          reject(new Error('FileReader failed'));
-        };
-        reader.readAsDataURL(blob);
-      };
-
-      if (file.type && file.type.startsWith('image/') && file.type !== 'image/svg+xml' && file.type !== 'image/gif') {
-        // Compress: resize to max 1024px, JPEG quality 0.7
-        var img = new Image();
-        img.onload = function() {
-          var w = img.width, h = img.height;
-          var maxDim = 1024;
-          if (w > maxDim || h > maxDim) {
-            if (w > h) { h = h * maxDim / w; w = maxDim; }
-            else { w = w * maxDim / h; h = maxDim; }
-          }
-          var c = document.createElement('canvas');
-          c.width = Math.round(w); c.height = Math.round(h);
-          var ctx = c.getContext('2d');
-          ctx.drawImage(img, 0, 0, c.width, c.height);
-          c.toBlob(function(compressed) {
-            if (compressed) processFile(compressed);
-            else processFile(file); // fallback to original
-          }, 'image/jpeg', 0.7);
-        };
-        img.onerror = function() { processFile(file); };
-        img.src = URL.createObjectURL(file);
-      } else {
-        processFile(file);
-      }
+      var id = 'up-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+      var blob = file; // store the original full-resolution file as-is
+      idbOpen().then(function(db) {
+        return new Promise(function(resolve2, reject2) {
+          var tx = db.transaction('uploads', 'readwrite');
+          var store = tx.objectStore('uploads');
+          store.put({ id: id, name: filename || file.name || 'file', blob: blob, ts: Date.now() });
+          tx.oncomplete = function() {
+            _uploadCache = null; // invalidate cache
+            var url = URL.createObjectURL(blob);
+            _objectUrls[id] = url;
+            resolve2({ id: id, name: filename || file.name || 'file', url: url, ts: Date.now(), size: blob.size, type: blob.type });
+          };
+          tx.onerror = function(e) { reject2(e.target.error); };
+        });
+      }).then(resolve).catch(reject);
     });
   }
 
   function deleteFile(url) {
     return listUploads().then(function(uploads) {
-      var idx = -1;
+      var match = null;
       for (var i = 0; i < uploads.length; i++) {
-        if (uploads[i].url === url) { idx = i; break; }
+        if (uploads[i].url === url || uploads[i].name === url.split('/').pop()) {
+          match = uploads[i];
+          break;
+        }
       }
-      if (idx >= 0) uploads.splice(idx, 1);
-      _uploadCache = uploads;
-      var obj = {};
-      obj[UPLOADS_KEY] = uploads;
-      return chromeLocalSet(obj);
+      if (!match) return;
+      if (_objectUrls[match.id]) {
+        URL.revokeObjectURL(_objectUrls[match.id]);
+        delete _objectUrls[match.id];
+      }
+      return idbOpen().then(function(db) {
+        return new Promise(function(resolve, reject) {
+          var tx = db.transaction('uploads', 'readwrite');
+          var store = tx.objectStore('uploads');
+          store.delete(match.id);
+          tx.oncomplete = function() { _uploadCache = null; resolve(); };
+          tx.onerror = function(e) { reject(e.target.error); };
+        });
+      });
     });
   }
 
