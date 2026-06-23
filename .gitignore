@@ -8,3 +8,4 @@ uploads/*.png
 uploads/*.jpg
 uploads/*.webp
 uploads/*.gif
+config.json
