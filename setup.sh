@@ -20,10 +20,8 @@
 set -euo pipefail
 
 # ── Derive version from git ──
+# Initial placeholder; updated after clone in step 3.
 GIT_VERSION="dev"
-if command -v git &>/dev/null; then
-  GIT_VERSION=$(git describe --always --tags --dirty 2>/dev/null || echo "dev")
-fi
 
 # ── Root detection ──
 IS_ROOT=false
@@ -314,6 +312,11 @@ fi
 
 cd "${INSTALL_DIR}"
 
+# Re-derive version from the cloned repo
+if command -v git &>/dev/null; then
+  GIT_VERSION=$(git describe --always --tags --dirty 2>/dev/null || echo "dev")
+fi
+
 # ═══════════════════════════════════════════════════════════════
 # Step 4 — Create data directories and initial config
 # ═══════════════════════════════════════════════════════════════
@@ -353,6 +356,17 @@ elif [ -f "icons.tar.gz" ]; then
   spin "Extracting from bundled archive" tar xzf icons.tar.gz
   if [ -f "icons/selfhst-index.json" ]; then
     ok_msg "Service icons extracted (icons/)"
+    # Verify — count SVGs and index entries, warn if too few
+    svg_count=$(find icons/ -maxdepth 1 -name '*.svg' 2>/dev/null | wc -l)
+    idx_entries=$(python3 -c "import json; d=json.load(open('icons/selfhst-index.json')); print(len(d))" 2>/dev/null || echo "0")
+    svg_expected=$(python3 -c "import json; d=json.load(open('icons/selfhst-index.json')); print(sum(1 for x in d if x.get('SVG')=='Yes'))" 2>/dev/null || echo "0")
+    if [ "$svg_count" -lt 100 ]; then
+      warn_msg "Only ${svg_count} SVGs found (expected ~${svg_expected}) — icon picker may be incomplete"
+    elif [ "$svg_count" -lt "$svg_expected" ]; then
+      ok_msg "${svg_count} SVGs present (${svg_expected} in index — ${idx_entries} total entries)"
+    else
+      ok_msg "${svg_count} SVGs present, ${idx_entries} index entries"
+    fi
   else
     warn_msg "Archive extraction failed — expected icons/selfhst-index.json not found"
     warn_msg "  Run: cd ${INSTALL_DIR} && tar xzf icons.tar.gz"
