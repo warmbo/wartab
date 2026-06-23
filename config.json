@@ -274,50 +274,6 @@
           "graphMode": false
         }
       ]
-    },
-    {
-      "id": "card-jc555r2mqr4ofae",
-      "title": "",
-      "icon": "package",
-      "color": "#888888",
-      "width": 1,
-      "height": 1,
-      "sections": [
-        {
-          "id": "sec-tbpfthmmqr4qlaw",
-          "type": "api-poller",
-          "label": "Api poller",
-          "links": [
-            {
-              "label": "Example",
-              "url": "https://example.com",
-              "icon": "link"
-            }
-          ],
-          "url": "https://YOUR-SITE.herokuapp.com/api/v1/entries.json?count=1",
-          "method": "GET",
-          "headers": {},
-          "refreshInterval": 60,
-          "display": "block",
-          "mappings": [
-            {
-              "field": "0.sgv",
-              "label": "Glucose",
-              "format": "text"
-            },
-            {
-              "field": "0.direction",
-              "label": "Trend",
-              "format": "text"
-            },
-            {
-              "field": "0.dateString",
-              "label": "Time",
-              "format": "text"
-            }
-          ]
-        }
-      ]
     }
   ],
   "pages": {
@@ -542,50 +498,6 @@
               "graphMode": false
             }
           ]
-        },
-        {
-          "id": "card-jc555r2mqr4ofae",
-          "title": "",
-          "icon": "package",
-          "color": "#888888",
-          "width": 1,
-          "height": 1,
-          "sections": [
-            {
-              "id": "sec-tbpfthmmqr4qlaw",
-              "type": "api-poller",
-              "label": "Api poller",
-              "links": [
-                {
-                  "label": "Example",
-                  "url": "https://example.com",
-                  "icon": "link"
-                }
-              ],
-              "url": "https://YOUR-SITE.herokuapp.com/api/v1/entries.json?count=1",
-              "method": "GET",
-              "headers": {},
-              "refreshInterval": 60,
-              "display": "block",
-              "mappings": [
-                {
-                  "field": "0.sgv",
-                  "label": "Glucose",
-                  "format": "text"
-                },
-                {
-                  "field": "0.direction",
-                  "label": "Trend",
-                  "format": "text"
-                },
-                {
-                  "field": "0.dateString",
-                  "label": "Time",
-                  "format": "text"
-                }
-              ]
-            }
-          ]
         }
       ]
     }
@@ -594,5 +506,5 @@
     "page-z14eg1umqptx854"
   ],
   "currentPage": "page-z14eg1umqptx854",
-  "_version": "extension-7f80e44-4-gfb042b3"
+  "_version": "cd93b49-dirty"
 }
