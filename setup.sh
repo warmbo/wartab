@@ -19,7 +19,11 @@
 # ═══════════════════════════════════════════════════════════════
 set -euo pipefail
 
-VERSION="0.6.0"
+# ── Derive version from git ──
+GIT_VERSION="dev"
+if command -v git &>/dev/null; then
+  GIT_VERSION=$(git describe --always --tags --dirty 2>/dev/null || echo "dev")
+fi
 
 # ── Root detection ──
 IS_ROOT=false
@@ -70,28 +74,51 @@ BOLD='\033[1m'; DIM='\033[2m'
 
 TOTAL_STEPS=8
 CURRENT_STEP=0
+COMPLETED_STEPS=()    # descriptions of finished steps (shown with ✓)
+STEP_HEADER=""         # current step description
 
-# Uses ANSI save/restore cursor + clear-to-end-of-display.
-# After the header box, one \033[s saves the anchor position.
-# Each step restores to that anchor, clears everything below (\033[J),
-# redraws progress bar, saves the new anchor, then prints step body.
-draw_progress() {
+# Redraw the entire screen from scratch.
+# No ANSI cursor-restore — uses clear + full redraw so it works on any terminal.
+redraw() {
+  clear 2>/dev/null || printf "\033[2J\033[H"
+  echo ""
+  echo -e "  ${CYAN}╔══════════════════════════════════════╗${NC}"
+  echo -e "  ${CYAN}║  ${BOLD}WarTab ${GIT_VERSION} — Setup${NC}${CYAN}             ║${NC}"
+  echo -e "  ${CYAN}╚══════════════════════════════════════╝${NC}"
+  echo ""
+  # Progress bar
   local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
   local filled=$((pct * 20 / 100))
   local bar=""
   for ((i=0; i<filled; i++)); do bar+="█"; done
   for ((i=filled; i<20; i++)); do bar+="░"; done
   echo -e "  ${BLUE}Progress: [${bar}${BLUE}] ${CYAN}${CURRENT_STEP}/${TOTAL_STEPS}${NC}"
+  echo ""
+  # Completed steps
+  for ((i=0; i<${#COMPLETED_STEPS[@]}; i++)); do
+    echo -e "  ${GREEN}✓${NC} ${COMPLETED_STEPS[i]}"
+  done
+  # Current step header
+  if [ -n "$STEP_HEADER" ]; then
+    echo -e "  ${BOLD}${STEP_HEADER}${NC}"
+    echo ""
+  fi
+}
+
+draw_progress() {
+  # No-op: progress is drawn inside redraw()
+  :
 }
 
 step_header() {
   CURRENT_STEP=$((CURRENT_STEP + 1))
   local desc="$1"
-  printf "\033[u\033[J"          # restore to fixed anchor, clear below
-  draw_progress
-  echo ""
-  echo -e "  ${BOLD}Step ${CURRENT_STEP}.${NC} ${desc}"
-  echo ""
+  # Archive the previous step description so redraw() shows it as ✓
+  if [ -n "$STEP_HEADER" ]; then
+    COMPLETED_STEPS+=("$STEP_HEADER")
+  fi
+  STEP_HEADER="Step ${CURRENT_STEP}. ${desc}"
+  redraw
 }
 
 # Run a command with an animated spinner while suppressed.
@@ -102,19 +129,18 @@ spin() {
   local pid=$!
   local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
   local i=0
-  printf "  ${CYAN}⠿${NC} ${msg}..."
   while kill -0 $pid 2>/dev/null; do
     local c="${chars:$i:1}"
-    printf "\r  ${CYAN}${c}${NC} ${msg}..."
+    printf "\r  ${CYAN}${c}${NC} ${msg}...   \033[K"
     i=$(( (i + 1) % 10 ))
     sleep 0.08
   done
   wait $pid 2>/dev/null || true
   local rc=$?
   if [ "$rc" -eq 0 ]; then
-    printf "\r  ${GREEN}✓${NC} ${msg}    \n"
+    printf "\r  ${GREEN}✓${NC} ${msg}   \033[K\n"
   else
-    printf "\r  ${RED}✗${NC} ${msg}    \n"
+    printf "\r  ${RED}✗${NC} ${msg}   \033[K\n"
   fi
   return "$rc"
 }
@@ -125,10 +151,10 @@ run() {
   shift
   printf "  ${CYAN}⠿${NC} ${msg}..."
   if "$@" 2>&1; then
-    printf "\r  ${GREEN}✓${NC} ${msg}    \n"
+    printf "\r  ${GREEN}✓${NC} ${msg}   \033[K\n"
   else
     local rc=$?
-    printf "\r  ${RED}✗${NC} ${msg}    \n"
+    printf "\r  ${RED}✗${NC} ${msg}   \033[K\n"
     return "$rc"
   fi
 }
@@ -140,10 +166,9 @@ info_msg() { echo -e "  ${BLUE}ℹ${NC} $1"; }
 
 echo ""
 echo -e "  ${CYAN}╔══════════════════════════════════════╗${NC}"
-echo -e "  ${CYAN}║  ${BOLD}WarTab v${VERSION} — Setup${NC}${CYAN}              ║${NC}"
+echo -e "  ${CYAN}║  ${BOLD}WarTab ${GIT_VERSION} — Setup${NC}${CYAN}             ║${NC}"
 echo -e "  ${CYAN}╚══════════════════════════════════════╝${NC}"
 echo ""
-printf "\033[s"   # ← anchor saved here, just after header box
 
 # ── Detect re-run / upgrade mode ──
 # If server.py already exists at the install target, treat this as an
@@ -503,11 +528,15 @@ fi
 # Done
 # ═══════════════════════════════════════════════════════════════
 
+# Archive the last step and show final display
+if [ -n "$STEP_HEADER" ]; then
+  COMPLETED_STEPS+=("$STEP_HEADER")
+fi
+CURRENT_STEP=$TOTAL_STEPS
+redraw
+
 HOSTNAME_SHORT=$(hostname -s 2>/dev/null || echo "localhost")
 HOSTNAME_FQDN=$(hostname -f 2>/dev/null || echo "$HOSTNAME_SHORT.local")
-
-# Clear last step body before showing final output
-printf "\033[u\033[J"
 echo ""
 echo -e "${GREEN}  ┌──────────────────────────────────────────┐${NC}"
 echo -e "${GREEN}  │  ${BOLD}WarTab is up and ready to configure${NC}${GREEN}    │${NC}"
