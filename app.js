@@ -1140,8 +1140,7 @@ function saveConfig() {
   try {
     storage.saveConfig(cfg).then(function(){}, function(err){
       console.error('saveConfig failed:', err);
-      var msg = storage.IS_EXTENSION ? 'Config save failed' : 'Config save failed — check server';
-      toast(msg, 'error');
+      toast(err.message || 'Config save failed', 'error');
     });
   } catch(e) {
     // Fallback: chrome.storage.local in extension mode, server POST otherwise

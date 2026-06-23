@@ -25,7 +25,11 @@ const storage = (function() {
       }
     }
     return fetch(BASE + path, opts).then(function(r) {
-      if (!r.ok) throw new Error(r.statusText);
+      if (!r.ok) return r.json().then(function(e) {
+        throw new Error(e.error || r.statusText);
+      }).catch(function() {
+        throw new Error(r.statusText);
+      });
       var ct = r.headers.get('Content-Type') || '';
       return ct.includes('application/json') ? r.json() : r.text();
     });
