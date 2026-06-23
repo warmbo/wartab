@@ -25,7 +25,7 @@ MIME_TYPES = {".html":"text/html",".css":"text/css",".js":"application/javascrip
 CORS_HEADERS = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"GET,POST,DELETE,OPTIONS","Access-Control-Allow-Headers":"Content-Type,X-Filename"}
 try: from PIL import Image, ImageOps; HAVE_PIL=True
 except ImportError: HAVE_PIL=False
-MAX_W,MAX_H,MAX_BYTES=1024,1024,5*1024*1024
+MAX_W,MAX_H,MAX_BYTES=99999,99999,20*1024*1024
 
 def validate_config(data):
     """Basic schema validation before writing config.json."""
