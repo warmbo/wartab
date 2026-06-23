@@ -5,8 +5,8 @@
     "icon": "sword"
   },
   "theme": {
-    "bgType": "image",
-    "bgValue": "/uploads/2229f7d022b64017a561894e40d45319.png",
+    "bgType": "gradient",
+    "bgValue": "#0a0a0a, #1a1a1a, #0d0d0d",
     "bgBlur": 0,
     "bgDim": 0,
     "blur": 20,
@@ -16,7 +16,7 @@
     "fontFamily": "Inter",
     "cardBg": "dark",
     "fontColor": "#cccccc",
-    "cardOpacity": 0.6,
+    "cardOpacity": 1,
     "bgRotate": false,
     "animations": true,
     "showAccentBar": true
@@ -223,11 +223,6 @@
               "label": "Docker",
               "url": "https://docs.docker.com",
               "icon": "/icons/docker.svg"
-            },
-            {
-              "label": "New",
-              "url": "https://",
-              "icon": "link"
             }
           ]
         }
@@ -259,13 +254,7 @@
         {
           "id": "sec-wkrgknamqpup0w4",
           "type": "digital-pet",
-          "label": "Digital Pet",
-          "lastFed": 1782248060484,
-          "hunger": 100,
-          "happiness": 100,
-          "waste": 0,
-          "lastPetted": 1782248060875,
-          "lastCleaned": 1782248061641
+          "label": "Digital Pet"
         }
       ]
     },
@@ -458,11 +447,6 @@
                   "label": "Docker",
                   "url": "https://docs.docker.com",
                   "icon": "/icons/docker.svg"
-                },
-                {
-                  "label": "New",
-                  "url": "https://",
-                  "icon": "link"
                 }
               ]
             }
@@ -494,13 +478,7 @@
             {
               "id": "sec-wkrgknamqpup0w4",
               "type": "digital-pet",
-              "label": "Digital Pet",
-              "lastFed": 1782248060484,
-              "hunger": 100,
-              "happiness": 100,
-              "waste": 0,
-              "lastPetted": 1782248060875,
-              "lastCleaned": 1782248061641
+              "label": "Digital Pet"
             }
           ]
         },
@@ -528,5 +506,5 @@
     "page-z14eg1umqptx854"
   ],
   "currentPage": "page-z14eg1umqptx854",
-  "_version": "extension-7f80e44-4-gfb042b3"
+  "_version": "cd93b49-dirty"
 }
