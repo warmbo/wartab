@@ -545,8 +545,8 @@ fi
 # Archive last step so it gets a checkmark alongside the rest
 if [ -n "$STEP_HEADER" ]; then
   COMPLETED_STEPS+=("$STEP_HEADER")
-  STEP_HEADER=""
 fi
+STEP_HEADER=""
 CURRENT_STEP=$TOTAL_STEPS
 redraw
 
