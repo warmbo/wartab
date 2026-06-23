@@ -75,7 +75,7 @@ const storage = (function() {
 
   // ── Icons ──
   function getIconIndex() {
-    return api('/icons/selfhst-index.json', 'GET');
+    return api('/icons/selfhst-index.json?t=' + Date.now(), 'GET');
   }
 
   return {

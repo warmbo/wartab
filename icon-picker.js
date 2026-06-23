@@ -57,12 +57,12 @@ function buildUploadTab(c){
   c.appendChild(gal);
 }
 function buildIconsTab(c){
-  const s=document.createElement('input');s.className='icon-search-bar';s.placeholder='Search icons or emoji...';c.appendChild(s);
+  const s=document.createElement('input');s.className='icon-search-bar';s.placeholder='Search icons...';c.appendChild(s);
   const etab=document.createElement('div');etab.style.cssText='display:flex;gap:4px;margin-bottom:8px;';
   const btnSvg=document.createElement('button');btnSvg.className='btn btn-glass btn-sm';btnSvg.textContent='SVG Icons';btnSvg.style.cssText='flex:1;';
   const btnEmoji=document.createElement('button');btnEmoji.className='btn btn-glass btn-sm';btnEmoji.textContent='Emoji';btnEmoji.style.cssText='flex:1;';
   etab.appendChild(btnSvg);etab.appendChild(btnEmoji);c.appendChild(etab);
-  const g=document.createElement('div');g.className='icon-grid';g.style.gridTemplateColumns='repeat(auto-fill,minmax(52px,1fr))';c.appendChild(g);
+  const g=document.createElement('div');g.className='icon-grid';g.style.gridTemplateColumns='repeat(auto-fill,minmax(42px,1fr))';c.appendChild(g);
   var _mode='svg';
   function getAllLucideIcons(){
     if(typeof lucide!=='undefined'&&lucide.icons)return Object.keys(lucide.icons).sort();
@@ -74,16 +74,15 @@ function buildIconsTab(c){
       var allIcons=getAllLucideIcons();
       var items=fl?allIcons.filter(function(n){return n.toLowerCase().includes(fl);}):allIcons;
       if(!items.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No icons found</div>';return;}
-      var batchSize=80;
+      var batchSize=120;
       var idx=0;
       function renderBatch(){
         var end=Math.min(idx+batchSize,items.length);
         for(;idx<end;idx++){
           var name=items[idx];
-          var d=document.createElement('div');d.className='icon-grid-item';d.style.cssText='flex-direction:column;gap:2px;padding:6px 2px;';
-          var i=document.createElement('i');i.setAttribute('data-lucide',name);i.style.cssText='width:20px;height:20px;';
-          var l=document.createElement('span');l.style.cssText='font-size:var(--text-3xs);text-align:center;overflow:hidden;text-overflow:ellipsis;max-width:52px;white-space:nowrap;';l.textContent=name;
-          d.appendChild(i);d.appendChild(l);
+          var d=document.createElement('div');d.className='icon-grid-item';d.style.cssText='padding:6px;';
+          var i=document.createElement('i');i.setAttribute('data-lucide',name);i.style.cssText='width:28px;height:28px;';
+          d.appendChild(i);
           d.addEventListener('click',function(n){return function(){selectIcon(n);};}(name));g.appendChild(d);
         }
         if(idx<items.length)requestAnimationFrame(renderBatch);
