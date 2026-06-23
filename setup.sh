@@ -542,9 +542,16 @@ fi
 # Done
 # ═══════════════════════════════════════════════════════════════
 
+# Archive last step so it gets a checkmark alongside the rest
+if [ -n "$STEP_HEADER" ]; then
+  COMPLETED_STEPS+=("$STEP_HEADER")
+  STEP_HEADER=""
+fi
+CURRENT_STEP=$TOTAL_STEPS
+redraw
+
 HOSTNAME_SHORT=$(hostname -s 2>/dev/null || echo "localhost")
 HOSTNAME_FQDN=$(hostname -f 2>/dev/null || echo "$HOSTNAME_SHORT.local")
-# Skip redraw — keep last step's status messages on screen
 echo ""
 echo -e "${GREEN}  ┌──────────────────────────────────────────┐${NC}"
 echo -e "${GREEN}  │  ${BOLD}WarTab is up and ready to configure${NC}${GREEN}    │${NC}"
