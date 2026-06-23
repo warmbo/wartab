@@ -1,0 +1,71 @@
+# Build and release the extension on every push to the `extension` branch.
+#
+# Each push produces a release tagged extension-{commit-hash} with
+# packaged .zips for Chrome, Edge, and Firefox. The most recent push
+# is also marked as "latest" so users always find the freshest build.
+#
+# Download → unzip → chrome://extensions → Developer mode → Load unpacked
+
+name: extension
+
+on:
+  push:
+    branches: [extension]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Build extension packages
+        run: bash extension/build.sh all
+
+      - name: Derive git hash
+        id: vars
+        run: echo "hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: extension-${{ steps.vars.outputs.hash }}
+          name: WarTab Extension — ${{ steps.vars.outputs.hash }}
+          target_commitish: extension
+          make_latest: true
+          fail_on_unmatched_files: true
+          body: |
+            Auto-built from commit `${{ steps.vars.outputs.hash }}`.
+
+            ### Download & Install
+
+            | Platform | File |
+            |----------|------|
+            | Chrome   | `wartab-chrome-${{ steps.vars.outputs.hash }}.zip` |
+            | Edge     | `wartab-edge-${{ steps.vars.outputs.hash }}.zip` |
+            | Firefox  | `wartab-firefox-${{ steps.vars.outputs.hash }}.zip` |
+
+            **Chrome / Edge:**
+            1. Download the ZIP for your browser
+            2. Unzip: `unzip wartab-*.zip -d ~/wartab`
+            3. Open `chrome://extensions` (or `edge://extensions`)
+            4. Enable **Developer mode** (toggle top-right)
+            5. Click **Load unpacked** → select the unzipped folder
+            6. Open a new tab
+
+            **Firefox (temporary):**
+            1. Download `wartab-firefox-${{ steps.vars.outputs.hash }}.zip`
+            2. Open `about:debugging#/runtime/this-firefox`
+            3. Click **Load Temporary Add-on** → select the ZIP
+
+          files: |
+            dist/wartab-chrome-*.zip
+            dist/wartab-edge-*.zip
+            dist/wartab-firefox-*.zip

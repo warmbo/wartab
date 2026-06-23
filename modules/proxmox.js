@@ -4,7 +4,6 @@
    - Node status (online/offline, CPU, memory)
    - VM & LXC counts (total / running)
    Uses Proxmox API tokens for auth.
-   All requests via /api/proxy to bypass CORS.
    ═══════════════════════════════════════════ */
 
 registerModule('proxmox', {
@@ -25,17 +24,10 @@ registerModule('proxmox', {
     const headers = { 'Authorization': 'Basic ' + auth };
 
     function fetchJson(endpoint) {
-      return fetch('/api/proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: base + endpoint,
-          method: 'GET',
-          headers: headers
-        })
-      }).then(r => r.json()).then(r => {
-        if (r.error) throw new Error(r.error);
-        const data = r.body;
+      return fetch(base + endpoint, { headers: headers }).then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(data => {
         if (data && data.data !== undefined) return data.data;
         return data;
       });

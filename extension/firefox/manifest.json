@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "WarTab",
+  "version": "0.0.0",
+  "version_name": "0.0.0-dev",
+  "description": "Self-hosted new tab dashboard — glassmorphic cards, widgets, and full customization.",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "system.cpu",
+    "system.memory",
+    "system.storage"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "icons": {
+    "16": "icons/extension-16.png",
+    "48": "icons/extension-48.png",
+    "128": "icons/extension-128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "static/*",
+        "icons/*",
+        "modules/*",
+        "*.js",
+        "*.css",
+        "*.html"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "wartab@warmbo",
+      "strict_min_version": "109.0"
+    }
+  }
+}

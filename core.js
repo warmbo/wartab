@@ -6,7 +6,7 @@
 
 /* ── Card Type Modules registry ── */
 const WARTAB_VERSION = 'dev';
-let WARTAB_BUILD = '';
+var WARTAB_BUILD = '';
 const CARD_MODULES = {};
 function registerModule(type, module){ CARD_MODULES[type]=module; }
 

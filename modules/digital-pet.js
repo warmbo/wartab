@@ -71,29 +71,28 @@ registerModule('digital-pet', {
     // Network speech
     var _sayTimer,_walkTimer,_blinkTimer,_wagTimer;
     function fetchNetFact(){
-      fetch('/api/stats').then(function(r){
-        if(r.status===401){throw{retry:true};}
-        return r.json();
-      }).then(function(d){
+      storage.getStats('local', '').then(function(d){
         var facts=[];
         if(d.hostname)facts.push('Hello, '+d.hostname+' here!');
-        if(d.uptime)facts.push("I've been up "+d.uptime.string+" ... getting sleepy.");
+        if(d.uptime&&d.uptime.string)facts.push("I've been up "+d.uptime.string+" ... getting sleepy.");
         if(typeof d.cpu==='number'){
           if(d.cpu>80)facts.push('CPU is '+d.cpu+"% ... that's hot!");
           else if(d.cpu<10)facts.push('CPU is only '+d.cpu+'% ... so quiet.');
           else facts.push("CPU chillin' at "+d.cpu+'%.');
         }
         if(d.memory){
-          var m=Math.round(d.memory.percent);
-          if(m>80)facts.push('RAM is '+m+"% full ... need more sticks!");
-          else if(m<30)facts.push('Plenty of RAM free ... '+m+'% used.');
-          else facts.push('Memory looking good at '+m+'%.');
+          var memPct = d.memory.percent !== undefined ? d.memory.percent :
+            (d.memory.total > 0 ? Math.round(d.memory.active / d.memory.total * 100) : 0);
+          if(memPct>80)facts.push('RAM is '+memPct+"% full ... need more sticks!");
+          else if(memPct<30)facts.push('Plenty of RAM free ... '+memPct+'% used.');
+          else facts.push('Memory looking good at '+memPct+'%.');
         }
         if(d.disks&&d.disks[0]){
-          var ds=Math.round(d.disks[0].percent);
-          if(ds>90)facts.push('Disk is '+ds+"% full ... yikes!");
-          else if(ds>70)facts.push('Disk at '+ds+"% ... might want to clean up.");
-          else facts.push('Disk has plenty of space ... '+ds+'% used.');
+          var diskPct = d.disks[0].percent !== undefined ? d.disks[0].percent :
+            (d.disks[0].total > 0 ? Math.round(d.disks[0].used / d.disks[0].total * 100) : 0);
+          if(diskPct>90)facts.push('Disk is '+diskPct+"% full ... yikes!");
+          else if(diskPct>70)facts.push('Disk at '+diskPct+"% ... might want to clean up.");
+          else facts.push('Disk has plenty of space ... '+diskPct+'% used.');
         }
         facts.push('The network looks good.');
         facts.push("What's going on with 10.0.0.x?");

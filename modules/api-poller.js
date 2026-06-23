@@ -7,7 +7,6 @@
    - Scale, suffix, prefix
    - Display modes: block, list
    - Custom headers & HTTP methods
-   - Optional proxy routing (bypass CORS via /api/proxy)
    ═══════════════════════════════════════════ */
 
 /* ── Format helpers ── */
@@ -82,21 +81,9 @@ function getNested(obj, path) {
   return current;
 }
 
-/* ── API fetch wrapper — decides direct vs proxy ── */
+/* ── API fetch wrapper — direct fetch (no proxy needed) ── */
 
-function apiFetch(url, method, headers, body, useProxy) {
-  if (useProxy) {
-    // Route through WarTab's proxy to bypass CORS
-    return fetch('/api/proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, method: method || 'GET', headers: headers || {}, body: body || null })
-    }).then(r => r.json()).then(resp => {
-      if (resp.error) throw new Error(resp.error);
-      return resp.body;
-    });
-  }
-  // Direct fetch (must have CORS or same-origin)
+function apiFetch(url, method, headers, body) {
   const opts = { method: method || 'GET' };
   if (headers && Object.keys(headers).length) opts.headers = headers;
   if (body) opts.body = typeof body === 'string' ? body : JSON.stringify(body);
@@ -112,7 +99,7 @@ function apiFetch(url, method, headers, body, useProxy) {
 registerModule('api-poller', {
   defaults: {
     url: '', method: 'GET', headers: {}, refreshInterval: 60,
-    display: 'block', useProxy: false,
+    display: 'block',
     mappings: [{ field: '', label: 'Value', format: 'text' }]
   },
 
@@ -146,7 +133,7 @@ registerModule('api-poller', {
         escHtml(sec.label || '') +
         '</span><span class="api-value">Loading...</span></div>';
 
-      apiFetch(url, sec.method, sec.headers, null, sec.useProxy)
+      apiFetch(url, sec.method, sec.headers, null)
         .then(data => {
           const mappings = sec.mappings || [];
           if (!mappings.length) {
@@ -253,19 +240,6 @@ registerModule('api-poller', {
     });
     methodSel.addEventListener('change', () => { sec.method = methodSel.value; saveConfig(); });
     bd.appendChild(methodSel);
-
-    // Use proxy toggle
-    const proxyRow = document.createElement('div');
-    proxyRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:12px;';
-    const proxyChk = document.createElement('input'); proxyChk.type = 'checkbox';
-    proxyChk.checked = !!sec.useProxy;
-    proxyChk.addEventListener('change', () => { sec.useProxy = proxyChk.checked; saveConfig(); });
-    proxyRow.appendChild(proxyChk);
-    const proxyLbl = document.createElement('span');
-    proxyLbl.style.cssText = 'font-size:var(--text-sm);color:var(--text-secondary);';
-    proxyLbl.textContent = 'Route through proxy (bypass CORS)';
-    proxyRow.appendChild(proxyLbl);
-    bd.appendChild(proxyRow);
 
     bd.appendChild(cpRange('Refresh (seconds)', sec.refreshInterval || 60, 5, 600,
       v => { sec.refreshInterval = parseInt(v); saveConfig(); }));

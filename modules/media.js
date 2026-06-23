@@ -3,7 +3,6 @@
    Unified dashboard for media services.
    Supports: Sonarr, Radarr, Plex (extensible).
    Each service configured with type + url + key.
-   All data fetched in parallel via /api/proxy.
    ═══════════════════════════════════════════ */
 
 /* ── Service definitions (presets) ── */
@@ -77,16 +76,12 @@ function mediaGroupHeader(label, statusDot) {
   return hdr;
 }
 
-/* ── Proxy fetch helper ── */
+/* ── Direct fetch helper (no proxy needed in extension mode) ── */
 
 function mediaFetch(url, headers) {
-  return fetch('/api/proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url, method: 'GET', headers })
-  }).then(r => r.json()).then(r => {
-    if (r.error) throw new Error(r.error);
-    return r.body;
+  return fetch(url, { headers: headers || {} }).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
   });
 }
 

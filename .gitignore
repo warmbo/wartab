@@ -1,6 +1,8 @@
 __pycache__/
 snapshots/
-icons/
+dist/
+# icons/ is tracked for extension bundling (selfhst-index.json, extension PNGs)
+uploads/
 uploads/*.svg
 uploads/*.png
 uploads/*.jpg

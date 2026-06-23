@@ -20,46 +20,7 @@
 function fetchLanScan(el){
   const body=el.querySelector('.lan-scan-body');
   if(!body)return;
-  const dot=el.querySelector('.lan-scan-dot');
-  if(dot)dot.style.background='var(--accent)';
-  fetch('/api/arp').then(function(r){return r.json();}).then(function(d){
-    if(dot){dot.style.background='';}
-    const now=Date.now(),ts=new Date();
-    const timeStr=String(ts.getHours()).padStart(2,'0')+':'+String(ts.getMinutes()).padStart(2,'0')+':'+String(ts.getSeconds()).padStart(2,'0');
-    const countEl=el.querySelector('.lan-scan-count');
-    if(countEl)countEl.textContent=d.count+' hosts';
-    // Load last 3 scans from localStorage to compare for new devices
-    const histKey='wartab_lan_history';
-    let history=[];
-    try{history=JSON.parse(localStorage.getItem(histKey)||'[]');}catch(e){}
-    if(!Array.isArray(history))history=[];
-    // Collect all MACs seen in the last 3 scans
-    const seenInLast3={};
-    history.forEach(function(h){(h.macs||[]).forEach(function(m){seenInLast3[m]=true;});});
-    let html='';
-    const currentMacs=[];
-    html+='<div class="lan-scan-line lan-scan-ts">['+timeStr+'] scan '+((history.length||0)+1)+' \u2014 '+d.count+' device'+(d.count!==1?'s':'')+' on network</div>';
-    (d.devices||[]).forEach(function(dev){
-      currentMacs.push(dev.mac);
-      const isNew=!seenInLast3[dev.mac];
-      const cls=isNew?'lan-scan-new':'lan-scan-line';
-      const tag=isNew?' \u25c2 NEW':'';
-      const hn = dev.hostname ? ' <span class="lan-scan-hostname">' + escHtml(dev.hostname) + '</span>' : '';
-      html+='<div class="'+cls+'">['+timeStr+'] <span class="lan-scan-ip">'+dev.ip+'</span> \u2192 '+dev.mac+'  <span class="lan-scan-vendor">'+escHtml(dev.vendor)+'</span>'+hn+tag+'</div>';
-    });
-    // Push this scan into history, keep last 3
-    history.push({macs:currentMacs,ts:now});
-    if(history.length>3)history=history.slice(-3);
-    try{localStorage.setItem(histKey,JSON.stringify(history));}catch(e){}
-    body.innerHTML=html;
-    const iv=parseInt(el.dataset.refresh)*1000;
-    if(iv>0)setTimeout(function(){fetchLanScan(el);},iv);
-  }).catch(function(e){
-    if(dot){dot.style.background='';}
-    body.innerHTML='<div class="lan-scan-line lan-scan-err">[ --:--:-- ] error: '+escHtml(e.message)+'</div>';
-    const iv=parseInt(el.dataset.refresh)*1000;
-    if(iv>0)setTimeout(function(){fetchLanScan(el);},iv);
-  });
+  body.innerHTML='<div class="lan-scan-line" style="color:var(--text-tertiary);padding:12px;text-align:center;">LAN scan requires the self-hosted WarTab server running on your network.</div>';
 }
 
 
@@ -1134,19 +1095,31 @@ async function loadConfig() {
     config = cloneObj(DEFAULT_CONFIG);
   }
 }
-// Save config to server — fire-and-forget POST
+// Save config — uses chrome.storage in extension mode, server API otherwise
 function saveConfig() {
   const cfg = cloneObj(config);
   try {
     storage.saveConfig(cfg).then(function(){}, function(err){
       console.error('saveConfig failed:', err);
-      toast('Config save failed — check server', 'error');
+      var msg = storage.IS_EXTENSION ? 'Config save failed' : 'Config save failed — check server';
+      toast(msg, 'error');
     });
   } catch(e) {
-    fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cfg), keepalive: true }).catch(function(err){
-      console.error('saveConfig fallback failed:', err);
-      toast('Config save failed — server unreachable', 'error');
-    });
+    // Fallback: chrome.storage.local in extension mode, server POST otherwise
+    if (storage.IS_EXTENSION) {
+      try {
+        var obj = {}; obj['wartab_config_fallback'] = cloneObj(config);
+        chrome.storage.local.set(obj, function(){});
+      } catch(e2) {
+        console.error('saveConfig extension fallback failed:', e2);
+        toast('Config save failed', 'error');
+      }
+    } else {
+      fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cfg), keepalive: true }).catch(function(err){
+        console.error('saveConfig fallback failed:', err);
+        toast('Config save failed — server unreachable', 'error');
+      });
+    }
   }
 }
 // Deep-merge stored config over defaults (arrays replaced, objects recursed)
@@ -2295,7 +2268,8 @@ async function init() {
   }
   renderAll(); renderPageNav(); initStatusBar();
   // Build version from config metadata (set by server as git hash)
-  WARTAB_BUILD = config._version || WARTAB_VERSION;
+  // Build version: build-meta.js > config metadata > fallback
+  WARTAB_BUILD = WARTAB_BUILD || config._version || WARTAB_VERSION;
   // Footer — build version from config
   $('#footer-text').textContent='WarTab '+WARTAB_BUILD+'  [?] shortcuts';
   loadIconRepo();

@@ -5,7 +5,6 @@
    - Latest CI/build status
    - Clickable link to the repo
    Supports: GitHub, Gitea, Forgejo, GitLab.
-   All requests via /api/proxy to bypass CORS.
    ═══════════════════════════════════════════ */
 
 const GIT_FORGES = {
@@ -113,14 +112,10 @@ registerModule('git', {
     const repoUrl = forge.repoUrl(sec.url, sec.owner, sec.repo);
     const apiUrl = forge.apiUrl(sec.url, sec.owner, sec.repo);
 
-    function proxyFetch(url) {
-      return fetch('/api/proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, method: 'GET', headers })
-      }).then(r => r.json()).then(r => {
-        if (r.error) throw new Error(r.error);
-        return r.body;
+    function directFetch(url) {
+      return fetch(url, { headers: headers }).then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
       });
     }
 
@@ -168,12 +163,12 @@ registerModule('git', {
     }
 
     const promises = [
-      proxyFetch(apiUrl).then(forge.parseRepo).catch(() => ({ stars: '—', language: '—', description: '', updated: null, openIssues: '—', forks: '—' })),
+      directFetch(apiUrl).then(forge.parseRepo).catch(() => ({ stars: '—', language: '—', description: '', updated: null, openIssues: '—', forks: '—' })),
     ];
 
     if (sec.showCi) {
       const ciUrl = forge.ciUrl(sec.url, sec.owner, sec.repo);
-      promises.push(proxyFetch(ciUrl).then(forge.parseCi).catch(() => null));
+      promises.push(directFetch(ciUrl).then(forge.parseCi).catch(() => null));
     } else {
       promises.push(Promise.resolve(null));
     }
