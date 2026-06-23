@@ -66,41 +66,56 @@ done
 # ═══════════════════════════════════════════════════════════════
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
-BOLD='\033[1m'; DIM='\033[2m'; CLR='\033[2K\r'
-UP='\033[1A'
+BOLD='\033[1m'; DIM='\033[2m'
 
 TOTAL_STEPS=8
 CURRENT_STEP=0
+BODY_LINES=0        # number of lines in the current step body (below progress bar)
 
+# Draw overall progress bar on the CURRENT line. Uses \r to overwrite in place.
 draw_progress() {
   local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
   local filled=$((pct * 20 / 100))
   local bar=""
   for ((i=0; i<filled; i++)); do bar+="█"; done
   for ((i=filled; i<20; i++)); do bar+="░"; done
-  printf "${CLR}${BLUE}  Progress: [${bar}${BLUE}] ${CYAN}${CURRENT_STEP}/${TOTAL_STEPS}${NC}"
+  printf "\r  ${BLUE}Progress: [${bar}${BLUE}] ${CYAN}${CURRENT_STEP}/${TOTAL_STEPS}${NC}   \033[K"
 }
 
+# Clear all lines from the current step body, leaving cursor on the
+# progress bar line so the next draw_progress overwrites it.
+clear_body() {
+  local n=$BODY_LINES
+  while [ "$n" -gt 0 ]; do
+    printf "\033[1A\033[2K"    # cursor up 1, erase entire line
+    n=$((n - 1))
+  done
+  BODY_LINES=0
+}
+
+# Begin a new step: clear previous body, update progress bar, print header.
 step_header() {
   CURRENT_STEP=$((CURRENT_STEP + 1))
   local desc="$1"
-  draw_progress
-  echo ""
+  clear_body                          # cursor now on progress bar line
+  draw_progress                       # overwrite progress bar in place
+  echo ""                             # first line of new body
   echo ""
   echo -e "  ${BOLD}Step ${CURRENT_STEP}.${NC} ${desc}"
   echo ""
+  BODY_LINES=3
 }
 
 # Run a command with an animated spinner while suppressed.
-# Usage: spin "message" command arg1 arg2 ...
+# Output replaces itself on a single line until completion.
 spin() {
   local msg="$1"
   shift
-  # Suppress all output, run in background
   "$@" >/dev/null 2>&1 &
   local pid=$!
   local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
   local i=0
+  printf "  ${CYAN}⠿${NC} ${msg}..."
   while kill -0 $pid 2>/dev/null; do
     local c="${chars:$i:1}"
     printf "\r  ${CYAN}${c}${NC} ${msg}..."
@@ -110,31 +125,41 @@ spin() {
   wait $pid 2>/dev/null || true
   local rc=$?
   if [ "$rc" -eq 0 ]; then
-    printf "\r  ${GREEN}✓${NC} ${msg}                    \n"
+    printf "\r  ${GREEN}✓${NC} ${msg}    \n"
   else
-    printf "\r  ${RED}✗${NC} ${msg}                    \n"
+    printf "\r  ${RED}✗${NC} ${msg}    \n"
   fi
+  BODY_LINES=$((BODY_LINES + 1))
   return "$rc"
 }
 
-# Run a command showing stdout in real-time (for short commands)
+# Run a short command, showing output live (no spinner).
 run() {
   local msg="$1"
   shift
-  printf "\r  ${CYAN}⠿${NC} ${msg}..."
+  printf "  ${CYAN}⠿${NC} ${msg}..."
   if "$@" 2>&1; then
-    printf "\r  ${GREEN}✓${NC} ${msg}                    \n"
+    printf "\r  ${GREEN}✓${NC} ${msg}    \n"
   else
     local rc=$?
-    printf "\r  ${RED}✗${NC} ${msg}                    \n"
+    printf "\r  ${RED}✗${NC} ${msg}    \n"
     return "$rc"
   fi
+  BODY_LINES=$((BODY_LINES + 1))
 }
 
-ok_msg()   { echo -e "  ${GREEN}✓${NC} $1"; }
-warn_msg() { echo -e "  ${YELLOW}⚠${NC} $1"; }
+ok_msg()   { echo -e "  ${GREEN}✓${NC} $1"; BODY_LINES=$((BODY_LINES + 1)); }
+warn_msg() { echo -e "  ${YELLOW}⚠${NC} $1"; BODY_LINES=$((BODY_LINES + 1)); }
 fail_msg() { echo -e "  ${RED}✗${NC} $1"; exit 1; }
-info_msg() { echo -e "  ${BLUE}ℹ${NC} $1"; }
+info_msg() { echo -e "  ${BLUE}ℹ${NC} $1"; BODY_LINES=$((BODY_LINES + 1)); }
+
+echo ""
+echo -e "  ${CYAN}╔══════════════════════════════════════╗${NC}"
+echo -e "  ${CYAN}║  ${BOLD}WarTab v${VERSION} — Setup${NC}${CYAN}              ║${NC}"
+echo -e "  ${CYAN}╚══════════════════════════════════════╝${NC}"
+echo ""
+draw_progress
+echo ""
 
 # ═══════════════════════════════════════════════════════════════
 # Uninstall mode
@@ -173,18 +198,6 @@ if [ "$UNINSTALL" = true ]; then
   echo -e "  ${GREEN}✓ WarTab uninstalled.${NC}"
   exit 0
 fi
-
-# ═══════════════════════════════════════════════════════════════
-# Header
-# ═══════════════════════════════════════════════════════════════
-
-echo ""
-echo -e "  ${CYAN}╔══════════════════════════════════════╗${NC}"
-echo -e "  ${CYAN}║  ${BOLD}WarTab v${VERSION} — Setup${NC}${CYAN}              ║${NC}"
-echo -e "  ${CYAN}╚══════════════════════════════════════╝${NC}"
-echo ""
-draw_progress
-echo ""
 
 # ═══════════════════════════════════════════════════════════════
 # Step 1 — Install system dependencies
@@ -467,10 +480,10 @@ else
   echo ""
   warn_msg "Server did not respond within 5 seconds"
   if [ "$IS_ROOT" = true ]; then
-  warn_msg "  Check logs: journalctl -u wartab -n 30 --no-pager"
-else
-  warn_msg "  Check logs: journalctl --user -u wartab -n 30 --no-pager"
-fi
+    warn_msg "  Check logs: journalctl -u wartab -n 30 --no-pager"
+  else
+    warn_msg "  Check logs: journalctl --user -u wartab -n 30 --no-pager"
+  fi
   fail_msg "Setup incomplete — fix the issue above and re-run"
 fi
 
@@ -487,8 +500,10 @@ fi
 HOSTNAME_SHORT=$(hostname -s 2>/dev/null || echo "localhost")
 HOSTNAME_FQDN=$(hostname -f 2>/dev/null || echo "$HOSTNAME_SHORT.local")
 
+# Clear step 8 body before showing final output
+clear_body
 echo ""
-echo -e "${CLR}${GREEN}  ┌──────────────────────────────────────────┐${NC}"
+echo -e "${GREEN}  ┌──────────────────────────────────────────┐${NC}"
 echo -e "${GREEN}  │  ${BOLD}WarTab is up and ready to configure${NC}${GREEN}    │${NC}"
 echo -e "${GREEN}  └──────────────────────────────────────────┘${NC}"
 echo ""
