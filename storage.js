@@ -17,6 +17,16 @@ const storage = (function() {
 
   // ── Config helpers (chrome.storage.local — 10MB+ quota) ──
 
+  // Listen for storage changes from other tabs — invalidate caches
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener(function(changes, areaName) {
+      if (areaName === 'local') {
+        if (changes[CONFIG_KEY]) _configCache = null;
+        if (changes[NOTES_PREFIX]) _notesCache = {};
+      }
+    });
+  }
+
   function chromeGet(keys) {
     return new Promise(function(resolve, reject) {
       try {
@@ -209,28 +219,63 @@ const storage = (function() {
 
   function uploadFile(file, filename) {
     return new Promise(function(resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function() {
-        var dataUrl = reader.result;
-        listUploads().then(function(uploads) {
-          var entry = {
-            name: filename,
-            url: dataUrl,
-            ts: Date.now()
-          };
-          uploads.push(entry);
-          _uploadCache = uploads;
-          var obj = {};
-          obj[UPLOADS_KEY] = uploads;
-          chromeLocalSet(obj).then(function() {
-            resolve(entry);
+      // Compress images before storing as data URLs to avoid bloat
+      var processFile = function(blob) {
+        var reader = new FileReader();
+        reader.onload = function() {
+          var dataUrl = reader.result;
+          listUploads().then(function(uploads) {
+            var entry = {
+              name: filename,
+              url: dataUrl,
+              ts: Date.now(),
+              size: blob.size
+            };
+            uploads.push(entry);
+            _uploadCache = uploads;
+            var obj = {};
+            obj[UPLOADS_KEY] = uploads;
+            chromeLocalSet(obj).then(function() {
+              resolve(entry);
+            }).catch(function(err) {
+              if (err && err.message && err.message.indexOf('QUOTA') !== -1) {
+                reject(new Error('Storage full — delete unused uploads or background images'));
+              } else {
+                reject(err);
+              }
+            });
           }).catch(reject);
-        }).catch(reject);
+        };
+        reader.onerror = function() {
+          reject(new Error('FileReader failed'));
+        };
+        reader.readAsDataURL(blob);
       };
-      reader.onerror = function() {
-        reject(new Error('FileReader failed'));
-      };
-      reader.readAsDataURL(file);
+
+      if (file.type && file.type.startsWith('image/') && file.type !== 'image/svg+xml' && file.type !== 'image/gif') {
+        // Compress: resize to max 1024px, JPEG quality 0.7
+        var img = new Image();
+        img.onload = function() {
+          var w = img.width, h = img.height;
+          var maxDim = 1024;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = h * maxDim / w; w = maxDim; }
+            else { w = w * maxDim / h; h = maxDim; }
+          }
+          var c = document.createElement('canvas');
+          c.width = Math.round(w); c.height = Math.round(h);
+          var ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          c.toBlob(function(compressed) {
+            if (compressed) processFile(compressed);
+            else processFile(file); // fallback to original
+          }, 'image/jpeg', 0.7);
+        };
+        img.onerror = function() { processFile(file); };
+        img.src = URL.createObjectURL(file);
+      } else {
+        processFile(file);
+      }
     });
   }
 

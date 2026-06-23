@@ -31,7 +31,7 @@ def validate_config(data):
     """Basic schema validation before writing config.json."""
     if not isinstance(data, dict):
         return False, "config must be a JSON object"
-    has_pages = "pages" in data and isinstance(data["pages"], dict) and len(data["pages"]) > 0
+    has_pages = "pages" in data and isinstance(data["pages"], (dict, list)) and len(data["pages"]) > 0
     has_cards = "cards" in data and isinstance(data["cards"], list)
     if not has_pages and not has_cards:
         return False, "missing 'pages' or 'cards' array"
