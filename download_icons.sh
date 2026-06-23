@@ -83,3 +83,18 @@ for item in svgs:
 
 elapsed = time.time() - start_time
 print(f"\nDone! {downloaded} downloaded, {skipped} skipped, {failed} failed ({elapsed:.0f}s)")
+
+# After successful download, create the bundled archive so subsequent
+# installs can extract it in one step instead of downloading individually.
+if failed == 0:
+    import subprocess as _sp
+    archive = HERE / "icons.tar.gz"
+    print(f"\nCreating {archive.name}...")
+    try:
+        _sp.run(["tar", "czf", str(archive), "icons/"], cwd=HERE, check=True, timeout=60)
+        size_mb = archive.stat().st_size / (1024 * 1024)
+        print(f"Archive created: {archive.name} ({size_mb:.1f} MB)")
+    except Exception as e:
+        print(f"Archive creation failed: {e}")
+else:
+    print("Skipping archive creation — some icons failed to download")

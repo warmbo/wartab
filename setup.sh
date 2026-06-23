@@ -299,16 +299,19 @@ fi
 # Step 5 — Download service icons
 # ═══════════════════════════════════════════════════════════════
 
-step_header "Downloading service icons"
+step_header "Installing service icons"
 
-if [ ! -f "icons/selfhst-index.json" ]; then
+if [ -f "icons/selfhst-index.json" ]; then
+  ok_msg "Service icons already present"
+elif [ -f "icons.tar.gz" ]; then
+  spin "Extracting from bundled archive" tar xzf icons.tar.gz
+  ok_msg "Service icons extracted (icons/)"
+else
   if spin "Downloading from selfh.st CDN" python3 download_icons.sh; then
-    ok_msg "Service icons downloaded (icons/)"
+    ok_msg "Service icons downloaded"
   else
     warn_msg "Icon download failed — run later: python3 ${INSTALL_DIR}/download_icons.sh"
   fi
-else
-  ok_msg "Service icons already present"
 fi
 
 # ═══════════════════════════════════════════════════════════════
