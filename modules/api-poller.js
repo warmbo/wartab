@@ -222,10 +222,10 @@ registerModule('api-poller', {
       if (p) {
         sec.url = p.url;
         sec.mappings = (p.fields || []).map(f => ({
-          field: f.path || '', label: f.label || 'Value', format: 'text'
+          field: f.path || '', label: f.label || 'Value', format: f.format || 'text'
         }));
         if (!sec.label || sec.label === 'API' || API_PRESETS.some(x => x.label === sec.label)) sec.label = p.label;
-        saveAndRefresh();
+        saveAndRefreshStructural();
       }
     });
     bd.appendChild(presetSel);
