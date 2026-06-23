@@ -99,6 +99,8 @@ install_deps() {
   command -v git &>/dev/null    || need="$need git"
   python3 -c "from PIL import Image" &>/dev/null || need="$need python3-pil"
   command -v avahi-publish-service &>/dev/null || command -v avahi-daemon &>/dev/null || need="$need avahi-daemon avahi-utils"
+  # systemctl --user requires libpam-systemd on clean Debian
+  systemctl --user &>/dev/null || need="$need libpam-systemd"
 
   if [ -z "$need" ]; then
     ok "All system dependencies already present"
@@ -110,6 +112,29 @@ install_deps() {
   # shellcheck disable=SC2086  # intentional word-splitting
   sudo apt-get install -y -qq $need || fail "apt install failed — run with --skip-deps and install manually"
   ok "System dependencies installed"
+
+  # After installing libpam-systemd, bootstrap the user systemd session.
+  # On a clean install the user won't have XDG_RUNTIME_DIR until they log
+  # out and back in. We can force it with loginctl enable-linger:
+  if ! systemctl --user &>/dev/null; then
+    info "Bootstrapping user systemd session..."
+    if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+      # Create runtime dir manually and start the user manager
+      sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null || true
+      sleep 1
+      # Check if linger created the directory
+      local uid
+      uid=$(id -u "${INSTALL_USER}" 2>/dev/null || echo "1000")
+      if [ ! -d "/run/user/${uid}" ]; then
+        # Last resort — dbus-launch to bootstrap
+        export XDG_RUNTIME_DIR="/run/user/${uid}"
+        sudo mkdir -p "${XDG_RUNTIME_DIR}" 2>/dev/null || true
+        sudo chown "${INSTALL_USER}" "${XDG_RUNTIME_DIR}" 2>/dev/null || true
+        chmod 700 "${XDG_RUNTIME_DIR}" 2>/dev/null || true
+        systemctl --user daemon-reload 2>/dev/null || true
+      fi
+    fi
+  fi
 }
 
 # ── Preflight checks ──
@@ -124,9 +149,24 @@ preflight() {
     && ok "Git: $(git --version 2>&1)" \
     || { warn "git not found"; fatal=1; }
 
-  systemctl --user &>/dev/null \
-    && ok "systemd (user mode) available" \
-    || warn "systemd user mode not available — service won't auto-start"
+  # Systemd user mode: check and attempt recovery
+  if systemctl --user &>/dev/null; then
+    ok "systemd (user mode) available"
+  else
+    warn "systemd user mode not available"
+    info "  Attempting to start user session..."
+    sudo loginctl enable-linger "${INSTALL_USER}" 2>/dev/null || true
+    sleep 1
+    if systemctl --user &>/dev/null; then
+      ok "systemd user session started via linger"
+    else
+      warn "Could not start systemd user session automatically"
+      warn "  After install, run these commands:"
+      warn "    sudo loginctl enable-linger ${INSTALL_USER}"
+      warn "    loginctl show-user ${INSTALL_USER}  # verify Linger=yes"
+      warn "    exec su - ${INSTALL_USER}            # new login to create session"
+    fi
+  fi
 
   ss -tlnp 2>/dev/null | grep -q ":${PORT} " \
     && warn "Port ${PORT} is already in use — pick another with --port" \
