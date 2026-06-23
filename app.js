@@ -1079,11 +1079,13 @@ const ICON_REPO = [];
 function loadIconRepo() {
   if (ICON_REPO.length > 0) return Promise.resolve();
   return storage.getIconIndex().then(function(data){
+    console.log('loadIconRepo: received', typeof data, Array.isArray(data) ? data.length + ' entries' : 'not an array');
     data.forEach(function(item){
       if (item.SVG === 'Yes') {
         ICON_REPO.push({name: item.Name, file: item.Reference, tags: [item.Category || '']});
       }
     });
+    console.log('loadIconRepo: ICON_REPO now has', ICON_REPO.length, 'entries');
     // Also re-render if picker is open
     const picker = document.getElementById('icon-picker-content');
     if (picker && picker.parentElement.classList.contains('open')) {

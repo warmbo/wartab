@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """WarTab Server — new tab page + /api/stats + image upload + icon save."""
-import argparse, http.server, io, json, logging, os, re, socket, subprocess, sys, time, uuid, webbrowser, urllib.request, urllib.error, urllib.parse, ssl
+import argparse, glob, http.server, io, json, logging, os, re, socket, subprocess, sys, time, uuid, webbrowser, urllib.request, urllib.error, urllib.parse, ssl
 from pathlib import Path
 from threading import Lock
 
@@ -553,6 +553,20 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
                 if f.is_file() and f.suffix.lower() in('.png','.jpg','.jpeg','.gif','.webp','.svg'):
                     files.append({"name":f.name,"url":f"/uploads/icons/{f.name}","size":f.stat().st_size})
             return self._json(files)
+        if self.path == "/api/icons/check":
+            idx_path = HERE / "icons" / "selfhst-index.json"
+            info = {"exists": False, "svg_count": 0, "index_entries": 0, "svgs_with_flag": 0}
+            if idx_path.exists():
+                info["exists"] = True
+                try:
+                    data = json.loads(idx_path.read_text())
+                    info["index_entries"] = len(data)
+                    info["svgs_with_flag"] = sum(1 for x in data if x.get("SVG") == "Yes")
+                    import glob
+                    info["svg_count"] = len(glob.glob(str(HERE / "icons" / "*.svg")))
+                except Exception as e:
+                    info["error"] = str(e)
+            return self._json(info)
         path = self.translate_path(self.path)
         if not Path(path).is_file() or self.path=="/":
             self.path="/index.html"
@@ -714,6 +728,17 @@ def main():
     print(f"\n  WarTab Server\n  ----")
     print(f"  Local:    http://localhost:{a.port}")
     for ip in get_local_ips(): print(f"  Network:  http://{ip}:{a.port}")
+    # Show icon status on startup
+    idx_path = HERE / "icons" / "selfhst-index.json"
+    if idx_path.exists():
+        try:
+            idx_data = json.loads(idx_path.read_text())
+            svg_files = len(glob.glob(str(HERE / "icons" / "*.svg")))
+            print(f"  Icons:    {svg_files} SVGs, {len(idx_data)} index entries")
+        except Exception as e:
+            print(f"  Icons:    index read failed ({e})")
+    else:
+        print(f"  Icons:    selfhst-index.json not found")
     mDNS_proc = None
     if a.mdns:
         try:
