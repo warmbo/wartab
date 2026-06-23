@@ -1,7 +1,7 @@
 # ⚔️ WarTab — Self-Hosted New Tab Page
 
 A lean, self-hosted new tab page with **glassmorphic** + **skeuomorphic** styling.
-Card-based layout with multi-page support, fully customizable from the UI.
+Card-based dashboard with multi-page support, fully customizable from the UI.
 Entirely self-contained — no external network required once loaded.
 
 ```
@@ -18,8 +18,9 @@ http://localhost:8081   or   http://<your-ip>:8081
 ## Features
 
 ### Multi-Page Dashboard
+
 - Create, rename, and delete pages via the page bar
-- Each page has its own set of cards, its own icon, and a custom title
+- Each page has its own set of cards, icon, and custom title
 - Keyboard-driven page switching with `Ctrl+Tab`
 - Empty pages show a helpful placeholder with an add-card prompt
 
@@ -38,19 +39,20 @@ http://localhost:8081   or   http://<your-ip>:8081
 | **Timer** | Hours/minutes dropdown-set countdown with Start/Reset |
 | **API Poller** | Fetch JSON from any endpoint, extract a value via dot-path, auto-refresh |
 
-### Icon System — 2,000+ icons
+### Icon System — 2,000+ Icons
 
-- **Lucide SVG** — 2,000+ vector icons, all from the Lucide library, color-matched to your theme
+- **Lucide SVG** — 2,000+ vector icons, color-matched to your theme
 - **Selfh.st service icons** — 350+ self-hosted app logos (Jellyfin, Home Assistant, Portainer, etc.) — organized in a searchable Services tab
 - **Emoji** — 500+ system emoji in the Icons tab
-- **Upload** — upload custom icon images (auto-resized to 256x256)
+- **Upload** — upload custom icon images (auto-resized to 256×256)
 - **CDN Discovery** — preview icons from the selfh.st CDN before downloading locally
-- Icons in card titles, link items, page tabs, and branding all use the same unified picker
+
+All icons — card titles, link items, page tabs, and branding — use the same unified picker.
 
 ### Drag & Drop Card Reordering
 
-- Pointer-event-based drag with a floating ghost overlay (fixed-position, follows cursor)
-- **simGrid preview** — CSS Grid auto-placement simulation shows each card's exact final position while dragging
+- Pointer-event-based drag with a floating ghost overlay (follows cursor)
+- **simGrid preview** — CSS Grid auto-placement simulation shows each card's exact position while dragging
 - Cards displaced by a drag show vertical-only movement (clean row-wrap preview)
 - Column-snap logic: dragged cards snap to the nearest column boundary
 - **FLIP animation** on drop — all shifted cards animate smoothly to their new positions
@@ -60,6 +62,7 @@ http://localhost:8081   or   http://<your-ip>:8081
 ### Edit Panel (per-card)
 
 A slide-out right panel for editing individual cards:
+
 - **Title** — editable text field
 - **Icon** — unified picker (Lucide + Services + Emoji + Upload), Change/Clear buttons with live preview
 - **Color** — color picker + hex input, sets the card's accent bar
@@ -99,9 +102,10 @@ A slide-out right panel organized into card-like sections:
 Built-in `/api/stats` endpoint — CPU, memory, disk, uptime, load — all from `/proc`
 with zero Python dependencies (no psutil). Returns JSON for the status bar widget.
 
-### Offline Capable — after first setup
+### Offline Capable — After First Setup
 
 All assets can be shipped with the repo or downloaded on demand:
+
 - **Lucide icon library** — 602KB (`/static/lucide.min.js`), included in repo
 - **Inter font** — weights 200–700 (`/static/fonts/`), included in repo
 - **Service icons** — 350+ SVG icons downloaded from selfh.st CDN during setup (`python3 download_icons.sh`)
@@ -116,27 +120,22 @@ and OpenWeatherMap API — both degrade gracefully.
 
 ### Option 1: One-Command Install (Debian)
 
-Works on a clean Debian install — installs all dependencies automatically:
+Works on a clean Debian install — installs everything automatically:
 
 ```bash
 curl -sL https://github.com/warmbo/wartab/raw/main/setup.sh | bash
 ```
 
 This single command:
-- Installs Python 3, git, Pillow, and Avahi/mDNS (via `apt`)
+
+- Installs Python 3, git, Pillow, and Avahi/mDNS
 - Clones WarTab to `/opt/wartab`
-- Creates an initial `config.json` from `config.example.json`
+- Creates an initial `config.json` from defaults
 - Downloads service icons from selfh.st
 - Starts WarTab as a systemd user service with mDNS advertising
 - Enables linger (keeps running after logout)
 
-**Result:** WarTab is live at:
-- `http://localhost:8081` — on the machine itself
-- `http://$(hostname).local:8081` — from any device on your LAN (via mDNS)
-
-**Set as your browser new tab:**
-- **Firefox:** Install "New Tab Override" → enter `http://$(hostname).local:8081`
-- **Chrome/Edge/Brave:** Install "New Tab Redirect" → enter `http://$(hostname).local:8081`
+**Result:** WarTab is live at `http://localhost:8081`.
 
 ### Option 2: Docker
 
@@ -165,30 +164,58 @@ Zero dependencies beyond Python stdlib:
 git clone https://github.com/warmbo/wartab.git
 cd wartab
 cp config.example.json config.json          # optional — server falls back to defaults
-python3 server.py --port 8081 --open        # --open opens browser automatically
-python3 server.py --port 8081 --mdns        # advertise via mDNS (install avahi-utils)
+python3 server.py --port 8081 --open         # --open opens browser automatically
+# python3 server.py --port 8081 --mdns       # advertise via mDNS (install avahi-utils)
 ```
 
-The server will work even without `config.json` — it serves built-in defaults on first run.
+The server works even without `config.json` — it serves built-in defaults on first run.
 
-### Setting as Browser New Tab
+### Browser Extension
 
-**If you installed via setup.sh (Option 1),** mDNS is already configured. Just use:
+WarTab also ships as a browser extension for Chrome, Edge, and Firefox.
+See [extension/INSTALL.md](extension/INSTALL.md) for installation instructions.
+
+---
+
+## Post-Install: Access & Setup
+
+### From the Machine Itself
+
 ```
-http://hostname.local:8081
+http://localhost:8081
 ```
-(replace `hostname` with your machine's name)
 
-**Firefox**: New Tab Override extension → set the URL above
-**Chrome/Edge/Brave**: New Tab Redirect extension → set the URL above
+### From Any Device on Your LAN
 
-### Systemd Auto-Start
+If you installed with **Option 1** (setup.sh), mDNS is already configured:
+
+```
+http://<hostname>.local:8081
+```
+
+If you installed manually, install Avahi and run the server with `--mdns`:
+
+```bash
+sudo apt install avahi-utils
+python3 server.py --port 8081 --mdns
+```
+
+### Setting as Your Browser's New Tab
+
+| Browser | Method |
+|---------|--------|
+| **Firefox** | Install "New Tab Override" → set URL to `http://<hostname>.local:8081` |
+| **Chrome/Edge/Brave** | Install "New Tab Redirect" → set URL to `http://<hostname>.local:8081` |
+
+### Run as a Systemd Service (persistent background)
 
 ```bash
 systemctl --user daemon-reload
 systemctl --user enable --now wartab.service
-journalctl --user -u wartab.service -f    # Logs
+journalctl --user -u wartab.service -f    # follow logs
 ```
+
+If you used Option 1, this is already done for you.
 
 ---
 
@@ -196,9 +223,9 @@ journalctl --user -u wartab.service -f    # Logs
 
 Config is stored server-side in `config.json` via the `/api/config` endpoint.
 Changes made in the UI are saved automatically with `navigator.sendBeacon`.
-Export/import/reset available from the config panel's Data section.
+Export, import, and reset are available from the config panel's Data section.
 
-Multi-device: point multiple browsers to the same WarTab server to share config.
+**Multi-device:** point multiple browsers to the same WarTab server to share config.
 
 ---
 
@@ -213,7 +240,7 @@ wartab/
 ├── server.py          # Python HTTP server (zero deps)
 ├── Dockerfile         # Container build
 ├── docker-compose.yml # Container orchestration
-├── download_icons.sh   # Fetches service icons from selfh.st CDN
+├── download_icons.sh  # Fetches service icons from selfh.st CDN
 ├── setup.sh           # Debian install script
 ├── manifest.json      # Chrome extension manifest
 ├── config.json        # Server-side config (auto-managed)
@@ -221,9 +248,11 @@ wartab/
 ├── static/
 │   ├── lucide.min.js  # Lucide icon library (local copy, 602KB)
 │   └── fonts/         # Inter font files + CSS
+├── modules/           # Pluggable card section modules
 ├── notes/             # Notes saved as .md files
 ├── uploads/           # User-uploaded background images
-├── PLAN.md            # Design document
+├── extension/         # Browser extension build files and manifests
+├── PLAN.md            # Architecture design document
 ├── HIERARCHY.md       # Component tree & class naming reference
 └── README.md          # This file
 ```
@@ -249,9 +278,11 @@ Single-page app — no framework, no build step, no node_modules. Just open and 
 - **Drag & Drop**: Pointer Events API, simGrid CSS Grid auto-placement simulation,
   FLIP animations, column-snap logic with grab-offset tracking.
 
+For a deeper look at the component hierarchy and data model, see [`HIERARCHY.md`](HIERARCHY.md) and [`PLAN.md`](PLAN.md).
+
 ---
 
-## Development Workflow
+## Development
 
 ### Dual-Remote Push
 
@@ -262,16 +293,19 @@ git push github <branch>
 git push origin <branch>   # Forgejo
 ```
 
-The alias `origin` points to the self-hosted Forgejo at `10.0.0.253:3000/cody/wartab`.
-The alias `github` points to `github.com/warmbo/wartab`.
+| Alias | Target |
+|-------|--------|
+| `github` | `github.com/warmbo/wartab` |
+| `origin` | `10.0.0.253:3000/cody/wartab` (self-hosted Forgejo) |
 
 ### Versioning & Cache Busting
 
-All `<script src>` and `<link rel="stylesheet">` tags in `index.html` use `?v=BUILD` as a
-placeholder. The server (`server.py`) automatically replaces `BUILD` with the current
+All `<script src>` and `<link rel="stylesheet">` tags in `index.html` use `?v=BUILD` as
+a placeholder. The server (`server.py`) automatically replaces `BUILD` with the current
 `git describe --always --tags --dirty` output at serve time.
 
 This means:
+
 - Every deploy automatically gets a unique cache-busting version
 - No manual version string updates needed
 - Browsers always fetch fresh assets after a server restart
@@ -288,3 +322,12 @@ the fallback is `'dev'`.
    - New card modal (around line 2140)
 3. Add a `<script src="modules/<type>.js?v=BUILD" defer>` to `index.html`
 4. Commit and dual-push to both remotes
+
+### Branches
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Self-hosted server version (current) |
+| `extension` | Browser extension variant — rewrites `storage.js` for `chrome.storage`, patches proxy-based fetches to direct fetch, stubs server-only features |
+
+See [`extension/PLAN.md`](extension/PLAN.md) for the full extension implementation plan.

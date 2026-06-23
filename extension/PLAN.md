@@ -1,7 +1,5 @@
 # WarTab Browser Extension Implementation Plan
 
-> **For Hermes:** Use the `subagent-driven-development` skill to execute this plan.
-
 **Goal:** Package WarTab as a fully self-contained browser extension for Chrome, Edge, and Firefox stores — no server required. Everything runs from the extension package. Config persists in `chrome.storage`. System stats use Chrome extension APIs. No calls to `/api/...` endpoints.
 
 **Architecture:** The extension bundles all static assets (HTML, CSS, JS, fonts, Lucide, icon index). Config is stored in `chrome.storage.sync` (cross-device) + `chrome.storage.local` (large data). System stats come from `chrome.system.cpu`, `chrome.system.memory`, `chrome.system.storage`. External module fetches (media, proxmox, git, api-poller) use direct `fetch()` (extensions have relaxed CORS). LAN scan, API proxy, ping/cert-check/docker/server endpoints are gracefully disabled with "requires server" messages.
@@ -12,18 +10,44 @@
 
 ---
 
+## Table of Contents
+
+- [Files Changed Summary](#files-changed-summary)
+- [Phase 0: Branch & Scaffold](#phase-0-branch--scaffold)
+- [Phase 1: Storage Layer Rewrite](#phase-1-storage-layer-rewrite)
+  - [Task 1.1: Rewrite storage.js](#task-11-rewrite-storagejs)
+  - [Task 1.2: Patch app.js](#task-12-patch-appjs)
+- [Phase 2: Module Patches](#phase-2-module-patches)
+  - [Task 2.1: Patch resource-monitor](#task-21-patch-resource-monitor)
+  - [Task 2.2: Patch media/proxmox/git/api-poller — direct fetch](#task-22-patch-proxy-dependent-modules)
+  - [Task 2.3: Patch lan-scan — stub](#task-23-patch-lan-scan-module)
+- [Phase 3: Extension Manifests & index.html](#phase-3-extension-manifests--indexhtml)
+  - [Task 3.1: Update index.html paths](#task-31-update-indexhtml-paths-for-extension)
+  - [Task 3.2: Extension manifest](#task-32-create-the-extension-manifest)
+  - [Task 3.3: Edge manifest](#task-33-edge-manifest)
+  - [Task 3.4: Firefox manifest](#task-34-firefox-manifest)
+- [Phase 4: Icon Index Bundling](#phase-4-icon-index-bundling)
+- [Phase 5: Build & Package](#phase-5-build--package)
+- [Phase 6: Store Assets](#phase-6-store-assets)
+- [Phase 7: Submission](#phase-7-submission)
+- [Feature Compatibility Matrix](#feature-compatibility-matrix)
+- [Summary: New File Tree](#summary-new-file-tree-extension-branch)
+- [Open Questions](#open-questions)
+
+---
+
 ## Files Changed Summary
 
 | File | Change | Reason |
-|---|---|---|
-| `index.html` | Change `/static/...` → `static/...` (absolute→relative paths) | Extension loads from `chrome-extension://`, not server root |
+|------|--------|--------|
+| `index.html` | `/static/...` → `static/...` (absolute → relative paths) | Extension loads from `chrome-extension://`, not server root |
 | `storage.js` | Complete rewrite: replace all `fetch(BASE + path)` with `chrome.storage.local/sync` | No server to fetch from |
 | `core.js` | No changes needed | Pure functions, no server deps |
 | `app.js` | Modify `fetchLanScan()` to show "server required" | `/api/arp` only works with server |
 | `app.js` | Modify `saveConfig()` fallback to use chrome.storage | Fallback also calls `/api/config` |
 | `app.js` | Modify `loadConfig()` / `loadIconRepo()` to use extension-bundled index | No server for icons |
 | `app.js` | Add `detectExtensionMode()` at init | Choose chrome.storage vs server storage |
-| `modules/resource-monitor.js` | Replace `storage.getStats()` with Chrome extension API calls | No `/api/stats` endpoint |
+| `modules/resource-monitor.js` | Replace `storage.getStats()` with Chrome extension APIs | No `/api/stats` endpoint |
 | `modules/lan-scan.js` | Stub with "requires server" message | `/api/arp` is server-only |
 | `modules/media.js` | Replace `fetch('/api/proxy', ...)` with direct `fetch(url, ...)` | No proxy needed in extensions |
 | `modules/proxmox.js` | Replace `fetch('/api/proxy', ...)` with direct `fetch(url, ...)` | Same |
@@ -160,8 +184,7 @@ const storage = (function() {
         cpu_temp: { celsius: 0 }, processes: 0
       };
 
-      // We can get cpu/memory/storage but NOT network/processes/gpu/uptime
-      // from chrome.system.* APIs. Fill what we can.
+      // chrome.system.* APIs provide cpu/memory/storage but NOT network/processes/gpu/uptime
       var done = { cpu: false, mem: false, disk: false };
 
       function tryResolve() {
@@ -333,11 +356,9 @@ const storage = (function() {
 })();
 ```
 
-**Step 1: Rewrite storage.js**
+**Step 1: Rewrite storage.js** — Write the full content above to `storage.js`.
 
-Write the full content above to `storage.js`.
-
-**Step 2: Add to manifest (will be finalized later)**
+**Step 2: Add to manifest** (will be finalized in Phase 3).
 
 **Step 3: Commit**
 
@@ -349,12 +370,11 @@ git push github extension && git push origin extension
 
 ---
 
-### Task 1.2: Modify `app.js` — extension mode detection + direct fetch patches
+### Task 1.2: Patch `app.js` — extension mode detection + direct fetch patches
 
 **Objective:** Add extension mode detection and patch the few direct `/api/...` calls in `app.js`. No structural changes — just wrap server-dependent calls.
 
-**Files:**
-- Modify: `app.js`
+**Files:** Modify `app.js`
 
 **Changes needed in app.js:**
 
@@ -392,13 +412,9 @@ if (storage.IS_EXTENSION) {
 
 6. **Stats in status bar** — `initStatusBar()` and `fetchStats()` call `storage.getStats()` which we rewrote. No change needed.
 
-**Step 1: Patch fetchLanScan in app.js**
+**Step 1: Patch fetchLanScan in app.js** — Find the `function fetchLanScan` block and replace its body.
 
-Find the `function fetchLanScan` block and replace its body.
-
-**Step 2: Patch saveConfig fallback**
-
-Find the fallback `fetch('/api/config', ...)` inside `saveConfig()` and wrap it.
+**Step 2: Patch saveConfig fallback** — Find the fallback `fetch('/api/config', ...)` inside `saveConfig()` and wrap it.
 
 **Step 3: Commit**
 
@@ -412,53 +428,21 @@ git push github extension && git push origin extension
 
 ## Phase 2: Module Patches
 
-### Task 2.1: Patch `resource-monitor` module — Chrome system API stats
+### Task 2.1: Patch resource-monitor — Chrome system API stats
 
-**Objective:** The resource monitor calls `storage.getStats()` which already returns correct-shaped data from chrome.system.* APIs. However, the CPU percentage field needs special handling since Chrome doesn't expose per-process CPU percentage.
+The resource monitor calls `storage.getStats()` which already returns correct-shaped data from chrome.system.* APIs. `storage.getStats()` already returns the right shape with sensible defaults for missing fields (CPU shows a moderate default, GPU is N/A). The module handles missing fields gracefully. **No code change needed.**
 
-**File:** Modify `modules/resource-monitor.js`
+### Task 2.2: Patch proxy-dependent modules
 
-**Change:** In `fetchData()` (line 236), the `storage.getStats()` response now has different CPU semantics. Add a fallback for CPU percentage — use Chrome's `chrome.processes` API if available, or show "N/A":
-
-```javascript
-// After storage.getStats resolves, handle extension mode CPU
-if (storage.IS_EXTENSION && typeof d.cpu !== 'number') {
-  d.cpu = d.cpu_pct || 50; // Chrome doesn't expose total CPU % — show moderate default
-  // Flag CPU as approximate
-}
-```
-
-Actually, a cleaner approach: add a function in storage.js that attempts to get CPU usage via `chrome.processes.getProcessInfo()` (requires "processes" permission — might be too invasive). Or simply show last-known values and indicate "extension mode."
-
-Best approach: **Keep it simple** — the resource monitor shows RAM and disk from chrome.system.* accurately. CPU shows a placeholder. GPU is not available. The module already handles missing fields gracefully (shows 0). Write it off as a limitation of the extension mode.
-
-No code change needed in the module — `storage.getStats()` already returns the right shape with sensible defaults for missing fields.
-
-### Task 2.2: Patch `media`, `proxmox`, `git`, `api-poller` — replace `/api/proxy` with direct fetch
-
-**Objective:** These modules use `fetch('/api/proxy', { method: 'POST', body: JSON.stringify({url, ...}) })` which only works with the server's proxy endpoint. In extension mode, replace with direct `fetch(url)`.
-
-**Critical insight:** Extension `fetch()` in MV3 is NOT subject to CORS restrictions for URLs matching the extension's `host_permissions` in the manifest. To make unrestricted cross-origin requests, we need to add the target hosts to the manifest OR use the extension's unrestricted fetch privilege.
-
-Actually, in Chrome extensions MV3, `fetch()` from an extension page (like a new tab override) DOES have CORS restrictions — it runs in the page's context, not the extension's privileged context. Only background/service workers and content scripts have unrestricted fetch.
-
-**Correct approach:** We need a background service worker that acts as a proxy. The module code sends the fetch request to the background worker via `chrome.runtime.sendMessage()`, and the background worker makes the unrestricted fetch request.
-
-OR, simpler: We add the necessary `host_permissions` to the manifest. Common targets:
-- `*://*/*` — allows all URLs (most permissive, may raise review concerns)
-- Specific patterns for media services: `http://*:*/*`, `https://*:*/*`
-
-For a self-hosted dashboard where users configure arbitrary URLs (media servers, git servers, proxmox, APIs), `*://*/*` host_permissions is the most practical choice. The Chrome Web Store review should accept this since the extension clearly needs to connect to user-configured servers.
-
-Let me use `*://*/*` for simplicity in v1.
+**Objective:** Modules that use `fetch('/api/proxy', ...)` need to switch to direct `fetch()` in extension mode. In Chrome MV3, `fetch()` from a new tab page runs in the page's context with CORS restrictions. The solution is to add `*://*/*` to `host_permissions` in the manifest, which allows unrestricted cross-origin fetch from the new tab page for any URL the user configures.
 
 **Files to modify:**
 - `modules/media.js` — Replace `mediaFetch()` function
 - `modules/proxmox.js` — Replace proxy calls
 - `modules/git.js` — Replace proxy calls
-- `modules/api-poller.js` — Replace proxy option
+- `modules/api-poller.js` — Remove proxy option
 
-**Simple replacement pattern for all modules:**
+**Replacement pattern for all modules:**
 
 ```javascript
 // OLD: return fetch('/api/proxy', { method: 'POST', headers: {...}, body: JSON.stringify({url, method, headers}) })
@@ -471,9 +455,7 @@ function directFetch(url, headers) {
 }
 ```
 
-**Step 1: Patch media.js**
-
-Replace `mediaFetch()` function at line 82-91:
+**Step 1: Patch media.js** — Replace `mediaFetch()` function at line 82-91:
 
 ```javascript
 function mediaFetch(url, headers) {
@@ -484,17 +466,11 @@ function mediaFetch(url, headers) {
 }
 ```
 
-**Step 2: Patch proxmox.js**
+**Step 2: Patch proxmox.js** — Replace the proxy-based `fetchJson()` function with direct fetch.
 
-Replace the proxy-based `fetchJson()` function with direct fetch.
+**Step 3: Patch git.js** — Replace the proxy-based fetch with direct fetch.
 
-**Step 3: Patch git.js**
-
-Replace the proxy-based fetch with direct fetch.
-
-**Step 4: Patch api-poller.js**
-
-Remove the proxy option, always use direct fetch.
+**Step 4: Patch api-poller.js** — Remove the proxy option, always use direct fetch.
 
 **Step 5: Commit**
 
@@ -506,7 +482,7 @@ git push github extension && git push origin extension
 
 ---
 
-### Task 2.3: Patch `lan-scan` module — stub with "requires server"
+### Task 2.3: Patch lan-scan module — stub
 
 **Objective:** LAN scan uses `/api/arp` which only works with `server.py`. Disable it gracefully.
 
@@ -522,9 +498,7 @@ if (typeof storage !== 'undefined' && storage.IS_EXTENSION) {
 }
 ```
 
-**Step 1: Read and patch lan-scan.js**
-
-Add the extension check at the start of the render function.
+**Step 1:** Read and patch lan-scan.js — add the extension check at the start of the render function.
 
 **Step 2: Commit**
 
@@ -536,9 +510,9 @@ git push github extension && git push origin extension
 
 ---
 
-## Phase 3: Extension Manifests & Index.html
+## Phase 3: Extension Manifests & index.html
 
-### Task 3.1: Update `index.html` paths for extension
+### Task 3.1: Update index.html paths for extension
 
 **Objective:** The HTML uses absolute paths like `/static/fonts/inter.css`. In the extension, these resolve relative to `chrome-extension://id/`, so absolute paths starting with `/` are wrong. Change to relative paths.
 
@@ -570,8 +544,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
 }
 ```
 
-This can be used later for feature gating.
-
 **Step 3: Commit**
 
 ```bash
@@ -584,7 +556,7 @@ git push github extension && git push origin extension
 
 ### Task 3.2: Create the extension manifest
 
-**Objective:** The project already has a `manifest.json` at root level from when it was used as an unpacked extension. Replace it with a full extension manifest that lists all resources.
+**Objective:** The project already has a `manifest.json` at root level from when it was used as an unpacked extension. Replace it with a full extension manifest.
 
 **File:** Modify `manifest.json`
 
@@ -628,9 +600,7 @@ git push github extension && git push origin extension
 }
 ```
 
-**Step 1: Write the manifest**
-
-Replace the existing `manifest.json` content.
+**Step 1:** Replace the existing `manifest.json` content.
 
 **Step 2: Commit**
 
@@ -644,12 +614,11 @@ git push github extension && git push origin extension
 
 ### Task 3.3: Edge manifest
 
-**Objective:** Edge accepts Chrome extensions directly, but having a separate manifest with Edge-specific metadata is cleaner for store submission.
+Edge accepts Chrome extensions directly, but having a separate manifest is cleaner for store submission.
 
-**Files:**
-- Create: `extension/edge/manifest.json`
+**Files:** Create `extension/edge/manifest.json`
 
-Same as Chrome manifest. Edge's store has "Import from Chrome" which copies the Chrome manifest, so this is optional but nice to have.
+Same as Chrome manifest — Edge's store has "Import from Chrome" which copies the Chrome manifest, so this is optional.
 
 **Step 1: Copy the manifest**
 
@@ -670,10 +639,9 @@ git push github extension && git push origin extension
 
 ### Task 3.4: Firefox manifest
 
-**Objective:** Firefox supports MV3+ but requires `browser_specific_settings.gecko.id`.
+Firefox supports MV3+ but requires `browser_specific_settings.gecko.id`.
 
-**Files:**
-- Create: `extension/firefox/manifest.json`
+**Files:** Create `extension/firefox/manifest.json`
 
 Same as Chrome manifest plus:
 
@@ -689,7 +657,7 @@ Same as Chrome manifest plus:
 }
 ```
 
-**Step 1: Write Firefox manifest**
+**Step 1:** Write Firefox manifest.
 
 **Step 2: Commit**
 
@@ -703,64 +671,18 @@ git push github extension && git push origin extension
 
 ## Phase 4: Icon Index Bundling
 
-### Task 4.1: Bundle selfhst-index.json
+**Objective:** The icon index (`icons/selfhst-index.json`, 570KB JSON) is needed for the Services tab in the icon picker. Currently served by the server at `/icons/selfhst-index.json`. Bundle it in the extension package.
 
-**Objective:** The icon index (570KB JSON) is needed for the Services tab in the icon picker. Currently served by the server at `/icons/selfhst-index.json`. Bundle it in the extension package.
+The icon index is already tracked in git under `icons/`. Individual icon SVGs (~1-5KB each × 2,367 = ~12MB) are too much to bundle. Strategy:
+- Bundle the index JSON only (570KB — required for the Services tab)
+- Individual service icons are fetched from the selfh.st CDN on demand (`https://cdn.selfh.st/icons/...`) when the user browses the Services tab
+- When the user selects a service icon, it's downloaded and stored as a data URL in `chrome.storage.local`
 
-**File:** The existing `icons/selfhst-index.json` is already in the repo. No change needed — the extension includes the whole `icons/` directory.
+**Note:** Check `.gitignore` — if `icons/` is ignored, force-add `selfhst-index.json` or change the approach.
 
-**Icon file sizes:**
-- `icons/selfhst-index.json`: 570KB (must bundle — icon picker needs it)
-- Individual icon SVGs: ~1-5KB each × 2,367 = ~12MB (too much to bundle)
+**Step 1:** Verify `icons/selfhst-index.json` is in the repo and will be included in the extension package.
 
-**Decision:** Bundle the index JSON only. Individual service icons are fetched from the selfh.st CDN on demand (`https://cdn.selfh.st/icons/...`) when the user browses the Services tab. This avoids 12MB of unnecessary bloat.
-
-The icon picker's `buildLibraryTab()` already displays icons with their SVG paths from the index. The SVG paths are CDN-backed. When the user selects a service icon, the picker downloads and saves it via the upload API.
-
-Wait — let me check how the icon picker actually loads icons. If it uses the CDN URL directly, then we don't need to bundle any icon SVGs. If it expects them at `/icons/...`, we need to proxy.
-
-Let me check the buildLibraryTab function.
-
-Actually, in the icon-picker.js code, `loadIconRepo()` fetches the index from `/icons/selfhst-index.json`, and individual icons are referenced by their SVG path. The icons themselves are in `/icons/` directory as individual SVGs. In the extension, the selfhst-index.json is bundled, and icons are fetched from CDN.
-
-But looking at the memory, it says:
-> selfhst-index.json MUST have capitalized keys (SVG, Name, Reference, Category)
-
-So the SVG field in the index references the SVG filename. The actual SVGs are at `/icons/{filename}.svg`.
-
-For the extension, we need to either:
-1. Bundle all SVGs (12MB) — raises extension size concerns
-2. Fetch SVGs from CDN on demand — the index has `Reference` field which might have CDN URLs
-
-Let me check the actual index structure and icon-picker.js to understand. But actually, for the plan, I'll propose the simplest approach: **bundle the index, fetch SVGs from the CDN on demand**. If the user selects a service icon, the picker downloads it in the background and stores it as a data URL in chrome.storage.local.
-
-**Step 1:** No code change needed — `icons/` is already tracked in git and will be included in the extension package.
-
-**Step 2: Update .gitignore if needed**
-
-The current `.gitignore` ignores:
-```
-__pycache__/
-snapshots/
-icons/
-uploads/*.svg
-uploads/*.png
-uploads/*.jpg
-uploads/*.webp
-uploads/*.gif
-```
-
-Note `icons/` is gitignored — they won't be in the repo! Let me check...
-
-Actually looking at the ls output, `icons/` directory exists and has 2,367 files. And the git log shows commits about icons. So either the gitignore has been updated or the icons were added before the gitignore rule.
-
-Let me check:
-
-Actually, the `.gitignore` has `icons/` — so icons are gitignored. But wait, the directory has 2367 files... Let me check if they're tracked.
-
-Hmm, I can't easily check from here. Let me just note this in the plan — we need to ensure icons/selfhst-index.json is included. If `icons/` is gitignored, we need to force-add the index or change the approach.
-
-For the plan, I'll note this as a task to verify and handle.
+**Step 2:** If `icons/` is gitignored, use `git add -f icons/selfhst-index.json` to force-track the index.
 
 ---
 
@@ -771,10 +693,6 @@ For the plan, I'll note this as a task to verify and handle.
 **Objective:** Automate extension packaging for all three stores.
 
 **File:** Create `extension/build.sh`
-
-Same as the original plan's build script — copies files, updates version, creates .zip.
-
-**Step 1: Write build.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -834,7 +752,9 @@ case "$BUILD" in
 esac
 ```
 
-**Step 2: Make executable and test**
+**Step 1:** Create `extension/build.sh` with the content above.
+
+**Step 2:** Make executable and test:
 
 ```bash
 chmod +x extension/build.sh
@@ -857,54 +777,38 @@ git push github extension && git push origin extension
 
 ### Task 6.1: Screenshots
 
-**Objective:** Capture 1280×800 screenshots from the running extension for store listings.
+Capture 1280×800 screenshots from the running extension for store listings. Create:
 
-**Files:**
-- Create: `extension/store-assets/screenshot-{01..05}.png`
-
-Screenshots needed:
-1. `screenshot-01.png` — Full dashboard with varied card types
-2. `screenshot-02.png` — Config panel open showing theme settings
-3. `screenshot-03.png` — Card edit panel with section editor
-4. `screenshot-04.png` — Icon picker showing Services/Lucide tabs
-5. `screenshot-05.png` — Multi-page setup with page tabs visible
-
-Capture from the loaded extension in Chrome:
-```bash
-# Use Chrome Headless or Puppeteer to capture
-```
-
-**Step 1:** Capture screenshots (manual or automated)
-
-**Step 2:** Commit
+- `extension/store-assets/screenshot-01.png` — Full dashboard with varied card types
+- `extension/store-assets/screenshot-02.png` — Config panel open showing theme settings
+- `extension/store-assets/screenshot-03.png` — Card edit panel with section editor
+- `extension/store-assets/screenshot-04.png` — Icon picker showing Services/Lucide tabs
+- `extension/store-assets/screenshot-05.png` — Multi-page setup with page tabs visible
 
 ### Task 6.2: Store listings and privacy policy
 
-**Files:**
-- Create: `extension/store-assets/chrome-listing.md`
-- Create: `extension/store-assets/edge-listing.md`
-- Create: `extension/store-assets/firefox-listing.md`
-- Create: `extension/store-assets/privacy-policy.md`
+Create:
 
-**Key content for privacy policy (self-contained extension):**
+- `extension/store-assets/chrome-listing.md`
+- `extension/store-assets/edge-listing.md`
+- `extension/store-assets/firefox-listing.md`
+- `extension/store-assets/privacy-policy.md`
+
+**Privacy policy key points (self-contained extension):**
 - No data sent to any server
 - Config stored in chrome.storage.sync (synced to your Google account if signed in)
 - Uploads stored in chrome.storage.local (local to your device)
 - Direct connections to services you configure (media servers, APIs, etc.)
 - No telemetry, analytics, or tracking
 
-**Step 1:** Write all listing files
-
-**Step 2:** Commit
-
 ---
 
 ## Phase 7: Submission
 
-### Task 7.1: Chrome Web Store submission checklist
+### Task 7.1: Chrome Web Store
 
 1. Pay $5 developer registration fee at chrome.google.com/webstore/developer
-2. Upload `dist/wartab-chrome-v0.3.0.zip`
+2. Upload `dist/wartab-chrome-v<version>.zip`
 3. Fill in:
    - Description from listing file
    - Screenshots (1280×800)
@@ -912,19 +816,19 @@ Capture from the loaded extension in Chrome:
    - Link to GitHub repo
 4. Submit for review (1-3 business days)
 
-### Task 7.2: Edge Add-ons submission
+### Task 7.2: Edge Add-ons
 
 1. Go to partner.microsoft.com → Edge Add-ons
 2. Free with Microsoft account
-3. Upload Chrome ZIP or `dist/wartab-edge-v0.3.0.zip`
+3. Upload Chrome ZIP or `dist/wartab-edge-v<version>.zip`
 4. Use "Import from Chrome" feature
 5. Submit (1-2 business days)
 
-### Task 7.3: Firefox Add-ons submission
+### Task 7.3: Firefox Add-ons
 
 1. Go to addons.mozilla.org → Developer Hub
 2. Free account
-3. Upload `dist/wartab-firefox-v0.3.0.zip`
+3. Upload `dist/wartab-firefox-v<version>.zip`
 4. Link source code to GitHub repo
 5. Submit (2-7 business days)
 
@@ -932,8 +836,8 @@ Capture from the loaded extension in Chrome:
 
 ## Feature Compatibility Matrix
 
-| Feature | Self-hosted (main/castle) | Extension (extension branch) |
-|---|---|---|
+| Feature | Self-hosted (main) | Extension (extension branch) |
+|---------|:------------------:|:---------------------------:|
 | Config persistence | `config.json` on server | `chrome.storage.sync` |
 | Notes | Server file storage | `chrome.storage.local` |
 | System stats | `/api/stats` (Python) | `chrome.system.cpu/memory/storage` |
@@ -967,7 +871,7 @@ wartab/
 │   ├── git.js              # [MODIFIED] Direct fetch instead of proxy
 │   ├── api-poller.js       # [MODIFIED] Direct fetch instead of proxy
 │   ├── lan-scan.js         # [MODIFIED] Stub in extension mode
-│   └── ... (all others)    # [UNCHANGED]
+│   └── ...                 # [UNCHANGED]
 ├── static/                 # [UNCHANGED — bundled as-is]
 ├── icons/                  # [UNCHANGED — bundled as-is, index JSON only]
 ├── extension/
@@ -981,15 +885,17 @@ wartab/
 │       ├── firefox-listing.md
 │       ├── privacy-policy.md
 │       └── screenshot-*.png
-├── server.py               # [DELETED or UNCHANGED — not in extension]
-├── setup.sh                # [DELETED or UNCHANGED — not in extension]
+├── server.py               # [NOT IN EXTENSION]
+├── setup.sh                # [NOT IN EXTENSION]
 └── dist/                   # [NEW] Build output
 ```
 
+---
+
 ## Open Questions
 
-1. **Icon size:** 2,367 SVG files at ~12MB. Should we prune to the most common ~200 icons and fetch others from CDN? Or bundle all? The Chrome Web Store has a soft limit of ~50MB for extensions, so 12MB is fine but not ideal. **Recommendation:** bundle all for v1, optimize later.
+1. **Icon size:** 2,367 SVG files at ~12MB. Should we prune to the most common ~200 icons and fetch others from CDN? The Chrome Web Store has a soft limit of ~50MB for extensions, so 12MB is fine but not ideal. **Recommendation:** bundle all for v1, optimize later.
 
-2. **CPU stats:** `chrome.system.cpu.getInfo()` doesn't give CPU usage percentage. Options: (a) Show "N/A" for extension CPU, (b) Use `chrome.processes` API (requires additional permission — "processes" permission triggers a warning), (c) Estimate from system values. **Recommendation:** Show RAM/disk accurately, CPU shows as "—" or last known. Acceptable limitation.
+2. **CPU stats:** `chrome.system.cpu.getInfo()` doesn't give CPU usage percentage. Show RAM/disk accurately, CPU shows placeholder or last known. Acceptable limitation.
 
 3. **Firefox timing:** Firefox is lower priority. Start with Chrome + Edge, add Firefox after both are submitted.

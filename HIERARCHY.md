@@ -1,6 +1,12 @@
-# WarTab Component Hierarchy
+# WarTab — Component Hierarchy
+
+A complete reference of the DOM tree, class naming conventions, and z-index layering.
+Use this when adding or debugging UI elements.
+
+---
 
 ## Top Level
+
 ```
 Page (index.html)
 ├── Top Bar (#top-bar)
@@ -9,7 +15,7 @@ Page (index.html)
 │   └── Actions (#top-actions) — Add Card, Config buttons
 ├── Card Grid (#card-grid)
 │   ├── Card (.card) — main dashboard cards
-│   │   ├── Accent Bar (.card::before) — 3px colored top bar
+│   │   ├── Accent Bar (.card::before) — 3px colored top border
 │   │   ├── Card Header (.card-header)
 │   │   │   ├── Card Title (.card-title)
 │   │   │   │   ├── Icon (.card-icon) — 24px Lucide/emoji
@@ -32,8 +38,8 @@ Page (index.html)
 │   │   │           ├── Quotes (.quotes-widget)
 │   │   │           └── Status Bar (.status-bar-widget)
 │   │   └── Section Divider (.section-divider) — <hr> between sections
-│   └── Gap Card (.card.grid-gap-card) — invisible spacer
-│       └── Controls (positioned absolute)
+│   └── Gap Card (.card.grid-gap-card)
+│       └── Controls (positioned absolute, visible on hover)
 │           ├── Edit Button (.card-edit-btn)
 │           └── Drag Handle (.drag-handle)
 ├── Footer (#footer)
@@ -47,7 +53,7 @@ Page (index.html)
 │   ├── Header (.config-header) — title + close button
 │   └── Body (#edit-panel-body)
 │       ├── Divider (.cp-divider) — "CARD SETTINGS"
-│       ├── Card Settings Panel (.cs-panel) — Title, Icon, Color, Width, Height
+│       ├── Card Settings Panel (.cs-panel)
 │       │   └── Grid (.cs-grid) — 2-column layout
 │       │       ├── Title row (.cs-full.cs-pair)
 │       │       ├── Icon row (.cs-pair > .cs-icon-row)
@@ -75,7 +81,7 @@ Page (index.html)
 │           │       ├── Links: table (.me-link-th + .me-link-tr rows)
 │           │       ├── Clock: checkboxes (.me-check-group)
 │           │       ├── Search: fields + select
-│           │       └── ... per module
+│           │       └── ... (per module)
 │           └── Ghost indicator (.se-ghost) — drag placeholder
 │       ├── Add Section button (cpBtn)
 │       └── Footer (.cp-footer)
@@ -90,6 +96,8 @@ Page (index.html)
     └── Upload Zone (.upload-zone)
 ```
 
+---
+
 ## Class Naming Conventions
 
 | Prefix | Scope | Examples |
@@ -102,13 +110,15 @@ Page (index.html)
 | `card-` | Main dashboard card | `card-edit-btn` |
 | `grid-` | Grid containers | `grid-gap-card` |
 
+---
+
 ## Z-Index Stack
 
 | Level | Element |
 |-------|---------|
-| 100   | Config overlay (`.config-overlay`) |
-| 101   | Config panel (`.config-panel#config-panel`) |
-| 102   | Edit panel overlay (`#edit-panel-overlay`) |
-| 103   | Edit panel (`#edit-panel`) |
-| 104   | Icon picker (`.icon-picker`) |
-| 200   | Toast container |
+| 100 | Config overlay (`.config-overlay`) |
+| 101 | Config panel (`.config-panel#config-panel`) |
+| 102 | Edit panel overlay (`#edit-panel-overlay`) |
+| 103 | Edit panel (`#edit-panel`) |
+| 104 | Icon picker (`.icon-picker`) |
+| 200 | Toast container |
