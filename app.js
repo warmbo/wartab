@@ -114,11 +114,29 @@ function closeCardEditPanel() {
 function saveAndRefresh(structural) {
   saveConfig();
   if (structural && _editingCardId) {
-    // Structural change — full re-render needed
-    renderAll();
-    if (config.cards.find(c => c.id === _editingCardId)) {
-      openCardEditPanel(_editingCardId);
+    // Structural change — rebuild the panel body and card preview without
+    // re-sliding the panel or destroying the entire page
+    const card = config.cards.find(c => c.id === _editingCardId);
+    if (card) {
+      // Update card preview in-place
+      const oldEl = document.querySelector(`[data-card-id="${_editingCardId}"]`);
+      if (oldEl) {
+        const idx = config.cards.indexOf(card);
+        const newEl = renderCard(card, idx);
+        oldEl.replaceWith(newEl);
+      }
+      // Rebuild the panel body to show structural changes (new sections,
+      // different module editors, etc.) — no slide animation needed
+      const body = $('#edit-panel-body');
+      body.innerHTML = '';
+      buildCardEditPanel(card);
+      // Restore highlight
+      const cardEl = document.querySelector(`[data-card-id="${_editingCardId}"]`);
+      if (cardEl) cardEl.classList.add('card-highlight');
+      const title = $('#edit-panel-title');
+      if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
     }
+    renderIcons();
   } else if (_editingCardId) {
     // Soft save — update the card element in-place without rebuilding the
     // entire page or re-opening the edit panel. The panel body stays stable,
