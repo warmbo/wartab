@@ -20,6 +20,7 @@ const API_PRESETS = [
   { label:'Open-Meteo (NYC)', url:'https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true', fields:[{label:'Temp °C',path:'current_weather.temperature'},{label:'Wind km/h',path:'current_weather.windspeed'}], icon:'cloud-sun' },
   { label:'Joke', url:'https://v2.jokeapi.dev/joke/Any?type=single', fields:[{label:'Joke',path:'joke'}], icon:'message-circle' },
   { label:'ISS Location', url:'http://api.open-notify.org/iss-now.json', fields:[{label:'Lat',path:'iss_position.latitude'},{label:'Lon',path:'iss_position.longitude'}], icon:'globe' },
+  { label:'Nightscout CGM', url:'https://YOUR-SITE.herokuapp.com/api/v1/entries.json?count=1', fields:[{label:'Glucose',path:'0.sgv',format:'number'},{label:'Trend',path:'0.direction'},{label:'Time',path:'0.dateString'}], icon:'activity' },
 ];
 
 /* ── Icon data ── */
