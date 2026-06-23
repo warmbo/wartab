@@ -982,13 +982,23 @@ const DEFAULT_CONFIG = {
   },
 
   /* ── Cards (each card is a dashboard panel with sections) ── */
+  /* ── Cards (each card is a dashboard panel with sections) ── */
   cards: [
+    {
+      id: 'welcome-card', title: 'Welcome to WarTab', icon: 'sword',
+      color: '#888888', width: 2,
+      sections: [
+        {
+          id: 'welcome-intro', type: 'notes', label: 'Your Dashboard',
+          content: 'Welcome to your self-hosted command centre.\n\nThis page is yours to customise — add cards, rearrange them, and connect your services.\n\nStart by clicking the + button in the top bar to add a new card, or the ⚙ gear icon to configure the look and feel.',
+        },
+      ],
+    },
     {
       id: 'search-card', title: 'Quick Search', icon: 'search',
       color: '#999999', width: 2,
       sections: [
-        { id: 'search-main', type: 'search', engine: 'Google',
-          placeholder: 'Search anything...', label: 'Web Search' },
+        { id: 'search-main', type: 'search', engine: 'Google', placeholder: 'Search anything...', label: 'Web Search' },
       ],
     },
     {
@@ -999,82 +1009,60 @@ const DEFAULT_CONFIG = {
       ],
     },
     {
-      id: 'daily-drivers', title: 'Daily Drivers', icon: 'globe',
-      color: '#cccccc', width: 2,
-      sections: [
-        {
-          id: 'dev-links', type: 'links', label: 'Development',
-          links: [
-            { label: 'GitHub', url: 'https://github.com', icon: '/icons/github.svg' },
-            { label: 'GitLab', url: 'https://gitlab.com', icon: '/icons/gitlab.svg' },
-            { label: 'Stack Overflow', url: 'https://stackoverflow.com', icon: 'help-circle' },
-            { label: 'npm', url: 'https://www.npmjs.com', icon: 'package' },
-            { label: 'PyPI', url: 'https://pypi.org', icon: 'code-2' },
-          ],
-        },
-        {
-          id: 'media-links', type: 'links', label: 'Media & Social',
-          links: [
-            { label: 'Reddit', url: 'https://reddit.com', icon: '/icons/reddit.svg' },
-            { label: 'YouTube', url: 'https://youtube.com', icon: '/icons/youtube.svg' },
-            { label: 'Twitch', url: 'https://twitch.tv', icon: '/icons/twitch.svg' },
-            { label: 'X', url: 'https://x.com', icon: 'x' },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'selfhosted', title: 'Self-Hosted', icon: 'monitor',
+      id: 'get-started', title: 'Getting Started', icon: 'compass',
       color: '#777777', width: 2,
       sections: [
         {
-          id: 'sh-services', type: 'links', label: 'Services',
+          id: 'start-links', type: 'links', label: 'Resources',
           links: [
+            { label: 'GitHub', url: 'https://github.com', icon: '/icons/github.svg' },
+            { label: 'Selfhosted', url: 'https://reddit.com/r/selfhosted', icon: '/icons/reddit.svg' },
             { label: 'Home Assistant', url: 'http://homeassistant.local:8123', icon: '/icons/home-assistant.svg' },
             { label: 'Jellyfin', url: 'http://jellyfin.local:8096', icon: '/icons/jellyfin.svg' },
             { label: 'Pi-hole', url: 'http://pi.hole/admin', icon: '/icons/pi-hole.svg' },
-            { label: 'Grafana', url: 'http://grafana.local:3000', icon: '/icons/grafana.svg' },
-            { label: 'Portainer', url: 'http://portainer.local:9000', icon: '/icons/portainer.svg' },
-            { label: 'Vaultwarden', url: 'http://vault.local:8080', icon: '/icons/vaultwarden.svg' },
+            { label: 'Docker', url: 'https://docs.docker.com', icon: '/icons/docker.svg' },
           ],
         },
       ],
     },
     {
-      id: 'dev-docs', title: 'Dev Docs', icon: 'book-open',
-      color: '#8a8a8a', width: 1,
+      id: 'module-showcase', title: 'Card Modules', icon: 'grid',
+      color: '#9a9a9a', width: 2,
       sections: [
         {
-          id: 'docs-links', type: 'link-list', label: 'References',
+          id: 'showcase-links', type: 'link-list', label: 'Available Modules',
           links: [
-            { label: 'MDN Web Docs', url: 'https://developer.mozilla.org', icon: 'globe' },
-            { label: 'Python Docs', url: 'https://docs.python.org/3/', icon: 'book' },
-            { label: 'Docker Docs', url: 'https://docs.docker.com', icon: '/icons/docker.svg' },
-            { label: 'Arch Wiki', url: 'https://wiki.archlinux.org', icon: 'book' },
+            { label: 'Links & Bookmarks', url: '', icon: 'link' },
+            { label: 'Search Bar', url: '', icon: 'search' },
+            { label: 'Clock & Calendar', url: '', icon: 'clock' },
+            { label: 'Weather', url: '', icon: 'cloud-sun' },
+            { label: 'Notes', url: '', icon: 'edit-3' },
+            { label: 'API Poller', url: '', icon: 'activity' },
+            { label: 'Resource Monitor', url: '', icon: 'bar-chart-3' },
+            { label: 'Media Card', url: '', icon: 'film' },
+            { label: 'Git Repo', url: '', icon: 'code-2' },
+            { label: 'Proxmox', url: '', icon: 'server' },
+            { label: 'Digital Pet', url: '', icon: 'heart' },
+            { label: 'LAN Scan', url: '', icon: 'radio' },
           ],
         },
       ],
     },
     {
-      id: 'notes-card', title: 'Quick Notes', icon: 'edit-3',
+      id: 'config-tip', title: 'Configuration', icon: 'settings',
       color: '#bbbbbb', width: 1,
       sections: [
         {
-          id: 'notes-main', type: 'notes', label: 'Notes',
-          content: '• WarTab is running!\n• Click ✎ on any card to edit it inline.\n• Drag ⠿ to reorder cards.',
+          id: 'config-notes', type: 'notes', label: 'Tips',
+          content: '• Click the ⚙ icon or press Ctrl+Shift+C to open settings\n• Drag ⠿ to reorder cards\n• Double-click any card title to rename it\n• Upload backgrounds in Appearance settings',
         },
       ],
     },
     {
-      id: 'demo-api', title: 'GitHub Stars', icon: 'github',
-      color: '#9a9a9a', width: 1,
+      id: 'system-info', title: 'System', icon: 'cpu',
+      color: '#999999', width: 1,
       sections: [
-        {
-          id: 'api-demo', type: 'api-poller', label: 'WarTab Stars',
-          url: 'https://api.github.com/repos/nousresearch/wartab',
-          fields: [{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}],
-          refreshInterval: 120,
-        },
+        { id: 'sys-resources', type: 'resource-monitor', source: 'local', glancesUrl: 'http://localhost:61209', refreshInterval: 3, graphMode: false },
       ],
     },
   ],

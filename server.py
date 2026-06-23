@@ -210,6 +210,87 @@ try:
         GIT_VERSION = out.stdout.strip()
 except Exception as e: log.debug('git version detection failed: %s', e)
 
+# ── Minimal config for first-run / missing config.json ──
+# Served when config.json doesn't exist so the page works immediately.
+MINIMAL_CONFIG = {
+    "version": GIT_VERSION or "dev",
+    "branding": {"title": "WarTab", "icon": "sword"},
+    "theme": {
+        "bgType": "gradient", "bgValue": "#0a0a0a, #1a1a1a, #0d0d0d",
+        "bgBlur": 0, "bgDim": 0, "blur": 20, "glow": "#888888",
+        "fontSizeText": 14, "fontSizeHeading": 16, "fontFamily": "Inter",
+        "cardBg": "dark", "fontColor": "#cccccc", "cardOpacity": 1,
+        "bgRotate": False, "animations": True, "showAccentBar": True,
+    },
+    "statusBar": {
+        "enabled": True, "source": "local",
+        "glancesUrl": "http://localhost:61209", "customUrl": "",
+        "refreshInterval": 15,
+        "items": ["cpu", "memory", "disk", "uptime"], "hostname": True,
+    },
+    "layout": {
+        "cols": 4, "gap": 16, "pageWidth": 100,
+        "pagePadding": 2, "pageWidthPadding": 2,
+    },
+    "search": {
+        "engine": "https://www.google.com/search?q=",
+        "engines": {
+            "Google": "https://www.google.com/search?q=",
+            "DuckDuckGo": "https://duckduckgo.com/?q=",
+            "Brave": "https://search.brave.com/search?q=",
+            "Bing": "https://www.bing.com/search?q=",
+            "YouTube": "https://www.youtube.com/results?search_query=",
+            "Reddit": "https://www.reddit.com/search/?q=",
+            "Wikipedia": "https://en.wikipedia.org/w/index.php?search=",
+        },
+        "selected": "Google", "openInNewTab": True,
+    },
+    "cards": [
+        {
+            "id": "welcome-card", "title": "Welcome to WarTab",
+            "icon": "sword", "color": "#888888", "width": 2, "height": 2,
+            "sections": [{"id": "welcome-intro", "type": "notes", "label": "Your Dashboard",
+                "content": "Welcome to your self-hosted command centre.\n\nThis page is yours to customise \u2014 add cards, rearrange them, and connect your services.\n\nClick the + button above to add a new card, or the \u2699 gear icon to configure the look and feel.\n\nDouble-click any card title to rename it."}],
+        },
+        {
+            "id": "search-card", "title": "Quick Search",
+            "icon": "search", "color": "#999999", "width": 1, "height": 1,
+            "sections": [{"id": "search-main", "type": "search", "engine": "Google",
+                "placeholder": "Search anything...", "label": "Web Search"}],
+        },
+        {
+            "id": "clock-card", "title": "Time & Date",
+            "icon": "clock", "color": "#aaaaaa", "width": 1, "height": 1,
+            "sections": [{"id": "clock-main", "type": "clock",
+                "format24h": False, "showDate": True}],
+        },
+        {
+            "id": "mods-card", "title": "Card Modules",
+            "icon": "grid", "color": "#9a9a9a", "width": 2, "height": 1,
+            "sections": [{"id": "mods-list", "type": "link-list", "label": "Available Modules",
+                "links": [
+                    {"label": "Links & Bookmarks", "url": "", "icon": "link"},
+                    {"label": "Search Bar", "url": "", "icon": "search"},
+                    {"label": "Clock & Calendar", "url": "", "icon": "clock"},
+                    {"label": "Weather", "url": "", "icon": "cloud-sun"},
+                    {"label": "Notes", "url": "", "icon": "edit-3"},
+                    {"label": "API Poller", "url": "", "icon": "activity"},
+                    {"label": "Resource Monitor", "url": "", "icon": "bar-chart-3"},
+                    {"label": "Media Card", "url": "", "icon": "film"},
+                    {"label": "Proxmox", "url": "", "icon": "server"},
+                    {"label": "LAN Scan", "url": "", "icon": "radio"},
+                ]}],
+        },
+        {
+            "id": "system-card", "title": "System",
+            "icon": "cpu", "color": "#999999", "width": 1, "height": 1,
+            "sections": [{"id": "sys-resources", "type": "resource-monitor",
+                "source": "local", "glancesUrl": "http://localhost:61209",
+                "refreshInterval": 3, "graphMode": False}],
+        },
+    ],
+}
+
 def scan_arp():
     import csv, io, socket, subprocess
     global _arp_cache, _arp_cache_ts
@@ -449,7 +530,10 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
                     data = json.load(f)
                     data["_version"] = GIT_VERSION
                     return self._json(data)
-            return self._json({})
+            # First run: serve minimal config so the page works immediately
+            result = dict(MINIMAL_CONFIG)
+            result["_version"] = GIT_VERSION
+            return self._json(result)
         if self.path == "/api/arp":
             return self._json(scan_arp())
         if self.path.startswith("/api/ping"):
@@ -626,11 +710,30 @@ def main():
     a=ap.parse_args()
     http.server.HTTPServer.allow_reuse_address=True
     server=http.server.ThreadingHTTPServer((a.bind,a.port),WarTabHandler); server.server_name="WarTab"
+    hostname=socket.gethostname()
     print(f"\n  WarTab Server\n  ----")
     print(f"  Local:    http://localhost:{a.port}")
     for ip in get_local_ips(): print(f"  Network:  http://{ip}:{a.port}")
+    mDNS_proc = None
+    if a.mdns:
+        try:
+            mDNS_proc = subprocess.Popen(
+                ["avahi-publish-service", "WarTab", "_http._tcp", str(a.port),
+                 "path=/"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            log.info("mDNS published — http://%s.local:%s", hostname, a.port)
+        except FileNotFoundError:
+            log.warning("--mdns: avahi-publish-service not found. Install: sudo apt install avahi-utils")
+        except Exception as e:
+            log.warning("--mdns: failed to publish: %s", e)
     print("  ----\n  Ctrl+C to stop\n")
     if a.open: webbrowser.open(f"http://localhost:{a.port}")
     try: server.serve_forever()
-    except KeyboardInterrupt: print("\n  Stopping..."); server.server_close(); sys.exit(0)
+    except KeyboardInterrupt: print("\n  Stopping...")
+    finally:
+        if mDNS_proc:
+            mDNS_proc.terminate()
+            mDNS_proc.wait(timeout=3)
+        server.server_close()
+        sys.exit(0)
 if __name__=="__main__": main()

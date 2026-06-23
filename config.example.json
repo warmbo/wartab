@@ -1,0 +1,150 @@
+{
+  "version": "dev",
+  "branding": {
+    "title": "WarTab",
+    "icon": "sword"
+  },
+  "theme": {
+    "bgType": "gradient",
+    "bgValue": "#0a0a0a, #1a1a1a, #0d0d0d",
+    "bgBlur": 0,
+    "bgDim": 0,
+    "blur": 20,
+    "glow": "#888888",
+    "fontSizeText": 14,
+    "fontSizeHeading": 16,
+    "fontFamily": "Inter",
+    "cardBg": "dark",
+    "fontColor": "#cccccc",
+    "cardOpacity": 1,
+    "bgRotate": false,
+    "animations": true,
+    "showAccentBar": true
+  },
+  "statusBar": {
+    "enabled": true,
+    "source": "local",
+    "glancesUrl": "http://localhost:61209",
+    "customUrl": "",
+    "refreshInterval": 15,
+    "items": ["cpu", "memory", "disk", "uptime"],
+    "hostname": true
+  },
+  "layout": {
+    "cols": 4,
+    "gap": 16,
+    "pageWidth": 100,
+    "pagePadding": 2,
+    "pageWidthPadding": 2
+  },
+  "search": {
+    "engine": "https://www.google.com/search?q=",
+    "engines": {
+      "Google": "https://www.google.com/search?q=",
+      "DuckDuckGo": "https://duckduckgo.com/?q=",
+      "Brave": "https://search.brave.com/search?q=",
+      "Bing": "https://www.bing.com/search?q=",
+      "YouTube": "https://www.youtube.com/results?search_query=",
+      "Reddit": "https://www.reddit.com/search/?q=",
+      "Wikipedia": "https://en.wikipedia.org/w/index.php?search="
+    },
+    "selected": "Google",
+    "openInNewTab": true
+  },
+  "cards": [
+    {
+      "id": "welcome-card",
+      "title": "Welcome to WarTab",
+      "icon": "sword",
+      "color": "#888888",
+      "width": 2,
+      "height": 2,
+      "sections": [
+        {
+          "id": "welcome-intro",
+          "type": "notes",
+          "label": "Your Dashboard",
+          "content": "Welcome to your self-hosted command centre.\n\nThis page is yours to customise — add cards, rearrange them, and connect your services.\n\nClick the + button above to add a new card, or the ⚙ gear icon to configure the look and feel.\n\nDouble-click any card title to rename it."
+        }
+      ]
+    },
+    {
+      "id": "search-card",
+      "title": "Quick Search",
+      "icon": "search",
+      "color": "#999999",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "search-main",
+          "type": "search",
+          "engine": "Google",
+          "placeholder": "Search anything...",
+          "label": "Web Search"
+        }
+      ]
+    },
+    {
+      "id": "clock-card",
+      "title": "Time & Date",
+      "icon": "clock",
+      "color": "#aaaaaa",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "clock-main",
+          "type": "clock",
+          "format24h": false,
+          "showDate": true
+        }
+      ]
+    },
+    {
+      "id": "mods-card",
+      "title": "Card Modules",
+      "icon": "grid",
+      "color": "#9a9a9a",
+      "width": 2,
+      "height": 1,
+      "sections": [
+        {
+          "id": "mods-list",
+          "type": "link-list",
+          "label": "Available Modules",
+          "links": [
+            { "label": "Links & Bookmarks", "url": "", "icon": "link" },
+            { "label": "Search Bar", "url": "", "icon": "search" },
+            { "label": "Clock & Calendar", "url": "", "icon": "clock" },
+            { "label": "Weather", "url": "", "icon": "cloud-sun" },
+            { "label": "Notes", "url": "", "icon": "edit-3" },
+            { "label": "API Poller", "url": "", "icon": "activity" },
+            { "label": "Resource Monitor", "url": "", "icon": "bar-chart-3" },
+            { "label": "Media Card", "url": "", "icon": "film" },
+            { "label": "Proxmox", "url": "", "icon": "server" },
+            { "label": "LAN Scan", "url": "", "icon": "radio" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "system-card",
+      "title": "System",
+      "icon": "cpu",
+      "color": "#999999",
+      "width": 1,
+      "height": 1,
+      "sections": [
+        {
+          "id": "sys-resources",
+          "type": "resource-monitor",
+          "source": "local",
+          "glancesUrl": "http://localhost:61209",
+          "refreshInterval": 3,
+          "graphMode": false
+        }
+      ]
+    }
+  ]
+}

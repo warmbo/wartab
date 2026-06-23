@@ -114,16 +114,29 @@ and OpenWeatherMap API — both degrade gracefully.
 
 ## Quick Start
 
-### Option 1: Install Script (Debian)
+### Option 1: One-Command Install (Debian)
+
+Works on a clean Debian install — installs all dependencies automatically:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/warmbo/wartab/main/setup.sh | bash
-# Or from the repo:
-bash setup.sh
+curl -sL https://github.com/warmbo/wartab/raw/main/setup.sh | bash
 ```
 
-This installs WarTab as a systemd user service, enables linger (keeps running after logout),
-and creates data directories for notes and uploads.
+This single command:
+- Installs Python 3, git, Pillow, and Avahi/mDNS (via `apt`)
+- Clones WarTab to `/opt/wartab`
+- Creates an initial `config.json` from `config.example.json`
+- Downloads service icons from selfh.st
+- Starts WarTab as a systemd user service with mDNS advertising
+- Enables linger (keeps running after logout)
+
+**Result:** WarTab is live at:
+- `http://localhost:8081` — on the machine itself
+- `http://$(hostname).local:8081` — from any device on your LAN (via mDNS)
+
+**Set as your browser new tab:**
+- **Firefox:** Install "New Tab Override" → enter `http://$(hostname).local:8081`
+- **Chrome/Edge/Brave:** Install "New Tab Redirect" → enter `http://$(hostname).local:8081`
 
 ### Option 2: Docker
 
@@ -133,36 +146,41 @@ docker build -t wartab .
 docker run -d \
   --name wartab \
   -p 8081:8081 \
-  -v wartab-config:/app/config.json \
-  -v wartab-notes:/app/notes \
-  -v wartab-uploads:/app/uploads \
+  -v "$(pwd)/wartab-data/config.json:/app/config.json" \
+  -v "$(pwd)/wartab-data/notes:/app/notes" \
+  -v "$(pwd)/wartab-data/uploads:/app/uploads" \
   wartab
 
 # Or with Docker Compose
 docker compose up -d
 ```
 
+Data files appear in `wartab-data/` for easy editing.
+
 ### Option 3: Manual (Python)
 
+Zero dependencies beyond Python stdlib:
+
 ```bash
-cd /home/cody/Projects/wartab
-python3 server.py
-# Opens on http://localhost:8081
-
-# Custom port
-python3 server.py --port 3000
-
-# Open browser automatically
-python3 server.py --port 8081 --open
-
-# mDNS / ZeroConf discovery (install avahi-utils first)
-python3 server.py --port 8081 --mdns
+git clone https://github.com/warmbo/wartab.git
+cd wartab
+cp config.example.json config.json          # optional — server falls back to defaults
+python3 server.py --port 8081 --open        # --open opens browser automatically
+python3 server.py --port 8081 --mdns        # advertise via mDNS (install avahi-utils)
 ```
+
+The server will work even without `config.json` — it serves built-in defaults on first run.
 
 ### Setting as Browser New Tab
 
-**Firefox**: New Tab Override extension → `http://localhost:8081`
-**Chrome/Edge/Brave**: New Tab Redirect extension → `http://localhost:8081`
+**If you installed via setup.sh (Option 1),** mDNS is already configured. Just use:
+```
+http://hostname.local:8081
+```
+(replace `hostname` with your machine's name)
+
+**Firefox**: New Tab Override extension → set the URL above
+**Chrome/Edge/Brave**: New Tab Redirect extension → set the URL above
 
 ### Systemd Auto-Start
 
