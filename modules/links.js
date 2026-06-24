@@ -36,7 +36,7 @@ registerModule('links', {
       li2_i.addEventListener('change',()=>{sec.links[li2].label=li2_i.value;saveAndRefresh();});
       const ic=document.createElement('button');ic.className='me-icon-btn';
       if(link.icon&&(link.icon.startsWith('http')||link.icon.startsWith('data:')||link.icon.startsWith('/'))){const img=document.createElement('img');img.src=link.icon;img.alt='';ic.appendChild(img);}else if(isLucideName(link.icon)){const li=document.createElement('i');li.setAttribute('data-lucide',link.icon);ic.appendChild(li);}else{ic.textContent=link.icon||'🔗';}
-      ic.title='Change icon';ic.addEventListener('click',()=>openIconPicker(url=>{sec.links[li2].icon=url;saveAndRefresh();}));
+      ic.title='Change icon';ic.addEventListener('click',()=>openIconPicker(url=>{sec.links[li2].icon=url;ic.innerHTML='';if(url.startsWith('http')||url.startsWith('data:')||url.startsWith('/')){const img=document.createElement('img');img.src=url;img.alt='';ic.appendChild(img);}else if(isLucideName(url)){const li=document.createElement('i');li.setAttribute('data-lucide',url);ic.appendChild(li);renderIcons();}else{ic.textContent=url||'🔗';}saveAndRefresh();}));
       const ui=document.createElement('input');ui.className='cp-input';ui.placeholder='https://';ui.value=link.url;
       ui.addEventListener('change',()=>{sec.links[li2].url=ui.value;saveAndRefresh();});
       const rm = cpBtn('✕', true); rm.title = '';
