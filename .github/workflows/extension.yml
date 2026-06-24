@@ -33,10 +33,19 @@ jobs:
         id: vars
         run: echo "hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
+      - name: Delete previous release (keep only latest)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PREV=$(gh release list --limit 2 --json tagName --jq '.[1].tagName' 2>/dev/null || true)
+          if [ -n "$PREV" ]; then
+            gh release delete "$PREV" --yes 2>/dev/null || true
+          fi
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: extension-${{ steps.vars.outputs.hash }}
+          tag_name: ${{ steps.vars.outputs.hash }}
           name: WarTab Extension — ${{ steps.vars.outputs.hash }}
           target_commitish: extension
           make_latest: true
