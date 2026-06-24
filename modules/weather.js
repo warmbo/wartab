@@ -11,6 +11,7 @@ registerModule('weather', {
     const windIcon=document.createElement('i');windIcon.setAttribute('data-lucide','wind');windIcon.style.cssText='width:12px;height:12px;';windEl.appendChild(windIcon);
     const windVal=document.createElement('span');windVal.className='weather-wind-val';windVal.textContent='--';windEl.appendChild(windVal);
     w.appendChild(windEl);
+    const fcEl=document.createElement('div');fcEl.className='weather-forecast';fcEl.textContent='';w.appendChild(fcEl);
     const tsEl=document.createElement('div');tsEl.className='weather-ts';tsEl.textContent='';w.appendChild(tsEl);
     cw.appendChild(w);
   },

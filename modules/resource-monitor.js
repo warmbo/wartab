@@ -6,7 +6,7 @@
    ═══════════════════════════════════════════ */
 if(!window._rmCache)window._rmCache={};
 registerModule('resource-monitor', {
-  defaults: { source:'local', glancesUrl:'http://localhost:61209', refreshInterval:3, graphMode:false },
+  defaults: { source:'local', glancesUrl:'http://localhost:61209', refreshInterval:3, graphMode:true },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='resource-monitor';
     w.style.cssText='display:flex;flex-direction:column;gap:8px;padding:4px 0;';

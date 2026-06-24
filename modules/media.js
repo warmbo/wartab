@@ -61,9 +61,14 @@ function mediaStatRow(label, value, accent) {
 
 /* ── Service group header ── */
 
-function mediaGroupHeader(label, statusDot) {
+function mediaGroupHeader(label, statusDot, url) {
   const hdr = document.createElement('div');
   hdr.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 0 3px;margin-top:4px;border-bottom:1px solid rgba(255,255,255,0.08);';
+  if (url) {
+    hdr.style.cursor = 'pointer';
+    hdr.title = 'Open ' + label;
+    hdr.addEventListener('click', function () { window.open(url, '_blank'); });
+  }
   if (statusDot) {
     const dot = document.createElement('span');
     dot.style.cssText = 'width:6px;height:6px;border-radius:50%;background:' + statusDot + ';flex-shrink:0;';
@@ -104,10 +109,10 @@ function parsePlexLib(d) {
 
 function fetchServiceData(svc) {
   const def = MEDIA_SERVICES[svc.type];
-  if (!def) return Promise.resolve({ type: svc.type, label: svc.label || svc.type, error: 'Unknown type' });
+  if (!def) return Promise.resolve({ type: svc.type, label: svc.label || svc.type, error: 'Unknown type', url: null });
 
   const base = (svc.url || '').replace(/\/+$/, '');
-  if (!base || !svc.key) return Promise.resolve({ type: svc.type, label: svc.label || def.label, error: 'Not configured' });
+  if (!base || !svc.key) return Promise.resolve({ type: svc.type, label: svc.label || def.label, error: 'Not configured', url: null });
 
   const headers = def.authHeaders(svc.key);
 
@@ -120,8 +125,8 @@ function fetchServiceData(svc) {
       }).catch(() => '—'),
       mediaFetch(base + '/library/sections', headers).then(d => parsePlexLib(d)).catch(() => ({})),
     ]).then(([streams, lib]) => {
-      return { type: 'plex', label: svc.label || 'Plex', streams, lib, error: null };
-    }).catch(err => ({ type: 'plex', label: svc.label || 'Plex', error: err.message }));
+      return { type: 'plex', label: svc.label || 'Plex', streams, lib, error: null, url: base };
+    }).catch(err => ({ type: 'plex', label: svc.label || 'Plex', error: err.message, url: base }));
   }
 
   // Standard services: collect field + optional field fetches
@@ -146,8 +151,8 @@ function fetchServiceData(svc) {
   return Promise.all(promises).then(values => {
     const results = {};
     fieldMeta.forEach((f, i) => { results[f.id] = { value: values[i], label: f.label, accent: f.accent }; });
-    return { type: svc.type, label: svc.label || def.label, results, error: null };
-  }).catch(err => ({ type: svc.type, label: svc.label || def.label, error: err.message }));
+    return { type: svc.type, label: svc.label || def.label, results, error: null, url: base };
+  }).catch(err => ({ type: svc.type, label: svc.label || def.label, error: err.message, url: base }));
 }
 
 /* ═══════════════════════════════════════════
@@ -181,13 +186,13 @@ registerModule('media', {
         w.innerHTML = '';
         results.forEach(r => {
           if (r.error) {
-            w.appendChild(mediaGroupHeader(r.label, 'rgba(200,80,80,0.6)'));
+            w.appendChild(mediaGroupHeader(r.label, 'rgba(200,80,80,0.6)', r.url));
             w.appendChild(mediaStatRow('Error', r.error, 'var(--color-error)'));
             return;
           }
 
           if (r.type === 'plex') {
-            w.appendChild(mediaGroupHeader(r.label, r.streams > 0 ? 'var(--color-success)' : 'var(--text-tertiary)'));
+            w.appendChild(mediaGroupHeader(r.label, r.streams > 0 ? 'var(--color-success)' : 'var(--text-tertiary)', r.url));
             w.appendChild(mediaStatRow('Streaming', r.streams === 0 ? '0' : r.streams, r.streams > 0 ? 'var(--color-success)' : 'var(--text-secondary)'));
             const libLabels = MEDIA_SERVICES.plex.libraryTypes;
             Object.keys(libLabels).forEach(type => {
@@ -198,7 +203,7 @@ registerModule('media', {
           }
 
           // Standard service (sonarr, radarr, etc.)
-          w.appendChild(mediaGroupHeader(r.label, Object.values(r.results).some(v => v.value > 0) ? 'var(--accent)' : 'var(--text-tertiary)'));
+          w.appendChild(mediaGroupHeader(r.label, Object.values(r.results).some(v => v.value > 0) ? 'var(--accent)' : 'var(--text-tertiary)', r.url));
 
           // Check if wanted/missing has a value — mark it in warning color if > 0
           Object.values(r.results).forEach(rr => {
