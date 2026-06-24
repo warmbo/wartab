@@ -333,10 +333,11 @@ function renderLinkIcon(icon) {
       const fallback = document.createElement('i');
       fallback.className = 'link-icon'; fallback.setAttribute('data-lucide', 'link');
       this.parentNode.replaceChild(fallback, this);
-      renderIcons();  // render the fallback Lucide icon
+      renderIcons();
     };
     return img;
   }
+  if (!icon) return renderLucideEl('link', 'link-icon');
   return renderIconElement(icon, 'link-icon');
 }
 /**
