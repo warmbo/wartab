@@ -410,10 +410,9 @@ async function init() {
   }
   renderAll(); renderPageNav(); initStatusBar();
   // Build version from config metadata (set by server as git hash)
-  // Build version: build-meta.js > config metadata > fallback
   WARTAB_BUILD = WARTAB_BUILD || config._version || WARTAB_VERSION;
-  // Footer — build version from config
-  $('#footer-text').textContent='WarTab '+WARTAB_BUILD+'  [?] shortcuts';
+  // Footer — build version with source link
+  var ft=$('#footer-text');if(ft)ft.innerHTML='WarTab <a href="https://github.com/warmbo/wartab" target="_blank" rel="me noopener" style="color:var(--text-secondary);text-decoration:none;">'+WARTAB_BUILD+'</a>  [?] shortcuts';
   loadIconRepo();
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
