@@ -141,13 +141,13 @@ registerModule('resource-monitor', {
       rows[m]=buildMetricRow(m,labels[m]);
       w.appendChild(rows[m].row);
     });
-    var netFill, netCanvas, netCwrap, netSpeedRow, rxEl, txEl;
+    var netFill, netCanvas, netCwrap, netSpeedRow, rxEl, txEl, netRow, netLabelRow, netLbl, netVal;
     if(showMetrics.net){
-    const netRow=document.createElement('div');netRow.style.cssText='display:flex;flex-direction:column;gap:2px;';
-    const netLabelRow=document.createElement('div');netLabelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
-    const netLbl=document.createElement('span');netLbl.style.cssText='color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
+    netRow=document.createElement('div');netRow.style.cssText='display:flex;flex-direction:column;gap:2px;';
+    netLabelRow=document.createElement('div');netLabelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
+    netLbl=document.createElement('span');netLbl.style.cssText='color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
     netLbl.textContent='NET';
-    const netVal=document.createElement('span');netVal.className='rm-val-net';netVal.style.cssText='color:var(--text-primary);font-variant-numeric:tabular-nums;font-size:var(--text-2xs);';
+    netVal=document.createElement('span');netVal.className='rm-val-net';netVal.style.cssText='color:var(--text-primary);font-variant-numeric:tabular-nums;font-size:var(--text-2xs);';
     netVal.textContent='--';
     netLabelRow.appendChild(netLbl);netLabelRow.appendChild(netVal);netRow.appendChild(netLabelRow);
     netFill=document.createElement('div');netFill.className='rm-fill-net';
