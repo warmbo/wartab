@@ -3,9 +3,9 @@ registerModule('notes', {
   render: (sec,card,cw)=>{
     cw.style.cssText='flex:1;display:flex;flex-direction:column;width:100%;';
     
-    // --- Toolbar ---
+    // --- Toolbar (hidden until editor focused) ---
     var tb=document.createElement('div');
-    tb.style.cssText='display:flex;gap:4px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:4px;flex-wrap:wrap;';
+    tb.style.cssText='display:none;gap:4px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:4px;flex-wrap:wrap;';
     
     function mkBtn(label,cmd,val){
       var b=document.createElement('button');
@@ -44,16 +44,52 @@ registerModule('notes', {
     
     cw.appendChild(e);
     
-    // --- Character count ---
+    // --- Toolbar visibility toggle ---
+    function showToolbar(){tb.style.display='flex';}
+    function hideToolbar(){tb.style.display='none';}
+    e.addEventListener('focus',showToolbar);
+    e.addEventListener('blur',function(){
+      // Delay hide so toolbar button clicks register before the editor blurs
+      setTimeout(function(){
+        if(!tb.contains(document.activeElement))hideToolbar();
+      },100);
+    });
+    
+    // --- Bottom row: download button + character count ---
+    var br=document.createElement('div');
+    br.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:4px 0;';
+    
+    // Download .md button
+    var dlBtn=document.createElement('button');
+    dlBtn.innerHTML='&#x2193;';
+    dlBtn.title='Download .md file';
+    dlBtn.style.cssText='padding:2px 8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--text-secondary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);line-height:1;';
+    dlBtn.addEventListener('click',function(){
+      var content=e.innerHTML;
+      var plain=e.textContent||'';
+      var blob=new Blob([content],{type:'text/markdown'});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url;
+      a.download=(card.title||'note')+'.md';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+    br.appendChild(dlBtn);
+    
+    // Character count
     var cc=document.createElement('div');
-    cc.style.cssText='text-align:right;font-size:var(--text-xs);color:var(--text-secondary);padding:4px 0;opacity:0.6;';
+    cc.style.cssText='font-size:var(--text-xs);color:var(--text-secondary);opacity:0.6;';
     
     function updateCharCount(){
       var txt=e.textContent||'';
       cc.textContent=txt.length+' chars';
     }
     updateCharCount();
-    cw.appendChild(cc);
+    br.appendChild(cc);
+    cw.appendChild(br);
 
     // --- Autosave with debounce ---
     var autosaveTimer=null;
