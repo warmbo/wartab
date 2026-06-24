@@ -435,11 +435,12 @@ const storage = (function() {
           var cached = data[CHECK_KEY];
           if (cached && Date.now() - cached.ts < ONE_HOUR) { resolve(cached); return; }
           fetch(GITHUB_API).then(function(r) { return r.json(); }).then(function(release) {
-            var latestTag = (release.tag_name || '').replace(/^v/, '');
-            var currentVer = '';
-            try { var m = chrome.runtime.getManifest(); currentVer = m.version_name || m.version || '0.0.0'; } catch(e) { currentVer = '0.0.0'; }
-            var isNewer = latestTag !== currentVer && latestTag !== currentVer.replace('-dev', '') && latestTag !== '';
-            var result = { ts: Date.now(), current: currentVer, latest: latestTag || '', available: isNewer, url: (release.html_url || 'https://github.com/warmbo/wartab/releases') + '' };
+            var latestTag = (release.tag_name || '').replace(/^v/, '').replace(/-.*$/, '');
+            var m = chrome.runtime.getManifest();
+            var rawVer = m.version_name || m.version || '0.0.0';
+            var currentVer = rawVer.replace(/-.*$/, ''); // strip suffix like -dev
+            var isNewer = latestTag !== '' && latestTag !== currentVer && latestTag !== rawVer;
+            var result = { ts: Date.now(), current: rawVer, latest: latestTag || '', available: isNewer, url: (release.html_url || 'https://github.com/warmbo/wartab/releases') + '' };
             var obj = {}; obj[CHECK_KEY] = result;
             chrome.storage.local.set(obj, function(){});
             resolve(result);
@@ -464,11 +465,11 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
       badge.rel = 'noopener';
       badge.title = 'WarTab ' + result.latest + ' available (current: ' + result.current + ')';
       badge.textContent = '\u2B06';
-      badge.style.cssText = 'font-size:14px;cursor:pointer;opacity:0.6;text-decoration:none;margin-left:4px;';
+      badge.style.cssText = 'font-size:14px;cursor:pointer;opacity:0.6;text-decoration:none;margin-left:8px;';
       badge.addEventListener('mouseenter', function(){ this.style.opacity = '1'; });
       badge.addEventListener('mouseleave', function(){ this.style.opacity = '0.6'; });
-      var actions = document.getElementById('top-actions');
-      if (actions) actions.appendChild(badge);
+      var footer = document.getElementById('footer-repo');
+      if (footer && footer.parentNode) footer.parentNode.appendChild(badge);
     });
   });
 }
