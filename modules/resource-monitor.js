@@ -186,7 +186,7 @@ registerModule('resource-monitor', {
         var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#888';
         drawSparkline(r.canvas,hist[key],accent,key==='ram'?100:0);
       });
-      if(netCwrap.style.display==='none')return;
+      if(!netCwrap||netCwrap.style.display==='none')return;
       var rect=netCwrap.getBoundingClientRect();
       var dpr=window.devicePixelRatio||1;
       netCanvas.width=rect.width*dpr;
@@ -205,8 +205,8 @@ registerModule('resource-monitor', {
         if(enabled){r.track.style.display='none';r.cwrap.style.display='block';}
         else{r.track.style.display='';r.cwrap.style.display='none';}
       });
-      if(enabled){netFill.style.display='none';netCwrap.style.display='block';}
-      else{netFill.style.display='';netCwrap.style.display='none';}
+      if(enabled){if(netFill)netFill.style.display='none';if(netCwrap)netCwrap.style.display='block';}
+      else{if(netFill)netFill.style.display='';if(netCwrap)netCwrap.style.display='none';}
       if(enabled)setTimeout(sizeAndDrawAll,0);
     }
     setGraphMode(sec.graphMode);
