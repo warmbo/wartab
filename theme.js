@@ -55,8 +55,12 @@ function applyTheme(){
     : `rgba(255,255,255,${0.15 * op})`);
   document.documentElement.dataset.cardBg=mode;
 
-  // Font color from config
-  const fc=t.fontColor||'#cccccc';
+  // Font color from config — invert in light card mode for readability
+  var fc=t.fontColor||'#cccccc';
+  if (mode === 'light') {
+    // In light mode, use dark text (independent of user's fontColor config)
+    fc = '#222222';
+  }
   root.style.setProperty('--text-primary',hexToRgba(fc,0.92));
   root.style.setProperty('--text-secondary',hexToRgba(fc,0.60));
   root.style.setProperty('--text-tertiary',hexToRgba(fc,0.35));
