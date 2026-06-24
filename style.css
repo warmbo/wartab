@@ -953,3 +953,4 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 
 /* Save success indicator pulse */
 #btn-config.save-ok { box-shadow: 0 0 16px rgba(100,220,100,0.4); transition: box-shadow 0.15s; }
+.import-warn-list { font-size: var(--text-sm); color: var(--text-secondary); max-height: 300px; overflow-y: auto; line-height: 1.6; }
