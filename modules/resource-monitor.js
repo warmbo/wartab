@@ -27,6 +27,7 @@ registerModule('resource-monitor', {
       var _smoothed={};
     }
     var metrics=['cpu','ram','disk','gpu'];
+    var showMetrics=sec.showMetrics||{cpu:true,ram:true,disk:true,gpu:true,net:true};
     // Canvas sparkline renderer — draws a polyline scaled to fill the canvas
     function hexToRgba(h,a){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return'rgba('+r+','+g+','+b+','+a+')';}
     function drawSparkline(canvas,data,color,fixedMax){
@@ -135,10 +136,12 @@ registerModule('resource-monitor', {
     }
     var rows={};
     metrics.forEach(function(m){
+      if(!showMetrics[m])return;
       var labels={cpu:'CPU',ram:'RAM',disk:'DISK',gpu:'GPU'};
       rows[m]=buildMetricRow(m,labels[m]);
       w.appendChild(rows[m].row);
     });
+    if(showMetrics.net){
     // Network row
     const netRow=document.createElement('div');netRow.style.cssText='display:flex;flex-direction:column;gap:2px;';
     const netLabelRow=document.createElement('div');netLabelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
@@ -159,6 +162,7 @@ registerModule('resource-monitor', {
     const txEl=document.createElement('span');txEl.className='rm-tx';
     netSpeedRow.appendChild(rxEl);netSpeedRow.appendChild(txEl);netRow.appendChild(netSpeedRow);
     w.appendChild(netRow);
+    }
     // System info
     const sysRow=document.createElement('div');sysRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:2px;';
     const hostEl=document.createElement('span');hostEl.className='rm-host';
@@ -306,7 +310,20 @@ registerModule('resource-monitor', {
     }
     fetchData();
     var _rmInterval=setInterval(fetchData,(sec.refreshInterval||3)*1000);
-    card._cleanup=function(){clearInterval(_rmInterval);};
+    var _rmObserver=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(!_rmInterval)_rmInterval=setInterval(fetchData,(sec.refreshInterval||3)*1000);
+        }else{
+          if(_rmInterval){clearInterval(_rmInterval);_rmInterval=null;}
+        }
+      });
+    },{threshold:0});
+    _rmObserver.observe(w);
+    card._cleanup=function(){
+      if(_rmInterval){clearInterval(_rmInterval);_rmInterval=null;}
+      if(_rmObserver){_rmObserver.disconnect();_rmObserver=null;}
+    };
   },
   editor: (sec,card,bd)=>{
     bd.appendChild(cpLabel('Data Source'));
@@ -321,5 +338,15 @@ registerModule('resource-monitor', {
     bd.appendChild(urlWrap);
     bd.appendChild(cpRange('Poll interval (s)',sec.refreshInterval||3,1,60,function(v){sec.refreshInterval=parseInt(v);saveAndRefresh();}));
     bd.appendChild(cpCheck('Show graphs',sec.graphMode,function(v){sec.graphMode=v;saveAndRefresh();}));
+    // Per-metric toggles
+    if(!sec.showMetrics)sec.showMetrics={cpu:true,ram:true,disk:true,gpu:true,net:true};
+    bd.appendChild(cpLabel('Show Metrics'));
+    var metricDefs=[['cpu','CPU'],['ram','RAM'],['disk','DISK'],['gpu','GPU'],['net','NET']];
+    var mToggleWrap=document.createElement('div');mToggleWrap.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;';
+    metricDefs.forEach(function(pair){
+      var key=pair[0],label=pair[1];
+      mToggleWrap.appendChild(cpCheck(label,sec.showMetrics[key]!==false,function(v){sec.showMetrics[key]=v;saveAndRefresh();}));
+    });
+    bd.appendChild(mToggleWrap);
   },
 });
