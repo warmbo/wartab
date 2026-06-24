@@ -74,7 +74,8 @@ function buildAppearancePanel(body){
   /* Background */
   body.appendChild(ps('Background'));
   const bgType=config.theme.bgType;
-  body.appendChild(pf('select','','Type',[{value:'gradient',label:'Gradient'},{value:'solid',label:'Solid'},{value:'image',label:'Image'}],bgType,v=>{config.theme.bgType=v;applyChanges();renderAll();buildConfigPanel();}));
+  body.appendChild(pf('select','','Type',[{value:'gradient',label:'Gradient'},{value:'solid',label:'Solid'},{value:'image',label:'Image'}],bgType,v=>{config.theme.bgType=v;// Reset bgValue to a default compatible with the new type (was left from old type)
+if(v==='gradient'){if(!config.theme.bgValue.includes(','))config.theme.bgValue='#0a0a0a, #1a1a1a';}else if(v==='solid'){var parts=config.theme.bgValue.split(',');config.theme.bgValue=(parts[0]||'#0a0a0a').trim();}else if(v==='image'&&config.theme.bgValue.includes(',')){config.theme.bgValue='#0a0a0a';}applyChanges();renderAll();buildConfigPanel();}));
 
   if(bgType==='gradient'){
     const parts=config.theme.bgValue.split(',').map(s=>s.trim());
