@@ -35,6 +35,11 @@ def validate_config(data):
     has_cards = "cards" in data and isinstance(data["cards"], list)
     if not has_pages and not has_cards:
         return False, "missing 'pages' or 'cards' array"
+    # Reject configs containing oversized data URLs (likely embedded images)
+    import re
+    data_urls = re.findall(r'data:[^,]{0,30},[A-Za-z0-9+/=]{100,}', json.dumps(data))
+    if data_urls:
+        return False, "config contains {} embedded data URLs — use file paths instead".format(len(data_urls))
     if "theme" not in data or not isinstance(data["theme"], dict):
         return False, "missing 'theme' object"
     theme = data["theme"]
@@ -611,7 +616,7 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             return self._json({"error":"not found"},404)
         if self.path == "/api/config":
             cl = int(self.headers.get("Content-Length", 0))
-            if cl > 1024*1024: return self._json({"error":"too large"},413)
+            if cl > 5*1024*1024: return self._json({"error":"too large"},413)
             body = self.rfile.read(cl) if cl else b"{}"
             try:
                 data = json.loads(body)
