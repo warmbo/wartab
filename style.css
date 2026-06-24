@@ -625,7 +625,7 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .me-link-tr .me-link-grab:active { cursor: grabbing; }
 .me-link-tr .cp-input { flex: 1; padding: 6px var(--space-2); font-size: var(--text-sm); min-width: 0; }
 .me-link-tr .btn-danger { padding: 2px var(--space-1) !important; font-size: var(--text-3xs) !important; width: var(--space-5) !important; min-width: var(--space-5); height: var(--space-5); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-.me-link-add { display: inline-flex; align-items: center; gap: 5px; padding: var(--space-2) var(--space-3); margin-top: var(--space-2); font-size: var(--text-2xs); font-weight: 600; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.10); color: var(--text-secondary); cursor: pointer; transition: all var(--anim-fast); font-family: var(--font); }
+.me-link-add { display: inline-flex; align-items: center; gap: 5px; padding: var(--space-2) var(--space-3); margin-top: var(--space-2); font-size: var(--text-2xs); font-weight: 600; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.10); color: var(--text-secondary); cursor: pointer; transition: background var(--anim-fast), color var(--anim-fast); font-family: var(--font); }
 .me-link-add:hover { background: rgba(255,255,255,0.07); border-color: var(--accent); color: var(--text-primary); }
 
 .me-link-ghost {
@@ -950,3 +950,6 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   #top-actions { gap: var(--space-1); }
   .btn-icon { width: var(--space-6); height: var(--space-6); font-size: var(--text-lg); }
 }
+
+/* Save success indicator pulse */
+#btn-config.save-ok { box-shadow: 0 0 16px rgba(100,220,100,0.4); transition: box-shadow 0.15s; }

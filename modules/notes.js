@@ -8,12 +8,12 @@ registerModule('notes', {
     // Load from server file (async — updates after initial render)
     storage.getNote(sec.id).then(function(d){
       if(d.content&&d.content!==sec.content){sec.content=d.content;e.innerHTML=d.content;}
-    }).catch(function(err){console.error('notes load failed:', err);});
+    }).catch(function(err){console.error('notes load failed:', err); toast('Note load failed','error');});
     e.addEventListener('blur',function(){
       sec.content=e.innerHTML;
       saveConfig();
       // Also save to server file
-      storage.saveNote(sec.id, e.innerHTML).catch(function(err){console.error('notes save failed:', err);});
+      storage.saveNote(sec.id, e.innerHTML).catch(function(err){console.error('notes save failed:', err); toast('Note save failed','error');});
     });
     // Preserve line breaks on Enter
     e.addEventListener('keydown',function(ev){

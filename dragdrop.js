@@ -302,7 +302,7 @@ function onDragEnd(e){
       else{grid.appendChild(srcEl);}
       const flips=snaps.map(({el,first})=>{const last=el.getBoundingClientRect();return{el,dx:first.left-last.left,dy:first.top-last.top};});
       const moved=flips.filter(f=>f.dx||f.dy);
-      if(moved.length){for(const{el,dx,dy}of moved){el.style.transition='none';el.style.transform=`translate(${dx}px,${dy}px)`;}
+      if(moved.length && !prefersReducedMotion()){for(const{el,dx,dy}of moved){el.style.transition='none';el.style.transform=`translate(${dx}px,${dy}px)`;}
         requestAnimationFrame(()=>{for(const{el,dx,dy}of moved){if(dx||dy){el.style.transition='transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';el.style.transform='translate(0,0)';}}
           setTimeout(()=>{for(const{el}of moved){el.style.transition='';el.style.transform='';}},450);
         });}
