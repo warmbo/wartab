@@ -1152,21 +1152,8 @@ function saveConfig() {
       toast(err.message || 'Config save failed', 'error');
     });
   } catch(e) {
-    // Fallback: chrome.storage.local in extension mode, server POST otherwise
-    if (storage.IS_EXTENSION) {
-      try {
-        var obj = {}; obj['wartab_config_fallback'] = cloneObj(config);
-        chrome.storage.local.set(obj, function(){});
-      } catch(e2) {
-        console.error('saveConfig extension fallback failed:', e2);
-        toast('Config save failed', 'error');
-      }
-    } else {
-      fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cfg), keepalive: true }).catch(function(err){
-        console.error('saveConfig fallback failed:', err);
-        toast('Config save failed — server unreachable', 'error');
-      });
-    }
+    console.error('saveConfig primary path threw:', e);
+    storage.saveConfigFallback(cfg);
   }
 }
 // Deep-merge stored config over defaults (arrays replaced, objects recursed)

@@ -87,6 +87,11 @@ const storage = (function() {
     IS_EXTENSION: false,
     getConfig: getConfig,
     saveConfig: saveConfig,
+    saveConfigFallback: function(cfg) {
+      fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cfg), keepalive: true }).catch(function(err){
+        console.error('saveConfig fallback failed:', err);
+      });
+    },
     getNote: getNote,
     saveNote: saveNote,
     getStats: getStats,
