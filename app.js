@@ -1942,7 +1942,7 @@ function buildSystemPanel(body){
   ['Export','Import','Reset'].forEach(label=>{
     const b=el('button','',label);b.className='btn btn-glass btn-sm'+(label==='Reset'?' btn-danger':'');
     b.addEventListener('click',()=>{
-      if(label==='Export'){const d=new Date();const bb=new Blob([JSON.stringify(config,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='wartab-config-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';a.click();URL.revokeObjectURL(a.href);toast('Exported');}
+      if(label==='Export'){const d=new Date();const cfg=cloneObj(config);var stripDataUrls=function(o){if(o&&typeof o==='object'){for(const k in o){if(typeof o[k]==='string'&&o[k].length>200&&o[k].startsWith('data:')){o[k]='[embedded data stripped — use file path instead]';}else{stripDataUrls(o[k]);}}}};stripDataUrls(cfg);const bb=new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='wartab-config-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';a.click();URL.revokeObjectURL(a.href);toast('Exported');}
       else if(label==='Import'){$('#import-file-input2').click();}
       else if(label==='Reset'){showConfirmModal('Reset all settings to defaults? This cannot be undone.',()=>{const snap=cloneObj(config);config=cloneObj(DEFAULT_CONFIG);saveConfig();applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();toastWithUndo('Reset',()=>{config=snap;saveConfig();applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();});},'Reset');}
     });
