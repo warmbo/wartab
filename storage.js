@@ -365,8 +365,11 @@ const storage = (function() {
     // Config
     getConfig: getConfig,
     saveConfig: saveConfig,
-
-    // Notes
+    saveConfigFallback: function(cfg) {
+      fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cfg), keepalive: true }).catch(function(err){
+        console.error('saveConfig fallback failed:', err);
+      });
+    },
     getNote: getNote,
     saveNote: saveNote,
 
