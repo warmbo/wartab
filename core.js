@@ -8,7 +8,25 @@
 const WARTAB_VERSION = 'dev';
 var WARTAB_BUILD = '';
 const CARD_MODULES = {};
-function registerModule(type, module){ CARD_MODULES[type]=module; }
+function registerModule(type, module){
+  CARD_MODULES[type]=module;
+  // Auto-inject per-module CSS into <head> on registration
+  if(module.css){
+    var id='mod-css-'+type;
+    if(!document.getElementById(id)){
+      var s=document.createElement('style');s.id=id;s.textContent=module.css;
+      document.head.appendChild(s);
+    }
+  }
+}
+
+/* ── Event Bus (Pub/Sub) ── */
+// Lightweight pub/sub for targeted re-renders instead of calling renderAll().
+// Subscribe with: var unsub = on('config:card:updated', fn)
+// Fire with:      emit('config:card:updated', { cardId: '...' })
+const _evBus={};
+function on(ev,fn){if(!_evBus[ev])_evBus[ev]=[];_evBus[ev].push(fn);return function(){_evBus[ev]=_evBus[ev].filter(function(f){return f!==fn;});};}
+function emit(ev,data){(_evBus[ev]||[]).forEach(function(fn){try{fn(data);}catch(e){console.error('[EventBus]',ev,e);}});}
 
 /* ── Public API presets for API Poller ── */
 const API_PRESETS = [
@@ -99,4 +117,44 @@ function fetchWithTimeout(url, options, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+/* ── Virtual Grid Utilities (coordinate tracking, collision detection) ── */
+// Tracks card positions in a virtual coordinate space for future drag-and-drop
+// improvements, without changing the current CSS-grid rendering approach.
+// Cards are placed left-to-right, top-to-bottom, wrapping per row.
+// Each card gets: x, y (column/row start, 1-indexed), cols, rows.
+
+function assignGridPositions(cards, cols) {
+  var col=1, row=1;
+  cards.forEach(function(c){
+    var w=Math.min(c.width||1, cols);
+    if(col+w-1>cols){col=1;row+=1;}
+    c._gx=col; c._gy=row; c._gw=w; c._gh=Math.min(c.height||1,4);
+    col+=w;
+  });
+}
+
+function getGridBounds(cards, cols) {
+  assignGridPositions(cards, cols);
+  var gw=cards.reduce(function(m,c){return Math.max(m,c._gx+c._gw-1);},0);
+  var gh=cards.reduce(function(m,c){return Math.max(m,c._gy+c._gh-1);},0);
+  return {cols:gw, rows:gh};
+}
+
+function getCardAt(cards, cols, gx, gy) {
+  assignGridPositions(cards, cols);
+  for(var i=0;i<cards.length;i++){
+    var c=cards[i];
+    if(gx>=c._gx&&gx<c._gx+c._gw&&gy>=c._gy&&gy<c._gy+c._gh) return c;
+  }
+  return null;
+}
+
+function isAreaFree(cards, cols, gx, gy, gw, gh, ignoreId) {
+  for(var r=0;r<gh;r++)for(var c2=0;c2<gw;c2++){
+    var cell=getCardAt(cards,cols,gx+c2,gy+r);
+    if(cell&&cell.id!==ignoreId)return false;
+  }
+  return true;
 }

@@ -7,7 +7,7 @@
 // Resolve columns for the current page (per-page setting or global default)
 function getPageCols(){return (config.pages[config.currentPage]&&config.pages[config.currentPage].cols)||config.layout.cols;}
 // Full page re-render: destroys and rebuilds grid from config
-function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];weatherIntervals.forEach(clearInterval);weatherIntervals=[];const grid=$('#card-grid');// Cleanup old card modules before destroying DOM
+function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];const grid=$('#card-grid');// Cleanup old card modules before destroying DOM
 const oldCards=grid.querySelectorAll('.card');oldCards.forEach(function(c){if(c._cleanup)c._cleanup();});grid.innerHTML='';var pageCols=getPageCols();grid.style.setProperty('--grid-cols',pageCols);grid.style.gap=config.layout.gap+'px';const appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width
   appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
@@ -76,7 +76,7 @@ if(!config.cards.length){
 }
 // Ungrouped cards render as normal
 config.cards.forEach((c,i)=>{grid.appendChild(renderCard(c,i));});
-setupWeatherWidgets();setupClocks();const fs=grid.querySelector('.inline-search-wrap input');if(fs)fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
+setupClocks();const fs=grid.querySelector('.inline-search-wrap input');if(fs)fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
   // Render Lucide icons for any newly created data-lucide elements
   renderIcons();
 }
@@ -305,6 +305,17 @@ function renderSection(section, card) {
   } else {
     contentWrap.textContent = 'Unknown type: ' + section.type;
   }
+  // Two-phase render: if module has onMount(), call it after the element is
+  // connected to the DOM. requestAnimationFrame fires after the current frame's
+  // synchronous DOM mutations (appendChild/replaceWith) complete, guaranteeing
+  // the element tree is live and measurable.
+  if (module && module.onMount) {
+    (function(cw,sec,cd){
+      requestAnimationFrame(function(){
+        if(cw.isConnected) module.onMount(sec, cd, cw);
+      });
+    })(contentWrap,section,card);
+  }
   fragment.appendChild(contentWrap);
 
   /* ── Divider (between sections) ── */
@@ -360,9 +371,6 @@ function findSection(sectionId) {
 function setupClocks(){if(clockInterval)clearInterval(clockInterval);if($$('.clock-widget').length===0){clockInterval=null;return;}updateClocks();clockInterval=setInterval(updateClocks,1000);}
 function updateClocks(){$$('.clock-widget').forEach(el=>{const n=new Date(),f24=el.dataset.format24==='1',sd=el.dataset.showDate==='1';let h=n.getHours();const m=String(n.getMinutes()).padStart(2,'0');el.querySelector('.clock-time').textContent=f24?String(h).padStart(2,'0')+':'+m:(h%12||12)+':'+m+' '+(h>=12?'PM':'AM');if(sd)el.querySelector('.clock-date').textContent=n.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});if(el.dataset.showCalendar==='1'){const cal=el.querySelector('.calendar-widget');if(cal)renderCalendar(cal,n);}});}
 function renderCalendar(el,date){const y=date.getFullYear(),m=date.getMonth();const fd=new Date(y,m,1).getDay();const ld=new Date(y,m+1,0).getDate();const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];let h=`<div class="calendar-month">${mn[m]} ${y}</div><div class="calendar-grid">`;['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{h+=`<div class="calendar-day-header">${d}</div>`;});for(let i=0;i<fd;i++)h+='<div class="calendar-day other-month"></div>';const today=new Date();for(let d=1;d<=ld;d++){const is=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();h+=`<div class="calendar-day${is?' today':''}">${d}</div>`;}h+='</div>';el.innerHTML=h;}
-function setupWeatherWidgets(){weatherIntervals.forEach(clearInterval);weatherIntervals=[];$$('.weather-widget').forEach(fetchWeather);}
-function fetchWeather(el){const k=el.dataset.apiKey,z=el.dataset.zip,c=el.dataset.country||'US',card=el._card;if(!k||!z){el.querySelector('.weather-detail').textContent='Set API key & zip code in config';return;}const ts=Date.now();fetchWithTimeout(`https://api.openweathermap.org/data/2.5/weather?zip=${encodeURIComponent(z)},${encodeURIComponent(c)}&units=${el.dataset.units}&appid=${k}`, null, 8000).then(r=>r.json()).then(d=>{if(d.cod!==200)throw Error(d.message);el.querySelectorAll('.skeleton-pulse').forEach(e=>e.classList.remove('skeleton-pulse'));const iconEl=el.querySelector('.weather-icon');if(iconEl){const lname=wIcon(d.weather[0].icon);iconEl.setAttribute('data-lucide',lname);}el.querySelector('.weather-temp').textContent=Math.round(d.main.temp)+'°';const feelsEl=el.querySelector('.weather-feels');if(feelsEl){feelsEl.textContent='Feels like '+Math.round(d.main.feels_like)+'°';feelsEl.style.display='block';}el.querySelector('.weather-detail').textContent=d.weather[0].description+' · '+d.main.humidity+'% humidity';const windEl=el.querySelector('.weather-wind-val');if(windEl){const ws=d.wind?d.wind.speed:0;windEl.textContent=ws+' '+(el.dataset.units==='imperial'?'mph':'m/s');}const fcEl=el.querySelector('.weather-forecast');if(fcEl){fetchWithTimeout(`https://api.openweathermap.org/data/2.5/forecast?zip=${encodeURIComponent(z)},${encodeURIComponent(c)}&units=${el.dataset.units}&appid=${k}`,null,8000).then(r=>r.json()).then(fd=>{if(fd.list&&fd.list.length>=3){fcEl.textContent='';const parts=fd.list.slice(0,3).map(p=>{const t=new Date(p.dt*1000);const h=t.getHours(),mn=t.getMinutes();return String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0')+' '+Math.round(p.main.temp)+'°';});fcEl.textContent=parts.join(' | ');}else{fcEl.textContent='';}}).catch(()=>{fcEl.textContent='';});}const tsEl=el.querySelector('.weather-ts');if(tsEl){tsEl.textContent='updated just now';tsEl.dataset.ts=String(ts);}el.dataset.lastOk=String(ts);}).catch(e=>{el.querySelector('.weather-detail').textContent='⚠ '+e.message;const tsEl=el.querySelector('.weather-ts');if(tsEl){const lo=el.dataset.lastOk;tsEl.textContent=lo?'last ok: '+timeAgo(parseInt(lo)):'';tsEl.dataset.ts=lo||String(ts);}});const wi=parseInt(el.dataset.refresh)*1000;if(card){if(card._weatherInterval)clearInterval(card._weatherInterval);if(wi>0)card._weatherInterval=setInterval(()=>fetchWeather(el),Math.max(5000,wi));}else if(wi>0){weatherIntervals.push(setInterval(()=>fetchWeather(el),Math.max(5000,wi)));}}
-function wIcon(iconCode){const m={'01d':'sun','01n':'sun','02d':'cloud-sun','02n':'cloud-sun','03d':'cloud','03n':'cloud','04d':'cloud','04n':'cloud','09d':'cloud-drizzle','09n':'cloud-drizzle','10d':'cloud-rain','10n':'cloud-rain','11d':'cloud-lightning','11n':'cloud-lightning','13d':'cloud-snow','13n':'cloud-snow','50d':'cloud-fog','50n':'cloud-fog'};return m[iconCode]||'cloud';}
 function renderApiWidget(el){renderApiFetch(el);}
 function renderApiFetch(el){
   const u=el.dataset.url;

@@ -7,11 +7,9 @@ registerModule('clock', {
     if(sec.showCalendar){const c=document.createElement('div');c.className='calendar-widget';c.id='cal-'+sec.id;w.appendChild(c);}
     cw.appendChild(w);
   },
-  editor: (sec,card,bd)=>{
-    const g=document.createElement('div');g.className='me-check-group';
-    g.appendChild(cpCheck('24hr',sec.format24h,v=>{sec.format24h=v;saveAndRefresh();}));
-    g.appendChild(cpCheck('Show date',sec.showDate,v=>{sec.showDate=v;saveAndRefresh();}));
-    g.appendChild(cpCheck('Show calendar',sec.showCalendar,v=>{sec.showCalendar=v;saveAndRefresh();}));
-    bd.appendChild(g);
-  },
+  settings: [
+    { name:'format24h', label:'Format', type:'select', options:[{value:false,label:'12-hour'},{value:true,label:'24-hour'}], default:false, structural:true },
+    { name:'showDate', label:'Show date', type:'checkbox', default:true, structural:true },
+    { name:'showCalendar', label:'Show calendar', type:'checkbox', default:false, structural:true },
+  ],
 });

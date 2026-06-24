@@ -1,49 +1,196 @@
 registerModule('weather', {
-  defaults: { apiKey:'', zip:'', country:'US', units:'imperial', refreshInterval:600 },
-  render: (sec,card,cw)=>{
-    if(!document.getElementById('weather-skeleton-style')){
-      const s=document.createElement('style');s.id='weather-skeleton-style';
-      s.textContent='@keyframes skeleton-pulse{0%,to{opacity:.4}50%{opacity:.8}}.skeleton-pulse{animation:skeleton-pulse 1.5s ease-in-out infinite;border-radius:4px;background:var(--surface-border);color:transparent!important;display:inline-block;pointer-events:none;user-select:none;min-width:40px;}.weather-widget .skeleton-pulse{min-height:1em;}';
-      document.head.appendChild(s);
-    }
-    const w=document.createElement('div');w.className='weather-widget';w.style.textAlign='center';w.dataset.apiKey=sec.apiKey||'';w.dataset.zip=sec.zip||'';w.dataset.country=sec.country||'US';w.dataset.units=sec.units||'imperial';w.dataset.refresh=sec.refreshInterval||600;
-    w._card=card;
-    const iconRow=document.createElement('div');iconRow.className='weather-main';
-    const iconEl=document.createElement('i');iconEl.className='weather-icon';iconEl.setAttribute('data-lucide','cloud');iconRow.appendChild(iconEl);
-    const tempWrap=document.createElement('div');tempWrap.style.cssText='display:flex;flex-direction:column;align-items:flex-start;';
-    const tempEl=document.createElement('div');tempEl.className='weather-temp skeleton-pulse';tempEl.textContent='--°';tempWrap.appendChild(tempEl);
-    const feelsEl=document.createElement('div');feelsEl.className='weather-feels';feelsEl.style.cssText='font-size:var(--text-xs);color:var(--text-tertiary);display:none;';tempWrap.appendChild(feelsEl);
+  defaults: { lat:'', lon:'', units:'celsius' },
+  css: `
+    .weather-widget{text-align:center;}
+    .weather-main{display:flex;align-items:center;justify-content:center;gap:12px;padding:4px 0;}
+    .weather-icon{font-size:2rem;}
+    .weather-temp{font-size:1.5rem;font-weight:700;line-height:1.2;}
+    .weather-feels{font-size:var(--text-xs);color:var(--text-tertiary);}
+    .weather-detail{font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;}
+    .weather-wind{font-size:var(--text-xs);color:var(--text-tertiary);margin-top:2px;display:flex;align-items:center;gap:4px;justify-content:center;}
+    .weather-forecast{display:flex;gap:8px;justify-content:center;margin-top:6px;flex-wrap:wrap;}
+    .weather-fc-day{text-align:center;font-size:var(--text-2xs);color:var(--text-tertiary);}
+    .weather-fc-day .day{font-weight:600;color:var(--text-secondary);}
+    .weather-fc-temp{font-size:var(--text-xs);color:var(--text-primary);font-weight:600;}
+    .weather-ts{font-size:var(--text-3xs);color:var(--text-tertiary);text-align:center;margin-top:4px;opacity:0.6;}
+  `,
+  render: (sec, card, cw) => {
+    const w = document.createElement('div');
+    w.className = 'weather-widget';
+
+    const iconRow = document.createElement('div');
+    iconRow.className = 'weather-main';
+    const iconEl = document.createElement('i');
+    iconEl.className = 'weather-icon';
+    iconEl.setAttribute('data-lucide', 'cloud');
+    iconRow.appendChild(iconEl);
+
+    const tempWrap = document.createElement('div');
+    tempWrap.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;';
+    const tempEl = document.createElement('div');
+    tempEl.className = 'weather-temp';
+    tempEl.textContent = '--°';
+    tempWrap.appendChild(tempEl);
+
+    const feelsEl = document.createElement('div');
+    feelsEl.className = 'weather-feels';
+    feelsEl.style.display = 'none';
+    tempWrap.appendChild(feelsEl);
+
     iconRow.appendChild(tempWrap);
     w.appendChild(iconRow);
-    const descEl=document.createElement('div');descEl.className='weather-detail skeleton-pulse';descEl.textContent='Loading...';w.appendChild(descEl);
-    const windEl=document.createElement('div');windEl.className='weather-wind';windEl.style.cssText='font-size:var(--text-xs);color:var(--text-tertiary);margin-top:2px;display:flex;align-items:center;gap:4px;';
-    const windIcon=document.createElement('i');windIcon.setAttribute('data-lucide','wind');windIcon.style.cssText='width:12px;height:12px;';windEl.appendChild(windIcon);
-    const windVal=document.createElement('span');windVal.className='weather-wind-val skeleton-pulse';windVal.textContent='--';windEl.appendChild(windVal);
+
+    const descEl = document.createElement('div');
+    descEl.className = 'weather-detail';
+    descEl.textContent = 'Loading...';
+    w.appendChild(descEl);
+
+    const windEl = document.createElement('div');
+    windEl.className = 'weather-wind';
+    windEl.style.display = 'none';
+    const windIcon = document.createElement('i');
+    windIcon.setAttribute('data-lucide', 'wind');
+    windIcon.style.cssText = 'width:12px;height:12px;';
+    windEl.appendChild(windIcon);
+    const windVal = document.createElement('span');
+    windVal.className = 'weather-wind-val';
+    windVal.textContent = '--';
+    windEl.appendChild(windVal);
     w.appendChild(windEl);
-    const fcEl=document.createElement('div');fcEl.className='weather-forecast';fcEl.textContent='';w.appendChild(fcEl);
-    const tsEl=document.createElement('div');tsEl.className='weather-ts';tsEl.textContent='';w.appendChild(tsEl);
+
+    const fcEl = document.createElement('div');
+    fcEl.className = 'weather-forecast';
+    w.appendChild(fcEl);
+
+    const tsEl = document.createElement('div');
+    tsEl.className = 'weather-ts';
+    w.appendChild(tsEl);
+
     cw.appendChild(w);
-    // Trigger initial fetch immediately — the module's render function only
-    // sets up skeleton HTML; fetchWeather reads dataset attributes set above
-    // and populates the widget with live data from OpenWeatherMap.
-    if (typeof fetchWeather === 'function' && (sec.apiKey || sec.zip)) {
-      fetchWeather(w);
-    }
-    card._cleanup=()=>{
-      if(card._weatherInterval){clearInterval(card._weatherInterval);card._weatherInterval=null;}
-      const ws=document.getElementById('weather-skeleton-style');
-      if(ws&&document.querySelectorAll('.weather-widget').length<=1)ws.remove();
+    card._cleanup = function() {
+      if (card._weatherInterval) { clearInterval(card._weatherInterval); card._weatherInterval = null; }
     };
   },
-  editor: (sec,card,bd)=>{
-    bd.appendChild(cpLabel('API Key'));
-    bd.appendChild(cpInput('OpenWeatherMap API key',sec.apiKey||'',v=>{sec.apiKey=v;saveConfig();}));
-    bd.appendChild(cpLabel('Zip Code'));
-    bd.appendChild(cpInput('e.g. 90210',sec.zip||'',v=>{sec.zip=v;saveConfig();}));
-    bd.appendChild(cpLabel('Country Code'));
-    bd.appendChild(cpInput('US',sec.country||'US',v=>{sec.country=v;saveConfig();}));
-    bd.appendChild(cpLabel('Units'));
-    bd.appendChild(cpSelect([{value:'imperial',label:'°F'},{value:'metric',label:'°C'},{value:'standard',label:'K'}],sec.units||'imperial',v=>{sec.units=v;saveConfig();}));
-    bd.appendChild(cpRange('Refresh (s)', sec.refreshInterval||600, 30, 1800, v=>{sec.refreshInterval=parseInt(v);saveConfig();}));
+  onMount: function(sec, card, cw) {
+    var w = cw.querySelector('.weather-widget');
+    if (!w) return;
+
+    function fetchOM() {
+      var lat = sec.lat, lon = sec.lon;
+      if (!lat || !lon) {
+        w.querySelector('.weather-detail').textContent = 'Set lat & lon in card editor';
+        return;
+      }
+      var isF = sec.units === 'fahrenheit';
+      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + encodeURIComponent(lat) +
+        '&longitude=' + encodeURIComponent(lon) +
+        '&current_weather=true' +
+        '&daily=temperature_2m_max,temperature_2m_min,weathercode' +
+        '&timezone=auto' +
+        (isF ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : '&wind_speed_unit=kmh');
+
+      fetch(url).then(function(r) { return r.json(); }).then(function(d) {
+        if (!w.parentNode) return;
+        var cw = d.current_weather;
+        if (!cw) throw new Error('No weather data');
+
+        var temp = Math.round(cw.temperature);
+        var code = cw.weathercode || 0;
+        var wind = cw.windspeed || 0;
+        var unit = isF ? '°F' : '°C';
+
+        // Icon mapping (WMO codes)
+        var iconMap = {
+          0: 'sun', 1: 'sun', 2: 'cloud-sun',
+          3: 'cloud',
+          45: 'cloud-fog', 48: 'cloud-fog',
+          51: 'cloud-drizzle', 53: 'cloud-drizzle', 55: 'cloud-drizzle',
+          56: 'cloud-drizzle', 57: 'cloud-drizzle',
+          61: 'cloud-rain', 63: 'cloud-rain', 65: 'cloud-rain',
+          66: 'cloud-rain', 67: 'cloud-rain',
+          71: 'cloud-snow', 73: 'cloud-snow', 75: 'cloud-snow',
+          77: 'cloud-snow',
+          80: 'cloud-drizzle', 81: 'cloud-rain', 82: 'cloud-rain',
+          85: 'cloud-snow', 86: 'cloud-snow',
+          95: 'cloud-lightning', 96: 'cloud-lightning', 99: 'cloud-lightning'
+        };
+        var wmoDescs = {
+          0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast',
+          45: 'Foggy', 48: 'Foggy',
+          51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
+          61: 'Light rain', 63: 'Rain', 65: 'Heavy rain',
+          71: 'Light snow', 73: 'Snow', 75: 'Heavy snow',
+          77: 'Snow grains',
+          80: 'Light showers', 81: 'Showers', 82: 'Heavy showers',
+          85: 'Light snow showers', 86: 'Snow showers',
+          95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm'
+        };
+
+        var icon = iconMap[code] || 'cloud';
+        var desc = wmoDescs[code] || '';
+
+        // Temperature element
+        w.querySelector('.weather-temp').textContent = temp + unit;
+        // Icon via Lucide
+        var ie = w.querySelector('.weather-icon');
+        ie.setAttribute('data-lucide', icon);
+        // Description
+        w.querySelector('.weather-detail').textContent = desc;
+        // Wind
+        var we = w.querySelector('.weather-wind');
+        we.style.display = '';
+        we.querySelector('.weather-wind-val').textContent = wind + (isF ? ' mph' : ' km/h');
+        renderIcons();
+
+        // Forecast
+        var daily = d.daily;
+        if (daily && daily.temperature_2m_max) {
+          var fcEl = w.querySelector('.weather-forecast');
+          fcEl.innerHTML = '';
+          var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+          var today = new Date().getDay();
+          var maxTemps = daily.temperature_2m_max;
+          var minTemps = daily.temperature_2m_min || [];
+          var wCodes = daily.weathercode || [];
+          for (var i = 0; i < Math.min(maxTemps.length, 5); i++) {
+            var dayEl = document.createElement('div');
+            dayEl.className = 'weather-fc-day';
+            var dName = document.createElement('div');
+            dName.className = 'day';
+            dName.textContent = i === 0 ? 'Now' : days[(today + i) % 7];
+            var fIcon = document.createElement('i');
+            fIcon.setAttribute('data-lucide', iconMap[wCodes[i]] || 'cloud');
+            fIcon.style.cssText = 'width:14px;height:14px;display:block;margin:2px auto;';
+            var ft = document.createElement('div');
+            ft.className = 'weather-fc-temp';
+            ft.textContent = Math.round(maxTemps[i]) + '°';
+            dayEl.appendChild(dName);
+            dayEl.appendChild(fIcon);
+            dayEl.appendChild(ft);
+            fcEl.appendChild(dayEl);
+          }
+          renderIcons();
+        }
+
+        // Timestamp
+        var ts = cw.time ? new Date(cw.time + 'Z') : new Date();
+        w.querySelector('.weather-ts').textContent = 'Updated ' + ts.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+      }).catch(function(err) {
+        if (!w.parentNode) return;
+        w.querySelector('.weather-detail').textContent = 'Weather unavailable';
+        console.error('Open-Meteo fetch failed:', err);
+      });
+    }
+
+    fetchOM();
+    // Refresh every 10 minutes
+    if (card._weatherInterval) clearInterval(card._weatherInterval);
+    card._weatherInterval = setInterval(fetchOM, 600000);
   },
+  settings: [
+    { name:'lat', label:'Latitude', type:'text', placeholder:'e.g. 51.50' },
+    { name:'lon', label:'Longitude', type:'text', placeholder:'e.g. -0.13' },
+    { name:'units', label:'Units', type:'select', options:[{value:'celsius',label:'°C'},{value:'fahrenheit',label:'°F'}], default:'celsius' },
+  ],
 });

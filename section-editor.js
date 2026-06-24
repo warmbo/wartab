@@ -213,7 +213,52 @@ function buildSectionEditor(sec, card, si) {
 
   mc.className = 'me-card';
 
-  const mod = CARD_MODULES[sec.type];  if (mod && mod.editor) mod.editor(sec, card, mc);
+  const mod = CARD_MODULES[sec.type];
+  // Settings schema auto-render: if module declares settings[], generate
+  // editor fields automatically instead of requiring a manual editor() fn.
+  // Supports: text, number, range, select, checkbox, color, textarea.
+  if (mod && mod.settings) {
+    mod.settings.forEach(function(f){
+      var onChange = function(v){ sec[f.name]=v; if(f.structural)saveAndRefreshStructural(); else saveConfig(); };
+      switch(f.type||'text'){
+        case 'text':
+          mc.appendChild(cpLabel(f.label)); mc.appendChild(cpInput(f.placeholder||'',sec[f.name]!==undefined?sec[f.name]:f.default||'',onChange));
+          break;
+        case 'number':
+          mc.appendChild(cpLabel(f.label));
+          var mn=f.min||0,mx=f.max||100;
+          mc.appendChild(cpRange(f.label,sec[f.name]!==undefined?sec[f.name]:f.default||mn,mn,mx,onChange,f.step));
+          break;
+        case 'select':
+          mc.appendChild(cpLabel(f.label)); mc.appendChild(cpSelect(f.options||[],sec[f.name]!==undefined?sec[f.name]:f.default||'',onChange));
+          break;
+        case 'checkbox':
+          mc.appendChild(cpCheck(f.label,sec[f.name]!==undefined?sec[f.name]:f.default||false,onChange));
+          break;
+        case 'color':
+          mc.appendChild(cpLabel(f.label));
+          var cr=document.createElement('div');cr.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:8px;';
+          var cp2=document.createElement('input');cp2.type='color';cp2.value=sec[f.name]||f.default||'#888888';
+          cp2.style.cssText='width:40px;height:34px;padding:2px;border:1px solid var(--surface-border);background:rgba(0,0,0,0.3);cursor:pointer;flex-shrink:0;';
+          var ct=document.createElement('input');ct.className='cp-input';ct.type='text';ct.value=sec[f.name]||f.default||'#888888';
+          var sync=function(){cp2.value=ct.value;sec[f.name]=ct.value;saveConfig();};
+          cp2.addEventListener('change',function(){ct.value=cp2.value;onChange(cp2.value);});
+          ct.addEventListener('change',sync);
+          cr.appendChild(cp2);cr.appendChild(ct);mc.appendChild(cr);
+          break;
+        case 'textarea':
+          mc.appendChild(cpLabel(f.label));
+          var ta=document.createElement('textarea');ta.className='cp-input';ta.placeholder=f.placeholder||'';
+          ta.style.cssText='min-height:60px;resize:vertical;width:100%;';
+          ta.value=sec[f.name]||f.default||'';
+          ta.addEventListener('change',function(){onChange(ta.value);});
+          mc.appendChild(ta);
+          break;
+      }
+    });
+  } else if (mod && mod.editor) {
+    mod.editor(sec, card, mc);
+  }
 
   if (mc.children.length > 0) bd.appendChild(mc);
 

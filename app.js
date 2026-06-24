@@ -256,6 +256,7 @@ function saveConfig() {
       // Subtle success indicator — brief pulse on the config button
       var btn = $('#btn-config');
       if (btn) { btn.classList.add('save-ok'); setTimeout(function(){ btn.classList.remove('save-ok'); }, 600); }
+      emit('config:saved', { config: config });
     }, function(err){
       console.error('saveConfig failed:', err);
       toast(err.message || 'Config save failed', 'error');

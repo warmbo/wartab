@@ -96,15 +96,6 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 [data-accent-bar="off"] .card::before,
 [data-accent-bar="off"] #top-bar::before { display: none; }
 
-/* ── Weather widget ── */
-.weather-widget { display: flex; flex-direction: column; gap: 2px; }
-.weather-main { display: flex; align-items: center; gap: var(--space-2); }
-.weather-icon { width: 36px; height: 36px; stroke-width: 1.5; }
-.weather-temp { font-size: var(--text-2xl); font-weight: 600; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
-.weather-detail { color: var(--text-secondary); }
-.weather-wind { color: var(--text-tertiary); display: flex; align-items: center; gap: var(--space-1); margin-top: 2px; }
-.weather-ts { color: var(--text-tertiary); margin-top: var(--space-1); }
-
 .cfg-conditional { overflow: hidden; transition: max-height var(--anim-fast) ease, opacity var(--anim-fast) ease, margin var(--anim-fast) ease; max-height: 200px; opacity: 1; margin-bottom: var(--space-2); }
 .cfg-conditional.hidden { max-height: 0; opacity: 0; margin-bottom: 0; padding: 0; }
 
@@ -370,7 +361,6 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .api-widget .api-row:last-child { border-bottom: none; }
 .api-error { color: var(--color-error); font-size: var(--text-sm); }
 .api-ts { color: var(--text-tertiary); margin-top: 3px; text-align: right; }
-.weather-ts { color: var(--text-tertiary); margin-top: 2px; text-align: center; font-size: var(--text-2xs); }
 
 .drag-handle { cursor: grab; color: var(--text-tertiary); padding: 2px var(--space-1); user-select: none; transition: color var(--anim-fast); width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; }
 .drag-handle:hover { color: var(--text-secondary); }
@@ -920,9 +910,6 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   .notes-text { font-size: var(--text-base); min-height: 60px; }
   .clock-time { font-size: var(--text-2xl); }
   .clock-date { font-size: var(--text-xs); }
-  .weather-widget { gap: var(--space-2); }
-  .weather-icon { font-size: var(--text-2xl); }
-  .weather-temp { font-size: var(--text-xl); }
   .grid-gap-card > div:first-child { opacity: 1 !important; }
 
   .slide-panel {
