@@ -71,7 +71,7 @@ registerModule('notes', {
       var url=URL.createObjectURL(blob);
       var a=document.createElement('a');
       a.href=url;
-      a.download=(card.title||'note')+'.md';
+      a.download=(sec.label||card.title||'note')+'.md';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
