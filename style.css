@@ -395,18 +395,19 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 [data-card-bg="light"] .slide-panel select,
 [data-card-bg="light"] .slide-panel input,
 [data-card-bg="light"] .slide-panel textarea,
-[data-card-bg="light"] .slide-panel button { color: rgba(0,0,0,0.88) !important; }
+[data-card-bg="light"] .slide-panel button { color: rgba(0,0,0,0.88) !important; background: rgba(0,0,0,0.06) !important; }
 [data-card-bg="light"] .slide-panel .form-group label,
 [data-card-bg="light"] .slide-panel .config-section h3 { color: rgba(0,0,0,0.55) !important; }
 [data-card-bg="light"] .slide-panel select option { background: #f0f0f0 !important; color: rgba(0,0,0,0.88) !important; }
 [data-card-bg="light"] .slide-panel-body { color: rgba(0,0,0,0.80); }
-[data-card-bg="light"] .cp-input { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.12); color: rgba(0,0,0,0.88); }
+[data-card-bg="light"] .cp-input { background: rgba(0,0,0,0.06) !important; border-color: rgba(0,0,0,0.12); color: rgba(0,0,0,0.88); }
 [data-card-bg="light"] .cp-input::placeholder { color: rgba(0,0,0,0.30); }
-[data-card-bg="light"] .cp-select { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.12); color: rgba(0,0,0,0.88); }
+[data-card-bg="light"] .cp-select { background: rgba(0,0,0,0.06) !important; border-color: rgba(0,0,0,0.12); color: rgba(0,0,0,0.88); }
 [data-card-bg="light"] .cp-select option { background: #f0f0f0; color: rgba(0,0,0,0.88); }
 [data-card-bg="light"] .cp-label { color: rgba(0,0,0,0.55); }
 [data-card-bg="light"] .cp-hint { color: rgba(0,0,0,0.40); }
 [data-card-bg="light"] .cp-divider { color: rgba(0,0,0,0.35); border-color: rgba(0,0,0,0.10); }
+[data-card-bg="light"] .slide-panel input[type=range] { background: transparent !important; }
 [data-card-bg="light"] .cp-range input[type=range] { accent-color: var(--accent); }
 [data-card-bg="light"] .cp-check label { color: rgba(0,0,0,0.70); }
 [data-card-bg="light"] .se-card { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.10); }
