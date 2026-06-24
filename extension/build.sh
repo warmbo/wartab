@@ -33,6 +33,14 @@ FILES=(
   style.css
   storage.js
   core.js
+  form-helpers.js
+  modals.js
+  stats.js
+  theme.js
+  render.js
+  pages.js
+  edit-panel.js
+  config-panel.js
   app.js
   icon-picker.js
   uploads.js
