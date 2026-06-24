@@ -290,7 +290,7 @@ function openPageManagementPanel() {
 
   foot.className = 'cp-footer';
 
-  foot.style.cssText = 'display:flex;gap:8px;margin-top:16px;';
+  foot.style.cssText = 'display:flex;gap:8px;margin-top:var(--space-4);';
 
   const addBtn = cpBtn('+ Add Page');
 
