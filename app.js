@@ -1950,7 +1950,7 @@ function buildSystemPanel(body){
   });
   body.appendChild(acts);
   const fi2=document.createElement('input');fi2.type='file';fi2.accept='.json';fi2.style.display='none';fi2.id='import-file-input2';
-  fi2.addEventListener('change',e=>{if(e.target.files[0]){const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);showConfirmModal('Import config from '+e.target.files[0].name+'? This will replace your current configuration.',()=>{config=deepMerge(cloneObj(DEFAULT_CONFIG),d);saveConfig();applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();toast('Imported');});}catch(e){toast('Failed: '+e.message,'error');}};r.readAsText(e.target.files[0]);}});
+  fi2.addEventListener('change',e=>{if(e.target.files[0]){const r=new FileReader();r.onload=async ev=>{try{const d=JSON.parse(ev.target.result);showConfirmModal('Import config from '+e.target.files[0].name+'? This will replace your current configuration.',async()=>{config=deepMerge(cloneObj(DEFAULT_CONFIG),d);try{await storage.saveConfig(cloneObj(config));}catch(e){toast('Import save failed: '+e.message,'error');return;}applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();toast('Imported');},'Import');}catch(e){toast('Failed: '+e.message,'error');}};r.readAsText(e.target.files[0]);}});
   body.appendChild(fi2);
 
   /* Snapshots */
