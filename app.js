@@ -66,19 +66,26 @@ function openCardEditPanel(cardId) {
   // transform position (translateX(-100%) or translateX(100%)) before .open
   // triggers the transition. offsetHeight only reflows layout, not transforms.
   // Set panel starting position explicitly via inline style (no CSS cascade ambiguity)
-  panel.style.transition='none';
-  panel.style.transform=panel.classList.contains('slide-left')?'translateX(-100%)':'translateX(100%)';
-  panel.offsetHeight;
-  // Double rAF: frame 1 paints the starting position, frame 2 triggers the transition
-  requestAnimationFrame(function(){
+  if (prefersReducedMotion()) {
+    // Skip animation — just show panel immediately
+    panel.classList.add('open');
+    $('#edit-panel-overlay').classList.add('open');
+    document.body.classList.add('panel-open');
+  } else {
+    panel.style.transition='none';
+    panel.style.transform=panel.classList.contains('slide-left')?'translateX(-100%)':'translateX(100%)';
+    panel.offsetHeight;
+    // Double rAF: frame 1 paints the starting position, frame 2 triggers the transition
     requestAnimationFrame(function(){
-      panel.style.transition='';
-      panel.classList.add('open');
-      panel.style.transform='';  // CSS #edit-panel.open → translateX(0)
-      $('#edit-panel-overlay').classList.add('open');
-      document.body.classList.add('panel-open');
+      requestAnimationFrame(function(){
+        panel.style.transition='';
+        panel.classList.add('open');
+        panel.style.transform='';  // CSS #edit-panel.open → translateX(0)
+        $('#edit-panel-overlay').classList.add('open');
+        document.body.classList.add('panel-open');
+      });
     });
-  });
+  }
   const title = $('#edit-panel-title');
   if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
 }
@@ -894,9 +901,7 @@ function onSecDragEnd(e) {
             const [m] = secs.splice(oldIdx, 1);
             const targetIdx = newIdx > oldIdx ? newIdx - 1 : newIdx;
             secs.splice(targetIdx, 0, m);
-            saveConfig();
-            renderAll();
-            openCardEditPanel(cardId);
+            saveAndRefreshStructural();
             toast('Section moved');
             secDragState = null;
             return;
@@ -1138,7 +1143,11 @@ async function loadConfig() {
 function saveConfig() {
   const cfg = cloneObj(config);
   try {
-    storage.saveConfig(cfg).then(function(){}, function(err){
+    storage.saveConfig(cfg).then(function(){
+      // Subtle success indicator — brief pulse on the config button
+      var btn = $('#btn-config');
+      if (btn) { btn.classList.add('save-ok'); setTimeout(function(){ btn.classList.remove('save-ok'); }, 600); }
+    }, function(err){
       console.error('saveConfig failed:', err);
       toast(err.message || 'Config save failed', 'error');
     });
@@ -1966,7 +1975,7 @@ function buildSystemPanel(body){
         const lbl=el('span','flex:1;font-size:var(--text-xs);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;',ts);
         const sz=el('span','font-size:var(--text-2xs);color:var(--text-tertiary);flex-shrink:0;',fmtSize(s.size));
         const rst=el('button','','Restore');rst.className='btn btn-glass btn-sm';rst.style.cssText='padding:2px 8px;font-size:var(--text-2xs);';
-        rst.addEventListener('click',()=>{showConfirmModal('Restore snapshot from '+ts+'? Current config will be replaced.',async()=>{await storage.snapshots.restore(s.name);await loadConfig();applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();toast('Restored: '+ts);},'Restore')});
+        rst.addEventListener('click',()=>{showConfirmModal('Restore snapshot from '+ts+'? Current config will be replaced.',async()=>{try{await storage.snapshots.restore(s.name);await loadConfig();applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();toast('Restored: '+ts);}catch(e){toast('Restore failed: '+e.message,'error');}}, 'Restore')});
         r.appendChild(lbl);r.appendChild(sz);r.appendChild(rst);
         snapList.appendChild(r);
       });

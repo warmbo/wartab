@@ -77,10 +77,19 @@ function escHtml(s){const d=document.createElement('div');d.textContent=s;return
 function cloneObj(o){return JSON.parse(JSON.stringify(o));}
 
 /* ── Toast ── */
-function toast(msg,type='info'){const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;$('#toast-container').appendChild(el);setTimeout(()=>el.remove(),3000);}
+function toast(msg,type='info'){
+  // Dedup: skip if an identical toast is already visible
+  const existing = document.querySelectorAll('.toast');
+  for (var i = 0; i < existing.length; i++) {
+    if (existing[i].textContent === msg) return;
+  }
+  const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;$('#toast-container').appendChild(el);setTimeout(()=>el.remove(),3000);}
 function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored','success');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>el.remove(),5000);}
 
 /* ── Time utilities ── */
+function prefersReducedMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function getNested(o,p){return p.split('.').reduce((a,pt)=>a&&a[pt],o);}
 
