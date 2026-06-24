@@ -27,7 +27,8 @@ const storage = (function() {
     return fetch(BASE + path, opts).then(function(r) {
       if (!r.ok) return r.json().then(function(e) {
         throw new Error(e.error || r.statusText);
-      }).catch(function() {
+      }, function() {
+        // JSON parse failed — fall back to HTTP status text
         throw new Error(r.statusText);
       });
       var ct = r.headers.get('Content-Type') || '';
