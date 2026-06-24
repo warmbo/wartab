@@ -365,6 +365,14 @@ const storage = (function() {
     // Config
     getConfig: getConfig,
     saveConfig: saveConfig,
+    saveConfigFallback: function(cfg) {
+      try {
+        var obj = {}; obj['wartab_config_fallback'] = cfg;
+        chrome.storage.local.set(obj, function(){});
+      } catch(e) {
+        console.error('saveConfig fallback failed:', e);
+      }
+    },
 
     // Notes
     getNote: getNote,
