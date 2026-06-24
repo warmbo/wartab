@@ -23,6 +23,9 @@ MANIFEST_VERSION="0.0.0.$GIT_REV_COUNT"
 
 BUILD="${1:-all}"
 
+# Clean stale dist artifacts
+rm -rf "$ROOT/dist"
+
 echo "  Git:      $GIT_HASH ($GIT_DESCRIBE)"
 echo "  Revision: $GIT_REV_COUNT"
 echo ""

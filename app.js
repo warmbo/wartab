@@ -1185,7 +1185,7 @@ function sanitizeImportConfig(raw) {
         // Don't copy the data URL; deepMerge will fill from DEFAULT_CONFIG
       } else if (typeof v === 'object') {
         out[k] = walk(v, p);
-      } else if (v !== undefined && v !== null) {
+      } else if (typeof v === 'string' || (v !== undefined && v !== null)) {
         out[k] = v;
       }
     }
