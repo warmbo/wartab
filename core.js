@@ -100,6 +100,3 @@ function fetchWithTimeout(url, options, timeoutMs) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
-
-/* ── updateBlurState ── */
-function updateBlurState(){}

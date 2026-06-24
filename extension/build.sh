@@ -44,6 +44,7 @@ FILES=(
   app.js
   icon-picker.js
   uploads.js
+  page-drag.js
   section-editor.js
   page-editor.js
   dragdrop.js
