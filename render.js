@@ -464,11 +464,7 @@ function fetchStatusWidget(el){
     if(!parts.length)content.innerHTML='<div style="font-size:var(--text-sm);color:var(--text-tertiary);">No stats</div>';
     if(ts){ts.textContent='updated';ts.dataset.ts=String(Date.now());}
   }
-  let url;
-  if(src==='local')url='/api/stats';
-  else if(src==='glances')url=el.dataset.glancesUrl+'/api/4';
-  else if(src==='custom'&&el.dataset.customUrl)url=el.dataset.customUrl;
-  else{content.innerHTML='<div style="font-size:var(--text-sm);color:var(--text-tertiary);">Configure source</div>';return;}
+  if(!src||(src==='custom'&&!el.dataset.customUrl)){content.innerHTML='<div style="font-size:var(--text-sm);color:var(--text-tertiary);">Configure source</div>';return;}
   content.innerHTML='<div style="font-size:var(--text-sm);color:var(--text-tertiary);">Loading...</div>';
-  fetch(url).then(function(r){if(!r.ok)throw Error(r.status);return r.json();}).then(function(d){render(d);}).catch(function(){content.innerHTML='<div style="font-size:var(--text-sm);color:#cc6666;">Stats offline</div>';});
+  storage.getStats(src, el.dataset.glancesUrl, el.dataset.customUrl).then(function(d){render(d);}).catch(function(){content.innerHTML='<div style="font-size:var(--text-sm);color:#cc6666;">Stats offline</div>';});
 }

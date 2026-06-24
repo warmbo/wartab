@@ -310,7 +310,7 @@ registerModule('resource-monitor', {
   },
   editor: (sec,card,bd)=>{
     bd.appendChild(cpLabel('Data Source'));
-    bd.appendChild(cpSelect([{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'}],sec.source||'local',function(v){sec.source=v;saveAndRefresh();}));
+    bd.appendChild(cpSelect([{value:'local',label:'Local (server stats)'},{value:'glances',label:'Glances API'}],sec.source||'local',function(v){sec.source=v;saveAndRefresh();}));
     var urlWrap=document.createElement('div');urlWrap.id='rm-url-'+sec.id;
     function renderUrl(){
       urlWrap.innerHTML='';

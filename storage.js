@@ -57,8 +57,9 @@ const storage = (function() {
 
     function saveNote(id, content) { return api('/api/notes/' + encodeURIComponent(id), 'POST', content); }
 
-    function getStats(source, glancesUrl) {
+    function getStats(source, glancesUrl, customUrl) {
       if (source === 'glances' && glancesUrl) return fetch(glancesUrl + '/api/4').then(function(r) { return r.json(); });
+      if (source === 'custom' && customUrl) return fetch(customUrl).then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); });
       return api('/api/stats', 'GET');
     }
 
@@ -196,9 +197,12 @@ const storage = (function() {
 
   // ── Stats (Chrome extension APIs) ──
 
-  function getStats(source, glancesUrl) {
+  function getStats(source, glancesUrl, customUrl) {
     if (source === 'glances' && glancesUrl) {
       return fetch(glancesUrl + '/api/4').then(function(r) { return r.json(); });
+    }
+    if (source === 'custom' && customUrl) {
+      return fetch(customUrl).then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); });
     }
     return new Promise(function(resolve) {
       var result = {

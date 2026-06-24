@@ -44,6 +44,8 @@ FILES=(
   app.js
   icon-picker.js
   uploads.js
+  section-editor.js
+  page-editor.js
   dragdrop.js
   manifest.json
   modules/

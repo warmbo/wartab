@@ -168,7 +168,7 @@ function buildSystemPanel(body){
   /* Status Bar */
   body.appendChild(ps('Status Bar'));
   body.appendChild(chk('Show',config.statusBar.enabled,v=>{config.statusBar.enabled=v;saveConfig();applyTheme();initStatusBar();renderAll();_configTab='system';buildConfigPanel();}));
-  body.appendChild(pf('select','','Source',[{value:'local',label:'Local (/api/stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],config.statusBar.source,v=>{config.statusBar.source=v;saveConfig();initStatusBar();_configTab='system';buildConfigPanel();}));
+  body.appendChild(pf('select','','Source',[{value:'local',label:'Local (server stats)'},{value:'glances',label:'Glances API'},{value:'custom',label:'Custom URL'}],config.statusBar.source,v=>{config.statusBar.source=v;saveConfig();initStatusBar();_configTab='system';buildConfigPanel();}));
   const gl=el('div','','',pf('text','','Glances URL',null,config.statusBar.glancesUrl,v=>{config.statusBar.glancesUrl=v;saveConfig();initStatusBar();}));
   gl.className='cfg-conditional'+(config.statusBar.source==='glances'?'':' hidden');
   body.appendChild(gl);
