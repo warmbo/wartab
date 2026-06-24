@@ -6,7 +6,7 @@
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
 // Full page re-render: destroys and rebuilds grid from config
 function renderAll(){apiPollTimers.forEach(clearTimeout);apiPollTimers=[];weatherIntervals.forEach(clearInterval);weatherIntervals=[];const grid=$('#card-grid');// Cleanup old card modules before destroying DOM
-const oldCards=grid.querySelectorAll('.card');oldCards.forEach(function(c){if(c._cleanup)c._cleanup();});grid.innerHTML='';grid.style.setProperty('--grid-cols',config.layout.cols);grid.style.gap=config.layout.gap+'px';const appEl=$('#app');if(appEl){
+const oldCards=grid.querySelectorAll('.card');oldCards.forEach(function(c){if(c._cleanup)c._cleanup();});grid.innerHTML='';var pageCols=(config.pages[config.currentPage]&&config.pages[config.currentPage].cols)||config.layout.cols;grid.style.setProperty('--grid-cols',pageCols);grid.style.gap=config.layout.gap+'px';const appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width
   appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
   const xPad=parseInt(config.layout.pageWidthPadding)||2;
@@ -84,7 +84,7 @@ setupWeatherWidgets();setupClocks();const fs=grid.querySelector('.inline-search-
 function renderCard(card,idx){
   if(card._isGap){
     const div=document.createElement('div');div.className='card grid-gap-card';div.dataset.cardId=card.id;
-    div.dataset.width=Math.min(card.width||1,config.layout.cols);div.dataset.index=idx;
+    div.dataset.width=Math.min(card.width||1,pageCols||config.layout.cols);div.dataset.index=idx;
     div.style.gridColumn='span '+div.dataset.width;
     if(card.height>1){div.style.gridRow='span '+card.height;div.dataset.height=card.height;}
     if(card.minHeight){const sp=document.createElement('div');sp.className='grid-gap-minh';sp.style.setProperty('--gap-minh',card.minHeight+'px');div.appendChild(sp);}
@@ -109,7 +109,7 @@ function renderCard(card,idx){
   const div = document.createElement('div');
   div.className = 'card';
   div.dataset.cardId = card.id;
-  div.dataset.width = Math.min(card.width || 1, config.layout.cols);
+  div.dataset.width = Math.min(card.width || 1, pageCols || config.layout.cols);
   div.dataset.index = idx;
   div.style.setProperty('--card-accent', card.color || config.theme.glow);
   const ch=Math.min(card.height||1,4);

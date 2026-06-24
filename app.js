@@ -364,7 +364,8 @@ function addNewCard(){
     btn.innerHTML = '<i data-lucide="'+t.icon+'" style="width:22px;height:22px;"></i><span style="font-size:var(--text-xs);color:var(--text-secondary);">'+t.label+'</span>';
     btn.addEventListener('click', () => {
       overlay.remove();
-      const colMax=config.layout.cols;
+      var colMax=config.layout.cols;
+      if(config.pages[config.currentPage]&&config.pages[config.currentPage].cols)colMax=config.pages[config.currentPage].cols;
       const sec = {id:'sec-'+uid(),type:t.type,label:t.label};
       if(t.type==='links'||t.type==='link-list') sec.links=[{label:'Example',url:'https://example.com',icon:'link'}];
       if(t.type==='api-poller') {sec.url='https://api.github.com/repos/nousresearch/wartab';sec.fields=[{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}];sec.refreshInterval=120;}
