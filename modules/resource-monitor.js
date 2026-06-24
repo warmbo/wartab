@@ -141,8 +141,8 @@ registerModule('resource-monitor', {
       rows[m]=buildMetricRow(m,labels[m]);
       w.appendChild(rows[m].row);
     });
+    var netFill, netCanvas, netCwrap, netSpeedRow, rxEl, txEl;
     if(showMetrics.net){
-    // Network row
     const netRow=document.createElement('div');netRow.style.cssText='display:flex;flex-direction:column;gap:2px;';
     const netLabelRow=document.createElement('div');netLabelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
     const netLbl=document.createElement('span');netLbl.style.cssText='color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
@@ -150,16 +150,16 @@ registerModule('resource-monitor', {
     const netVal=document.createElement('span');netVal.className='rm-val-net';netVal.style.cssText='color:var(--text-primary);font-variant-numeric:tabular-nums;font-size:var(--text-2xs);';
     netVal.textContent='--';
     netLabelRow.appendChild(netLbl);netLabelRow.appendChild(netVal);netRow.appendChild(netLabelRow);
-    const netFill=document.createElement('div');netFill.className='rm-fill-net';
+    netFill=document.createElement('div');netFill.className='rm-fill-net';
     netFill.style.cssText='height:4px;width:0%;background:var(--accent);transition:width 0.4s ease;';
     netRow.appendChild(netFill);
-    var netCanvas=document.createElement('canvas');netCanvas.className='rm-spark-net';
-    var netCwrap=document.createElement('div');netCwrap.style.cssText='display:none;height:40px;position:relative;';
+    netCanvas=document.createElement('canvas');netCanvas.className='rm-spark-net';
+    netCwrap=document.createElement('div');netCwrap.style.cssText='display:none;height:40px;position:relative;';
     netCwrap.appendChild(netCanvas);
     netRow.appendChild(netCwrap);
-    const netSpeedRow=document.createElement('div');netSpeedRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:1px;';
-    const rxEl=document.createElement('span');rxEl.className='rm-rx';
-    const txEl=document.createElement('span');txEl.className='rm-tx';
+    netSpeedRow=document.createElement('div');netSpeedRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:1px;';
+    rxEl=document.createElement('span');rxEl.className='rm-rx';
+    txEl=document.createElement('span');txEl.className='rm-tx';
     netSpeedRow.appendChild(rxEl);netSpeedRow.appendChild(txEl);netRow.appendChild(netSpeedRow);
     w.appendChild(netRow);
     }
