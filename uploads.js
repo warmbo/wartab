@@ -68,7 +68,7 @@ function openBgPicker() {
     const img=document.createElement('img');img.src=f.url;img.style.cssText='width:80px;height:56px;object-fit:cover;border:1px solid var(--surface-border);display:block;';
     c.addEventListener('click',function(){config.theme.bgType='image';config.theme.bgValue=f.url;applyTheme();saveConfig();renderAll();$('#bg-picker-overlay').classList.remove('open');$('#bg-picker').classList.remove('open');toast('Background set');});
     // Delete button
-    const del=document.createElement('button');del.textContent='✕';
+    const del=document.createElement('button');del.textContent='✕';del.setAttribute('aria-label','Delete background');
     del.style.cssText='position:absolute;top:0;right:0;padding:0 4px;font-size:11px;background:#000;border:1px solid rgba(255,80,80,0.5);color:#ff4444;cursor:pointer;line-height:1.4;font-weight:700;';
     del.addEventListener('click',function(e){
       e.stopPropagation();

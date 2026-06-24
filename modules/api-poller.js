@@ -281,7 +281,7 @@ registerModule('api-poller', {
         vInp.style.cssText = 'flex:2;padding:5px 6px;font-size:var(--text-2xs);';
         vInp.addEventListener('change', () => { sec.headers[kInp.value] = vInp.value; saveConfig(); });
         const rm = document.createElement('button'); rm.className = 'btn btn-glass btn-sm';
-        rm.textContent = '✕'; rm.style.cssText = 'padding:2px 5px;font-size:var(--text-2xs);';
+        rm.textContent = '✕'; rm.style.cssText = 'padding:2px 5px;font-size:var(--text-2xs);'; rm.setAttribute('aria-label','Remove field');
         rm.addEventListener('click', () => { delete sec.headers[kInp.value]; renderHeaders(); saveConfig(); });
         row.appendChild(kInp); row.appendChild(vInp); row.appendChild(rm);
         hdrContainer.appendChild(row);

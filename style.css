@@ -245,6 +245,7 @@ body {
 .btn-glass:hover { background: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.02) 100%); border-color: var(--glass-border-hover); }
 .btn-glass:active { box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.1); transform: translateY(1px); }
 .btn-icon { padding: var(--space-1) 7px; font-size: var(--text-lg); line-height: 1; }
+.btn-icon:active { transform: scale(0.93); }
 .btn-icon-lg { min-width: 36px; min-height: 36px; padding: var(--space-1) 7px; font-size: var(--text-lg); line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
 .btn-icon-sm { min-width: 28px; min-height: 28px; padding: var(--space-1) var(--space-2); font-size: var(--text-sm); line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
 .btn-sm { padding: var(--space-1) var(--space-2); font-size: var(--text-xs); }
@@ -789,6 +790,7 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .card-edit-btn { background: none !important; background-color: transparent !important; border: none !important; color: var(--text-tertiary); font-size: var(--text-base); cursor: pointer; padding: var(--space-1) var(--space-2); transition: opacity var(--anim-fast), color var(--anim-fast); opacity: var(--opacity-hint); appearance: none; -webkit-appearance: none; min-width: 36px; min-height: 36px; }
 .card:hover .card-edit-btn, .card-edit-btn:hover { opacity: var(--opacity-full); }
 .card-edit-btn:hover { color: var(--text-primary); }
+.card-edit-btn:active { transform: scale(0.93); }
 .card .drag-handle { opacity: var(--opacity-hint); transition: opacity var(--anim-fast), color var(--anim-fast); cursor: grab; color: var(--text-secondary); min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
 .card:hover .drag-handle, .card .drag-handle:hover { opacity: var(--opacity-full); color: var(--text-primary); }
 .card .drag-handle:active { cursor: grabbing; }
