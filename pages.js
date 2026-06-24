@@ -73,16 +73,16 @@ function showShortcutsOverlay() {
   const box = document.createElement('div');
   box.className = 'modal-box';
   box.style.maxWidth = '420px';
-  box.innerHTML = '<div style="font-size:var(--heading-size);font-weight:700;color:var(--text-primary);margin-bottom:16px;">Keyboard Shortcuts</div>' +
-    '<div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:12px;">Press a key while this window is open:</div>' +
-    '<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:var(--text-sm);line-height:1.8;">' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">N</kbd><span>Add new card</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">S</kbd><span>Focus search bar</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">P</kbd><span>New page</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">C</kbd><span>Toggle config panel</span>' +
-    '<kbd style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:3px;font-family:var(--font);font-size:var(--text-xs);font-weight:700;">?</kbd><span>Close this window</span>' +
+  box.innerHTML = '<div style="font-size:var(--heading-size);font-weight:700;color:var(--text-primary);margin-bottom:var(--space-4);">Keyboard Shortcuts</div>' +
+    '<div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-3);">Press a key while this window is open:</div>' +
+    '<div class="shortcut-grid">' +
+    '<kbd class="kbd-shortcut">N</kbd><span>Add new card</span>' +
+    '<kbd class="kbd-shortcut">S</kbd><span>Focus search bar</span>' +
+    '<kbd class="kbd-shortcut">P</kbd><span>New page</span>' +
+    '<kbd class="kbd-shortcut">C</kbd><span>Toggle config panel</span>' +
+    '<kbd class="kbd-shortcut">?</kbd><span>Close this window</span>' +
     '</div>' +
-    '<div style="text-align:center;margin-top:16px;font-size:var(--text-2xs);color:var(--text-tertiary);">Esc to close · Ctrl+K to search anytime</div>';
+    '<div style="text-align:center;margin-top:var(--space-4);font-size:var(--text-2xs);color:var(--text-tertiary);">Esc to close · Ctrl+K to search anytime</div>';
   overlay.appendChild(box);
   overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
   document.body.appendChild(overlay);

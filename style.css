@@ -760,6 +760,10 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .card-transparent { background: transparent !important; border-color: transparent !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 .card-transparent::before { display: none !important; }
 
+/* ── Keyboard shortcuts overlay ── */
+.kbd-shortcut { background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 3px; font-family: var(--font); font-size: var(--text-xs); font-weight: 700; }
+.shortcut-grid { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); line-height: 1.8; }
+
 .card.drop-shift {
   border-left: 3px solid var(--accent) !important;
   box-shadow: inset 3px 0 12px color-mix(in srgb, var(--accent) 15%, transparent) !important;
