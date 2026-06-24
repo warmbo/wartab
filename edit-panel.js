@@ -64,6 +64,11 @@ function updateBlurState() {
 }
 
 function closeCardEditPanel() {
+  // Re-render the edited card before closing so all saveConfig()-only field
+  // changes (weather API key, api-poller URL, git repo, etc.) are reflected
+  // in the DOM without requiring a full page refresh.
+  // Only trigger for card editing — page editing handles its own renders.
+  if (_editingCardId) saveAndRefresh();
   // Remove highlight from edited card
   if (_editingCardId) {
     const el = document.querySelector(`[data-card-id="${_editingCardId}"]`);

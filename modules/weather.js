@@ -23,6 +23,12 @@ registerModule('weather', {
     const fcEl=document.createElement('div');fcEl.className='weather-forecast';fcEl.textContent='';w.appendChild(fcEl);
     const tsEl=document.createElement('div');tsEl.className='weather-ts';tsEl.textContent='';w.appendChild(tsEl);
     cw.appendChild(w);
+    // Trigger initial fetch immediately — the module's render function only
+    // sets up skeleton HTML; fetchWeather reads dataset attributes set above
+    // and populates the widget with live data from OpenWeatherMap.
+    if (typeof fetchWeather === 'function' && (sec.apiKey || sec.zip)) {
+      fetchWeather(w);
+    }
     card._cleanup=()=>{
       if(card._weatherInterval){clearInterval(card._weatherInterval);card._weatherInterval=null;}
       const ws=document.getElementById('weather-skeleton-style');
