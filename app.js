@@ -1172,6 +1172,51 @@ function saveConfig() {
 // Deep-merge stored config over defaults (arrays replaced, objects recursed)
 function deepMerge(t,s){const r=cloneObj(t);for(const k in s){if(s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k]))r[k]=deepMerge(r[k]||{},s[k]);else r[k]=s[k];}return r;}
 
+/* ── Sanitize imported config — skip bad data, collect warnings ── */
+function sanitizeImportConfig(raw) {
+  const warnings = [];
+  if (!raw || typeof raw !== 'object') return { data: {}, warnings: ['Imported data is not a valid JSON object'] };
+
+  function walk(obj, path) {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) {
+      const out = [];
+      for (let i = 0; i < obj.length; i++) {
+        const p = path + '[' + i + ']';
+        if (obj[i] === null || obj[i] === undefined) { warnings.push(escHtml(p) + ': skipped null/undefined'); continue; }
+        var cleaned = walk(obj[i], p);
+        if (cleaned !== undefined && cleaned !== null) out.push(cleaned);
+      }
+      return out;
+    }
+    const out = {};
+    for (var k in obj) {
+      var v = obj[k];
+      var p = path + '.' + k;
+      if (typeof v === 'string' && v.length > 200 && v.startsWith('data:')) {
+        warnings.push(escHtml(p) + ': removed embedded data URL (' + Math.round(v.length / 1024) + 'KB) — use file path instead');
+        // Don't copy the data URL; deepMerge will fill from DEFAULT_CONFIG
+      } else if (typeof v === 'object') {
+        out[k] = walk(v, p);
+      } else if (v !== undefined && v !== null) {
+        out[k] = v;
+      }
+    }
+    return out;
+  }
+
+  var data = walk(raw, '');
+  if (typeof data !== 'object' || data === null) { data = {}; warnings.push('Config replaced with empty object'); }
+
+  // Ensure top-level sections exist (deepMerge will fill in defaults)
+  if (data.cards && !Array.isArray(data.cards)) { delete data.cards; warnings.push('.cards: not an array — removed'); }
+  if (data.pages !== undefined && !Array.isArray(data.pages) && typeof data.pages !== 'object') { delete data.pages; warnings.push('.pages: invalid type — removed'); }
+  if (data.theme && typeof data.theme !== 'object') { delete data.theme; warnings.push('.theme: invalid — using defaults'); }
+  if (data.layout && typeof data.layout !== 'object') { delete data.layout; warnings.push('.layout: invalid — using defaults'); }
+
+  return { data: data, warnings: warnings };
+}
+
 /* ── Theme & Branding ── */
 function applyTheme(){
   const t=config.theme,bg=$('#bg-canvas');
@@ -1950,7 +1995,7 @@ function buildSystemPanel(body){
   });
   body.appendChild(acts);
   const fi2=document.createElement('input');fi2.type='file';fi2.accept='.json';fi2.style.display='none';fi2.id='import-file-input2';
-  fi2.addEventListener('change',e=>{if(e.target.files[0]){const r=new FileReader();r.onload=async ev=>{try{const d=JSON.parse(ev.target.result);showConfirmModal('Import config from '+e.target.files[0].name+'? This will replace your current configuration.',async()=>{config=deepMerge(cloneObj(DEFAULT_CONFIG),d);try{await storage.saveConfig(cloneObj(config));}catch(e){toast('Import save failed: '+e.message,'error');return;}applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();toast('Imported');},'Import');}catch(e){toast('Failed: '+e.message,'error');}};r.readAsText(e.target.files[0]);}});
+  fi2.addEventListener('change',e=>{if(e.target.files[0]){const r=new FileReader();r.onload=async ev=>{try{const d=JSON.parse(ev.target.result);var result=sanitizeImportConfig(d);var warnings=result.warnings;var cleaned=result.data;showConfirmModal('Import config from '+e.target.files[0].name+'? This will replace your current configuration.',async()=>{config=deepMerge(cloneObj(DEFAULT_CONFIG),cleaned);try{await storage.saveConfig(cloneObj(config));}catch(e){toast('Import save failed: '+e.message,'error');return;}applyTheme();renderAll();_configTab='system';buildConfigPanel();initStatusBar();if(warnings.length){showModal('<b>Import completed with warnings:</b><br><br><div style=\"font-size:var(--text-sm);color:var(--text-secondary);max-height:300px;overflow-y:auto;\">• '+warnings.join('<br>• ')+'</div>');}else{toast('Imported');}},'Import');}catch(e){toast('Failed: '+e.message,'error');}};r.readAsText(e.target.files[0]);}});
   body.appendChild(fi2);
 
   /* Snapshots */
@@ -2213,6 +2258,28 @@ function showConfirmModal(msg, onConfirm, okText) {
   cancelBtn.addEventListener('click', () => overlay.remove());
   btnRow.appendChild(okBtn);
   btnRow.appendChild(cancelBtn);
+  box.appendChild(btnRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+/* ── Info modal (message + OK button, no confirmation) ── */
+function showModal(html) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const box = document.createElement('div');
+  box.className = 'modal-box';
+  box.style.cssText = 'max-width:520px;text-align:left;';
+  const body = document.createElement('div');
+  body.innerHTML = html;
+  box.appendChild(body);
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;justify-content:center;margin-top:16px;';
+  const okBtn = document.createElement('button');
+  okBtn.className = 'btn btn-glass btn-sm';
+  okBtn.textContent = 'OK';
+  okBtn.addEventListener('click', () => overlay.remove());
+  btnRow.appendChild(okBtn);
   box.appendChild(btnRow);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
