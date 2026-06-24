@@ -106,6 +106,7 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 .weather-ts { color: var(--text-tertiary); margin-top: var(--space-1); }
 
 .cfg-conditional { overflow: hidden; transition: max-height var(--anim-fast) ease, opacity var(--anim-fast) ease, margin var(--anim-fast) ease; max-height: 200px; opacity: 1; margin-bottom: var(--space-2); }
+.cfg-conditional.hidden { max-height: 0; opacity: 0; margin-bottom: 0; padding: 0; }
 
 /* ── Quotes widget ── */
 .quotes-widget { cursor: pointer; user-select: none; }

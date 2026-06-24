@@ -113,7 +113,8 @@ const storage = (function() {
       snapshots: {
         list: function() { return api('/api/config/backups', 'GET'); },
         create: function() { return getConfig().then(function(cfg) { return saveConfig(cfg); }); },
-        restore: function(name) { return api('/api/config/restore/' + encodeURIComponent(name), 'POST'); }
+        restore: function(name) { return api('/api/config/restore/' + encodeURIComponent(name), 'POST'); },
+        delete: function(name) { return api('/api/config/delete-snapshot/' + encodeURIComponent(name), 'POST'); }
       }
     };
   }
@@ -367,6 +368,20 @@ const storage = (function() {
           }
           if (!snap) throw new Error('Snapshot not found: ' + name);
           return saveConfig(snap.config);
+        });
+      },
+      delete: function(name) {
+        return chromeGet(SNAPSHOTS_KEY).then(function(data) {
+          var snaps = data[SNAPSHOTS_KEY] || [];
+          var idx = -1;
+          for (var i = 0; i < snaps.length; i++) {
+            if (snaps[i].name === name) { idx = i; break; }
+          }
+          if (idx < 0) throw new Error('Snapshot not found: ' + name);
+          snaps.splice(idx, 1);
+          var obj = {};
+          obj[SNAPSHOTS_KEY] = snaps;
+          return chromeSet(obj);
         });
       }
     }

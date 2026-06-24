@@ -653,6 +653,14 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             with open(cfg_path, "w") as f:
                 json.dump(data, f, indent=2)
             return self._json({"status":"restored","snapshot":safe})
+        if self.path.startswith("/api/config/delete-snapshot/"):
+            name = self.path.split("/api/config/delete-snapshot/")[1]
+            safe = re.sub(r"[^a-zA-Z0-9_-]", "", name)
+            snap_path = HERE / "snapshots" / f"config_{safe}.json"
+            if not snap_path.exists():
+                return self._json({"error":"snapshot not found"},404)
+            snap_path.unlink()
+            return self._json({"status":"deleted","snapshot":safe})
         if self.path.startswith("/api/notes/"):
             note_id = self.path.split("/api/notes/")[1].split("?")[0]
             if not note_id: return self._json({"error":"missing id"},400)

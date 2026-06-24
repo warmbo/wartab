@@ -19,6 +19,7 @@ function buildUploadTab(c){
     z.innerHTML='<div style="padding:20px;color:var(--text-secondary);">Uploading...</div>';
     storage.uploadIcon(file,file.name).then(function(result){
       if(result&&!result.error){
+        loadGal();
         selectIcon(result.url);
       }else{
         toast('Upload failed: '+(result&&result.error?result.error:'Unknown'),'error');
