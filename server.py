@@ -106,7 +106,7 @@ _arp_lock = Lock()
 
 GIT_VERSION = ''
 try:
-    out = subprocess.run(['git','describe','--always','--tags','--dirty'],
+    out = subprocess.run(['git','rev-parse','--short','HEAD'],
         capture_output=True,text=True,timeout=2,cwd=HERE)
     if out.returncode==0:
         GIT_VERSION = out.stdout.strip()
