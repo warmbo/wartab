@@ -433,7 +433,16 @@ const storage = (function() {
       return new Promise(function(resolve) {
         chrome.storage.local.get(CHECK_KEY, function(data) {
           var cached = data[CHECK_KEY];
-          if (cached && Date.now() - cached.ts < ONE_HOUR) { resolve(cached); return; }
+          // Validate cache: discard if the extension version changed or if the
+          // cached latest matches current (indicates stale comparison result)
+          var m = chrome.runtime.getManifest();
+          var rawVer = m.version_name || m.version || '0.0.0';
+          var currentVer = rawVer.replace(/-.*$/, '');
+          if (cached && Date.now() - cached.ts < ONE_HOUR) {
+            if (cached.current !== rawVer) { cached = null; } // extension updated — re-check
+            else if (cached.available && cached.latest === currentVer) { cached = null; } // stale true positive
+            else { resolve(cached); return; }
+          }
           fetch(GITHUB_API).then(function(r) { return r.json(); }).then(function(release) {
             var latestTag = (release.tag_name || '').replace(/^v/, '').replace(/-.*$/, '');
             var m = chrome.runtime.getManifest();
