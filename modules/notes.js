@@ -33,7 +33,7 @@ registerModule('notes', {
     var e=document.createElement('div');
     e.className='notes-editor';
     e.contentEditable=true;
-    e.style.cssText='min-height:100px;padding:8px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.06);color:var(--text-primary);font-size:var(--text-sm);line-height:1.6;outline:none;';
+    e.style.cssText='min-height:100px;max-height:32em;overflow-y:auto;padding:8px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.06);color:var(--text-primary);font-size:var(--text-sm);line-height:1.6;outline:none;';
     
     // Use textContent instead of innerHTML for initial empty state
     if(sec.content){
