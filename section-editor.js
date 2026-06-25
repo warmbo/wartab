@@ -270,10 +270,9 @@ function buildSectionEditor(sec, card, si) {
   if (!sec.styles) sec.styles = {};
   var st = sec.styles;
 
-  // Helper: update data- attributes on the live card preview without re-render
+  // Helper: update styles on the live card preview without re-render
   function applyStyleVars(s, editorCardEl) {
     if (!s || !s.id || !_editingCardId) return;
-    // Apply to the card behind the overlay
     var cardEl = document.querySelector('[data-card-id="' + _editingCardId + '"]');
     if (!cardEl) return;
     var pcw = cardEl.querySelector('[data-sec-id="' + s.id + '"]');
@@ -282,16 +281,33 @@ function buildSectionEditor(sec, card, si) {
     var al = ss.align || 'left';
     var sc = ss.scale || 'medium';
     var de = ss.density || 'standard';
-    pcw.dataset.modScale = sc;
-    pcw.dataset.modDensity = de;
+
+    // 1. Alignment (CSS variables)
     pcw.style.setProperty('--mod-align', al);
     pcw.style.setProperty('--mod-justify', al === 'center' ? 'center' : al === 'right' ? 'flex-end' : 'flex-start');
     pcw.style.textAlign = al === 'left' ? '' : al;
-    // Also apply to the section editor card so the user sees real-time feedback
-    // inside the edit panel without closing it
+
+    // 2. Scale — directly set font sizes on all text elements within the module.
+    //    This bypasses CSS selector matching issues and always works.
+    var sf = sc === 'small' ? 0.75 : sc === 'large' ? 1.35 : 1;
+    pcw.querySelectorAll('[class]').forEach(function(el){
+      if (el.children.length > 0) return; // skip containers
+      var cs = window.getComputedStyle(el);
+      var fs = parseFloat(cs.fontSize);
+      if (fs && fs > 4) {
+        if (!el._baseFs) el._baseFs = fs;
+        el.style.fontSize = (el._baseFs * sf) + 'px';
+      }
+    });
+
+    // 3. Density — scale gap and padding CSS variables on flex containers
+    var df = de === 'compact' ? 0.6 : de === 'comfortable' ? 1.5 : 1;
+    pcw.style.setProperty('--mod-df', String(df));
+
+    // 4. Editor card scaling (immediate visual feedback)
     if (editorCardEl) {
-      var sc2 = sc === 'small' ? '0.85' : sc === 'large' ? '1.25' : '1';
-      editorCardEl.style.fontSize = parseFloat(sc2) + 'em';
+      var esc = sc === 'small' ? 0.85 : sc === 'large' ? 1.2 : 1;
+      editorCardEl.style.fontSize = esc + 'em';
     }
   }
 

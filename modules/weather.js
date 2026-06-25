@@ -2,32 +2,17 @@ registerModule('weather', {
   defaults: { zip:'', country:'US', units:'celsius' },
   css: `
     .weather-widget{}
-    .weather-main{display:flex;align-items:center;justify-content:var(--mod-justify,center);gap:16px;padding:8px 0;}
+    .weather-main{display:flex;align-items:center;justify-content:var(--mod-justify,center);gap:calc(16px * var(--mod-df,1));padding:calc(8px * var(--mod-df,1)) 0;}
     .weather-icon{font-size:3rem;width:52px;height:52px;flex-shrink:0;}
     .weather-temp{font-size:3rem;font-weight:700;line-height:1.1;letter-spacing:-1px;}
     .weather-feels{font-size:var(--text-sm);color:var(--text-tertiary);}
     .weather-detail{font-size:var(--text-sm);color:var(--text-secondary);margin-top:4px;}
     .weather-wind{font-size:var(--text-sm);color:var(--text-tertiary);margin-top:4px;display:flex;align-items:center;gap:4px;justify-content:var(--mod-justify,center);}
-    .weather-forecast{display:flex;gap:12px;justify-content:var(--mod-justify,center);margin-top:8px;flex-wrap:wrap;}
+    .weather-forecast{display:flex;gap:calc(12px * var(--mod-df,1));justify-content:var(--mod-justify,center);margin-top:calc(8px * var(--mod-df,1));flex-wrap:wrap;}
     .weather-fc-day{text-align:center;font-size:var(--text-xs);color:var(--text-tertiary);}
     .weather-fc-day .day{font-weight:600;color:var(--text-secondary);}
     .weather-fc-temp{font-size:var(--text-xs);color:var(--text-primary);font-weight:600;}
     .weather-ts{font-size:var(--text-xs);color:var(--text-tertiary);text-align:center;margin-top:6px;opacity:0.6;}
-    /* Scale: small */
-    [data-mod-scale="small"] .weather-icon{font-size:2.2rem;width:38px;height:38px;}
-    [data-mod-scale="small"] .weather-temp{font-size:2.2rem;}
-    [data-mod-scale="small"] .weather-detail{font-size:var(--text-xs);}
-    /* Scale: large */
-    [data-mod-scale="large"] .weather-icon{font-size:3.8rem;width:64px;height:64px;}
-    [data-mod-scale="large"] .weather-temp{font-size:3.8rem;}
-    /* Height: small card - tighter layout */
-    [data-mod-height="small"] .weather-main{gap:10px;padding:2px 0;}
-    [data-mod-height="small"] .weather-icon{font-size:2rem;width:34px;height:34px;}
-    [data-mod-height="small"] .weather-temp{font-size:2rem;}
-    [data-mod-height="small"] .weather-detail,.weather-wind,.weather-ts{font-size:var(--text-2xs);}
-    /* Height: large/expanded - more breathing room */
-    [data-mod-height="large"] .weather-main{padding:12px 0;}
-    [data-mod-height="expanded"] .weather-main{padding:14px 0;}
   `,
   render: (sec, card, cw) => {
     const w = document.createElement('div');
