@@ -272,13 +272,13 @@ function buildSectionEditor(sec, card, si) {
 
   // Helper: update data- attributes on the live card preview without re-rendering
   function applyStyleVars(s, secIdx) {
-    // Try direct reference first (set by render.js renderSection)
-    var pcw = s.__cw;
-    // Fallback: find by card ID + section index (always works if card is in DOM)
-    if (!pcw || !pcw.isConnected) {
-      var cardEl = document.querySelector('[data-card-id="' + _editingCardId + '"]');
-      if (cardEl) pcw = cardEl.querySelectorAll('.dropdown-content')[secIdx];
-    }
+    // Find the card element by data-card-id, then find the section by index.
+    // This is bulletproof: the card is always in the DOM behind the overlay,
+    // and secIdx is captured from buildSectionEditor's parameter.
+    var cardEl = document.querySelector('[data-card-id="' + _editingCardId + '"]');
+    if (!cardEl) return;
+    var wraps = cardEl.querySelectorAll('.dropdown-content');
+    var pcw = wraps[secIdx];
     if (!pcw || !pcw.isConnected) return;
     var ss = s.styles || {};
     var al = ss.align || 'left';
@@ -318,8 +318,7 @@ function buildSectionEditor(sec, card, si) {
       ';color:var(--text-primary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);';
     ab.addEventListener('click', function() {
       st.align = a;
-      saveConfig();
-      applyStyleVars(sec, si);
+      saveAndRefresh();
     });
     alignRow.appendChild(ab);
   });
@@ -331,7 +330,7 @@ function buildSectionEditor(sec, card, si) {
   styleInner.appendChild(cpSelect(
     [{value:'compact',label:'Compact'},{value:'standard',label:'Standard'},{value:'comfortable',label:'Comfortable'}],
     st.density || 'standard',
-    function(v) { st.density = v; saveConfig(); applyStyleVars(sec, si); }
+    function(v) { st.density = v; saveAndRefresh(); }
   ));
 
   // Scale
@@ -339,7 +338,7 @@ function buildSectionEditor(sec, card, si) {
   styleInner.appendChild(cpSelect(
     [{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],
     st.scale || 'medium',
-    function(v) { st.scale = v; saveConfig(); applyStyleVars(sec, si); }
+    function(v) { st.scale = v; saveAndRefresh(); }
   ));
 
   styleBody.appendChild(styleInner);
