@@ -10,7 +10,6 @@ registerModule('clock', {
     .calendar-day{padding:3px 0;font-variant-numeric:tabular-nums;transition:background var(--anim-fast);}
     .calendar-day.today{background:var(--accent-glass);color:var(--text-primary);font-weight:600;}
     .calendar-day.other-month{color:var(--text-tertiary);opacity:0.4;}
-    .clock-extras{font-size:var(--text-xs);color:var(--text-tertiary);margin-top:var(--space-2);text-align:center;}
 
     [data-mod-scale="small"] .clock-time{font-size:var(--text-2xl);}
     [data-mod-scale="large"] .clock-time{font-size:var(--text-4xl);}
@@ -19,24 +18,19 @@ registerModule('clock', {
     var w = document.createElement('div');
     w.className = 'clock-widget';
 
-    /* Always visible: time */
+    /* Time — always visible */
     var timeEl = document.createElement('div');
     timeEl.className = 'clock-time';
     timeEl.textContent = '--:--';
     w.appendChild(timeEl);
 
-    /* Date: controlled by showDate setting */
+    /* Date — controlled by showDate setting */
     var dateEl = document.createElement('div');
     dateEl.className = 'clock-date';
     dateEl.style.display = sec.showDate ? '' : 'none';
     w.appendChild(dateEl);
 
-    /* Extras (week number, day of year) — always visible when calculated */
-    var extras = document.createElement('div');
-    extras.className = 'clock-extras';
-    w.appendChild(extras);
-
-    /* Calendar: controlled by showCalendar setting */
+    /* Calendar — controlled by showCalendar setting */
     var calEl = document.createElement('div');
     calEl.className = 'calendar-widget';
     calEl.id = 'cal-' + sec.id;
@@ -75,33 +69,6 @@ registerModule('clock', {
         dateEl.textContent = now.toLocaleDateString('en-US', {
           weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
         }).toUpperCase();
-      }
-
-      /* Extras: week number, day of year */
-      var extrasEl = w.querySelector('.clock-extras');
-      if (extrasEl) {
-        var startOfYear = new Date(now.getFullYear(), 0, 0);
-        var diff = now - startOfYear;
-        var dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-        var weekNum = Math.ceil((dayOfYear + new Date(now.getFullYear(), 0, 1).getDay()) / 7);
-        var daysInYear = new Date(now.getFullYear(), 11, 31).getDate() - new Date(now.getFullYear(), 0, 0).getDate();
-        
-        // Clear extras and rebuild with badge + progress ring
-        extrasEl.innerHTML = '';
-        var infoRow = document.createElement('div');
-        infoRow.style.cssText = 'display:flex;align-items:center;gap:var(--space-3);justify-content:center;';
-        
-        var badge = ds.badge('W' + weekNum, 'info');
-        infoRow.appendChild(badge);
-        
-        infoRow.appendChild(ds.progressRing(dayOfYear, daysInYear, 36, 3));
-        
-        var dayLabel = document.createElement('span');
-        dayLabel.style.cssText = 'font-size:var(--text-2xs);color:var(--text-tertiary);';
-        dayLabel.textContent = 'Day ' + dayOfYear + ' of ' + daysInYear;
-        infoRow.appendChild(dayLabel);
-        
-        extrasEl.appendChild(infoRow);
       }
 
       /* Calendar */
