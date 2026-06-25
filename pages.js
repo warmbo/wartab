@@ -27,13 +27,21 @@ function renderPageNav() {
   const tabs = $('#page-tabs');
   if (!tabs) return;
   tabs.innerHTML = '';
+
+  // Wrap tabs in a scrollable container with overflow arrows
+  var scrollWrap = document.createElement('div');
+  scrollWrap.className = 'page-tabs-scroll';
+  var inner = document.createElement('div');
+  inner.className = 'page-tabs-inner';
+  scrollWrap.appendChild(inner);
+
   (config.pageOrder || []).forEach(id => {
     const p = config.pages[id];
     if (!p) return;
     const tab = document.createElement('span');
     tab.className = 'page-tab' + (id === config.currentPage ? ' active' : '');
 
-    // Page icon — part of the tab, no separate click handler
+    // Page icon
     const iconEl = document.createElement('span');
     iconEl.className = 'page-tab-icon';
     if (p.icon && isLucideName(p.icon)) {
@@ -45,7 +53,7 @@ function renderPageNav() {
     }
     tab.appendChild(iconEl);
 
-    // Page name — click to switch, double-click opens edit panel
+    // Page name
     const nameSpan = document.createElement('span');
     nameSpan.textContent = p.name;
     let clickTimer = null;
@@ -59,9 +67,40 @@ function renderPageNav() {
       openPageEditPanel(id);
     });
     tab.appendChild(nameSpan);
-    tabs.appendChild(tab);
+    inner.appendChild(tab);
   });
-  // Render Lucide SVGs for page tab icons
+
+  // Left/right scroll arrows
+  var leftArrow = document.createElement('button');
+  leftArrow.className = 'page-tab-arrow page-tab-arrow-left';
+  leftArrow.innerHTML = '&#9664;';
+  leftArrow.title = 'Scroll left';
+  leftArrow.addEventListener('click', function() { inner.scrollBy({ left: -120, behavior: 'smooth' }); });
+
+  var rightArrow = document.createElement('button');
+  rightArrow.className = 'page-tab-arrow page-tab-arrow-right';
+  rightArrow.innerHTML = '&#9654;';
+  rightArrow.title = 'Scroll right';
+  rightArrow.addEventListener('click', function() { inner.scrollBy({ left: 120, behavior: 'smooth' }); });
+
+  // Show/hide arrows based on overflow
+  function updateArrows() {
+    var hasOverflow = inner.scrollWidth > inner.clientWidth;
+    leftArrow.style.display = hasOverflow && inner.scrollLeft > 0 ? '' : 'none';
+    rightArrow.style.display = hasOverflow && inner.scrollLeft < inner.scrollWidth - inner.clientWidth - 2 ? '' : 'none';
+  }
+  inner.addEventListener('scroll', updateArrows);
+  // Use ResizeObserver for container size changes
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(updateArrows);
+    ro.observe(inner);
+    inner._ro = ro;
+  }
+
+  tabs.appendChild(leftArrow);
+  tabs.appendChild(scrollWrap);
+  tabs.appendChild(rightArrow);
+  setTimeout(updateArrows, 50);
   renderIcons();
 }
 function showShortcutsOverlay() {

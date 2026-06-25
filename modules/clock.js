@@ -11,20 +11,13 @@ registerModule('clock', {
     .calendar-day.today{background:var(--accent-glass);color:var(--text-primary);font-weight:600;}
     .calendar-day.other-month{color:var(--text-tertiary);opacity:0.4;}
     .clock-extras{font-size:var(--text-xs);color:var(--text-tertiary);margin-top:var(--space-2);text-align:center;}
-    /* Clock calendar fix: ensure calendar-month is hidden when showCalendar is set to false on page settings */
-    .clock-widget[data-show-calendar="0"] .calendar-widget{display:none !important;}
 
     [data-mod-scale="small"] .clock-time{font-size:var(--text-2xl);}
     [data-mod-scale="large"] .clock-time{font-size:var(--text-4xl);}
-    [data-mod-height="small"] .clock-date{display:none;}
-    [data-mod-height="small"] .calendar-widget{display:none;}
-    [data-mod-height="small"] .clock-extras{display:none;}
-    [data-mod-height="medium"] .clock-extras{display:none;}
   `,
   render: function(sec, card, cw) {
     var w = document.createElement('div');
     w.className = 'clock-widget';
-    w.dataset.showCalendar = sec.showCalendar ? '1' : '0';
 
     /* Always visible: time */
     var timeEl = document.createElement('div');
@@ -32,31 +25,22 @@ registerModule('clock', {
     timeEl.textContent = '--:--';
     w.appendChild(timeEl);
 
-    /* Date: visible when showDate AND card height >= 2 */
+    /* Date: controlled by showDate setting */
     var dateEl = document.createElement('div');
     dateEl.className = 'clock-date';
-    if (sec.showDate) {
-      dateEl.style.display = ds.showHide('medium', card.height);
-    } else {
-      dateEl.style.display = 'none';
-    }
+    dateEl.style.display = sec.showDate ? '' : 'none';
     w.appendChild(dateEl);
 
-    /* Extras (week/day-of-year): visible at height >= 3 */
+    /* Extras (week number, day of year) — always visible when calculated */
     var extras = document.createElement('div');
     extras.className = 'clock-extras';
-    extras.style.display = ds.showHide('large', card.height);
     w.appendChild(extras);
 
-    /* Calendar: visible when showCalendar=true OR card height >= 2 */
+    /* Calendar: controlled by showCalendar setting */
     var calEl = document.createElement('div');
     calEl.className = 'calendar-widget';
     calEl.id = 'cal-' + sec.id;
-    if (sec.showCalendar) {
-      calEl.style.display = ds.showHide('medium', card.height);
-    } else {
-      calEl.style.display = 'none';
-    }
+    calEl.style.display = sec.showCalendar ? '' : 'none';
     w.appendChild(calEl);
 
     cw.appendChild(w);
@@ -87,15 +71,15 @@ registerModule('clock', {
       if (timeEl) timeEl.textContent = timeStr;
 
       var dateEl = w.querySelector('.clock-date');
-      if (dateEl && sec.showDate && dateEl.style.display !== 'none') {
+      if (dateEl && sec.showDate) {
         dateEl.textContent = now.toLocaleDateString('en-US', {
           weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
         }).toUpperCase();
       }
 
-      /* Extras */
+      /* Extras: week number, day of year */
       var extrasEl = w.querySelector('.clock-extras');
-      if (extrasEl && card.height >= 3) {
+      if (extrasEl) {
         var startOfYear = new Date(now.getFullYear(), 0, 0);
         var diff = now - startOfYear;
         var dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -105,7 +89,7 @@ registerModule('clock', {
 
       /* Calendar */
       var calEl = w.querySelector('.calendar-widget');
-      if (calEl && calEl.style.display !== 'none') {
+      if (calEl && sec.showCalendar) {
         var year = now.getFullYear();
         var month = now.getMonth();
         var firstDay = new Date(year, month, 1).getDay();

@@ -14,6 +14,11 @@ registerModule('quotes', {
     auth.style.cssText='font-size:var(--text-xs);color:var(--text-secondary);text-align:right;padding-right:4px;';
     const aName=document.createElement('span');aName.className='quotes-author-name';aName.textContent='';auth.appendChild(aName);
     q.appendChild(auth);
+    // Hint: click to cycle (fades in on hover)
+    var hint = document.createElement('div');
+    hint.className = 'quotes-hint';
+    hint.textContent = 'Click to cycle';
+    q.appendChild(hint);
     q.dataset.secId=sec.id;
     cw.appendChild(q);
     setTimeout(function(){fetchQuote(q,sec);},100);

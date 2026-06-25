@@ -9,6 +9,11 @@ registerModule('search', {
     b.addEventListener('click',()=>doSearch(i.value,sec));i.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch(i.value,sec);});
     w.appendChild(b);cw.appendChild(w);
     const en=sec.engine||config.search.selected||'Google';const t=document.createElement('div');t.className='search-engine-tag';t.textContent=en;cw.appendChild(t);
+    // Shortcut hint
+    var sh = document.createElement('div');
+    sh.className = 'search-hint';
+    sh.textContent = 'Ctrl+K to focus';
+    cw.appendChild(sh);
   },
   editor: (sec,card,bd)=>{
     const w=document.createElement('div');w.style.cssText='position:relative;margin-bottom:8px;';

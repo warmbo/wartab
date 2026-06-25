@@ -414,8 +414,9 @@ async function init() {
   // Build version from config metadata (set by server as git hash)
   WARTAB_BUILD = WARTAB_BUILD || config._version || WARTAB_VERSION;
   // Footer — build version with source link
-  var ft=$('#footer-text');if(ft)ft.innerHTML='WarTab <a href="https://github.com/warmbo/wartab" target="_blank" rel="me noopener" style="color:var(--text-secondary);text-decoration:none;">'+WARTAB_BUILD+'</a>  [?] shortcuts';
+  var ft=$('#footer-text');if(ft)ft.innerHTML='WarTab <a href="https://github.com/warmbo/wartab" target="_blank" rel="me noopener" style="color:var(--text-secondary);text-decoration:none;">'+WARTAB_BUILD+'</a>';
   loadIconRepo();
+  $('#btn-help').addEventListener('click', function() { showShortcutsOverlay(); });
   $('#btn-config').addEventListener('click',toggleConfigPanel);
   $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
   $('#brand-text').addEventListener('click',()=>{location.reload();});

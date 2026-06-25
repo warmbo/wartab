@@ -102,6 +102,8 @@ i[data-lucide] { display: inline-block; vertical-align: middle; }
 /* ── Quotes widget ── */
 .quotes-widget { cursor: pointer; user-select: none; }
 .quotes-widget:hover .quotes-text { opacity: 0.85; }
+.quotes-hint { font-size: var(--text-3xs); color: var(--text-tertiary); text-align: right; opacity: 0; transition: opacity var(--anim-fast); margin-top: 2px; }
+.quotes-widget:hover .quotes-hint { opacity: 0.6; }
 
 :root[data-card-bg="light"] {
   --card-bg: rgba(255, 255, 255, 0.14);
@@ -184,8 +186,21 @@ body {
 #top-bar::before { content: ''; display: block; height: 3px; background: var(--accent); position: absolute; top: 0; left: 0; right: 0; }
 #top-bar .brand { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-lg); font-weight: 700; letter-spacing: 0.5px; text-shadow: var(--emboss-shadow); flex-shrink: 0; cursor: pointer; user-select: none; }
 #top-bar .brand .brand-icon { display: inline-flex; align-items: center; justify-content: center; width: var(--space-5); height: var(--space-5); font-size: var(--text-xl); font-family: 'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',var(--font); }
-#page-tabs { display: flex; gap: var(--space-1); flex: 1; justify-content: flex-start; overflow-x: auto; min-width: 0; padding: 0 var(--space-1); }
+#page-tabs { display: flex; gap: var(--space-1); flex: 1; justify-content: flex-start; overflow: visible; min-width: 0; padding: 0 var(--space-1); align-items: center; }
 #page-tabs::-webkit-scrollbar { height: 0; }
+.page-tabs-scroll { flex: 1; overflow: hidden; min-width: 0; }
+.page-tabs-inner { display: flex; gap: var(--space-1); overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.page-tabs-inner::-webkit-scrollbar { display: none; }
+.page-tab-arrow {
+  flex-shrink: 0; border: none; background: rgba(255,255,255,0.04);
+  color: var(--text-tertiary); cursor: pointer; padding: 4px 6px;
+  font-size: var(--text-3xs); line-height: 1;
+  transition: background var(--anim-fast), color var(--anim-fast);
+  display: none; align-items: center; justify-content: center;
+  min-width: 22px; min-height: 22px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.page-tab-arrow:hover { background: rgba(255,255,255,0.10); color: var(--text-secondary); }
 .page-tab { padding: 6px 12px; font-size: var(--text-xs); cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--text-secondary); transition: background var(--anim-fast), border-color var(--anim-fast), opacity var(--anim-fast); user-select: none; display: inline-flex; align-items: center; gap: var(--space-1); opacity: var(--opacity-dim); white-space: nowrap; }
 .page-tab:hover { border-color: var(--accent); color: var(--text-primary); opacity: var(--opacity-mid); background: rgba(255,255,255,0.06); }
 .page-tab.active { border-color: var(--accent); color: var(--text-primary); opacity: var(--opacity-full); background: rgba(255,255,255,0.08); }
@@ -338,6 +353,9 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .inline-search-wrap input:focus { border-color: var(--card-accent,var(--accent)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--card-accent,var(--accent)) 20%, transparent); }
 .inline-search-wrap input::placeholder { color: var(--text-tertiary); }
 .search-engine-tag { color: var(--text-tertiary); margin-top: var(--space-1); text-align: right; }
+.search-hint { font-size: var(--text-3xs); color: var(--text-tertiary); text-align: right; opacity: 0; transition: opacity var(--anim-fast); margin-top: 2px; }
+.inline-search-wrap:hover + .search-engine-tag + .search-hint,
+.search-hint:hover { opacity: 0.6; }
 
 .clock-widget { text-align: center; padding: var(--space-2) 0; }
 .clock-time { font-size: var(--text-3xl); font-weight: 200; letter-spacing: 2px; font-variant-numeric: tabular-nums; text-shadow: var(--emboss-shadow); }
@@ -844,17 +862,19 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 }
 
 /* ══════ Grid Gap (empty cells) ══════ */
-.card-edit-btn { background: none !important; background-color: transparent !important; border: none !important; color: var(--text-tertiary); font-size: var(--text-base); cursor: pointer; padding: var(--space-1) var(--space-2); transition: opacity var(--anim-fast), color var(--anim-fast); opacity: var(--opacity-hint); appearance: none; -webkit-appearance: none; min-width: 36px; min-height: 36px; }
+.card-edit-btn { background: none !important; background-color: transparent !important; border: none !important; color: var(--text-tertiary); font-size: var(--text-base); cursor: pointer; padding: var(--space-1) var(--space-2); transition: opacity var(--anim-fast), color var(--anim-fast); opacity: var(--opacity-dim); appearance: none; -webkit-appearance: none; min-width: 36px; min-height: 36px; }
 .card:hover .card-edit-btn, .card-edit-btn:hover { opacity: var(--opacity-full); }
 .card-edit-btn:hover { color: var(--text-primary); }
 .card-edit-btn:active { transform: scale(0.93); }
-.card .drag-handle { opacity: var(--opacity-hint); transition: opacity var(--anim-fast), color var(--anim-fast); cursor: grab; color: var(--text-secondary); min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+.card .drag-handle { opacity: var(--opacity-dim); transition: opacity var(--anim-fast), color var(--anim-fast); cursor: grab; color: var(--text-secondary); min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
 .card:hover .drag-handle, .card .drag-handle:hover { opacity: var(--opacity-full); color: var(--text-primary); }
 .card .drag-handle:active { cursor: grabbing; }
 
+/* Touch devices: always show edit controls at full opacity */
 @media (hover: none) and (pointer: coarse) {
-  .card-edit-btn { opacity: var(--opacity-dim) !important; }
-  .card:hover .card-edit-btn { opacity: var(--opacity-full) !important; }
+  .card-edit-btn { opacity: var(--opacity-full) !important; background: rgba(255,255,255,0.04) !important; border-radius: var(--radius-sm); }
+  .card .drag-handle { opacity: var(--opacity-full) !important; }
+  .card .card-header { padding-right: var(--space-2); }
 }
 
 .grid-gap-card {
