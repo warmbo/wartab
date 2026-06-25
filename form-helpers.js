@@ -86,3 +86,31 @@ function cpBtn(text, danger) {
   if (danger) b.title = text;
   return b;
 }
+
+/* ── Collapsible field group for module editors ── */
+function meFieldGroup(label, defaultOpen) {
+  var wrap = document.createElement('div');
+  wrap.className = 'me-field-group';
+
+  var hdr = document.createElement('button');
+  hdr.type = 'button';
+  hdr.className = 'me-field-group-hdr';
+  hdr.innerHTML = '<span class="me-field-group-arrow">▶</span><span class="me-field-group-label">' + label + '</span>';
+  wrap.appendChild(hdr);
+
+  var body = document.createElement('div');
+  body.className = 'me-field-group-body';
+  if (!defaultOpen) {
+    body.classList.add('me-fg-collapsed');
+    hdr.classList.add('me-fg-collapsed');
+  }
+  wrap.appendChild(body);
+
+  hdr.addEventListener('click', function() {
+    var isOpen = !body.classList.contains('me-fg-collapsed');
+    body.classList.toggle('me-fg-collapsed', isOpen);
+    hdr.classList.toggle('me-fg-collapsed', isOpen);
+  });
+
+  return body;  // Return the body so the module editor appends fields to it
+}

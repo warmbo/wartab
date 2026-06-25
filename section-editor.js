@@ -25,7 +25,17 @@ function buildSectionEditor(sec, card, si) {
 
   hdr.className = 'se-card-header';
 
-
+  // Click to toggle collapse
+  hdr.style.cursor = 'pointer';
+  hdr.title = 'Click to expand/collapse';
+  hdr.addEventListener('click', function(e) {
+    // Don't toggle when clicking the drag handle or action buttons
+    if (e.target.closest('.se-drag-handle') || e.target.closest('.se-card-actions')) return;
+    var isOpen = !bd.classList.contains('se-collapsed');
+    bd.classList.toggle('se-collapsed', isOpen);
+    hdr.classList.toggle('se-collapsed-section', isOpen);
+    cardEl.classList.toggle('se-collapsed-card', isOpen);
+  });
 
   // Grab handle
 
@@ -210,15 +220,12 @@ function buildSectionEditor(sec, card, si) {
 
 
   /* Module editor fields */
-
   const mc = document.createElement('div');
-
   mc.className = 'me-card';
 
-  const mod = CARD_MODULES[sec.type];
-  // Settings schema auto-render: if module declares settings[], generate
-  // editor fields automatically instead of requiring a manual editor() fn.
-  // Supports: text, number, range, select, checkbox, color, textarea.
+  var mod = CARD_MODULES[sec.type];
+  /* Settings schema auto-render: if module declares settings[], generate
+     editor fields automatically instead of requiring a manual editor() fn. */
   if (mod && mod.settings) {
     mod.settings.forEach(function(f){
       var onChange = function(v){ sec[f.name]=v; if(f.structural)saveAndRefreshStructural(); else saveConfig(); };
@@ -260,6 +267,14 @@ function buildSectionEditor(sec, card, si) {
     });
   } else if (mod && mod.editor) {
     mod.editor(sec, card, mc);
+  }
+  /* ── Grouped editor support ── */
+  /* Modules can return groups from their editor function by calling
+     a helper that marks groups. We detect .me-field-group children. */
+  var groups = mc.querySelectorAll('.me-field-group');
+  if (groups.length > 0) {
+    // Groups already rendered by the module editor — wrap each in collapsible
+    // styling is already applied via CSS
   }
 
   if (mc.children.length > 0) bd.appendChild(mc);

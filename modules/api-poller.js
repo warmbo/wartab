@@ -202,14 +202,15 @@ registerModule('api-poller', {
     }
     if (!sec.mappings) sec.mappings = [{ field: '', label: 'Value', format: 'text' }];
 
-    bd.appendChild(cpLabel('Label'));
-    bd.appendChild(cpInput('My API', sec.label || '', v => { sec.label = v; saveConfig(); }));
+    /* ── Connection group ── */
+    var connBody = meFieldGroup('Connection', true);
+    bd.appendChild(connBody.parentNode);
 
-    bd.appendChild(cpLabel('API URL'));
-    bd.appendChild(cpInput('https://api.example.com/status', sec.url || '', v => { sec.url = v; saveConfig(); }));
+    connBody.appendChild(cpLabel('API URL'));
+    connBody.appendChild(cpInput('https://api.example.com/status', sec.url || '', v => { sec.url = v; saveConfig(); }));
 
     // Preset selector
-    bd.appendChild(cpLabel('Preset'));
+    connBody.appendChild(cpLabel('Preset'));
     const presetSel = document.createElement('select'); presetSel.className = 'cp-input';
     presetSel.appendChild(new Option('— None —', ''));
     API_PRESETS.forEach(function(p) {
@@ -228,10 +229,10 @@ registerModule('api-poller', {
         saveAndRefreshStructural();
       }
     });
-    bd.appendChild(presetSel);
+    connBody.appendChild(presetSel);
 
     // HTTP Method
-    bd.appendChild(cpLabel('Method'));
+    connBody.appendChild(cpLabel('Method'));
     const methodSel = document.createElement('select'); methodSel.className = 'cp-input';
     ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].forEach(m => {
       const opt = new Option(m, m);
@@ -239,25 +240,10 @@ registerModule('api-poller', {
       methodSel.appendChild(opt);
     });
     methodSel.addEventListener('change', () => { sec.method = methodSel.value; saveConfig(); });
-    bd.appendChild(methodSel);
+    connBody.appendChild(methodSel);
 
-    bd.appendChild(cpRange('Refresh (seconds)', sec.refreshInterval || 60, 5, 600,
-      v => { sec.refreshInterval = parseInt(v); saveConfig(); }));
-
-    // Display mode
-    bd.appendChild(cpLabel('Display Mode'));
-    const displaySel = document.createElement('select'); displaySel.className = 'cp-input';
-    [{ value: 'block', label: 'Block (label + large value)' },
-     { value: 'list', label: 'List (label side-by-side)' }].forEach(o => {
-      const opt = new Option(o.label, o.value);
-      if (o.value === (sec.display || 'block')) opt.selected = true;
-      displaySel.appendChild(opt);
-    });
-    displaySel.addEventListener('change', () => { sec.display = displaySel.value; saveConfig(); });
-    bd.appendChild(displaySel);
-
-    // Custom headers (simplified — single header key:value)
-    bd.appendChild(cpLabel('Headers (optional)'));
+    // Custom headers
+    connBody.appendChild(cpLabel('Headers (optional)'));
     const hdrContainer = document.createElement('div');
     hdrContainer.style.cssText = 'margin-bottom:8px;';
     function renderHeaders() {
@@ -298,10 +284,12 @@ registerModule('api-poller', {
       hdrContainer.appendChild(addBtn);
     }
     renderHeaders();
-    bd.appendChild(hdrContainer);
+    connBody.appendChild(hdrContainer);
 
-    // Field mappings
-    bd.appendChild(cpLabel('Field Mappings'));
+    /* ── Data Fields group ── */
+    var dataBody = meFieldGroup('Data Fields', true);
+    bd.appendChild(dataBody.parentNode);
+
     const fieldContainer = document.createElement('div');
     fieldContainer.style.cssText = 'margin-bottom:8px;';
 
@@ -378,6 +366,27 @@ registerModule('api-poller', {
       fieldContainer.appendChild(addBtn);
     }
     renderFields();
-    bd.appendChild(fieldContainer);
+    dataBody.appendChild(fieldContainer);
+
+    /* ── Display group ── */
+    var dispBody = meFieldGroup('Display', false);
+    bd.appendChild(dispBody.parentNode);
+
+    dispBody.appendChild(cpLabel('Section Label'));
+    dispBody.appendChild(cpInput('My API', sec.label || '', v => { sec.label = v; saveConfig(); }));
+
+    dispBody.appendChild(cpLabel('Display Mode'));
+    const displaySel = document.createElement('select'); displaySel.className = 'cp-input';
+    [{ value: 'block', label: 'Block (label + large value)' },
+     { value: 'list', label: 'List (label side-by-side)' }].forEach(o => {
+      const opt = new Option(o.label, o.value);
+      if (o.value === (sec.display || 'block')) opt.selected = true;
+      displaySel.appendChild(opt);
+    });
+    displaySel.addEventListener('change', () => { sec.display = displaySel.value; saveConfig(); });
+    dispBody.appendChild(displaySel);
+
+    dispBody.appendChild(cpRange('Refresh (seconds)', sec.refreshInterval || 60, 5, 600,
+      v => { sec.refreshInterval = parseInt(v); saveConfig(); }));
   },
 });  // end api-poller

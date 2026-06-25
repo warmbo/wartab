@@ -4,6 +4,47 @@
    Depends on: $, $$, config, saveConfig (app.js), toast (core.js), renderCard (render.js)
    ═══════════════════════════════════════════ */
 let _editingCardId = null, _editPanelOpen = false, _slideTimer = null;
+let _savedScrollPos = 0;  // for scroll preservation on rebuild
+
+/* ── Scroll position helpers ── */
+function _saveScroll() {
+  var body = $('#edit-panel-body');
+  if (body) _savedScrollPos = body.scrollTop;
+}
+function _restoreScroll() {
+  var body = $('#edit-panel-body');
+  if (body && _savedScrollPos > 0) {
+    requestAnimationFrame(function() { body.scrollTop = _savedScrollPos; });
+  }
+}
+
+/* ── Collapsible section helper ── */
+function _collapsibleSection(label, defaultOpen) {
+  var wrap = document.createElement('div');
+  wrap.className = 'ep-section';
+
+  var hdr = document.createElement('button');
+  hdr.className = 'ep-section-hdr';
+  hdr.type = 'button';
+  hdr.innerHTML = '<span class="ep-section-arrow">▶</span><span class="ep-section-label">' + label + '</span>';
+  wrap.appendChild(hdr);
+
+  var body = document.createElement('div');
+  body.className = 'ep-section-body';
+  if (!defaultOpen) {
+    body.classList.add('ep-collapsed');
+    hdr.classList.add('ep-collapsed');
+  }
+  wrap.appendChild(body);
+
+  hdr.addEventListener('click', function() {
+    var isOpen = !body.classList.contains('ep-collapsed');
+    body.classList.toggle('ep-collapsed', isOpen);
+    hdr.classList.toggle('ep-collapsed', isOpen);
+  });
+
+  return { wrap: wrap, body: body, hdr: hdr };
+}
 
 function openCardEditPanel(cardId) {
   const card = config.cards.find(c => c.id === cardId);
@@ -21,8 +62,6 @@ function openCardEditPanel(cardId) {
   if (cardEl) {
     const cr = cardEl.getBoundingClientRect();
     const vw = window.innerWidth;
-    // Set slide direction FIRST so the panel starts at the correct off-screen position
-    // before .open triggers the transition
     if (cr.left + cr.width / 2 > vw / 2) {
       panel.classList.add('slide-left');
     } else {
@@ -31,12 +70,7 @@ function openCardEditPanel(cardId) {
   } else {
     panel.classList.remove('slide-left');
   }
-  // Force style resolution so the browser registers the starting off-screen
-  // transform position (translateX(-100%) or translateX(100%)) before .open
-  // triggers the transition. offsetHeight only reflows layout, not transforms.
-  // Set panel starting position explicitly via inline style (no CSS cascade ambiguity)
   if (prefersReducedMotion()) {
-    // Skip animation — just show panel immediately
     panel.classList.add('open');
     $('#edit-panel-overlay').classList.add('open');
     document.body.classList.add('panel-open');
@@ -44,12 +78,11 @@ function openCardEditPanel(cardId) {
     panel.style.transition='none';
     panel.style.transform=panel.classList.contains('slide-left')?'translateX(-100%)':'translateX(100%)';
     panel.offsetHeight;
-    // Double rAF: frame 1 paints the starting position, frame 2 triggers the transition
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
         panel.style.transition='';
         panel.classList.add('open');
-        panel.style.transform='';  // CSS #edit-panel.open → translateX(0)
+        panel.style.transform='';
         $('#edit-panel-overlay').classList.add('open');
         document.body.classList.add('panel-open');
       });
@@ -64,12 +97,7 @@ function updateBlurState() {
 }
 
 function closeCardEditPanel() {
-  // Re-render the edited card before closing so all saveConfig()-only field
-  // changes (weather API key, api-poller URL, git repo, etc.) are reflected
-  // in the DOM without requiring a full page refresh.
-  // Only trigger for card editing — page editing handles its own renders.
   if (_editingCardId) saveAndRefresh();
-  // Remove highlight from edited card
   if (_editingCardId) {
     const el = document.querySelector(`[data-card-id="${_editingCardId}"]`);
     if (el) el.classList.remove('card-highlight');
@@ -77,10 +105,9 @@ function closeCardEditPanel() {
   _editingCardId = null;
   _editingPageId = null;
   _editPanelOpen = false;
+  _savedScrollPos = 0;
   $('#edit-panel-overlay').classList.remove('open');
   $('#edit-panel').classList.remove('open');
-  // Keep slide-left during the close transition so --slide-dir stays -100%
-  // and the panel slides out to the left. Clean up after animation completes.
   clearTimeout(_slideTimer);
   _slideTimer = setTimeout(function() {
     const p=$('#edit-panel');
@@ -94,34 +121,27 @@ function closeCardEditPanel() {
 
 function saveAndRefresh(structural) {
   saveConfig();
+  _saveScroll();
   if (structural && _editingCardId) {
-    // Structural change — rebuild the panel body and card preview without
-    // re-sliding the panel or destroying the entire page
     const card = config.cards.find(c => c.id === _editingCardId);
     if (card) {
-      // Update card preview in-place
       const oldEl = document.querySelector(`[data-card-id="${_editingCardId}"]`);
       if (oldEl) {
         const idx = config.cards.indexOf(card);
         const newEl = renderCard(card, idx);
         oldEl.replaceWith(newEl);
       }
-      // Rebuild the panel body to show structural changes (new sections,
-      // different module editors, etc.) — no slide animation needed
       const body = $('#edit-panel-body');
       body.innerHTML = '';
       buildCardEditPanel(card);
-      // Restore highlight
       const cardEl = document.querySelector(`[data-card-id="${_editingCardId}"]`);
       if (cardEl) cardEl.classList.add('card-highlight');
       const title = $('#edit-panel-title');
       if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
     }
     renderIcons();
+    _restoreScroll();
   } else if (_editingCardId) {
-    // Soft save — update the card element in-place without rebuilding the
-    // entire page or re-opening the edit panel. The panel body stays stable,
-    // no scroll jump, no slide animation.
     const card = config.cards.find(c => c.id === _editingCardId);
     if (card) {
       const oldEl = document.querySelector(`[data-card-id="${_editingCardId}"]`);
@@ -134,6 +154,7 @@ function saveAndRefresh(structural) {
       if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
     }
     renderIcons();
+    _restoreScroll();
   } else if (_editingPageId) {
     renderAll();
     renderPageNav();
@@ -148,164 +169,193 @@ function saveAndRefreshStructural() {
 
 let _editingPageId = null;
 
+/* ═══════════════════════════════════════════
+   BUILD CARD EDIT PANEL
+   ═══════════════════════════════════════════ */
+
 function buildCardEditPanel(card) {
   const body = $('#edit-panel-body');
   body.innerHTML = '';
 
   if (card._isGap) {
-    body.appendChild(cpRange('Width', card.width, 1, config.layout.cols, v => {
+    body.appendChild(cpRange('Width', card.width, 1, config.layout.cols, function(v) {
       card.width = parseInt(v); saveAndRefresh();
     }));
-    body.appendChild(cpRange('Min Height (px)', card.minHeight || 0, 0, 400, v => {
+    body.appendChild(cpRange('Min Height (px)', card.minHeight || 0, 0, 400, function(v) {
       card.minHeight = parseInt(v) || 0; saveAndRefresh();
     }));
-    body.appendChild(cpCheck('Empty gap (no content)', true, v => {
+    body.appendChild(cpCheck('Empty gap (no content)', true, function(v) {
       if (!v) { card.sections = card._savedSections || [{ id: 'sec-' + uid(), type: 'links', label: 'Links', links: [{ label: 'Example', url: 'https://example.com', icon: 'link' }] }]; }
       card._isGap = v;
       saveAndRefreshStructural();
     }));
-    const foot = document.createElement('div');
-    foot.className = 'cp-footer';
-    const done = cpBtn('Done');
-    done.addEventListener('click', closeCardEditPanel);
-    foot.appendChild(done);
-    body.appendChild(foot);
+    // Use sticky action bar
+    body.appendChild(_buildActionBar(card));
     return;
   }
 
-  /* ── Card Settings ── */
-  body.appendChild(cpDivider('CARD SETTINGS'));
-  const panel = document.createElement('div');
-  panel.className = 'cs-panel';
-  const grid = document.createElement('div');
-  grid.className = 'cs-grid';
+  /* ── CARD SETTINGS section ── */
+  var cs = _collapsibleSection('Card Settings', true);
+  body.appendChild(cs.wrap);
 
-  // Title
-  const titleG = document.createElement('div');
-  titleG.className = 'cs-full cs-pair';
+  var settingsGrid = document.createElement('div');
+  settingsGrid.className = 'ep-settings-grid';
+  cs.body.appendChild(settingsGrid);
+
+  // Title (full width)
+  var titleG = document.createElement('div');
+  titleG.className = 'ep-full';
   titleG.appendChild(cpLabel('Title'));
-  const ti = cpInput('Card title', card.title, v => { card.title = v; saveAndRefresh(); });
-  titleG.appendChild(ti);
-  grid.appendChild(titleG);
+  titleG.appendChild(cpInput('Card title', card.title, function(v) { card.title = v; saveAndRefresh(); }));
+  settingsGrid.appendChild(titleG);
+
+  // Icon + Color row
+  var iconColorRow = document.createElement('div');
+  iconColorRow.className = 'ep-icon-color';
 
   // Icon
-  const iconG = document.createElement('div');
-  iconG.className = 'cs-pair';
+  var iconG = document.createElement('div');
+  iconG.className = 'ep-pair';
   iconG.appendChild(cpLabel('Icon'));
-  const iconRow = document.createElement('div');
+  var iconRow = document.createElement('div');
   iconRow.className = 'cs-icon-row';
-  const ip = document.createElement('span');
+  var ip = document.createElement('span');
   ip.className = 'cs-icon-preview';
   if (card.icon && (card.icon.startsWith('http') || card.icon.startsWith('data:') || card.icon.startsWith('/'))) {
-    const img = document.createElement('img'); img.src = card.icon; img.style.cssText = 'width:20px;height:20px;object-fit:contain;';
+    var img = document.createElement('img'); img.src = card.icon; img.style.cssText = 'width:20px;height:20px;object-fit:contain;';
     ip.appendChild(img);
   } else if (isLucideName(card.icon)) {
     ip.appendChild(renderLucideEl(card.icon, ''));
   } else if (card.icon) {
     ip.textContent = card.icon;
   }
-  // else: blank — no icon
   iconRow.appendChild(ip);
-  const chIcon = cpBtn('Change');
-  chIcon.addEventListener('click', () => openIconPicker(url => { card.icon = url; saveAndRefresh(); }));
+  var chIcon = cpBtn('Change');
+  chIcon.addEventListener('click', function() { openIconPicker(function(url) { card.icon = url; saveAndRefresh(); }); });
   iconRow.appendChild(chIcon);
-  const clIcon = cpBtn('✕');
-  clIcon.addEventListener('click', () => { card.icon = ''; saveAndRefresh(); });
+  var clIcon = cpBtn('✕');
+  clIcon.addEventListener('click', function() { card.icon = ''; saveAndRefresh(); });
   iconRow.appendChild(clIcon);
   iconG.appendChild(iconRow);
-  grid.appendChild(iconG);
+  iconColorRow.appendChild(iconG);
 
   // Color
-  const colorG = document.createElement('div');
-  colorG.className = 'cs-pair';
+  var colorG = document.createElement('div');
+  colorG.className = 'ep-pair';
   colorG.appendChild(cpLabel('Color'));
-  const colorRow = document.createElement('div');
+  var colorRow = document.createElement('div');
   colorRow.className = 'cs-color-row';
-  const cp = document.createElement('input');
+  var cp = document.createElement('input');
   cp.type = 'color'; cp.value = card.color || config.theme.glow;
   cp.style.cssText = 'width:40px;height:34px;padding:2px;border:1px solid var(--surface-border);background:rgba(0,0,0,0.3);cursor:pointer;flex-shrink:0;';
-  const ct = document.createElement('input');
+  var ct = document.createElement('input');
   ct.className = 'cp-input';
   ct.type = 'text'; ct.value = card.color || config.theme.glow;
-  const syncColor = v => { cp.value = v; ct.value = v; card.color = v; saveAndRefresh(); };
-  cp.addEventListener('change', () => syncColor(cp.value));
-  ct.addEventListener('change', () => syncColor(ct.value));
+  var syncColor = function(v) { cp.value = v; ct.value = v; card.color = v; saveAndRefresh(); };
+  cp.addEventListener('change', function() { syncColor(cp.value); });
+  ct.addEventListener('change', function() { syncColor(ct.value); });
   colorRow.appendChild(cp);
   colorRow.appendChild(ct);
   colorG.appendChild(colorRow);
-  grid.appendChild(colorG);
+  iconColorRow.appendChild(colorG);
 
-  // Width
-  const wG = document.createElement('div');
-  wG.className = 'cs-pair';
-  wG.appendChild(cpRange('Width', card.width, 1, config.layout.cols, v => { card.width = parseInt(v); saveAndRefresh(); }));
-  grid.appendChild(wG);
+  settingsGrid.appendChild(iconColorRow);
 
-  // Height
-  const hG = document.createElement('div');
-  hG.className = 'cs-pair';
-  hG.appendChild(cpRange('Height', card.height || 1, 1, 4, v => { card.height = parseInt(v); saveAndRefresh(); }));
-  grid.appendChild(hG);
+  // Width + Height row
+  var sizeRow = document.createElement('div');
+  sizeRow.className = 'ep-size-row';
+  sizeRow.appendChild(cpRange('Width', card.width, 1, config.layout.cols, function(v) { card.width = parseInt(v); saveAndRefresh(); }));
+  sizeRow.appendChild(cpRange('Height', card.height || 1, 1, 4, function(v) { card.height = parseInt(v); saveAndRefresh(); }));
+  settingsGrid.appendChild(sizeRow);
 
-  // Gap toggle (full width)
-  const gapG = document.createElement('div');
-  gapG.className = 'cs-full';
-  gapG.appendChild(cpCheck('Empty gap (no content)', false, v => {
-    card._isGap = v;
-    if (v) { card._savedSections = card.sections; card.sections = []; }
-    else { card.sections = card._savedSections || []; }
-    saveAndRefreshStructural();
-  }));
-  grid.appendChild(gapG);
+  /* ── SECTIONS section ── */
+  var secSec = _collapsibleSection('Sections', true);
+  body.appendChild(secSec.wrap);
 
-  // Transparent card (see-through, no bg/border/shadow)
-  const trG = document.createElement('div');
-  trG.className = 'cs-full';
-  trG.appendChild(cpCheck('Transparent (no background)', card.transparent, v => { card.transparent = v; saveAndRefresh(); }));
-  grid.appendChild(trG);
-
-  panel.appendChild(grid);
-  body.appendChild(panel);
-
-  /* ── Sections ── */
-  body.appendChild(cpDivider('SECTIONS'));
-  (card.sections || []).forEach((sec, si) => {
+  (card.sections || []).forEach(function(sec, si) {
     try {
-      body.appendChild(buildSectionEditor(sec, card, si));
+      secSec.body.appendChild(buildSectionEditor(sec, card, si));
     } catch(e) {
       console.error('Section editor error', e);
     }
   });
-  const addSecBtn = cpBtn('+ Add Section');
+
+  var addSecBtn = cpBtn('+ Add Section');
   addSecBtn.style.marginTop = '4px';
-  addSecBtn.addEventListener('click', () => {
+  addSecBtn.addEventListener('click', function() {
     card.sections = card.sections || [];
     card.sections.push({ id: 'sec-' + uid(), type: 'links', label: 'Links', styles:{ align:'left', density:'standard', scale:'medium' }, links: [{ label: 'Example', url: 'https://example.com', icon: 'link' }] });
     saveAndRefreshStructural();
     toast('Section added');
   });
-  body.appendChild(addSecBtn);
+  secSec.body.appendChild(addSecBtn);
 
-  /* ── Footer ── */
-  const foot = document.createElement('div');
-  foot.className = 'cp-footer';
-  const doneBtn = cpBtn('Done');
-  doneBtn.addEventListener('click', closeCardEditPanel);
-  foot.appendChild(doneBtn);
-  const delBtn = cpBtn('Delete Card', true);
-  delBtn.addEventListener('click', () => {
-    const snap = cloneObj(config.cards);
-    const idx = config.cards.findIndex(c => c.id === card.id);
-    if (idx < 0) return;
-    showConfirmModal('Delete "' + (card.title || 'card') + '"?', function() {
-      config.cards.splice(idx, 1);
-      closeCardEditPanel();
-      saveConfig();
-      renderAll();
-      toastWithUndo('Card deleted', () => { config.cards = snap; saveConfig(); renderAll(); });
-    });
-  });
-  foot.appendChild(delBtn);
-  body.appendChild(foot);
+  /* ── ADVANCED section ── */
+  var adv = _collapsibleSection('Advanced', false);
+  body.appendChild(adv.wrap);
+
+  adv.body.appendChild(cpCheck('Empty gap (no content)', false, function(v) {
+    card._isGap = v;
+    if (v) { card._savedSections = card.sections; card.sections = []; }
+    else { card.sections = card._savedSections || []; }
+    saveAndRefreshStructural();
+  }));
+  adv.body.appendChild(cpCheck('Transparent (no background)', card.transparent, function(v) { card.transparent = v; saveAndRefresh(); }));
+
+  /* ── STICKY ACTION BAR ── */
+  body.appendChild(_buildActionBar(card));
 }
 
+/* ── Build the sticky action bar ── */
+function _buildActionBar(card) {
+  var bar = document.createElement('div');
+  bar.className = 'ep-action-bar';
+
+  var doneBtn = document.createElement('button');
+  doneBtn.className = 'btn btn-glass ep-action-primary';
+  doneBtn.textContent = 'Done';
+  doneBtn.addEventListener('click', closeCardEditPanel);
+  bar.appendChild(doneBtn);
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-glass ep-action-cancel';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', closeCardEditPanel);
+  bar.appendChild(cancelBtn);
+
+  if (!card._isGap) {
+    var addBtn = document.createElement('button');
+    addBtn.className = 'btn btn-glass ep-action-add';
+    addBtn.innerHTML = '+ Add Section';
+    addBtn.addEventListener('click', function() {
+      card.sections = card.sections || [];
+      card.sections.push({ id: 'sec-' + uid(), type: 'links', label: 'Links', styles:{ align:'left', density:'standard', scale:'medium' }, links: [{ label: 'Example', url: 'https://example.com', icon: 'link' }] });
+      saveAndRefreshStructural();
+      toast('Section added');
+    });
+    bar.appendChild(addBtn);
+
+    var spacer = document.createElement('div');
+    spacer.className = 'ep-action-spacer';
+    bar.appendChild(spacer);
+
+    var delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-glass btn-danger ep-action-del';
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', function() {
+      var snap = cloneObj(config.cards);
+      var idx = config.cards.findIndex(function(c) { return c.id === card.id; });
+      if (idx < 0) return;
+      showConfirmModal('Delete "' + (card.title || 'card') + '"?', function() {
+        config.cards.splice(idx, 1);
+        closeCardEditPanel();
+        saveConfig();
+        renderAll();
+        toastWithUndo('Card deleted', function() { config.cards = snap; saveConfig(); renderAll(); });
+      });
+    });
+    bar.appendChild(delBtn);
+  }
+
+  return bar;
+}
