@@ -270,20 +270,19 @@ function buildSectionEditor(sec, card, si) {
   if (!sec.styles) sec.styles = {};
   var st = sec.styles;
 
-  // Helper: update data- attributes on the live card preview without re-rendering
-  function applyStyleVars(s, secIdx) {
-    // Find the card element by data-card-id, then find the section by index.
-    // This is bulletproof: the card is always in the DOM behind the overlay,
-    // and secIdx is captured from buildSectionEditor's parameter.
+  // Helper: update data- attributes on the live card preview without re-render
+  function applyStyleVars(s) {
+    if (!s || !s.id || !_editingCardId) return;
     var cardEl = document.querySelector('[data-card-id="' + _editingCardId + '"]');
     if (!cardEl) return;
-    var wraps = cardEl.querySelectorAll('.dropdown-content');
-    var pcw = wraps[secIdx];
-    if (!pcw || !pcw.isConnected) return;
+    var pcw = cardEl.querySelector('[data-sec-id="' + s.id + '"]');
+    if (!pcw) return;
     var ss = s.styles || {};
     var al = ss.align || 'left';
-    pcw.dataset.modScale = ss.scale || 'medium';
-    pcw.dataset.modDensity = ss.density || 'standard';
+    var sc = ss.scale || 'medium';
+    var de = ss.density || 'standard';
+    pcw.dataset.modScale = sc;
+    pcw.dataset.modDensity = de;
     pcw.style.setProperty('--mod-align', al);
     pcw.style.setProperty('--mod-justify', al === 'center' ? 'center' : al === 'right' ? 'flex-end' : 'flex-start');
     pcw.style.textAlign = al === 'left' ? '' : al;
@@ -318,7 +317,8 @@ function buildSectionEditor(sec, card, si) {
       ';color:var(--text-primary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);';
     ab.addEventListener('click', function() {
       st.align = a;
-      saveAndRefresh();
+      saveConfig();
+      applyStyleVars(sec);
     });
     alignRow.appendChild(ab);
   });
@@ -330,7 +330,7 @@ function buildSectionEditor(sec, card, si) {
   styleInner.appendChild(cpSelect(
     [{value:'compact',label:'Compact'},{value:'standard',label:'Standard'},{value:'comfortable',label:'Comfortable'}],
     st.density || 'standard',
-    function(v) { st.density = v; saveAndRefresh(); }
+    function(v) { st.density = v; saveConfig(); applyStyleVars(sec); }
   ));
 
   // Scale
@@ -338,7 +338,7 @@ function buildSectionEditor(sec, card, si) {
   styleInner.appendChild(cpSelect(
     [{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],
     st.scale || 'medium',
-    function(v) { st.scale = v; saveAndRefresh(); }
+    function(v) { st.scale = v; saveConfig(); applyStyleVars(sec); }
   ));
 
   styleBody.appendChild(styleInner);
