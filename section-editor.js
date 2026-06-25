@@ -204,6 +204,7 @@ function buildSectionEditor(sec, card, si) {
       if (mod && mod.defaults) Object.assign(sec, cloneObj(mod.defaults));
       // Ensure section style defaults exist
       if (!sec.styles) sec.styles = { align:'left', density:'standard', scale:'medium' };
+      if (!sec.styles.fontScale) sec.styles.fontScale = { title:1, content:1, secondary:1 };
 
       saveAndRefreshStructural();
 
@@ -324,6 +325,12 @@ function buildSectionEditor(sec, card, si) {
       var esc = sc === 'small' ? 0.85 : sc === 'large' ? 1.2 : 1;
       editorCardEl.style.fontSize = esc + 'em';
     }
+
+    // 5. Typography scale — set CSS variables (modules use --mod-font-*)
+    var fs = ss.fontScale || {};
+    pcw.style.setProperty('--mod-font-title', String(fs.title || 1));
+    pcw.style.setProperty('--mod-font-content', String(fs.content || 1));
+    pcw.style.setProperty('--mod-font-secondary', String(fs.secondary || 1));
   }
 
   var styleToggle = document.createElement('button');
@@ -378,6 +385,43 @@ function buildSectionEditor(sec, card, si) {
     st.scale || 'medium',
     function(v) { st.scale = v; saveConfig(); applyStyleVars(sec, cardEl); }
   ));
+
+  /* Typography controls */
+  var fsDiv = document.createElement('div');
+  fsDiv.style.cssText = 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);';
+  fsDiv.appendChild(cpLabel('Typography'));
+
+  var fs = st.fontScale || {};
+  function mkFontSlider(label, key, min, max) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+    var lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:var(--text-2xs);color:var(--text-tertiary);width:60px;flex-shrink:0;';
+    lbl.textContent = label;
+    var rng = document.createElement('input');
+    rng.type = 'range'; rng.min = min || 0.7; rng.max = max || 1.6; rng.step = 0.05;
+    rng.value = fs[key] !== undefined ? fs[key] : 1;
+    rng.style.cssText = 'flex:1;accent-color:var(--accent);height:4px;cursor:pointer;';
+    var val = document.createElement('span');
+    val.style.cssText = 'font-size:var(--text-2xs);color:var(--text-secondary);min-width:24px;text-align:right;font-variant-numeric:tabular-nums;';
+    val.textContent = rng.value + '\u00d7';
+    rng.addEventListener('input', function() {
+      val.textContent = rng.value + '\u00d7';
+    });
+    rng.addEventListener('change', function() {
+      if (!st.fontScale) st.fontScale = { title:1, content:1, secondary:1 };
+      st.fontScale[key] = parseFloat(rng.value);
+      saveConfig();
+      applyStyleVars(sec, cardEl);
+    });
+    row.appendChild(lbl); row.appendChild(rng); row.appendChild(val);
+    return row;
+  }
+
+  fsDiv.appendChild(mkFontSlider('Heading', 'title'));
+  fsDiv.appendChild(mkFontSlider('Content', 'content'));
+  fsDiv.appendChild(mkFontSlider('Secondary', 'secondary'));
+  styleInner.appendChild(fsDiv);
 
   styleBody.appendChild(styleInner);
   bd.appendChild(styleToggle);

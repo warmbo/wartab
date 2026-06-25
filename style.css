@@ -1200,6 +1200,43 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .ds-ts { color: var(--text-tertiary); font-size: var(--text-2xs); text-align: right; margin-top: var(--space-1); font-style: italic; }
 
 /* ═══════════════════════════════════════════
+   UNIVERSAL CUSTOMIZATION — Typography & Height Variants
+   Applied to every module via data attributes on contentWrap.
+   ═══════════════════════════════════════════ */
+
+/* ── Typography scale (--mod-font-* from section.styles.fontScale) ── */
+.ds-module-content { font-size: calc(var(--text-base) * var(--mod-font-content, 1)); }
+.ds-module-hdr .ds-module-title { font-size: calc(var(--text-xs) * var(--mod-font-title, 1)); }
+.ds-stat-label, .ds-stat-value { font-size: calc(var(--text-xs) * var(--mod-font-content, 1)); }
+.ds-metric-label { font-size: calc(var(--text-2xs) * var(--mod-font-secondary, 1)); }
+
+/* ── Height-based progressive disclosure (applied via ds.card() helpers) ── */
+/* Small height: minimal content, compact spacing */
+[data-mod-height="small"] .ds-module-hdr { padding: 2px 0; margin-bottom: 4px; min-height: 22px; }
+[data-mod-height="small"] .ds-module-content { font-size: calc(var(--text-sm) * var(--mod-font-content, 1)); }
+[data-mod-height="small"] .ds-stat-row { padding: 1px 0; font-size: var(--text-2xs); }
+
+/* Large / expanded: more breathing room */
+[data-mod-height="large"] .ds-module-hdr { padding: 6px 0 var(--space-2); }
+[data-mod-height="large"] .ds-stat-row { padding: var(--space-2) 0; }
+[data-mod-height="expanded"] .ds-module-hdr { padding: 8px 0 var(--space-3); }
+[data-mod-height="expanded"] .ds-module-secondary { border-top-width: 2px; margin-top: var(--space-3); padding-top: var(--space-3); }
+
+/* ── Density overrides for ds-* components ── */
+[data-mod-density="compact"] .ds-module-hdr { padding: 2px 0; margin-bottom: 2px; }
+[data-mod-density="compact"] .ds-stat-row { padding: 1px 0; font-size: var(--text-2xs); }
+[data-mod-density="compact"] .ds-metric { margin-bottom: 2px; }
+[data-mod-density="comfortable"] .ds-module-hdr { padding: 8px 0 var(--space-2); margin-bottom: var(--space-2); }
+[data-mod-density="comfortable"] .ds-stat-row { padding: var(--space-2) 0; }
+[data-mod-density="comfortable"] .ds-metric { margin-bottom: var(--space-2); }
+
+/* ── Scale overrides for ds-* components ── */
+[data-mod-scale="small"] .ds-stat-value { font-size: var(--text-xs); }
+[data-mod-scale="small"] .ds-metric-val { font-size: var(--text-xs); }
+[data-mod-scale="large"] .ds-stat-value { font-size: var(--text-base); }
+[data-mod-scale="large"] .ds-metric-val { font-size: var(--text-sm); }
+
+/* ═══════════════════════════════════════════
    EDIT PANEL — Collapsible Sections & Action Bar
    ═══════════════════════════════════════════ */
 .ep-section { margin-bottom: var(--space-4); }

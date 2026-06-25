@@ -428,3 +428,42 @@ ds.fmtDuration = function(seconds) {
   if (s < 86400) return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
   return Math.floor(s / 86400) + 'd ' + Math.floor((s % 86400) / 3600) + 'h';
 };
+
+/* ═══════════════════════════════════════════
+   PROGRESSIVE DISCLOSURE — Height Variants
+   ═══════════════════════════════════════════ */
+
+/**
+ * Get the height variant label for a card height value.
+ * @param {number} cardHeight  1-4
+ * @returns {string} 'small' | 'medium' | 'large' | 'expanded'
+ */
+ds.heightVariant = function(cardHeight) {
+  var h = Math.min(cardHeight || 1, 4);
+  return h <= 1 ? 'small' : h === 2 ? 'medium' : h === 3 ? 'large' : 'expanded';
+};
+
+/**
+ * Check if the current card height meets a minimum variant threshold.
+ * Use this to conditionally show content in module render functions.
+ * @param {string} minVariant   'medium' | 'large' | 'expanded'
+ * @param {number} cardHeight   1-4
+ * @returns {boolean}
+ */
+ds.showAt = function(minVariant, cardHeight) {
+  var order = { small: 0, medium: 1, large: 2, expanded: 3 };
+  var current = order[ds.heightVariant(cardHeight)] || 0;
+  var min = order[minVariant] || 0;
+  return current >= min;
+};
+
+/**
+ * Display helper: returns 'block' or 'none' depending on height threshold.
+ * Use in inline CSS: element.style.display = ds.showHide('medium', card.height);
+ * @param {string} minVariant
+ * @param {number} cardHeight
+ * @returns {string} 'block' | 'none'
+ */
+ds.showHide = function(minVariant, cardHeight) {
+  return ds.showAt(minVariant, cardHeight) ? 'block' : 'none';
+};
