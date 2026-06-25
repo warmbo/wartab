@@ -271,8 +271,14 @@ function buildSectionEditor(sec, card, si) {
   var st = sec.styles;
 
   // Helper: update data- attributes on the live card preview without re-rendering
-  function applyStyleVars(s) {
+  function applyStyleVars(s, secIdx) {
+    // Try direct reference first (set by render.js renderSection)
     var pcw = s.__cw;
+    // Fallback: find by card ID + section index (always works if card is in DOM)
+    if (!pcw || !pcw.isConnected) {
+      var cardEl = document.querySelector('[data-card-id="' + _editingCardId + '"]');
+      if (cardEl) pcw = cardEl.querySelectorAll('.dropdown-content')[secIdx];
+    }
     if (!pcw || !pcw.isConnected) return;
     var ss = s.styles || {};
     var al = ss.align || 'left';
@@ -313,7 +319,7 @@ function buildSectionEditor(sec, card, si) {
     ab.addEventListener('click', function() {
       st.align = a;
       saveConfig();
-      applyStyleVars(sec);
+      applyStyleVars(sec, si);
     });
     alignRow.appendChild(ab);
   });
@@ -325,7 +331,7 @@ function buildSectionEditor(sec, card, si) {
   styleInner.appendChild(cpSelect(
     [{value:'compact',label:'Compact'},{value:'standard',label:'Standard'},{value:'comfortable',label:'Comfortable'}],
     st.density || 'standard',
-    function(v) { st.density = v; saveConfig(); applyStyleVars(sec); }
+    function(v) { st.density = v; saveConfig(); applyStyleVars(sec, si); }
   ));
 
   // Scale
@@ -333,7 +339,7 @@ function buildSectionEditor(sec, card, si) {
   styleInner.appendChild(cpSelect(
     [{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],
     st.scale || 'medium',
-    function(v) { st.scale = v; saveConfig(); applyStyleVars(sec); }
+    function(v) { st.scale = v; saveConfig(); applyStyleVars(sec, si); }
   ));
 
   styleBody.appendChild(styleInner);
