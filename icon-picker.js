@@ -105,7 +105,7 @@ function buildIconsTab(c){
           d.addEventListener('click',function(){selectIcon(emo);});g.appendChild(d);
         });
       } else {
-        // Category mode: collapsible sections, collapsed by default
+        // Category mode: collapsible sections using dropdown-toggle pattern
         var categories = [
           { key: 'smiley', label: 'Smileys & Emotion', icon: '😀' },
           { key: 'people', label: 'People & Body', icon: '👋' },
@@ -120,52 +120,55 @@ function buildIconsTab(c){
           var catEmojis = EMOJI_DATA.filter(function(e) { return e[1] === cat.key; });
           if (!catEmojis.length) return;
 
-          // Collapsible section header
+          // Header — matches dropdown-toggle pattern
           var hdr = document.createElement('button');
-          hdr.className = 'ip-cat-hdr';
-          hdr.type = 'button';
-          hdr.innerHTML = '<span class="ip-cat-arrow">▶</span><span class="ip-cat-icon">' + cat.icon + '</span><span class="ip-cat-label">' + cat.label + '</span><span class="ip-cat-count">' + catEmojis.length + '</span>';
+          hdr.className = 'dropdown-toggle';
+          hdr.style.cssText = 'font-size:var(--text-xs);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;';
+          hdr.innerHTML = '<span style="font-size:var(--text-base);margin-right:4px;">' + cat.icon + '</span>' +
+            '<span style="flex:1;text-align:left;">' + cat.label + '</span>' +
+            '<span class="arrow"><i data-lucide="chevron-right" style="width:10px;height:10px;"></i></span>';
           g.appendChild(hdr);
 
-          // Collapsible body (grid)
+          // Body — matches dropdown-content pattern
           var body = document.createElement('div');
-          body.className = 'ip-cat-body ip-cat-collapsed';
-          body.style.cssText = 'overflow:hidden;transition:max-height 0.25s ease,opacity 0.2s ease;max-height:0;opacity:0;';
+          body.className = 'dropdown-content';
           g.appendChild(body);
 
-          // Toggle
-          hdr.addEventListener('click', function() {
-            var isOpen = !body.classList.contains('ip-cat-collapsed');
-            body.classList.toggle('ip-cat-collapsed', isOpen);
-            hdr.classList.toggle('ip-cat-open', !isOpen);
-            if (isOpen) {
-              body.style.maxHeight = '0'; body.style.opacity = '0';
-            } else {
-              body.style.maxHeight = body.scrollHeight + 'px'; body.style.opacity = '1';
-            }
-          });
-          hdr.addEventListener('dblclick', function() {
-            // Double-click to expand all categories
-            document.querySelectorAll('.ip-cat-body.ip-cat-collapsed').forEach(function(b) {
-              b.classList.remove('ip-cat-collapsed');
-              b.style.maxHeight = b.scrollHeight + 'px'; b.style.opacity = '1';
-              b.previousElementSibling.classList.add('ip-cat-open');
-            });
-          });
-
-          // Render emoji grid for this category
+          // Emoji grid inside body
           var grid = document.createElement('div');
           grid.className = 'icon-grid';
           catEmojis.forEach(function(e) {
             var emo = e[0];
             var d = document.createElement('div'); d.className = 'icon-grid-item';
-            d.innerHTML = '<span class="ip-emoji">' + emo + '</span>';
-            d.title = e[2].split('|')[0]; // Show first keyword as tooltip
+            d.innerHTML = '<span class="ip-emoji" title="' + e[2].split('|')[0] + '">' + emo + '</span>';
             d.addEventListener('click', function(){ selectIcon(emo); });
             grid.appendChild(d);
           });
           body.appendChild(grid);
+
+          // Toggle with arrow rotation
+          hdr.addEventListener('click', function() {
+            var isOpen = body.classList.contains('open');
+            if (isOpen) {
+              // Collapse: pin height, remove open, let CSS transition to 0
+              body.style.maxHeight = body.scrollHeight + 'px';
+              body.offsetHeight;
+              body.classList.remove('open');
+              body.style.maxHeight = '';
+              hdr.classList.remove('open');
+            } else {
+              // Expand: add open class, measure, animate from 0
+              body.classList.add('open');
+              body.style.maxHeight = '';
+              var h = body.scrollHeight;
+              body.style.maxHeight = '0px';
+              body.offsetHeight;
+              body.style.maxHeight = h + 'px';
+              hdr.classList.add('open');
+            }
+          });
         });
+        renderIcons();
       }
     }
   }
