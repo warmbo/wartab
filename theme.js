@@ -55,7 +55,7 @@ function applyTheme(){
     : `rgba(255,255,255,${0.15 * op})`);
   document.documentElement.dataset.cardBg=mode;
   // Card radius
-  root.style.setProperty('--card-radius', (parseInt(t.cardRadius) || 16) + 'px');
+  root.style.setProperty('--card-radius', (t.cardRadius !== undefined ? parseInt(t.cardRadius) : 16) + 'px');
 
   // Font color from config — invert in light card mode for readability
   var fc=t.fontColor||'#cccccc';
