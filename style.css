@@ -1355,10 +1355,9 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .card { transition: var(--transition-card); will-change: transform; }
 .card:hover { 
   border-color: var(--glass-border-hover); 
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
-  transform: translateY(-1px); 
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
 }
-.card:active { transform: translateY(0); }
+.card:active { }
 
 /* ── Card accent bar — gradient treatment ── */
 .card::before {
@@ -1424,21 +1423,20 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   pointer-events: none;
 }
 .link-item:hover::after { opacity: 1; }
-.link-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
-.link-item:active { transform: translateY(0); }
+.link-item:hover { box-shadow: 0 0 0 1px var(--accent-glass), var(--glass-shadow); }
+.link-item:active { }
 .link-item .link-icon { transition: transform var(--anim-fast); }
-.link-item:hover .link-icon { transform: scale(1.1); }
+.link-item:hover .link-icon { }
 
 /* ── Link rows — subtle highlight ── */
 .link-row { 
   position: relative;
   padding: 6px var(--space-2); 
   border-radius: var(--radius-sm);
-  transition: background var(--anim-fast), transform var(--anim-fast);
+  transition: background var(--anim-fast);
 }
 .link-row:hover { 
   background: rgba(255,255,255,0.06); 
-  transform: translateX(2px); 
 }
 
 /* ── Clock widget — premium time display ── */
@@ -1496,13 +1494,13 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 /* ── Page tabs — cleaner active state ── */
 .page-tab {
   border-radius: var(--radius-sm);
-  transition: background var(--anim-fast), border-color var(--anim-fast), opacity var(--anim-fast), transform var(--anim-fast);
+  transition: background var(--anim-fast), border-color var(--anim-fast), opacity var(--anim-fast), box-shadow var(--anim-fast);
 }
-.page-tab:hover { transform: translateY(-1px); }
+.page-tab:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-glass); }
 .page-tab.active { 
   border-color: var(--accent); 
   background: var(--accent-glass); 
-  box-shadow: 0 0 12px var(--accent-glow);
+  box-shadow: 0 0 0 1px var(--accent-glass);
 }
 
 /* ── Modal — cleaner presentation ── */
@@ -1602,8 +1600,8 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   transition: background var(--anim-fast), border-color var(--anim-fast), transform var(--anim-fast), box-shadow var(--anim-fast);
 }
 .cp-type-btn:hover { 
-  transform: translateY(-2px); 
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3); 
+  border-color: var(--accent); 
+  box-shadow: 0 0 0 1px var(--accent-glass);
 }
 
 /* ═══════════════════════════════════════════
