@@ -192,6 +192,8 @@ function buildSectionEditor(sec, card, si) {
       const mod = CARD_MODULES[v];
 
       if (mod && mod.defaults) Object.assign(sec, cloneObj(mod.defaults));
+      // Ensure section style defaults exist
+      if (!sec.styles) sec.styles = { align:'left', density:'standard', scale:'medium' };
 
       saveAndRefreshStructural();
 
@@ -261,6 +263,69 @@ function buildSectionEditor(sec, card, si) {
   }
 
   if (mc.children.length > 0) bd.appendChild(mc);
+
+  /* ── Style controls (alignment, density, scale) ── */
+  // Universal customization panel for all modules. Controls set CSS variables
+  // on the section content wrap: --mod-align, --mod-density-scale, --mod-scale.
+  if (!sec.styles) sec.styles = {};
+  var st = sec.styles;
+
+  var styleToggle = document.createElement('button');
+  styleToggle.className = 'dropdown-toggle';
+  styleToggle.style.cssText = 'font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;padding:6px 0;margin-top:4px;cursor:pointer;border:none;background:none;display:flex;align-items:center;gap:4px;width:100%;';
+  styleToggle.innerHTML = '<i data-lucide="chevron-right" style="width:12px;height:12px;transition:transform 0.2s;"></i> Style';
+  var styleBody = document.createElement('div');
+  styleBody.style.cssText = 'overflow:hidden;transition:max-height 0.25s ease;max-height:0;';
+  var styleInner = document.createElement('div');
+  styleInner.style.cssText = 'padding:4px 0;';
+
+  styleToggle.addEventListener('click', function() {
+    var isOpen = styleBody.style.maxHeight !== '0px';
+    styleBody.style.maxHeight = isOpen ? '0px' : styleBody.scrollHeight + 'px';
+    styleToggle.querySelector('i').style.transform = isOpen ? '' : 'rotate(90deg)';
+  });
+
+  // Alignment
+  var alignGroup = document.createElement('div');
+  alignGroup.style.cssText = 'margin-bottom:6px;';
+  alignGroup.appendChild(cpLabel('Alignment'));
+  var alignRow = document.createElement('div');
+  alignRow.style.cssText = 'display:flex;gap:4px;';
+  ['left','center','right'].forEach(function(a) {
+    var ab = document.createElement('button');
+    ab.textContent = a.charAt(0).toUpperCase() + a.slice(1);
+    ab.style.cssText = 'flex:1;padding:4px 6px;border:1px solid var(--surface-border);background:' +
+      ((st.align||'left') === a ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.2)') +
+      ';color:var(--text-primary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);';
+    ab.addEventListener('click', function() {
+      st.align = a;
+      saveAndRefresh();
+    });
+    alignRow.appendChild(ab);
+  });
+  alignGroup.appendChild(alignRow);
+  styleInner.appendChild(alignGroup);
+
+  // Density
+  styleInner.appendChild(cpLabel('Density'));
+  styleInner.appendChild(cpSelect(
+    [{value:'compact',label:'Compact'},{value:'standard',label:'Standard'},{value:'comfortable',label:'Comfortable'}],
+    st.density || 'standard',
+    function(v) { st.density = v; saveAndRefresh(); }
+  ));
+
+  // Scale
+  styleInner.appendChild(cpLabel('Scale'));
+  styleInner.appendChild(cpSelect(
+    [{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],
+    st.scale || 'medium',
+    function(v) { st.scale = v; saveAndRefresh(); }
+  ));
+
+  styleBody.appendChild(styleInner);
+  bd.appendChild(styleToggle);
+  bd.appendChild(styleBody);
+  renderIcons();
 
   cardEl.appendChild(bd);
 

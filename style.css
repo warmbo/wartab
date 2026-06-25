@@ -360,6 +360,33 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .api-widget .api-row { display: flex; justify-content: space-between; align-items: center; padding: var(--space-1) 0; border-bottom: 1px solid var(--surface-border); }
 .api-widget .api-row:last-child { border-bottom: none; }
 .api-error { color: var(--color-error); font-size: var(--text-sm); }
+/* ── Module Style Framework ── */
+/* Universal customization variables applied to every section content wrap.
+   Set via section-editor.js style panel; inherited by all module CSS. */
+.dropdown-content {
+  /* Density: scales gaps, padding, margins within module widgets */
+  --mod-gap: calc(var(--space-2) * var(--mod-density-scale, 1));
+  --mod-pad: calc(4px * var(--mod-density-scale, 1));
+  /* Scale: adjusts font sizes and icon sizes throughout the module */
+  --mod-font-scale: var(--mod-scale, 1);
+}
+
+/* Height-based variant selectors — modules use these to show/hide content.
+   Set via render.js data-mod-height attribute on each section content wrap. */
+[data-mod-height="small"] .mod-only-medium,
+[data-mod-height="small"] .mod-only-large,
+[data-mod-height="small"] .mod-only-expanded,
+[data-mod-height="medium"] .mod-only-large,
+[data-mod-height="medium"] .mod-only-expanded,
+[data-mod-height="large"] .mod-only-expanded { display: none !important; }
+
+/* Small height: minimum viable widget */
+[data-mod-height="small"] .dropdown-content { padding: 2px 0; }
+
+/* Large / expanded: more breathing room */
+[data-mod-height="large"] .dropdown-content,
+[data-mod-height="expanded"] .dropdown-content { padding: 6px 0; }
+
 .api-ts { color: var(--text-tertiary); margin-top: 3px; text-align: right; }
 
 .drag-handle { cursor: grab; color: var(--text-tertiary); padding: 2px var(--space-1); user-select: none; transition: color var(--anim-fast); width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; }

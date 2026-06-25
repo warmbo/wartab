@@ -280,7 +280,7 @@ function buildCardEditPanel(card) {
   addSecBtn.style.marginTop = '4px';
   addSecBtn.addEventListener('click', () => {
     card.sections = card.sections || [];
-    card.sections.push({ id: 'sec-' + uid(), type: 'links', label: 'Links', links: [{ label: 'Example', url: 'https://example.com', icon: 'link' }] });
+    card.sections.push({ id: 'sec-' + uid(), type: 'links', label: 'Links', styles:{ align:'left', density:'standard', scale:'medium' }, links: [{ label: 'Example', url: 'https://example.com', icon: 'link' }] });
     saveAndRefreshStructural();
     toast('Section added');
   });

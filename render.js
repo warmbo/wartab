@@ -299,6 +299,23 @@ function renderSection(section, card) {
   const contentWrap = document.createElement('div');
   contentWrap.className = 'dropdown-content' + (section.collapsed ? '' : ' open');
 
+  // Apply section styles: alignment, density, scale, and icon controls.
+  // Every module inherits these as CSS variables on the content wrap,
+  // so modules can reference --mod-align, --mod-density-scale, --mod-scale
+  // in their CSS without any JavaScript changes.
+  var st = section.styles || {};
+  contentWrap.style.setProperty('--mod-align', st.align || 'left');
+  contentWrap.style.setProperty('--mod-density-scale', String(st.density === 'compact' ? '0.75' : st.density === 'comfortable' ? '1.35' : '1'));
+  contentWrap.style.setProperty('--mod-scale', String(st.scale === 'small' ? '0.88' : st.scale === 'large' ? '1.15' : '1'));
+  if (st.align === 'center') { contentWrap.style.textAlign = 'center'; }
+  else if (st.align === 'right') { contentWrap.style.textAlign = 'right'; }
+
+  // Height-based variant: data-mod-height is set on the card element by
+  // renderCard(). Modules can use [data-mod-height="small"] selectors.
+  var _ch = Math.min(card.height || 1, 4);
+  var _hv = _ch <= 1 ? 'small' : _ch === 2 ? 'medium' : _ch === 3 ? 'large' : 'expanded';
+  contentWrap.dataset.modHeight = _hv;
+
   const module = CARD_MODULES[section.type];
   if (module && module.render) {
     module.render(section, card, contentWrap);
