@@ -317,6 +317,8 @@ function renderSection(section, card) {
   var _hv = _ch <= 1 ? 'small' : _ch === 2 ? 'medium' : _ch === 3 ? 'large' : 'expanded';
   contentWrap.dataset.modHeight = _hv;
   contentWrap.dataset.secId = section.id;
+  contentWrap.dataset.modScale = st.scale || 'medium';
+  contentWrap.dataset.modDensity = st.density || 'standard';
 
   const module = CARD_MODULES[section.type];
   if (module && module.render) {

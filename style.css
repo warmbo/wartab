@@ -361,15 +361,12 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .api-widget .api-row:last-child { border-bottom: none; }
 .api-error { color: var(--color-error); font-size: var(--text-sm); }
 /* ── Module Style Framework ── */
-/* Universal customization variables applied to every section content wrap.
+/* Universal customization attributes applied to every section content wrap.
    Set via section-editor.js style panel; inherited by all module CSS. */
-.dropdown-content {
-  /* Density: scales gaps, padding, margins within module widgets */
-  --mod-gap: calc(var(--space-2) * var(--mod-density-scale, 1));
-  --mod-pad: calc(4px * var(--mod-density-scale, 1));
-  /* Scale: adjusts font sizes and icon sizes throughout the module */
-  --mod-font-scale: var(--mod-scale, 1);
-}
+[data-mod-scale="small"] { --mod-scale-factor: 0.85; }
+[data-mod-scale="large"] { --mod-scale-factor: 1.3; }
+[data-mod-density="compact"] { --mod-density-factor: 0.7; }
+[data-mod-density="comfortable"] { --mod-density-factor: 1.4; }
 
 /* Height-based variant selectors — modules use these to show/hide content.
    Set via render.js data-mod-height attribute on each section content wrap. */

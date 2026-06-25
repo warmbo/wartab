@@ -270,16 +270,14 @@ function buildSectionEditor(sec, card, si) {
   if (!sec.styles) sec.styles = {};
   var st = sec.styles;
 
-  // Helper: update CSS vars on the live card preview without re-rendering
+  // Helper: update data- attributes on the live card preview without re-rendering
   function applyStyleVars(s) {
     var pcw = document.querySelector('[data-sec-id="' + s.id + '"]');
     if (!pcw) return;
     var ss = s.styles || {};
-    var ds = ss.density === 'compact' ? '0.6' : ss.density === 'comfortable' ? '1.5' : '1';
-    var sc = ss.scale === 'small' ? '0.75' : ss.scale === 'large' ? '1.4' : '1';
     var al = ss.align || 'left';
-    pcw.style.setProperty('--mod-density-scale', ds);
-    pcw.style.setProperty('--mod-scale', sc);
+    pcw.dataset.modScale = ss.scale || 'medium';
+    pcw.dataset.modDensity = ss.density || 'standard';
     pcw.style.setProperty('--mod-align', al);
     pcw.style.setProperty('--mod-justify', al === 'center' ? 'center' : al === 'right' ? 'flex-end' : 'flex-start');
     pcw.style.textAlign = al === 'left' ? '' : al;

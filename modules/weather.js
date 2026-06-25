@@ -2,22 +2,31 @@ registerModule('weather', {
   defaults: { zip:'', country:'US', units:'celsius' },
   css: `
     .weather-widget{}
-    .weather-main{display:flex;align-items:center;justify-content:var(--mod-justify,center);gap:var(--mod-gap,12px);padding:var(--mod-pad,4px) 0;}
-    .weather-icon{font-size:calc(2rem * var(--mod-font-scale,1));}
-    .weather-temp{font-size:calc(1.5rem * var(--mod-font-scale,1));font-weight:700;line-height:1.2;}
+    .weather-main{display:flex;align-items:center;justify-content:var(--mod-justify,center);gap:12px;padding:6px 0;}
+    .weather-icon{font-size:2rem;width:36px;height:36px;}
+    .weather-temp{font-size:2rem;font-weight:700;line-height:1.2;}
     .weather-feels{font-size:var(--text-xs);color:var(--text-tertiary);}
-    .weather-detail{font-size:calc(var(--text-sm) * var(--mod-font-scale,1));color:var(--text-secondary);margin-top:2px;}
+    .weather-detail{font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;}
     .weather-wind{font-size:var(--text-xs);color:var(--text-tertiary);margin-top:2px;display:flex;align-items:center;gap:4px;justify-content:center;}
-    .weather-forecast{display:flex;gap:var(--mod-gap,8px);justify-content:var(--mod-justify,center);margin-top:6px;flex-wrap:wrap;}
+    .weather-forecast{display:flex;gap:8px;justify-content:var(--mod-justify,center);margin-top:6px;flex-wrap:wrap;}
     .weather-fc-day{text-align:center;font-size:var(--text-2xs);color:var(--text-tertiary);}
     .weather-fc-day .day{font-weight:600;color:var(--text-secondary);}
     .weather-fc-temp{font-size:var(--text-xs);color:var(--text-primary);font-weight:600;}
     .weather-ts{font-size:var(--text-3xs);color:var(--text-tertiary);text-align:center;margin-top:4px;opacity:0.6;}
-    /* Compact density override */
-    [data-mod-height="small"] .weather-icon{font-size:calc(1.4rem * var(--mod-font-scale,1));}
-    [data-mod-height="small"] .weather-temp{font-size:calc(1.2rem * var(--mod-font-scale,1));}
-    [data-mod-height="small"] .weather-main{gap:6px;}
-    [data-mod-height="small"] .weather-detail,.weather-wind,.weather-ts{font-size:calc(var(--text-2xs));}
+    /* Scale: small */
+    [data-mod-scale="small"] .weather-icon{font-size:1.4rem;width:28px;height:28px;}
+    [data-mod-scale="small"] .weather-temp{font-size:1.4rem;}
+    /* Scale: large */
+    [data-mod-scale="large"] .weather-icon{font-size:2.6rem;width:44px;height:44px;}
+    [data-mod-scale="large"] .weather-temp{font-size:2.6rem;}
+    /* Height: small card - tighter layout */
+    [data-mod-height="small"] .weather-icon{font-size:1.4rem;width:26px;height:26px;}
+    [data-mod-height="small"] .weather-temp{font-size:1.4rem;}
+    [data-mod-height="small"] .weather-main{gap:8px;padding:2px 0;}
+    [data-mod-height="small"] .weather-detail,.weather-wind,.weather-ts{font-size:var(--text-2xs);}
+    /* Height: large/expanded - more breathing room */
+    [data-mod-height="large"] .weather-main{padding:8px 0;}
+    [data-mod-height="expanded"] .weather-main{padding:10px 0;}
   `,
   render: (sec, card, cw) => {
     const w = document.createElement('div');
