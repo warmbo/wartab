@@ -149,6 +149,9 @@ function saveAndRefresh(structural) {
         const idx = config.cards.indexOf(card);
         const newEl = renderCard(card, idx);
         oldEl.replaceWith(newEl);
+        // Re-highlight the new card element (lost on replaceWith)
+        const cardEl = document.querySelector(`[data-card-id="${_editingCardId}"]`);
+        if (cardEl) cardEl.classList.add('card-highlight');
       }
       const title = $('#edit-panel-title');
       if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
