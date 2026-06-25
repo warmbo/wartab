@@ -319,6 +319,8 @@ function renderSection(section, card) {
   contentWrap.dataset.secId = section.id;
   contentWrap.dataset.modScale = st.scale || 'medium';
   contentWrap.dataset.modDensity = st.density || 'standard';
+  // Store a direct DOM reference for the style panel to update without querySelector
+  section.__cw = contentWrap;
 
   const module = CARD_MODULES[section.type];
   if (module && module.render) {

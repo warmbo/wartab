@@ -272,8 +272,8 @@ function buildSectionEditor(sec, card, si) {
 
   // Helper: update data- attributes on the live card preview without re-rendering
   function applyStyleVars(s) {
-    var pcw = document.querySelector('[data-sec-id="' + s.id + '"]');
-    if (!pcw) return;
+    var pcw = s.__cw;
+    if (!pcw || !pcw.isConnected) return;
     var ss = s.styles || {};
     var al = ss.align || 'left';
     pcw.dataset.modScale = ss.scale || 'medium';
