@@ -626,3 +626,70 @@ Recommended order:
 3. Standardized module actions API (enables all future action-based features)
 4. Resource Monitor disk capacity + alert thresholds
 5. Weather hourly forecast
+
+---
+
+# Beautification Initiative — Visual Scores & Assessment
+
+## Module Visual Scores (Post-Beautification)
+
+| Module | Visual Appeal | Density | Personality | Info Presentation | Showcase Potential |
+|--------|:------------:|:-------:|:-----------:|:----------------:|:-----------------:|
+| Clock | 8 | 8 | 7 | 8 | 9 |
+| Weather | 8 | 8 | 6 | 7 | 8 |
+| Search | 7 | 8 | 4 | 7 | 7 |
+| Links (grid) | 8 | 7 | 6 | 8 | 8 |
+| Link-List | 7 | 9 | 5 | 7 | 6 |
+| Notes | 7 | 7 | 5 | 7 | 6 |
+| Quotes | 7 | 8 | 8 | 7 | 7 |
+| Resource Monitor | 8 | 8 | 6 | 8 | 8 |
+| API Poller | 7 | 7 | 4 | 7 | 7 |
+| Media | 7 | 7 | 5 | 7 | 7 |
+| Git | 7 | 7 | 4 | 7 | 6 |
+| Iframe | 6 | 6 | 3 | 5 | 4 |
+| Image | 6 | 6 | 4 | 6 | 5 |
+| Timer | 6 | 7 | 5 | 6 | 5 |
+| Digital Pet | 8 | 8 | 9 | 7 | 7 |
+| LAN Scan | 7 | 7 | 5 | 7 | 5 |
+| Proxmox | 7 | 7 | 4 | 7 | 5 |
+| ASCII Animation | 6 | 7 | 7 | 5 | 5 |
+
+## Biggest Visual Weaknesses (Post-Beautification)
+
+1. **Iframe**: Lowest visual engagement — embeds other sites, no WarTab identity
+2. **Timer**: Functional but visually flat — numeric display lacks character
+3. **Image**: Simple img tag, no gallery or frame treatment
+4. **ASCII Animation**: Niche appeal, rough terminal aesthetic
+5. **Digital Pet room**: Complex DOM with absolute positioning, fragile on narrow cards
+
+## Biggest Beautification Opportunities
+
+1. **Clock**: Gradient text on time is premium — extend to date and calendar
+2. **Timer**: Circular progress ring instead of flat text display
+3. **Resource Monitor**: Gradient fills on metric bars, animated transitions
+4. **Weather**: Animated weather icons (CSS keyframes for rain/snow)
+5. **Links**: Service icon loading states, category color themes
+6. **Digital Pet**: Animated idle (blink, tail wag via CSS keyframes)
+7. **API Poller**: Visual diff indicators (up/down arrows on value changes)
+
+## Beautification Implementation
+
+The beautification CSS block adds approximately 270 lines covering:
+
+- **Card hover elevation**: translateY(-1px) + enhanced shadow + border glow
+- **Accent bar gradient**: Linear gradient from card accent color to transparent
+- **Card header polish**: Subtle bottom border, icon opacity transition
+- **Link items**: Gradient overlay on hover, scale(1.1) icon enlargement, translateY(-2px) lift
+- **Link rows**: translateX(2px) slide on hover
+- **Clock**: Gradient text fill on time display
+- **Search input**: Glow box-shadow on focus
+- **Button premium**: ::after pseudo-element for gradient highlight on hover
+- **Page tabs**: translateY(-1px) hover, box-shadow on active
+- **Modal**: backdrop-filter blur on overlay, elevated shadow on box
+- **Resource monitor**: smooth cubic-bezier transition on fill bars
+- **Weather temp**: Gradient text fill
+- **Notes editor**: Enhanced focus ring
+- **Digital pet**: text-shadow + drop-shadow for ASCII depth
+- **Toast**: Rounded corners + enhanced backdrop blur
+- **Section editor cards**: Rounded corners + rich transitions
+- **Card type picker**: translateY(-2px) lift on hover

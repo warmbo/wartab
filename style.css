@@ -1,5 +1,7 @@
 /* ═══════════════════════════════════════════
    WarTab — Glass + Skeuomorphic Tab Page
+
+   DESIGN TOKENS — beautification v2
    ═══════════════════════════════════════════ */
 
 :root {
@@ -16,6 +18,7 @@
   --accent: #888888;
   --accent-glow: rgba(136, 136, 136, 0.3);
   --accent-glass: rgba(136, 136, 136, 0.12);
+  --accent-glass-strong: rgba(136, 136, 136, 0.20);
   --bg-img-blur: 0px;
   --bg-dim-opacity: 0;
   --bevel-light: rgba(255, 255, 255, 0.08);
@@ -33,15 +36,16 @@
   --card-input-bg: rgba(0, 0, 0, 0.3);
   /* ── Design tokens ── */
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
-  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 16px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 16px; --radius-xl: 24px;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
   --shadow-panel: -8px 0 40px rgba(0,0,0,0.5);
+  --shadow-elevated: 0 12px 48px rgba(0,0,0,0.5);
   /* ── Typography tokens ── */
   --text-3xs: 10px; --text-2xs: 11px; --text-xs: 12px; --text-sm: 13px;
   --text-base: 14px; --text-lg: 16px; --text-xl: 20px;
-  --text-2xl: 24px; --text-3xl: 32px; --text-4xl: 40px;
+  --text-2xl: 24px; --text-3xl: 32px; --text-4xl: 40px; --text-5xl: 52px;
   --heading-size: 15px; --text-size: 14px;
   --anim-fast: 0.15s; --anim-normal: 0.3s; --anim-slow: 0.45s;
   --opacity-hint: 0.35; --opacity-dim: 0.55; --opacity-mid: 0.8; --opacity-full: 1;
@@ -56,9 +60,10 @@
   --transition-btn: background var(--anim-fast) ease, border-color var(--anim-fast) ease, box-shadow var(--anim-fast) ease, transform var(--anim-fast) ease;
   --transition-panel: transform var(--anim-normal) cubic-bezier(0.4,0,0.2,1);
   --transition-dropdown: max-height var(--anim-slow) ease, opacity var(--anim-normal) ease;
-  --transition-card: border-color var(--anim-fast), box-shadow var(--anim-fast);
+  --transition-card: border-color var(--anim-fast), box-shadow var(--anim-fast), transform var(--anim-fast) ease;
   --transition-fade: opacity var(--anim-normal);
   --transition-blur: filter 0.3s, opacity 0.3s;
+  --transition-all: all var(--anim-fast) ease;
   --z-bg: 0; --z-content: 1; --z-overlay: 100; --z-panel: 101; --z-edit-panel: 103; --z-picker: 104; --z-card-highlight: 105; --z-toast: 200; --z-drag: 999; --z-loader: 9999;
   color-scheme: dark;
   font-family: var(--font);
@@ -1333,3 +1338,264 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .ep-action-add { font-size: var(--text-xs) !important; padding: var(--space-1) var(--space-3) !important; }
 .ep-action-spacer { flex: 1; }
 .ep-action-del { font-size: var(--text-xs) !important; padding: var(--space-1) var(--space-3) !important; }
+
+/* ═══════════════════════════════════════════
+   VISUAL EXCELLENCE — Beautification Initiative
+   Enhanced card presentation, premium interactions,
+   visual hierarchy, and module polish.
+   ═══════════════════════════════════════════ */
+
+/* ── Card hover elevation ── */
+.card { transition: var(--transition-card); will-change: transform; }
+.card:hover { 
+  border-color: var(--glass-border-hover); 
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
+  transform: translateY(-1px); 
+}
+.card:active { transform: translateY(0); }
+
+/* ── Card accent bar — gradient treatment ── */
+.card::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, var(--card-accent, var(--accent)) 0%, color-mix(in srgb, var(--card-accent, var(--accent)) 40%, transparent) 100%);
+  flex-shrink: 0;
+}
+
+/* ── Card header polish ── */
+.card-header { 
+  padding: var(--space-3) var(--space-4); 
+  gap: var(--space-2); 
+  flex-shrink: 0; 
+  min-width: 0; 
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.card-title { 
+  font-size: var(--heading-size); 
+  font-weight: 600; 
+  letter-spacing: 0.2px;
+}
+.card-title .card-icon { 
+  opacity: 0.85;
+  transition: opacity var(--anim-fast);
+}
+.card:hover .card-title .card-icon { opacity: 1; }
+
+/* ── Card body — slightly tighter padding for content density ── */
+.card-body { 
+  padding: var(--space-3) var(--space-4) var(--space-4); 
+}
+
+/* ── Section dropdown toggle — premium feel ── */
+.dropdown-toggle {
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: var(--space-2) 0;
+  transition: color var(--anim-fast), opacity var(--anim-fast);
+}
+.dropdown-toggle:hover { opacity: 1; }
+.dropdown-toggle .arrow { 
+  opacity: 0.5;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity var(--anim-fast); 
+}
+.dropdown-toggle:hover .arrow { opacity: 1; }
+.dropdown-toggle.open .arrow { transform: rotate(90deg); opacity: 1; }
+
+/* ── Link items — richer hover with color accent ── */
+.link-item {
+  position: relative;
+  overflow: hidden;
+  transition: background var(--anim-fast) ease, border-color var(--anim-fast) ease, box-shadow var(--anim-fast) ease, transform var(--anim-fast) ease;
+}
+.link-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent-glass) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--anim-fast);
+  pointer-events: none;
+}
+.link-item:hover::after { opacity: 1; }
+.link-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+.link-item:active { transform: translateY(0); }
+.link-item .link-icon { transition: transform var(--anim-fast); }
+.link-item:hover .link-icon { transform: scale(1.1); }
+
+/* ── Link rows — subtle highlight ── */
+.link-row { 
+  position: relative;
+  padding: 6px var(--space-2); 
+  border-radius: var(--radius-sm);
+  transition: background var(--anim-fast), transform var(--anim-fast);
+}
+.link-row:hover { 
+  background: rgba(255,255,255,0.06); 
+  transform: translateX(2px); 
+}
+
+/* ── Clock widget — premium time display ── */
+.clock-time { 
+  font-weight: 200; 
+  letter-spacing: 3px;
+  background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.clock-date { letter-spacing: 1.5px; font-weight: 500; }
+
+/* ── Search input — elegant focus ── */
+.inline-search-wrap input {
+  transition: border-color var(--anim-fast), box-shadow var(--anim-fast), background var(--anim-fast);
+}
+.inline-search-wrap input:focus {
+  background: rgba(255,255,255,0.08);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--card-accent,var(--accent)) 20%, transparent), 0 0 20px color-mix(in srgb, var(--card-accent,var(--accent)) 10%, transparent);
+}
+
+/* ── Button premium states ── */
+.btn-glass {
+  transition: var(--transition-btn);
+  position: relative;
+  overflow: hidden;
+}
+.btn-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity var(--anim-fast);
+  pointer-events: none;
+}
+.btn-glass:hover::after { opacity: 1; }
+.btn-glass:active { transform: translateY(1px) scale(0.98); }
+
+/* ── Stat values — monospace numbers for alignment ── */
+.stat-value, .ds-stat-value, .api-value, .rm-val-net { 
+  font-variant-numeric: tabular-nums; 
+}
+
+/* ── Toast premium ── */
+.toast { 
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-md);
+}
+
+/* ── Page tabs — cleaner active state ── */
+.page-tab {
+  border-radius: var(--radius-sm);
+  transition: background var(--anim-fast), border-color var(--anim-fast), opacity var(--anim-fast), transform var(--anim-fast);
+}
+.page-tab:hover { transform: translateY(-1px); }
+.page-tab.active { 
+  border-color: var(--accent); 
+  background: var(--accent-glass); 
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* ── Modal — cleaner presentation ── */
+.modal-overlay { 
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.modal-box { 
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* ── Resource monitor — better metric bar styling ── */
+.rm-fill-cpu,
+.rm-fill-ram,
+.rm-fill-disk,
+.rm-fill-gpu {
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background var(--anim-fast);
+}
+
+/* ── Weather module — enhanced temp gradient ── */
+.weather-temp {
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Quotes — enhanced typography ── */
+.quotes-text { 
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+.quotes-text .quotes-content { 
+  font-style: italic;
+}
+
+/* ── Notes editor — cleaner focus state ── */
+.notes-editor { 
+  transition: border-color var(--anim-fast), box-shadow var(--anim-fast), background var(--anim-fast);
+  border-radius: var(--radius-sm);
+}
+.notes-editor:focus { 
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glass);
+  background: rgba(0,0,0,0.2);
+}
+
+/* ── API Poller — premium row styling ── */
+.api-row { 
+  transition: background var(--anim-fast);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-1);
+}
+.api-row:hover { background: rgba(255,255,255,0.03); }
+
+/* ── Digital pet — ASCII art text shadow for depth ── */
+.dp-creature { 
+  text-shadow: 0 0 4px rgba(255,255,255,0.1);
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+}
+
+/* ── Loading shimmer — premium gradient ── */
+.ds-skeleton {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0.03) 25%, 
+    rgba(255,255,255,0.10) 50%, 
+    rgba(255,255,255,0.03) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* ── Grid gap cards — cleaner dashed border ── */
+.grid-gap-card {
+  border: 1px dashed rgba(255,255,255,0.10) !important;
+  transition: border-color var(--anim-fast);
+}
+.grid-gap-card:hover { border-color: rgba(255,255,255,0.20) !important; }
+
+/* ── Footer — slightly elevated ── */
+#footer {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-md);
+}
+
+/* ── Section editor cards — richer border treatment ── */
+.se-card {
+  border-radius: var(--radius-sm);
+  transition: opacity var(--anim-fast), transform var(--anim-fast), box-shadow var(--anim-fast), border-color var(--anim-fast);
+}
+.se-card-header { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+
+/* ── Card type picker buttons — premium hover ── */
+.cp-type-btn {
+  border-radius: var(--radius-sm);
+  transition: background var(--anim-fast), border-color var(--anim-fast), transform var(--anim-fast), box-shadow var(--anim-fast);
+}
+.cp-type-btn:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3); 
+}
