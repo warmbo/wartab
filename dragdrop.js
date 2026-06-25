@@ -102,7 +102,7 @@ function startDrag(e, id, idx){
   srcEl.classList.add('dragging');
   const ghost=document.createElement('div');ghost.className='drag-ghost';
   ghost.style.display='none';
-  const cw=Math.min(card.width||1,config.layout.cols);
+  const cw=Math.min(card.width||1,getPageCols());
   const ch=card.height||1;
   if(card._isGap){
     ghost.innerHTML='<div class="dgh-label">␣ empty gap</div>';
@@ -134,8 +134,8 @@ function buildRowMap(grid, excludeEl) {
     for(const row of rows){if(top===row.top){row.cards.push(el);found=true;break;}}
     if(!found)rows.push({top,cards:[el]});
   }
-  // Compute bottom for each row from the first card's height
-  for(const row of rows){const h=row.cards[0].offsetHeight;row.bottom=row.top+h;}
+  // Compute bottom from the tallest card in the row (handles mixed heights)
+  for(const row of rows){let h=0;for(const cr of row.cards)h=Math.max(h,cr.offsetHeight);row.bottom=row.top+h;}
   return rows;
 }
 /** Given the current _beforeCardId, predict where CSS Grid auto-placement will
@@ -179,7 +179,7 @@ function onDragMove(e){
   if(!dragState.active)return;
   const grid=$('#card-grid'),ghost=dragState.ghost,dSrc=dragState.srcEl;
   if(!ghost||!grid)return;
-  const gr=grid.getBoundingClientRect(),cols=config.layout.cols,gap=(config.layout.gap||16);
+  const gr=grid.getBoundingClientRect(),cols=getPageCols(),gap=(config.layout.gap||16);
   const colW=(gr.width-(cols-1)*gap)/cols,step=colW+gap;
   const cw=dragState._cardWidth,ch=dragState._cardHeight;
   const grabOffs=dragState._grabOffs||colW*0.33;
@@ -237,7 +237,7 @@ function onDragMove(e){
   // Show dropPreview at simulateGrid-predicted final position
   var dp=dragState.dropPreview;
   if(dropZone!=='none'){
-    var pp=predictDropPixelPos(cols,gr,rows,colW,gap,cw,ch,cr);
+    var pp=dragState._beforeCardId===dragState.cardId?null:predictDropPixelPos(cols,gr,rows,colW,gap,cw,ch,cr);
     if(pp){
       dp.style.display='';
       dp.style.left=pp.left+'px';dp.style.top=pp.top+'px';
@@ -277,16 +277,17 @@ function simulateGrid(cards, cols) {
 }
 function computeDropShift(targetBeforeCardId) {
   dropZoneClear();
-  const allCards = config.cards;const dragId = dragState.cardId;const cols = config.layout.cols;
+  if(targetBeforeCardId===dragState.cardId)return; // no-op when referencing itself
+  const allCards = config.cards;const dragId = dragState.cardId;const cols = getPageCols();
   const srcIdx = allCards.findIndex(c => c.id === dragId);
   if (srcIdx < 0) return;
   const newOrder = [...allCards];const [moved] = newOrder.splice(srcIdx, 1);
   const beforeIdx = targetBeforeCardId ? newOrder.findIndex(c => c.id === targetBeforeCardId) : newOrder.length;
   newOrder.splice(beforeIdx < 0 ? newOrder.length : beforeIdx, 0, moved);
   const oldPos = simulateGrid(allCards, cols);const newPos = simulateGrid(newOrder, cols);
-  computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder);
+  computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder, cols);
 }
-function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder) {
+function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder, cols) {
   dropZoneClear();
   document.querySelectorAll('.card-dir-arrow').forEach(function(el){el.remove();});
   document.querySelectorAll('.card-swap-arrow').forEach(function(el){el.remove();});
