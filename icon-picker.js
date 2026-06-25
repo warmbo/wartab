@@ -91,17 +91,82 @@ function buildIconsTab(c){
       }
       requestAnimationFrame(renderBatch);
     }else{
+      var efl = (s.value||'').toLowerCase().trim();
       var items;
-      if (fl) {
-        var lower = fl.toLowerCase();
+      if (efl) {
+        // Search mode: flat results across all categories
         items = EMOJI_DATA.filter(function(e) {
-          return e[0] === lower || e[2].toLowerCase().indexOf(lower) !== -1;
+          return e[0] === efl || e[2].toLowerCase().indexOf(efl) !== -1;
         }).map(function(e) { return e[0]; });
+        if(!items.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No emoji found</div>';return;}
+        items.forEach(function(emo){
+          var d=document.createElement('div');d.className='icon-grid-item';
+          d.innerHTML='<span class="ip-emoji">'+emo+'</span>';
+          d.addEventListener('click',function(){selectIcon(emo);});g.appendChild(d);
+        });
       } else {
-        items = EMOJIS;
+        // Category mode: collapsible sections, collapsed by default
+        var categories = [
+          { key: 'smiley', label: 'Smileys & Emotion', icon: '😀' },
+          { key: 'people', label: 'People & Body', icon: '👋' },
+          { key: 'nature', label: 'Animals & Nature', icon: '🐶' },
+          { key: 'food', label: 'Food & Drink', icon: '🍔' },
+          { key: 'travel', label: 'Travel & Places', icon: '🚗' },
+          { key: 'activities', label: 'Activities & Objects', icon: '🎮' },
+          { key: 'symbols', label: 'Symbols', icon: '❤️' },
+          { key: 'flags', label: 'Flags', icon: '🏁' },
+        ];
+        categories.forEach(function(cat) {
+          var catEmojis = EMOJI_DATA.filter(function(e) { return e[1] === cat.key; });
+          if (!catEmojis.length) return;
+
+          // Collapsible section header
+          var hdr = document.createElement('button');
+          hdr.className = 'ip-cat-hdr';
+          hdr.type = 'button';
+          hdr.innerHTML = '<span class="ip-cat-arrow">▶</span><span class="ip-cat-icon">' + cat.icon + '</span><span class="ip-cat-label">' + cat.label + '</span><span class="ip-cat-count">' + catEmojis.length + '</span>';
+          g.appendChild(hdr);
+
+          // Collapsible body (grid)
+          var body = document.createElement('div');
+          body.className = 'ip-cat-body ip-cat-collapsed';
+          body.style.cssText = 'overflow:hidden;transition:max-height 0.25s ease,opacity 0.2s ease;max-height:0;opacity:0;';
+          g.appendChild(body);
+
+          // Toggle
+          hdr.addEventListener('click', function() {
+            var isOpen = !body.classList.contains('ip-cat-collapsed');
+            body.classList.toggle('ip-cat-collapsed', isOpen);
+            hdr.classList.toggle('ip-cat-open', !isOpen);
+            if (isOpen) {
+              body.style.maxHeight = '0'; body.style.opacity = '0';
+            } else {
+              body.style.maxHeight = body.scrollHeight + 'px'; body.style.opacity = '1';
+            }
+          });
+          hdr.addEventListener('dblclick', function() {
+            // Double-click to expand all categories
+            document.querySelectorAll('.ip-cat-body.ip-cat-collapsed').forEach(function(b) {
+              b.classList.remove('ip-cat-collapsed');
+              b.style.maxHeight = b.scrollHeight + 'px'; b.style.opacity = '1';
+              b.previousElementSibling.classList.add('ip-cat-open');
+            });
+          });
+
+          // Render emoji grid for this category
+          var grid = document.createElement('div');
+          grid.className = 'icon-grid';
+          catEmojis.forEach(function(e) {
+            var emo = e[0];
+            var d = document.createElement('div'); d.className = 'icon-grid-item';
+            d.innerHTML = '<span class="ip-emoji">' + emo + '</span>';
+            d.title = e[2].split('|')[0]; // Show first keyword as tooltip
+            d.addEventListener('click', function(){ selectIcon(emo); });
+            grid.appendChild(d);
+          });
+          body.appendChild(grid);
+        });
       }
-      if(!items.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No emoji found</div>';return;}
-      items.forEach(function(emo){var d=document.createElement('div');d.className='icon-grid-item';d.innerHTML='<span class="ip-emoji">'+emo+'</span>';d.addEventListener('click',function(){selectIcon(emo);});g.appendChild(d);});
     }
   }
   function setMode(m){_mode=m;btnSvg.style.borderColor=m==='svg'?'var(--accent)':'var(--surface-border)';btnEmoji.style.borderColor=m==='emoji'?'var(--accent)':'var(--surface-border)';ri(s.value);}
