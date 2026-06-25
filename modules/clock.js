@@ -11,6 +11,8 @@ registerModule('clock', {
     .calendar-day.today{background:var(--accent-glass);color:var(--text-primary);font-weight:600;}
     .calendar-day.other-month{color:var(--text-tertiary);opacity:0.4;}
     .clock-extras{font-size:var(--text-xs);color:var(--text-tertiary);margin-top:var(--space-2);text-align:center;}
+    /* Clock calendar fix: ensure calendar-month is hidden when showCalendar is set to false on page settings */
+    .clock-widget[data-show-calendar="0"] .calendar-widget{display:none !important;}
 
     [data-mod-scale="small"] .clock-time{font-size:var(--text-2xl);}
     [data-mod-scale="large"] .clock-time{font-size:var(--text-4xl);}
@@ -22,6 +24,7 @@ registerModule('clock', {
   render: function(sec, card, cw) {
     var w = document.createElement('div');
     w.className = 'clock-widget';
+    w.dataset.showCalendar = sec.showCalendar ? '1' : '0';
 
     /* Always visible: time */
     var timeEl = document.createElement('div');
@@ -29,7 +32,7 @@ registerModule('clock', {
     timeEl.textContent = '--:--';
     w.appendChild(timeEl);
 
-    /* Height >= 2: date */
+    /* Date: visible when showDate AND card height >= 2 */
     var dateEl = document.createElement('div');
     dateEl.className = 'clock-date';
     if (sec.showDate) {
@@ -39,17 +42,21 @@ registerModule('clock', {
     }
     w.appendChild(dateEl);
 
-    /* Height >= 3: extras (week number, day of year) */
+    /* Extras (week/day-of-year): visible at height >= 3 */
     var extras = document.createElement('div');
     extras.className = 'clock-extras';
     extras.style.display = ds.showHide('large', card.height);
     w.appendChild(extras);
 
-    /* Height >= 2: calendar */
+    /* Calendar: visible when showCalendar=true OR card height >= 2 */
     var calEl = document.createElement('div');
     calEl.className = 'calendar-widget';
     calEl.id = 'cal-' + sec.id;
-    calEl.style.display = ds.showHide('medium', card.height);
+    if (sec.showCalendar) {
+      calEl.style.display = ds.showHide('medium', card.height);
+    } else {
+      calEl.style.display = 'none';
+    }
     w.appendChild(calEl);
 
     cw.appendChild(w);
@@ -80,19 +87,19 @@ registerModule('clock', {
       if (timeEl) timeEl.textContent = timeStr;
 
       var dateEl = w.querySelector('.clock-date');
-      if (dateEl && sec.showDate) {
+      if (dateEl && sec.showDate && dateEl.style.display !== 'none') {
         dateEl.textContent = now.toLocaleDateString('en-US', {
           weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
         }).toUpperCase();
       }
 
-      /* Height-based progressive disclosure: extras */
+      /* Extras */
       var extrasEl = w.querySelector('.clock-extras');
       if (extrasEl && card.height >= 3) {
         var startOfYear = new Date(now.getFullYear(), 0, 0);
         var diff = now - startOfYear;
         var dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-        var weekNum = now.getWeekNumber ? now.getWeekNumber() : Math.ceil(dayOfYear / 7);
+        var weekNum = Math.ceil((dayOfYear + new Date(now.getFullYear(), 0, 1).getDay()) / 7);
         extrasEl.textContent = 'Week ' + weekNum + ' \u00b7 Day ' + dayOfYear;
       }
 
@@ -129,5 +136,6 @@ registerModule('clock', {
   settings: [
     { name:'format24h', label:'Format', type:'select', options:[{value:false,label:'12-hour'},{value:true,label:'24-hour'}], default:false, structural:true },
     { name:'showDate', label:'Show date', type:'checkbox', default:true, structural:true },
+    { name:'showCalendar', label:'Show calendar', type:'checkbox', default:false, structural:true },
   ],
 });

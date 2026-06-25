@@ -1210,6 +1210,20 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .ds-stat-label, .ds-stat-value { font-size: calc(var(--text-xs) * var(--mod-font-content, 1)); }
 .ds-metric-label { font-size: calc(var(--text-2xs) * var(--mod-font-secondary, 1)); }
 
+/* ── Universal font scaling applied to ALL section content ── */
+/* Sets baseline font-size on every section's contentWrap.
+   Modules with explicit font-size values (clock-time, weather-temp, etc.)
+   keep their sizes; inherited text scales with the slider. */
+.dropdown-content { font-size: calc(14px * var(--mod-font-content, 1)); }
+/* Section title row inside the content also scales */
+.dropdown-content .section-title,
+.dropdown-content .link-label { font-size: calc(var(--text-xs) * var(--mod-font-title, 1)); }
+/* Secondary/subtle text scales independently */
+.dropdown-content .api-ts,
+.dropdown-content .lan-scan-ts,
+.dropdown-content .weather-ts,
+.dropdown-content .ds-ts { font-size: calc(var(--text-2xs) * var(--mod-font-secondary, 1)); }
+
 /* ── Height-based progressive disclosure (applied via ds.card() helpers) ── */
 /* Small height: minimal content, compact spacing */
 [data-mod-height="small"] .ds-module-hdr { padding: 2px 0; margin-bottom: 4px; min-height: 22px; }
