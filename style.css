@@ -183,7 +183,7 @@ body {
 /* ══════ Top Bar ══════ */
 #top-bar {
   display: flex; align-items: center; justify-content: flex-start; gap: var(--space-3); margin-bottom: var(--space-5);
-  padding: var(--space-2) 20px; background: var(--card-bg);
+  padding: var(--space-2) 22px; background: var(--card-bg);
   backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur));
   border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
   position: relative;
