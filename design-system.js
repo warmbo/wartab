@@ -467,3 +467,119 @@ ds.showAt = function(minVariant, cardHeight) {
 ds.showHide = function(minVariant, cardHeight) {
   return ds.showAt(minVariant, cardHeight) ? 'block' : 'none';
 };
+
+/* ═══════════════════════════════════════════
+   VISUALIZATION COMPONENTS
+   Progress rings, trend indicators, badges
+   ═══════════════════════════════════════════ */
+
+/**
+ * SVG progress ring — circular progress indicator
+ * @param {number} value        Current value (0-100 or actual)
+ * @param {number} max          Maximum value (default 100)
+ * @param {number} [size=48]    SVG diameter in px
+ * @param {number} [stroke=4]   Stroke width in px
+ * @param {string} [color]      Fill color (defaults to accent)
+ * @returns {HTMLElement}
+ */
+ds.progressRing = function(value, max, size, stroke, color) {
+  max = max || 100;
+  size = size || 48;
+  stroke = stroke || 4;
+  color = color || 'var(--accent)';
+  var pct = Math.max(0, Math.min(100, (value / max) * 100));
+  var radius = (size - stroke) / 2;
+  var circ = 2 * Math.PI * radius;
+  var offset = circ - (pct / 100) * circ;
+
+  var wrap = _el('div', 'ds-ring');
+  wrap.style.cssText = 'width:' + size + 'px;height:' + size + 'px;display:inline-flex;align-items:center;justify-content:center;position:relative;';
+
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
+
+  var bgCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  bgCircle.setAttribute('cx', size / 2);
+  bgCircle.setAttribute('cy', size / 2);
+  bgCircle.setAttribute('r', radius);
+  bgCircle.setAttribute('fill', 'none');
+  bgCircle.setAttribute('stroke', 'rgba(255,255,255,0.06)');
+  bgCircle.setAttribute('stroke-width', stroke);
+  svg.appendChild(bgCircle);
+
+  var fgCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  fgCircle.setAttribute('cx', size / 2);
+  fgCircle.setAttribute('cy', size / 2);
+  fgCircle.setAttribute('r', radius);
+  fgCircle.setAttribute('fill', 'none');
+  fgCircle.setAttribute('stroke', color);
+  fgCircle.setAttribute('stroke-width', stroke);
+  fgCircle.setAttribute('stroke-linecap', 'round');
+  fgCircle.setAttribute('stroke-dasharray', circ);
+  fgCircle.setAttribute('stroke-dashoffset', offset);
+  fgCircle.style.transform = 'rotate(-90deg)';
+  fgCircle.style.transformOrigin = '50% 50%';
+  fgCircle.style.transition = 'stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+  svg.appendChild(fgCircle);
+
+  wrap.appendChild(svg);
+
+  // Center label
+  var label = _el('span', 'ds-ring-label');
+  label.textContent = Math.round(value) + (max === 100 ? '%' : '');
+  label.style.cssText = 'position:absolute;font-size:var(--text-2xs);font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;pointer-events:none;';
+  wrap.appendChild(label);
+
+  return wrap;
+};
+
+/**
+ * Trend indicator — up/down arrow with value
+ * @param {number} value       The change value
+ * @param {string} [dir]       'up' | 'down' | 'flat' (auto if omitted)
+ * @param {string} [unit]      Optional unit suffix
+ * @returns {HTMLElement}
+ */
+ds.trend = function(value, dir, unit) {
+  if (dir === undefined || dir === null) {
+    dir = value > 0 ? 'up' : value < 0 ? 'down' : 'flat';
+  }
+  var wrap = _el('span', 'ds-trend ds-trend-' + dir);
+  var arrow = dir === 'up' ? '\u25B2' : dir === 'down' ? '\u25BC' : '\u25C6';
+  var absVal = Math.abs(value);
+  wrap.innerHTML = arrow + ' ' + absVal + (unit || '');
+  return wrap;
+};
+
+/**
+ * Status badge — colored label for module states
+ * @param {string} text    Badge text
+ * @param {string} [variant]  'success' | 'warning' | 'error' | 'info' | 'neutral'
+ * @returns {HTMLElement}
+ */
+ds.badge = function(text, variant) {
+  var b = _el('span', 'ds-badge');
+  if (variant) b.classList.add('ds-badge-' + variant);
+  b.textContent = text;
+  return b;
+};
+
+/**
+ * Card entrance animation — subtle fade+slide on mount
+ * @param {HTMLElement} el  Element to animate (applied once, self-removing)
+ */
+ds.entrance = function(el) {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(8px)';
+  el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+  requestAnimationFrame(function() {
+    el.style.opacity = '';
+    el.style.transform = '';
+  });
+  // Clean up transition after animation completes
+  setTimeout(function() {
+    el.style.transition = '';
+  }, 400);
+};

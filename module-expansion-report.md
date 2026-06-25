@@ -670,9 +670,9 @@ Recommended order:
 4. **Weather**: Animated weather icons (CSS keyframes for rain/snow)
 5. **Links**: Service icon loading states, category color themes
 6. **Digital Pet**: Animated idle (blink, tail wag via CSS keyframes)
-7. **API Poller**: Visual diff indicators (up/down arrows on value changes)
+---
 
-## Beautification Implementation
+# Beautification Implementation
 
 The beautification CSS block adds approximately 270 lines covering:
 
@@ -693,3 +693,76 @@ The beautification CSS block adds approximately 270 lines covering:
 - **Toast**: Rounded corners + enhanced backdrop blur
 - **Section editor cards**: Rounded corners + rich transitions
 - **Card type picker**: translateY(-2px) lift on hover
+
+---
+
+# Visual Identity System
+
+## Typography Hierarchy
+
+| Level | Token | Usage |
+|-------|-------|-------|
+| Hero | --text-5xl (52px) | Weather temperature, large numbers |
+| Display | --text-4xl (40px) | Clock time |
+| Heading 1 | --text-3xl (32px) | Card titles, section headers |
+| Heading 2 | --heading-size (15px) | Card headers with icon |
+| Body | --text-base (14px) | Content text, stat values |
+| Small | --text-sm (13px) | Link labels, secondary info |
+| Caption | --text-xs (12px) | Status text, timestamps |
+| Micro | --text-2xs (11px) | Badges, chart labels |
+| Tiny | --text-3xs (10px) | Secondary timestamps |
+
+## Elevation System
+
+| Level | Shadow | Usage |
+|-------|--------|-------|
+| Ground | none | Background, page |
+| Surface | --shadow-sm | Card base |
+| Raised | --shadow-md | Card hover, modal |
+| Elevated | --shadow-lg | Dropdowns, panels |
+| Floating | --shadow-elevated | Drag ghost, toasts |
+
+## Motion Rules
+
+- **Fast (0.15s)**: Hover states, button feedback, color transitions
+- **Normal (0.30s)**: Panel slides, entrance animations, card transitions
+- **Slow (0.45s)**: Dropdown collapse, section reveal, page transitions
+- **Easing**: `cubic-bezier(0.4, 0, 0.2, 1)` (Material-style) for premium feel
+- **Transform transitions**: GPU-accelerated (translate, scale, rotate) preferred over layout (width, height, top)
+
+## Color Usage
+
+- **Accent**: Single accent color (#888888 default) used for borders, highlights, active states
+- **Accent glass**: 12% opacity accent used for backgrounds, hover fills
+- **Text hierarchy**: 92% primary, 60% secondary, 35% tertiary
+- **Status**: Green (success), yellow/amber (warning), red (error)
+- **Card backgrounds**: 6% white at base, 15% black for alternate backgrounds
+
+## Icon Language
+
+- **Lucide icons**: Primary icon set — 2000+ consistent outline icons
+- **Service icons**: selfh.st SVG icons for branded services (Plex, GitHub, etc.)
+- **Emoji**: Secondary set for quick, playful icons
+- **Card icons**: 24px (--space-5), link icons: 20px, stat icons: 14px
+- **Icon opacity**: 0.85 base → 1.0 on hover (subtle highlight)
+
+## New Visualization Components
+
+### ds.progressRing(value, max, size, stroke, color)
+SVG circular progress indicator with animated `stroke-dashoffset`. Shows percentage in center label. Smooth 0.6s cubic-bezier transition on value changes.
+
+### ds.trend(value, dir, unit)
+Up/down/flat arrow indicator. Green ▲ for positive, red ▼ for negative, gray ◆ for flat. Tabular-nums for alignment.
+
+### ds.badge(text, variant)
+Colored pill badge. 5 variants: success (green), warning (amber), error (red), info (accent), neutral (default).
+
+### ds.entrance(el)
+One-shot fade+slide animation. Opacity 0 → 1, translateY(8px) → 0 over 0.3s. Self-cleaning (removes transition after 400ms).
+
+## Delight Animations
+
+- **Card entrance**: Staggered fade-in on page load (10 cards, 20ms delay each)
+- **Stat count-up**: Resource monitor values fade in with slight upward motion
+- **Pulse ring**: Loading/active indicator — expanding glow rings
+- **Hover lift**: Cards lift 1px, link items lift 2px, buttons scale to 0.98 on press

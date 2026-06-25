@@ -188,6 +188,8 @@ function renderCard(card,idx){
   
 
   dragHandle.addEventListener('pointerdown', function(e) { startDrag(e, card.id, idx); });
+  // Entrance animation
+  ds.entrance(div);
   return div;
 }
 

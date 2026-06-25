@@ -84,7 +84,24 @@ registerModule('clock', {
         var diff = now - startOfYear;
         var dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
         var weekNum = Math.ceil((dayOfYear + new Date(now.getFullYear(), 0, 1).getDay()) / 7);
-        extrasEl.textContent = 'Week ' + weekNum + ' \u00b7 Day ' + dayOfYear;
+        var daysInYear = new Date(now.getFullYear(), 11, 31).getDate() - new Date(now.getFullYear(), 0, 0).getDate();
+        
+        // Clear extras and rebuild with badge + progress ring
+        extrasEl.innerHTML = '';
+        var infoRow = document.createElement('div');
+        infoRow.style.cssText = 'display:flex;align-items:center;gap:var(--space-3);justify-content:center;';
+        
+        var badge = ds.badge('W' + weekNum, 'info');
+        infoRow.appendChild(badge);
+        
+        infoRow.appendChild(ds.progressRing(dayOfYear, daysInYear, 36, 3));
+        
+        var dayLabel = document.createElement('span');
+        dayLabel.style.cssText = 'font-size:var(--text-2xs);color:var(--text-tertiary);';
+        dayLabel.textContent = 'Day ' + dayOfYear + ' of ' + daysInYear;
+        infoRow.appendChild(dayLabel);
+        
+        extrasEl.appendChild(infoRow);
       }
 
       /* Calendar */

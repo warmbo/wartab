@@ -1599,3 +1599,71 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   transform: translateY(-2px); 
   box-shadow: 0 4px 16px rgba(0,0,0,0.3); 
 }
+
+/* ═══════════════════════════════════════════
+   VISUALIZATION COMPONENTS — Progress Rings, Trends, Badges, Delight
+   ═══════════════════════════════════════════ */
+
+/* ── Progress Ring ── */
+.ds-ring { flex-shrink: 0; }
+.ds-ring svg { display: block; }
+.ds-ring-label { pointer-events: none; user-select: none; }
+
+/* ── Trend Indicator ── */
+.ds-trend { 
+  display: inline-flex; align-items: center; gap: 2px;
+  font-size: var(--text-2xs); font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ds-trend-up { color: var(--color-success); }
+.ds-trend-down { color: var(--color-error); }
+.ds-trend-flat { color: var(--text-tertiary); }
+
+/* ── Status Badge ── */
+.ds-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 10px;
+  font-size: var(--text-2xs); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.ds-badge-success { background: rgba(102,204,153,0.12); color: var(--color-success); border-color: rgba(102,204,153,0.2); }
+.ds-badge-warning { background: rgba(204,204,153,0.12); color: var(--color-warning); border-color: rgba(204,204,153,0.2); }
+.ds-badge-error   { background: rgba(204,102,102,0.12); color: var(--color-error); border-color: rgba(204,102,102,0.2); }
+.ds-badge-info    { background: var(--accent-glass); color: var(--accent); border-color: var(--accent-glass); }
+
+/* ── Card entrance animation ── */
+@keyframes ds-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card { animation: ds-fade-in 0.3s ease both; }
+.card:nth-child(1) { animation-delay: 0.02s; }
+.card:nth-child(2) { animation-delay: 0.04s; }
+.card:nth-child(3) { animation-delay: 0.06s; }
+.card:nth-child(4) { animation-delay: 0.08s; }
+.card:nth-child(5) { animation-delay: 0.10s; }
+.card:nth-child(6) { animation-delay: 0.12s; }
+.card:nth-child(7) { animation-delay: 0.14s; }
+.card:nth-child(8) { animation-delay: 0.16s; }
+.card:nth-child(9) { animation-delay: 0.18s; }
+.card:nth-child(10) { animation-delay: 0.20s; }
+
+/* ── Stat count-up animation for resource monitor ── */
+@keyframes ds-count-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rm-val-cpu, .rm-val-ram, .rm-val-disk, .rm-val-gpu, .rm-val-net {
+  animation: ds-count-in 0.25s ease both;
+}
+
+/* ── Pulse ring for loading/active states ── */
+@keyframes ds-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-glow); }
+  70%  { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.ds-pulse { animation: ds-pulse 1.5s ease-in-out infinite; }
