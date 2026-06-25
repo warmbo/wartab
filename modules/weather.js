@@ -7,7 +7,7 @@
 registerModule('weather', {
   defaults: { zip:'', country:'US', units:'celsius' },
   css: `
-    .weather-temp{font-size:2.8rem;font-weight:700;line-height:1.1;letter-spacing:-1px;}
+    .weather-temp{font-size:var(--text-3xl);font-weight:700;line-height:1.1;letter-spacing:-1px;}
     .weather-feels{font-size:var(--text-sm);color:var(--text-tertiary);}
     .weather-detail{font-size:var(--text-sm);color:var(--text-secondary);}
     .weather-wind-row{display:flex;align-items:center;gap:4px;font-size:var(--text-sm);color:var(--text-tertiary);}
@@ -17,9 +17,13 @@ registerModule('weather', {
     .weather-fc-temp{font-size:var(--text-xs);color:var(--text-primary);font-weight:600;}
     .weather-forecast{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;padding:4px 0;}
     .weather-fc-icon{width:16px;height:16px;display:block;margin:2px auto;}
+    .weather-icon-main{width:48px;height:48px;flex-shrink:0;}
+    .weather-icon-wind{width:12px;height:12px;}
+    .weather-temp-wrap{display:flex;flex-direction:column;}
+    .weather-secondary-wrap{display:flex;flex-direction:column;gap:4px;}
 
-    [data-mod-scale="small"] .weather-temp{font-size:2rem;}
-    [data-mod-scale="large"] .weather-temp{font-size:3.6rem;}
+    [data-mod-scale="small"] .weather-temp{font-size:var(--text-2xl);}
+    [data-mod-scale="large"] .weather-temp{font-size:var(--text-4xl);}
     [data-mod-height="large"] .weather-forecast{gap:16px;}
     [data-mod-height="expanded"] .weather-forecast{gap:20px;}
   `,
@@ -156,11 +160,11 @@ registerModule('weather', {
 
         var iconEl = document.createElement('i');
         iconEl.setAttribute('data-lucide', icon);
-        iconEl.style.cssText = 'width:48px;height:48px;flex-shrink:0;';
+        iconEl.className = 'weather-icon-main';
         contentEl.appendChild(iconEl);
 
         var tempWrap = document.createElement('div');
-        tempWrap.style.cssText = 'display:flex;flex-direction:column;';
+        tempWrap.className = 'weather-temp-wrap';
         var tempEl = document.createElement('div');
         tempEl.className = 'weather-temp';
         tempEl.textContent = temp + unit;
@@ -185,13 +189,13 @@ registerModule('weather', {
         windRow.className = 'weather-wind-row';
         var windIcon = document.createElement('i');
         windIcon.setAttribute('data-lucide', 'wind');
-        windIcon.style.cssText = 'width:12px;height:12px;';
+        windIcon.className = 'weather-icon-wind';
         windRow.appendChild(windIcon);
         windRow.appendChild(document.createTextNode(wind + (isF ? ' mph' : ' km/h')));
 
         /* ── Build secondary content (forecast) ── */
         var secondaryEl = document.createElement('div');
-        secondaryEl.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+        secondaryEl.className = 'weather-secondary-wrap';
 
         var daily = d.daily;
         if (daily && daily.temperature_2m_max) {

@@ -91,7 +91,15 @@ function buildIconsTab(c){
       }
       requestAnimationFrame(renderBatch);
     }else{
-      var items=fl?EMOJIS.filter(function(e){return e.includes(fl);}):EMOJIS;
+      var items;
+      if (fl) {
+        var lower = fl.toLowerCase();
+        items = EMOJI_DATA.filter(function(e) {
+          return e[0] === lower || e[2].toLowerCase().indexOf(lower) !== -1;
+        }).map(function(e) { return e[0]; });
+      } else {
+        items = EMOJIS;
+      }
       if(!items.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No emoji found</div>';return;}
       items.forEach(function(emo){var d=document.createElement('div');d.className='icon-grid-item';d.innerHTML='<span class="ip-emoji">'+emo+'</span>';d.addEventListener('click',function(){selectIcon(emo);});g.appendChild(d);});
     }
