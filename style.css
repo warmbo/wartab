@@ -188,9 +188,8 @@ body {
   border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
   position: relative;
   border-radius: var(--card-radius, 0px);
-  overflow: hidden;
 }
-#top-bar::before { content: ''; display: block; height: 3px; background: var(--accent); position: absolute; top: 0; left: 0; right: 0; }
+#top-bar::before { content: ''; display: block; height: 3px; background: var(--accent); position: absolute; top: 0; left: 0; right: 0; border-radius: var(--card-radius, 0px) var(--card-radius, 0px) 0 0; }
 #top-bar .brand { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-lg); font-weight: 700; letter-spacing: 0.5px; text-shadow: var(--emboss-shadow); flex-shrink: 0; cursor: pointer; user-select: none; }
 #top-bar .brand .brand-icon { display: inline-flex; align-items: center; justify-content: center; width: var(--space-5); height: var(--space-5); font-size: var(--text-xl); font-family: 'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',var(--font); }
 #page-tabs { display: flex; gap: var(--space-1); flex: 1; justify-content: flex-start; overflow: visible; min-width: 0; padding: 0 var(--space-1); align-items: center; }
