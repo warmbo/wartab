@@ -141,7 +141,7 @@ function buildRowMap(grid, excludeEl) {
 /** Given the current _beforeCardId, predict where CSS Grid auto-placement will
  *  put the dragged card after the drop. Returns pixel {left,top,width,height}
  *  for a card-sized outline, or null if prediction fails. */
-function predictDropPixelPos(cols, gr, rows, colW, gap, cardW, cardH, cardRect){
+function predictDropPixelPos(cols, gr, rows, colW, gap, cardW, cardH){
   var bid=dragState._beforeCardId;
   var all=config.cards,did=dragState.cardId;
   var si=all.findIndex(function(c){return c.id===did;});
@@ -182,10 +182,6 @@ function onDragMove(e){
   const gr=grid.getBoundingClientRect(),cols=getPageCols(),gap=(config.layout.gap||16);
   const colW=(gr.width-(cols-1)*gap)/cols,step=colW+gap;
   const cw=dragState._cardWidth,ch=dragState._cardHeight;
-  const grabOffs=dragState._grabOffs||colW*0.33;
-  const relX=e.clientX-gr.left;
-  let targetCol=Math.round((relX-grabOffs)/step);
-  targetCol=Math.max(0,Math.min(cols-cw,targetCol));
   const rows=buildRowMap(grid,dSrc);
   let targetRow=null,rowIdx=0;
   for(let i=0;i<rows.length;i++){const row=rows[i];if(e.clientY>=row.top-20&&e.clientY<=row.bottom+20){targetRow=row;rowIdx=i;break;}}
@@ -194,22 +190,8 @@ function onDragMove(e){
     for(let i=0;i<rows.length;i++){const d=Math.abs(e.clientY-rows[i].top);if(d<bestD){bestD=d;best=i;}}
     targetRow=rows[best];rowIdx=best;
   }
-  const ghostLeft=gr.left+targetCol*(colW+gap);
-  const ghostW=cw*colW+(cw-1)*gap;
-  const ghostTop=targetRow?targetRow.top:(e.clientY-30);
-  const ghostH=targetRow?(targetRow.bottom-targetRow.top):60;
   const ghostAccent=config.cards.find(c=>c.id===dragState.cardId);
-  var cr=dragState._cardRect;
-  var snapDX=ghostLeft-cr.left;
-  var cursorCardTop=e.clientY-dragState._grabOffsY;
-  var bestRowIdx=0,bestRowDist=Infinity;
-  for(var ri=0;ri<rows.length;ri++){
-    var d2=Math.abs(rows[ri].top-cursorCardTop);
-    if(d2<bestRowDist){bestRowDist=d2;bestRowIdx=ri;}
-  }
-  var snapTop=rows.length?rows[bestRowIdx].top:(e.clientY-30);
-  var snapDY=snapTop-cr.top;
-  ghost.style.cssText=`position:fixed;pointer-events:none;z-index:var(--z-drag);left:${cr.left}px;top:${cr.top}px;width:${dragState._origWidth}px;min-height:${cr.height}px;transform:translate(${snapDX}px,${snapDY}px);display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);border:2px dashed ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'};backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);`;
+  ghost.style.cssText=`position:fixed;pointer-events:none;z-index:var(--z-drag);left:${e.clientX-dragState._grabOffs}px;top:${e.clientY-dragState._grabOffsY}px;width:${dragState._origWidth}px;min-height:${dragState._cardH || 60}px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);border:2px dashed ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'};backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);`;
   document.querySelectorAll('.card.push-preview').forEach(function(el){
     el.style.transition='none';el.classList.remove('push-preview');el.style.transform='';
   });
@@ -226,18 +208,36 @@ function onDragMove(e){
     else if(dropZone==='above'){dragState._beforeCardId=rows[0].cards.length?rows[0].cards[0].dataset.cardId:null;}
     else{dragState._beforeCardId=null;}
   }else if(dropZone==='inrow'&&targetRow){
-    var insBefore=null;
+    // Find which card the cursor is over, then decide before/after by midpoint
+    var hovered=null;
     for(var el of targetRow.cards){
       var r2=el.getBoundingClientRect();
-      if(r2.left>=ghostLeft-5){insBefore=el;break;}
+      if(e.clientX>=r2.left&&e.clientX<=r2.right){hovered=el;break;}
     }
-    if(insBefore){dragState._beforeCardId=insBefore.dataset.cardId;}
-    else{dragState._beforeCardId=null;}
+    if(hovered){
+      var hr=hovered.getBoundingClientRect();
+      if(e.clientX>hr.left+hr.width/2){
+        // Right half: insert after (find next card or append)
+        var nextEl=null;
+        for(var el2 of targetRow.cards){
+          var r3=el2.getBoundingClientRect();
+          if(r3.left>hr.right){nextEl=el2;break;}
+        }
+        dragState._beforeCardId=nextEl?nextEl.dataset.cardId:null;
+      }else{
+        // Left half: insert before
+        dragState._beforeCardId=hovered.dataset.cardId;
+      }
+    }else if(targetRow.cards.length&&e.clientX<targetRow.cards[0].getBoundingClientRect().left){
+      dragState._beforeCardId=targetRow.cards[0].dataset.cardId;
+    }else{
+      dragState._beforeCardId=null;
+    }
   }
   // Show dropPreview at simulateGrid-predicted final position
   var dp=dragState.dropPreview;
   if(dropZone!=='none'){
-    var pp=dragState._beforeCardId===dragState.cardId?null:predictDropPixelPos(cols,gr,rows,colW,gap,cw,ch,cr);
+    var pp=dragState._beforeCardId===dragState.cardId?null:predictDropPixelPos(cols,gr,rows,colW,gap,cw,ch);
     if(pp){
       dp.style.display='';
       dp.style.left=pp.left+'px';dp.style.top=pp.top+'px';
@@ -251,7 +251,7 @@ function onDragMove(e){
 }
 function dropZoneClear(){
   $$('.card.drop-shift').forEach(function(el){el.classList.remove('drop-shift');});
-  document.querySelectorAll('.card-dir-arrow').forEach(function(el){el.remove();});
+  document.querySelectorAll('.card-dir-arrow,.card-swap-arrow').forEach(function(el){el.remove();});
 }
 function simulateGrid(cards, cols) {
   const occ = [];const out = [];
@@ -288,9 +288,7 @@ function computeDropShift(targetBeforeCardId) {
   computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder, cols);
 }
 function computeDropShiftFromPositions(allCards, oldPos, newPos, dragId, newOrder, cols) {
-  dropZoneClear();
-  document.querySelectorAll('.card-dir-arrow').forEach(function(el){el.remove();});
-  document.querySelectorAll('.card-swap-arrow').forEach(function(el){el.remove();});
+  document.querySelectorAll('.card-dir-arrow,.card-swap-arrow').forEach(function(el){el.remove();});
   const grid = document.getElementById('card-grid');
   var dragOldIdx = allCards.findIndex(function(c){return c.id===dragId;});
   var dragOldPos = dragOldIdx>=0?oldPos[dragOldIdx]:null;
