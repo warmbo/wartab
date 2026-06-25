@@ -187,6 +187,8 @@ body {
   backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur));
   border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
   position: relative;
+  border-radius: var(--card-radius, 0px);
+  overflow: hidden;
 }
 #top-bar::before { content: ''; display: block; height: 3px; background: var(--accent); position: absolute; top: 0; left: 0; right: 0; }
 #top-bar .brand { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-lg); font-weight: 700; letter-spacing: 0.5px; text-shadow: var(--emboss-shadow); flex-shrink: 0; cursor: pointer; user-select: none; }
