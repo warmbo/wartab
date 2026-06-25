@@ -54,6 +54,7 @@ const DEFAULT_CONFIG = {
     cardBg: 'dark',               // card background variant
     fontColor: '#cccccc',         // text color override
     cardOpacity: 1,               // 0-1 opacity for card backgrounds
+    cardRadius: 16,               // card border radius (px)
     bgRotate: false,              // rotate background on interval
     animations: true,             // enable CSS transitions/animations
     showAccentBar: true,          // show 3px accent bar at top of cards

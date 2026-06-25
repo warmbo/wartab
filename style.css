@@ -282,6 +282,8 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   transition: border-color var(--anim-fast), box-shadow var(--anim-fast);
   position: relative; min-width: 0;
   display: flex; flex-direction: column;
+  border-radius: var(--card-radius, 0px);
+  overflow: hidden;
 }
 .card:hover { border-color: var(--glass-border-hover); }
 .card::before { content: ''; display: block; height: 3px; background: var(--card-accent, var(--accent)); flex-shrink: 0; }

@@ -137,6 +137,7 @@ if(v==='gradient'){if(!config.theme.bgValue.includes(','))config.theme.bgValue='
   body.appendChild(ps('Card Styles'));
   body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark'},{value:'light',label:'Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
   body.appendChild(pf('range','','Card Transparency',null,Math.round((1-(config.theme.cardOpacity||1))*100),v=>{config.theme.cardOpacity=1-(parseInt(v)/100);applyChanges();},{min:0,max:100}));
+  body.appendChild(pf('range','','Card Corner Radius (px)',null,parseInt(config.theme.cardRadius)||16,v=>{config.theme.cardRadius=parseInt(v);applyChanges();},{min:0,max:24}));
   body.appendChild(pf('color','','Accent Color',null,config.theme.glow,v=>{config.theme.glow=v;applyChanges();}));
   body.appendChild(pf('range','','Glass Blur (px)',null,config.theme.blur,v=>{config.theme.blur=parseInt(v);applyChanges();},{min:4,max:40}));
   body.appendChild(chk('Animated transitions',config.theme.animations!==false,v=>{config.theme.animations=v;applyChanges();renderAll();}));
