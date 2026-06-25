@@ -82,16 +82,6 @@ function openPageEditPanel(pageId) {
 
   body.appendChild(nameG);
 
-  // Columns
-  const colG = document.createElement('div');
-  colG.className = 'cs-pair';
-  colG.appendChild(cpRange('Columns', page.cols || config.layout.cols, 1, 6, v => {
-    page.cols = parseInt(v);
-    saveConfig();
-    renderAll();
-  }));
-  body.appendChild(colG);
-
   // Divider
 
   body.appendChild(cpDivider(''));
