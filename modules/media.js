@@ -174,7 +174,12 @@ registerModule('media', {
 
     const services = (sec.services || []).filter(s => s.type && s.url && s.key);
     if (!services.length) {
-      w.innerHTML = '<div style="color:var(--text-tertiary);font-size:var(--text-sm);padding:8px 0;text-align:center;">Add media services in the card editor</div>';
+      w.innerHTML = '';
+      w.appendChild(ds.empty('film', 'Add Media Services',
+        'Add Sonarr, Radarr, Plex or other services in the card editor.', {
+          label: 'Edit card',
+          onClick: function() { openCardEditPanel(card.id); }
+        }));
       cw.appendChild(w); return;
     }
 

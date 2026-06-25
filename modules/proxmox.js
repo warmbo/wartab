@@ -14,7 +14,12 @@ registerModule('proxmox', {
     w.style.cssText = 'display:flex;flex-direction:column;gap:6px;padding:4px 0;';
 
     if (!sec.url || !sec.username || !sec.password) {
-      w.innerHTML = '<div style="color:var(--text-tertiary);font-size:var(--text-sm);padding:8px 0;text-align:center;">Configure Proxmox in the card editor</div>';
+      w.innerHTML = '';
+      w.appendChild(ds.empty('server', 'Configure Proxmox',
+        'Add your Proxmox server URL and API credentials in the card editor.', {
+          label: 'Edit card',
+          onClick: function() { openCardEditPanel(card.id); }
+        }));
       cw.appendChild(w); return;
     }
 

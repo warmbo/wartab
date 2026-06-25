@@ -103,7 +103,12 @@ registerModule('git', {
     w.style.cssText = 'display:flex;flex-direction:column;gap:4px;padding:4px 0;';
 
     if (!sec.owner || !sec.repo) {
-      w.innerHTML = '<div style="color:var(--text-tertiary);font-size:var(--text-sm);padding:8px 0;text-align:center;">Configure repo in the card editor</div>';
+      w.innerHTML = '';
+      w.appendChild(ds.empty('code-2', 'Configure Git Repo',
+        'Add your repository details in the card editor.', {
+          label: 'Edit card',
+          onClick: function() { openCardEditPanel(card.id); }
+        }));
       cw.appendChild(w); return;
     }
 
