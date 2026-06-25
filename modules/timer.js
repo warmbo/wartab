@@ -42,6 +42,11 @@ registerModule('timer', {
       updateDisplay();
     }
     cw.appendChild(w);
+    // Hint: flashes on complete
+    var hint = document.createElement('div');
+    hint.className = 'timer-hint';
+    hint.textContent = 'Page title flashes when time is up';
+    cw.appendChild(hint);
   },
   editor: (sec,card,bd)=>{
     const modeRow=document.createElement('div');modeRow.style.cssText='margin-bottom:10px;';

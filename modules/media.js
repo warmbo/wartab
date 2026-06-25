@@ -298,6 +298,41 @@ registerModule('media', {
         keyInp.style.cssText = 'flex:1;padding:4px 6px;font-size:var(--text-2xs);';
         keyInp.addEventListener('change', () => { svc.key = keyInp.value; saveConfig(); });
         row3.appendChild(keyInp);
+        // Test connection button
+        var testBtn = document.createElement('button');
+        testBtn.className = 'btn btn-glass btn-sm';
+        testBtn.textContent = 'Test';
+        testBtn.style.cssText = 'padding:4px 8px;font-size:var(--text-2xs);flex-shrink:0;';
+        var testStatus = document.createElement('span');
+        testStatus.style.cssText = 'font-size:var(--text-2xs);min-width:40px;text-align:center;';
+        testBtn.addEventListener('click', function() {
+          if (!svc.url || !svc.key) {
+            testStatus.textContent = 'Fill URL+key';
+            testStatus.style.color = 'var(--color-warning)';
+            return;
+          }
+          testStatus.textContent = '...';
+          testStatus.style.color = 'var(--text-tertiary)';
+          var base = svc.url.replace(/\/+$/, '');
+          var def = MEDIA_SERVICES[svc.type];
+          var headers = def ? def.authHeaders(svc.key) : {};
+          var testUrl = base + (svc.type === 'plex' ? '/status/sessions' : '/api/v3/system/status');
+          fetch(testUrl, { headers: headers }).then(function(r) {
+            if (r.ok) {
+              testStatus.textContent = '✓ OK';
+              testStatus.style.color = 'var(--color-success)';
+              setTimeout(function() { testStatus.textContent = ''; }, 3000);
+            } else {
+              testStatus.textContent = 'HTTP ' + r.status;
+              testStatus.style.color = 'var(--color-error)';
+            }
+          }).catch(function() {
+            testStatus.textContent = 'Failed';
+            testStatus.style.color = 'var(--color-error)';
+          });
+        });
+        row3.appendChild(testBtn);
+        row3.appendChild(testStatus);
         card.appendChild(row3);
 
         // Optional toggles per type

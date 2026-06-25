@@ -583,3 +583,101 @@ ds.entrance = function(el) {
     el.style.transition = '';
   }, 400);
 };
+
+/**
+ * Settings Drawer — reusable inline settings panel for modules.
+ * Creates a gear button that opens/closes a settings panel within the card.
+ * @param {object} fields  Array of { label, type, value, onChange }
+ * @returns {HTMLElement}  The drawer container (append to card body or section)
+ */
+ds.settingsDrawer = function(fields) {
+  var wrap = _el('div', 'ds-drawer');
+
+  /* Toggle button */
+  var toggle = document.createElement('button');
+  toggle.className = 'btn btn-glass btn-icon ds-drawer-toggle';
+  toggle.title = 'Settings';
+  toggle.setAttribute('aria-label', 'Settings');
+  var gearIcon = renderLucideEl('settings', '');
+  gearIcon.style.cssText = 'width:14px;height:14px;';
+  toggle.appendChild(gearIcon);
+  wrap.appendChild(toggle);
+
+  /* Drawer panel */
+  var panel = _el('div', 'ds-drawer-panel ds-drawer-closed');
+
+  (fields || []).forEach(function(f) {
+    var row = _el('div', 'ds-drawer-row');
+
+    if (f.type === 'checkbox') {
+      var cl = document.createElement('label');
+      cl.className = 'ds-drawer-check';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !!f.value;
+      cb.addEventListener('change', function() {
+        if (f.onChange) f.onChange(cb.checked);
+        // Close after toggle
+        panel.classList.add('ds-drawer-closed');
+        toggle.classList.remove('ds-drawer-open');
+      });
+      cl.appendChild(cb);
+      cl.appendChild(document.createTextNode(' ' + f.label));
+      row.appendChild(cl);
+    } else if (f.type === 'select') {
+      row.appendChild(_txt('span', 'ds-drawer-label', f.label));
+      var sel = document.createElement('select');
+      sel.className = 'ds-drawer-select';
+      (f.options || []).forEach(function(o) {
+        var opt = document.createElement('option');
+        opt.value = o.value;
+        opt.textContent = o.label;
+        if (o.value === f.value) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', function() {
+        if (f.onChange) f.onChange(sel.value);
+      });
+      row.appendChild(sel);
+    } else if (f.type === 'button') {
+      var btn = document.createElement('button');
+      btn.className = 'btn btn-glass btn-sm';
+      btn.textContent = f.label;
+      if (f.onClick) btn.addEventListener('click', f.onClick);
+      row.appendChild(btn);
+    }
+
+    panel.appendChild(row);
+  });
+
+  wrap.appendChild(panel);
+
+  /* Toggle open/close */
+  toggle.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var isOpen = !panel.classList.contains('ds-drawer-closed');
+    panel.classList.toggle('ds-drawer-closed', isOpen);
+    toggle.classList.toggle('ds-drawer-open', !isOpen);
+    renderIcons();
+  });
+
+  /* Close on outside click */
+  var closeHandler = function(e) {
+    if (!wrap.contains(e.target)) {
+      panel.classList.add('ds-drawer-closed');
+      toggle.classList.remove('ds-drawer-open');
+      document.removeEventListener('click', closeHandler);
+    }
+  };
+  toggle.addEventListener('click', function() {
+    if (panel.classList.contains('ds-drawer-closed')) {
+      // Will open — add listener for outside click
+      setTimeout(function() {
+        document.addEventListener('click', closeHandler);
+      }, 0);
+    }
+  });
+
+  renderIcons();
+  return wrap;
+};

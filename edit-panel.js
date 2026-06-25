@@ -207,6 +207,7 @@ function buildCardEditPanel(card) {
   titleG.className = 'ep-full';
   titleG.appendChild(cpLabel('Title'));
   titleG.appendChild(cpInput('Card title', card.title, function(v) { card.title = v; saveAndRefresh(); }));
+  titleG.appendChild(cpHint('Double-click any card title on the dashboard to rename it inline'));
   settingsGrid.appendChild(titleG);
 
   // Icon + Color row
@@ -267,6 +268,75 @@ function buildCardEditPanel(card) {
   sizeRow.appendChild(cpRange('Width', card.width, 1, config.layout.cols, function(v) { card.width = parseInt(v); saveAndRefresh(); }));
   sizeRow.appendChild(cpRange('Height', card.height || 1, 1, 4, function(v) { card.height = parseInt(v); saveAndRefresh(); }));
   settingsGrid.appendChild(sizeRow);
+
+  /* ── LAYOUT section (card-level defaults for all sections) ── */
+  var layoutSec = _collapsibleSection('Layout', false);
+  body.appendChild(layoutSec.wrap);
+
+  // Compute card-level style defaults from all sections
+  function getCardStyles() {
+    var align = 'left', density = 'standard', scale = 'medium';
+    if (card.sections && card.sections.length) {
+      var s = card.sections[0].styles || {};
+      align = s.align || 'left';
+      density = s.density || 'standard';
+      scale = s.scale || 'medium';
+    }
+    return { align: align, density: density, scale: scale };
+  }
+
+  function applyCardStyles(align, density, scale) {
+    (card.sections || []).forEach(function(sec) {
+      if (!sec.styles) sec.styles = {};
+      sec.styles.align = align;
+      sec.styles.density = density;
+      sec.styles.scale = scale;
+    });
+    saveAndRefresh();
+    // Rebuild panel to show updated section editor values
+    var title = $('#edit-panel-title');
+    if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
+  }
+
+  var cardSt = getCardStyles();
+
+  // Alignment buttons
+  var alGroup = document.createElement('div');
+  alGroup.style.cssText = 'margin-bottom:var(--space-2);';
+  alGroup.appendChild(cpLabel('Alignment'));
+  var alRow = document.createElement('div');
+  alRow.style.cssText = 'display:flex;gap:4px;';
+  ['left', 'center', 'right'].forEach(function(a) {
+    var ab = document.createElement('button');
+    ab.textContent = a.charAt(0).toUpperCase() + a.slice(1);
+    ab.style.cssText = 'flex:1;padding:4px 6px;border:1px solid var(--surface-border);background:' +
+      (cardSt.align === a ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.2)') +
+      ';color:var(--text-primary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);';
+    ab.addEventListener('click', function() {
+      applyCardStyles(a, cardSt.density, cardSt.scale);
+    });
+    alRow.appendChild(ab);
+  });
+  alGroup.appendChild(alRow);
+  layoutSec.body.appendChild(alGroup);
+
+  // Density
+  layoutSec.body.appendChild(cpLabel('Density'));
+  layoutSec.body.appendChild(cpSelect(
+    [{value:'compact',label:'Compact'},{value:'standard',label:'Standard'},{value:'comfortable',label:'Comfortable'}],
+    cardSt.density,
+    function(v) { applyCardStyles(cardSt.align, v, cardSt.scale); }
+  ));
+
+  // Scale
+  layoutSec.body.appendChild(cpLabel('Scale'));
+  layoutSec.body.appendChild(cpSelect(
+    [{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],
+    cardSt.scale,
+    function(v) { applyCardStyles(cardSt.align, cardSt.density, v); }
+  ));
+
+  layoutSec.body.appendChild(cpHint('Applies to all sections in this card. Override per section in each section editor.'));
 
   /* ── SECTIONS section ── */
   var secSec = _collapsibleSection('Sections', true);
