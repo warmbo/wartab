@@ -72,6 +72,8 @@ function buildIconsTab(c){
   function ri(f){
     g.innerHTML='';const fl=(f||'').toLowerCase();
     if(_mode==='svg'){
+      g.style.display = 'grid';
+      g.style.gridTemplateColumns = 'repeat(auto-fill,minmax(42px,1fr))';
       var allIcons=getAllLucideIcons();
       var items=fl?allIcons.filter(function(n){return n.toLowerCase().includes(fl);}):allIcons;
       if(!items.length){g.innerHTML='<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-tertiary);font-size:var(--text-base);">No icons found</div>';return;}
@@ -91,6 +93,7 @@ function buildIconsTab(c){
       }
       requestAnimationFrame(renderBatch);
     }else{
+      g.style.display = 'block';
       var efl = (s.value||'').toLowerCase().trim();
       var items;
       if (efl) {
