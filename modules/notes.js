@@ -1,11 +1,12 @@
 registerModule('notes', {
   defaults: { content:'' },
   render: (sec,card,cw)=>{
-    cw.style.cssText='flex:1;display:flex;flex-direction:column;width:100%;';
+    cw.style.flex='1';cw.style.display='flex';cw.style.flexDirection='column';cw.style.width='100%';
     
-    // --- Toolbar (hidden until editor focused) ---
+    // --- Toolbar (hidden until editor focused, fades in) ---
     var tb=document.createElement('div');
-    tb.style.cssText='display:none;gap:4px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:4px;flex-wrap:wrap;';
+    tb.className='notes-tb';
+    tb.style.cssText='gap:4px;padding:0;border-bottom:1px solid rgba(255,255,255,0.06);margin:0;flex-wrap:wrap;display:flex;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease, margin 0.3s ease;';
     
     function mkBtn(label,cmd,val){
       var b=document.createElement('button');
@@ -33,7 +34,7 @@ registerModule('notes', {
     var e=document.createElement('div');
     e.className='notes-editor';
     e.contentEditable=true;
-    e.style.cssText='min-height:100px;max-height:32em;overflow-y:auto;padding:8px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.06);color:var(--text-primary);font-size:var(--text-sm);line-height:1.6;outline:none;';
+    e.style.cssText='min-height:90px;max-height:none;overflow-y:auto;padding:8px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.06);color:var(--text-primary);font-size:var(--text-sm);line-height:1.6;outline:none;';
     
     // Use textContent instead of innerHTML for initial empty state
     if(sec.content){
@@ -42,11 +43,29 @@ registerModule('notes', {
       e.textContent='';
     }
     
+    // Use saved editor height or default
+    if (sec.editorHeight) {
+      e.style.height = sec.editorHeight + 'px';
+      e.style.maxHeight = 'none';
+    }
     cw.appendChild(e);
-    
-    // --- Toolbar visibility toggle ---
-    function showToolbar(){tb.style.display='flex';}
-    function hideToolbar(){tb.style.display='none';}
+
+    // --- Resize handle (drag to set height, 4–25 lines) ---
+    var rh=document.createElement('div');
+    rh.style.cssText='height:4px;cursor:ns-resize;background:rgba(255,255,255,0.06);border-radius:2px;margin:2px 0;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:3px;';
+    rh.title='Drag to resize (4–25 lines)';
+    rh.innerHTML='<span style="display:block;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.12);"></span><span style="display:block;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.12);"></span><span style="display:block;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.12);"></span>';
+    cw.appendChild(rh);
+
+    var _drag=false,_startY=0,_startH=0;
+    var LINE_H=13*1.6,MIN_H=Math.round(4*LINE_H),MAX_H=Math.round(25*LINE_H);
+    function onMove(ev){if(!_drag)return;var h=Math.max(MIN_H,Math.min(MAX_H,_startH+ev.clientY-_startY));e.style.height=h+'px';e.style.maxHeight='none';}
+    function onUp(){if(_drag){_drag=false;document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);sec.editorHeight=e.offsetHeight;saveConfig();}}
+    rh.addEventListener('mousedown',function(ev){ev.preventDefault();_drag=true;_startY=ev.clientY;_startH=e.offsetHeight;document.body.style.cursor='ns-resize';document.body.style.userSelect='none';document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);});
+
+    // --- Toolbar visibility toggle with fade ---
+    function showToolbar(){tb.style.maxHeight='40px';tb.style.opacity='1';tb.style.padding='4px 0';tb.style.margin='0 0 4px 0';}
+    function hideToolbar(){tb.style.maxHeight='0';tb.style.opacity='0';tb.style.padding='0';tb.style.margin='0';}
     e.addEventListener('focus',showToolbar);
     e.addEventListener('blur',function(){
       // Delay hide so toolbar button clicks register before the editor blurs
@@ -148,6 +167,7 @@ registerModule('notes', {
     
     // --- Cleanup ---
     card._cleanup=function(){
+      if(_drag){_drag=false;document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);}
       if(autosaveTimer){clearTimeout(autosaveTimer);autosaveTimer=null;}
     };
   },

@@ -11,7 +11,7 @@ registerModule('quotes', {
     txt.appendChild(cont);
     q.appendChild(txt);
     const auth=document.createElement('div');auth.className='quotes-author';
-    auth.style.cssText='font-size:var(--text-xs);color:var(--text-secondary);text-align:right;padding-right:4px;';
+    auth.style.cssText='font-size:var(--text-xs);color:var(--text-secondary);text-align:var(--mod-align,right);padding-right:4px;';
     const aName=document.createElement('span');aName.className='quotes-author-name';aName.textContent='';auth.appendChild(aName);
     q.appendChild(auth);
     // Hint: click to cycle (fades in on hover)

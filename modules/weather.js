@@ -7,25 +7,53 @@
 registerModule('weather', {
   defaults: { zip:'', country:'US', units:'celsius' },
   css: `
-    .weather-temp{font-size:var(--text-3xl);font-weight:700;line-height:1.1;letter-spacing:-1px;}
-    .weather-feels{font-size:var(--text-sm);color:var(--text-tertiary);}
-    .weather-detail{font-size:var(--text-sm);color:var(--text-secondary);}
-    .weather-wind-row{display:flex;align-items:center;gap:4px;font-size:var(--text-sm);color:var(--text-tertiary);}
-    .weather-main{display:flex;align-items:center;gap:16px;padding:4px 0;}
-    .weather-fc-day{text-align:center;font-size:var(--text-xs);color:var(--text-tertiary);}
-    .weather-fc-day .day{font-weight:600;color:var(--text-secondary);}
-    .weather-fc-temp{font-size:var(--text-xs);color:var(--text-primary);font-weight:600;}
-    .weather-forecast{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;padding:4px 0;}
-    .weather-fc-icon{width:16px;height:16px;display:block;margin:2px auto;}
-    .weather-icon-main{width:48px;height:48px;flex-shrink:0;}
-    .weather-icon-wind{width:12px;height:12px;}
-    .weather-temp-wrap{display:flex;flex-direction:column;}
-    .weather-secondary-wrap{display:flex;flex-direction:column;gap:4px;}
+    /* ── Alignment (all elements use --mod-justify / --mod-align) ── */
+    .weather-main{display:flex;align-items:center;justify-content:var(--mod-justify,center);gap:calc(20px * var(--mod-df,1));padding:calc(8px * var(--mod-df,1)) 0;}
+    .weather-wind-row{display:flex;align-items:center;justify-content:var(--mod-justify,flex-start);gap:calc(6px * var(--mod-df,1));font-size:calc(var(--text-sm) * var(--mod-font-secondary,1));color:var(--text-tertiary);margin-top:calc(4px * var(--mod-df,1));}
+    .weather-forecast{display:flex;gap:calc(16px * var(--mod-df,1));flex-wrap:wrap;justify-content:var(--mod-justify,center);padding:calc(8px * var(--mod-df,1)) 0;}
 
-    [data-mod-scale="small"] .weather-temp{font-size:var(--text-2xl);}
-    [data-mod-scale="large"] .weather-temp{font-size:var(--text-4xl);}
-    [data-mod-height="large"] .weather-forecast{gap:16px;}
-    [data-mod-height="expanded"] .weather-forecast{gap:20px;}
+    /* ── Typography (--mod-font-title/content/secondary multipliers) ── */
+    .weather-temp{font-size:calc(var(--text-4xl) * var(--mod-font-content,1));font-weight:700;line-height:1;letter-spacing:-1px;}
+    .weather-feels{font-size:calc(var(--text-sm) * var(--mod-font-secondary,1));color:var(--text-tertiary);margin-top:2px;}
+    .weather-detail{font-size:calc(var(--text-sm) * var(--mod-font-secondary,1));color:var(--text-secondary);}
+    .weather-fc-day .day{font-weight:600;color:var(--text-secondary);font-size:calc(var(--text-xs) * var(--mod-font-secondary,1));letter-spacing:0.5px;}
+    .weather-fc-temp{font-size:calc(var(--text-sm) * var(--mod-font-content,1));color:var(--text-primary);font-weight:600;}
+
+    /* ── Layout containers ── */
+    .weather-fc-day{text-align:center;display:flex;flex-direction:column;align-items:center;gap:calc(4px * var(--mod-df,1));color:var(--text-tertiary);}
+    .weather-temp-wrap{display:flex;flex-direction:column;align-items:center;}
+    .weather-secondary-wrap{display:flex;flex-direction:column;gap:calc(6px * var(--mod-df,1));}
+
+    /* ── Icons (size controlled by scale, not density) ── */
+    .weather-icon-main{width:56px;height:56px;flex-shrink:0;}
+    .weather-icon-wind{width:14px;height:14px;}
+    .weather-fc-icon{width:28px;height:28px;display:block;margin:2px auto;}
+
+    /* ══════ Scale: small ══════ */
+    [data-mod-scale="small"] .weather-temp{font-size:calc(var(--text-3xl) * var(--mod-font-content,1));}
+    [data-mod-scale="small"] .weather-icon-main{width:40px;height:40px;}
+    [data-mod-scale="small"] .weather-fc-icon{width:22px;height:22px;}
+    [data-mod-scale="small"] .weather-icon-wind{width:12px;height:12px;}
+    [data-mod-scale="small"] .weather-forecast{gap:calc(12px * var(--mod-df,1));}
+
+    /* ══════ Scale: large ══════ */
+    [data-mod-scale="large"] .weather-temp{font-size:calc(var(--text-5xl) * var(--mod-font-content,1));}
+    [data-mod-scale="large"] .weather-icon-main{width:72px;height:72px;}
+    [data-mod-scale="large"] .weather-fc-icon{width:34px;height:34px;}
+    [data-mod-scale="large"] .weather-icon-wind{width:16px;height:16px;}
+    [data-mod-scale="large"] .weather-forecast{gap:calc(20px * var(--mod-df,1));}
+    [data-mod-scale="large"] .weather-fc-temp{font-size:calc(var(--text-base) * var(--mod-font-content,1));}
+    [data-mod-scale="large"] .weather-wind-row{font-size:calc(var(--text-base) * var(--mod-font-secondary,1));}
+
+    /* ══════ Height: large ══════ */
+    [data-mod-height="large"] .weather-forecast{gap:20px;}
+    [data-mod-height="large"] .weather-fc-icon{width:32px;height:32px;}
+    [data-mod-height="large"] .weather-main{gap:24px;padding:10px 0;}
+
+    /* ══════ Height: expanded ══════ */
+    [data-mod-height="expanded"] .weather-forecast{gap:24px;}
+    [data-mod-height="expanded"] .weather-fc-icon{width:36px;height:36px;}
+    [data-mod-height="expanded"] .weather-main{gap:28px;padding:14px 0;}
   `,
   render: function(sec, card, cw) {
     /* ── Phase 1: Skeleton using design system ── */

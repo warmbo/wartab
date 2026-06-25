@@ -8,9 +8,9 @@
 registerModule('ascii-anim', {
   defaults: { anim:'donut', speed:10, contrast:10, ghost:false },
   render: (sec,card,cw)=>{
-    cw.style.cssText='display:flex;flex-direction:column;flex:1;min-height:0;width:100%;';
+    cw.style.display='flex';cw.style.flexDirection='column';cw.style.flex='1';cw.style.minHeight='0';cw.style.width='100%';
     var pre=document.createElement('pre');
-    pre.style.cssText='margin:0;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.2);text-align:left;font-family:monospace;flex:1;width:100%;min-width:100%;box-sizing:border-box;padding:4px;line-height:1.12;';
+    pre.style.cssText='margin:0;white-space:pre;overflow:hidden;color:var(--text-primary);background:rgba(0,0,0,0.2);font-family:monospace;flex:1;width:100%;min-width:100%;box-sizing:border-box;padding:4px;line-height:1.12;';
     var running=true,_timer,ro;
     var sp=(parseFloat(sec.speed)||10)/10;
     var ct=(parseFloat(sec.contrast)||10)/10;

@@ -111,15 +111,15 @@ function startDrag(e, id, idx){
     ghost.innerHTML='<div class="dgh-label">'+iconHtml+'<span class="ghost-title">'+escHtml(card.title||'Card')+'</span></div>';
   }
   document.body.appendChild(ghost);
-  const insertBar=document.createElement('div');
-  insertBar.className='drag-insert-bar';
-  insertBar.style.display='none';
-  document.body.appendChild(insertBar);
+  const dropPreview=document.createElement('div');
+  dropPreview.className='drag-drop-preview';
+  dropPreview.style.display='none';
+  document.body.appendChild(dropPreview);
   const srcRect=srcEl.getBoundingClientRect();
-  dragState={cardId:id,srcEl,ghost,insertBar,active:false,_startX:e.clientX,_startY:e.clientY,_beforeCardId:null,
+  dragState={cardId:id,srcEl,ghost,dropPreview,active:false,_startX:e.clientX,_startY:e.clientY,_beforeCardId:null,
     _cardWidth:cw,_cardHeight:ch,_grabOffs:e.clientX-srcRect.left,_grabOffsY:e.clientY-srcRect.top,
     _cardLeft:srcRect.left,_cardTop:srcRect.top,_cardW:srcRect.width,_cardH:srcRect.height,
-    _cardRect:srcRect};
+    _cardRect:srcRect,_origWidth:srcEl.offsetWidth};
   document.addEventListener('pointermove',onDragMove);
   document.addEventListener('pointerup',onDragEnd);
   document.addEventListener('pointercancel',onDragEnd);
@@ -129,11 +129,44 @@ function buildRowMap(grid, excludeEl) {
   const items=[...grid.children].filter(el=>el.classList.contains('card')&&el!==excludeEl);
   const rows=[];
   for(const el of items){
-    const r=el.getBoundingClientRect();let found=false;
-    for(const row of rows){if(Math.abs(row.top-r.top)<10){row.cards.push(el);row.right=Math.max(row.right,r.right);row.bottom=Math.max(row.bottom,r.bottom);found=true;break;}}
-    if(!found)rows.push({top:r.top,bottom:r.bottom,cards:[el],right:r.right});
+    const top=el.offsetTop;
+    let found=false;
+    for(const row of rows){if(top===row.top){row.cards.push(el);found=true;break;}}
+    if(!found)rows.push({top,cards:[el]});
   }
+  // Compute bottom for each row from the first card's height
+  for(const row of rows){const h=row.cards[0].offsetHeight;row.bottom=row.top+h;}
   return rows;
+}
+/** Given the current _beforeCardId, predict where CSS Grid auto-placement will
+ *  put the dragged card after the drop. Returns pixel {left,top,width,height}
+ *  for a card-sized outline, or null if prediction fails. */
+function predictDropPixelPos(cols, gr, rows, colW, gap, cardW, cardH, cardRect){
+  var bid=dragState._beforeCardId;
+  var all=config.cards,did=dragState.cardId;
+  var si=all.findIndex(function(c){return c.id===did;});
+  if(si<0)return null;
+  var ord=all.slice();var m=ord.splice(si,1)[0];
+  var bi=bid?ord.findIndex(function(c){return c.id===bid;}):ord.length;
+  ord.splice(bi<0?ord.length:bi,0,m);
+  var pos=simulateGrid(ord,cols);
+  var ni=ord.findIndex(function(c){return c.id===did;});
+  if(ni<0||!pos[ni])return null;
+  var row=pos[ni].row,col=pos[ni].col;
+  var left=gr.left+col*(colW+gap);
+  var pw=cardW*colW+(cardW-1)*gap;
+  var top,ph;
+  if(rows.length===0){
+    top=gr.top+gap+row*(cardH+gap);
+    ph=cardH;
+  }else{
+    if(row<rows.length){top=rows[row].top;ph=rows[row].bottom-rows[row].top;}
+    else{
+      var lr=rows[rows.length-1];var avgH=(lr.bottom-rows[0].top)/rows.length;
+      top=lr.bottom+gap+(row-(rows.length-1))*(avgH+gap);ph=cardH;
+    }
+  }
+  return{left:left,top:top,width:pw,height:ph};
 }
 function onDragMove(e){
   if(!dragState)return;
@@ -165,18 +198,6 @@ function onDragMove(e){
   const ghostW=cw*colW+(cw-1)*gap;
   const ghostTop=targetRow?targetRow.top:(e.clientY-30);
   const ghostH=targetRow?(targetRow.bottom-targetRow.top):60;
-  let beforeCard=null;
-  if(targetRow){
-    for(const el of targetRow.cards){
-      const r=el.getBoundingClientRect();
-      if(r.left>=ghostLeft-5){beforeCard=el;break;}
-    }
-    if(!beforeCard&&targetRow.cards.length){
-      const ns=targetRow.cards[targetRow.cards.length-1].nextElementSibling;
-      beforeCard=(ns&&ns.classList.contains('card'))?ns:null;
-    }
-  }
-  dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
   const ghostAccent=config.cards.find(c=>c.id===dragState.cardId);
   var cr=dragState._cardRect;
   var snapDX=ghostLeft-cr.left;
@@ -188,28 +209,45 @@ function onDragMove(e){
   }
   var snapTop=rows.length?rows[bestRowIdx].top:(e.clientY-30);
   var snapDY=snapTop-cr.top;
-  ghost.style.cssText=`position:fixed;pointer-events:none;z-index:var(--z-drag);left:${cr.left}px;top:${cr.top}px;width:${ghostW-4}px;min-height:${cr.height}px;transform:translate(${snapDX}px,${snapDY}px);display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);border:2px dashed ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'};backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);`;
+  ghost.style.cssText=`position:fixed;pointer-events:none;z-index:var(--z-drag);left:${cr.left}px;top:${cr.top}px;width:${dragState._origWidth}px;min-height:${cr.height}px;transform:translate(${snapDX}px,${snapDY}px);display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'} 15%, transparent);border:2px dashed ${ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)'};backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);`;
   document.querySelectorAll('.card.push-preview').forEach(function(el){
     el.style.transition='none';el.classList.remove('push-preview');el.style.transform='';
   });
-  computeDropShift(dragState._beforeCardId);
+  // Unified drop zone determination — sets _beforeCardId once, no overwrites
   var dropY=e.clientY;
   var dropZone='none',betweenIdx=0;
   if(rows.length>1){for(var ri=0;ri<rows.length-1;ri++){if(dropY>=rows[ri].bottom&&dropY<=rows[ri+1].top){dropZone='between';betweenIdx=ri;break;}}}
   if(dropZone==='none'&&rows.length&&dropY>rows[rows.length-1].bottom)dropZone='below';
-  if(dropZone==='none'){for(var ri=0;ri<rows.length;ri++){if(dropY>=rows[ri].top&&dropY<=rows[ri].bottom){dropZone=beforeCard?'insert':'append';break;}}}
-  if(dropZone==='between'||dropZone==='below'){
-    insertBar.style.display='';insertBar.style.left=gr.left+'px';insertBar.style.border='none';
-    insertBar.style.boxShadow='0 0 8px color-mix(in srgb, var(--accent) 50%, transparent)';insertBar.style.background='var(--accent)';insertBar.style.width=gr.width+'px';insertBar.style.height='4px';
-    if(dropZone==='between'){var bgt=rows[betweenIdx].bottom,bgb=rows[betweenIdx+1].top;insertBar.style.top=((bgt+bgb)/2-2)+'px';var nextRow=rows[betweenIdx+1];beforeCard=nextRow&&nextRow.cards.length?nextRow.cards[0]:null;}
-    else{insertBar.style.top=(rows[rows.length-1].bottom+gap/2-2)+'px';beforeCard=null;}
-    dragState._beforeCardId=beforeCard?beforeCard.dataset.cardId:null;
-  }else if(dropZone==='append'){
-    insertBar.style.display='';var lr=targetRow.cards[targetRow.cards.length-1].getBoundingClientRect();var phWidth=cw*colW+(cw-1)*gap;var phHeight=(ch||1)*140;
-    insertBar.style.left=lr.right+'px';insertBar.style.top=targetRow.top+'px';insertBar.style.width=phWidth+'px';insertBar.style.height=phHeight+'px';
-    insertBar.style.background='color-mix(in srgb, '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)')+' 10%, transparent)';
-    insertBar.style.border='2px dashed '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)');dragState._beforeCardId=null;
-  }else{insertBar.style.display='none';}
+  if(dropZone==='none'&&rows.length&&dropY<rows[0].top)dropZone='above';
+  if(dropZone==='none'){for(var ri=0;ri<rows.length;ri++){if(dropY>=rows[ri].top&&dropY<=rows[ri].bottom){dropZone='inrow';break;}}}
+  // Determine drop target (_beforeCardId) — drives both dropPreview and actual drop
+  if(dropZone==='above'||dropZone==='between'||dropZone==='below'){
+    if(dropZone==='between'){var nextRow=rows[betweenIdx+1];dragState._beforeCardId=nextRow&&nextRow.cards.length?nextRow.cards[0].dataset.cardId:null;}
+    else if(dropZone==='above'){dragState._beforeCardId=rows[0].cards.length?rows[0].cards[0].dataset.cardId:null;}
+    else{dragState._beforeCardId=null;}
+  }else if(dropZone==='inrow'&&targetRow){
+    var insBefore=null;
+    for(var el of targetRow.cards){
+      var r2=el.getBoundingClientRect();
+      if(r2.left>=ghostLeft-5){insBefore=el;break;}
+    }
+    if(insBefore){dragState._beforeCardId=insBefore.dataset.cardId;}
+    else{dragState._beforeCardId=null;}
+  }
+  // Show dropPreview at simulateGrid-predicted final position
+  var dp=dragState.dropPreview;
+  if(dropZone!=='none'){
+    var pp=predictDropPixelPos(cols,gr,rows,colW,gap,cw,ch,cr);
+    if(pp){
+      dp.style.display='';
+      dp.style.left=pp.left+'px';dp.style.top=pp.top+'px';
+      dp.style.width=pp.width+'px';dp.style.height=pp.height+'px';
+      dp.style.background='color-mix(in srgb, '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)')+' 12%, transparent)';
+      dp.style.border='2px dashed '+(ghostAccent&&ghostAccent.color?ghostAccent.color:'var(--accent)');
+      dp.style.borderRadius='var(--radius-md)';
+    }else{dp.style.display='none';}
+  }else{dp.style.display='none';}
+  computeDropShift(dragState._beforeCardId);
 }
 function dropZoneClear(){
   $$('.card.drop-shift').forEach(function(el){el.classList.remove('drop-shift');});
@@ -217,16 +255,19 @@ function dropZoneClear(){
 }
 function simulateGrid(cards, cols) {
   const occ = [];const out = [];
+  let curRow = 0, curCol = 0;
   for (const card of cards) {
     const w = Math.min(card.width || 1, cols);const h = card.height || 1;let placed = false;
-    for (let row = 0; !placed && row < 100; row++) {
+    for (let row = curRow; !placed && row < 100; row++) {
+      const startCol = (row === curRow) ? curCol : 0;
       if (!occ[row]) occ[row] = [];
-      for (let col = 0; col <= cols - w && !placed; col++) {
+      for (let col = startCol; col <= cols - w && !placed; col++) {
         let free = true;
         for (let dr = 0; dr < h && free; dr++) for (let dc = 0; dc < w && free; dc++) if (occ[row + dr] && occ[row + dr][col + dc]) free = false;
         if (free) {
           for (let dr = 0; dr < h; dr++) { if (!occ[row + dr]) occ[row + dr] = []; for (let dc = 0; dc < w; dc++) occ[row + dr][col + dc] = true; }
-          out.push({ row, col }); placed = true;
+          out.push({ row, col }); placed = true; curRow = row; curCol = col + w;
+          if (curCol >= cols) { curRow++; curCol = 0; }
         }
       }
     }
@@ -283,7 +324,7 @@ function onDragEnd(e){
   document.removeEventListener('pointermove',onDragMove);document.removeEventListener('pointerup',onDragEnd);document.removeEventListener('pointercancel',onDragEnd);
   dropZoneClear();
   document.querySelectorAll('.card.push-preview').forEach(function(el){el.classList.remove('push-preview');el.style.transform='';el.style.transition='';});
-  if(dragState.insertBar&&dragState.insertBar.parentNode)dragState.insertBar.remove();
+  if(dragState.dropPreview&&dragState.dropPreview.parentNode)dragState.dropPreview.remove();
   if(!dragState)return;
   const{cardId,srcEl,ghost,active,_beforeCardId}=dragState;
   if(ghost&&ghost.parentNode)ghost.remove();

@@ -825,9 +825,11 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
   backdrop-filter: blur(var(--space-1)); -webkit-backdrop-filter: blur(var(--space-1));
   display: flex; align-items: center; justify-content: center;
 }
-.drag-insert-bar {
-  position: fixed !important; pointer-events: none !important; z-index: calc(var(--z-drag) - 1) !important;
-  transition: opacity var(--anim-fast);
+.drag-drop-preview {
+  position: fixed !important; pointer-events: none !important; z-index: calc(var(--z-drag) - 2) !important;
+  border-radius: var(--radius-md);
+  transition: left 0.05s linear, top 0.05s linear;
+  display: flex; align-items: center; justify-content: center;
 }
 .dgh-label {
   display: flex; align-items: center; gap: var(--space-2);
@@ -1078,11 +1080,23 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .dp-stats { margin-bottom: var(--space-1); }
 .dp-stat-row { display: flex; align-items: center; gap: var(--space-1); margin-bottom: 2px; font-size: var(--text-2xs); white-space: nowrap; }
 .dp-stat-lbl { width: 42px; color: var(--text-secondary); flex-shrink: 0; }
-.dp-bar { flex: 1; height: 5px; background: rgba(0,0,0,0.15); overflow: hidden; flex-shrink: 1; min-width: 20px; }
-.dp-fill { height: 100%; transition: width 0.4s; }
+.dp-bar { flex: 1; height: 6px; background: rgba(0,0,0,0.15); overflow: hidden; flex-shrink: 1; min-width: 20px; border-radius: 3px; }
+.dp-fill { height: 100%; transition: width 0.4s, background 0.6s; border-radius: 3px; }
 .dp-val { width: var(--space-5); text-align: right; color: var(--text-tertiary); font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .dp-actions { display: flex; gap: 3px; }
 .dp-actions .btn { flex: 1; font-size: var(--text-2xs); padding: 3px var(--space-1); justify-content: center; }
+
+/* ── Digital pet — environment props ── */
+.dp-env { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.dp-env pre { position: absolute; margin: 0; font-family: 'JetBrains Mono','Cascadia Code','Consolas',monospace; font-size: var(--text-xs); line-height: 1; user-select: none; pointer-events: none; opacity: 0.7; }
+.dp-env-food { color: var(--accent); font-size: var(--text-sm); opacity: 0.6; }
+.dp-env-dirt { color: rgba(180,140,80,0.6); font-size: var(--text-sm); }
+.dp-env-sparkle { color: rgba(255,255,200,0.7); font-size: var(--text-base); animation: dp-float 2s ease-in-out infinite; }
+.dp-env-heart { color: rgba(255,120,120,0.7); font-size: var(--text-lg); animation: dp-float 1.5s ease-in-out infinite; }
+@keyframes dp-float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-4px);} }
+
+/* ── Digital pet — info line ── */
+.dp-info { font-size: var(--text-2xs); color: var(--text-tertiary); text-align: center; padding: 2px 0; font-style: italic; }
 
 @media (max-width: 380px) {
   #top-bar { padding: var(--space-2) var(--space-2); }
@@ -1237,18 +1251,37 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 
 /* ── Typography scale (--mod-font-* from section.styles.fontScale) ── */
 .ds-module-content { font-size: calc(var(--text-base) * var(--mod-font-content, 1)); }
+.ds-module-secondary { font-size: calc(var(--text-xs) * var(--mod-font-secondary, 1)); }
+.ds-module-footer { font-size: calc(var(--text-2xs) * var(--mod-font-secondary, 1)); }
 .ds-module-hdr .ds-module-title { font-size: calc(var(--text-xs) * var(--mod-font-title, 1)); }
 .ds-stat-label, .ds-stat-value { font-size: calc(var(--text-xs) * var(--mod-font-content, 1)); }
 .ds-metric-label { font-size: calc(var(--text-2xs) * var(--mod-font-secondary, 1)); }
+.ds-metric-val { font-size: calc(var(--text-xs) * var(--mod-font-content, 1)); }
+.ds-state { font-size: calc(var(--text-sm) * var(--mod-font-content, 1)); }
+.ds-ts { font-size: calc(var(--text-2xs) * var(--mod-font-secondary, 1)); }
+.ds-empty-msg { font-size: calc(var(--text-sm) * var(--mod-font-content, 1)); }
+.ds-empty-hint { font-size: calc(var(--text-xs) * var(--mod-font-secondary, 1)); }
+.ds-error-msg { font-size: calc(var(--text-sm) * var(--mod-font-content, 1)); }
+.ds-error-detail { font-size: calc(var(--text-xs) * var(--mod-font-secondary, 1)); }
+
+/* Inline style modules — base typography via inheritance */
+.dropdown-content { font-size: calc(1em * var(--mod-font-content, 1)); }
+
+/* Module-specific typography overrides for inline-style modules */
+.timer-display { font-size: calc(var(--text-3xl) * var(--mod-font-content, 1)); }
+.timer-label { font-size: calc(var(--text-xs) * var(--mod-font-secondary, 1)); }
+.timer-info { font-size: calc(var(--text-2xs) * var(--mod-font-secondary, 1)); }
+.quotes-text { font-size: calc(var(--text-lg) * var(--mod-font-content, 1)); }
+.quotes-author { font-size: calc(var(--text-xs) * var(--mod-font-secondary, 1)); }
+.search-wrap input { font-size: calc(var(--text-sm) * var(--mod-font-content, 1)); }
+.lan-scan-title { font-size: calc(var(--text-2xs) * var(--mod-font-secondary, 1)); }
+.git-card-link { font-size: calc(var(--text-sm) * var(--mod-font-content, 1)); }
+.media-card-title { font-size: calc(var(--text-sm) * var(--mod-font-content, 1)); }
+.proxmox-card-title { font-size: calc(var(--text-sm) * var(--mod-font-content, 1)); }
+.dp-stat-label { font-size: calc(var(--text-2xs) * var(--mod-font-secondary, 1)); }
+.dp-stat-value { font-size: calc(var(--text-xs) * var(--mod-font-content, 1)); }
 
 /* ── Universal font scaling applied to ALL section content ── */
-/* Sets baseline font-size on every section's contentWrap.
-   Modules with explicit font-size values (clock-time, weather-temp, etc.)
-   keep their sizes; inherited text scales with the slider. */
-.dropdown-content { font-size: calc(14px * var(--mod-font-content, 1)); }
-/* Section title row inside the content also scales */
-.dropdown-content .section-title,
-.dropdown-content .link-label { font-size: calc(var(--text-xs) * var(--mod-font-title, 1)); }
 /* Secondary/subtle text scales independently */
 .dropdown-content .api-ts,
 .dropdown-content .lan-scan-ts,
@@ -1274,6 +1307,50 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 [data-mod-density="comfortable"] .ds-module-hdr { padding: 8px 0 var(--space-2); margin-bottom: var(--space-2); }
 [data-mod-density="comfortable"] .ds-stat-row { padding: var(--space-2) 0; }
 [data-mod-density="comfortable"] .ds-metric { margin-bottom: var(--space-2); }
+
+/* ── Module-specific density overrides ── */
+/* Weather: compact ── tighter spacing, smaller secondary text */
+[data-mod-density="compact"] .weather-main { gap: 8px; }
+[data-mod-density="compact"] .weather-wind-row { gap: 4px; margin-top: 2px; }
+[data-mod-density="compact"] .weather-forecast { gap: 8px; padding: 4px 0; }
+[data-mod-density="compact"] .weather-fc-day { gap: 1px; padding: 0; }
+[data-mod-density="compact"] .weather-detail { font-size: var(--text-2xs); }
+[data-mod-density="compact"] .weather-feels { font-size: var(--text-2xs); }
+[data-mod-density="compact"] .weather-fc-day .day { font-size: var(--text-2xs); }
+
+/* Weather: comfortable ── more breathing room */
+[data-mod-density="comfortable"] .weather-main { gap: 28px; padding: 12px 0; }
+[data-mod-density="comfortable"] .weather-wind-row { gap: 10px; margin-top: 8px; }
+[data-mod-density="comfortable"] .weather-forecast { gap: 24px; padding: 12px 0; }
+[data-mod-density="comfortable"] .weather-fc-day { gap: var(--space-2); padding: var(--space-1) 0; }
+
+[data-mod-density="compact"] .clock-date { font-size: var(--text-xs); }
+[data-mod-density="compact"] .clock-tick { font-size: var(--text-3xs); }
+[data-mod-density="compact"] .clock-separator { font-size: var(--text-xs); }
+[data-mod-density="compact"] .notes-toolbar { padding: 2px 0; gap: 2px; }
+[data-mod-density="compact"] .notes-editor { padding: 6px 8px; font-size: var(--text-xs); }
+[data-mod-density="compact"] .link-grid-item { padding: 4px 8px; gap: 4px; font-size: var(--text-xs); }
+[data-mod-density="compact"] .link-list-item { padding: 3px 6px; font-size: var(--text-xs); }
+[data-mod-density="compact"] .quotes-text { font-size: var(--text-base); padding: 0; margin: 0; }
+[data-mod-density="compact"] .timer-display { font-size: var(--text-2xl); padding: 4px 0; }
+[data-mod-density="compact"] .api-row { padding: 1px 0; gap: 2px; }
+[data-mod-density="compact"] .api-label { font-size: var(--text-2xs); }
+[data-mod-density="compact"] .api-value { font-size: var(--text-xs); }
+[data-mod-density="compact"] .dp-stat-row { padding: 1px 0; gap: 2px; }
+[data-mod-density="compact"] .dp-stat-lbl { font-size: var(--text-2xs); }
+[data-mod-density="compact"] .lan-scan-line { font-size: var(--text-2xs); padding: 1px 0; }
+[data-mod-density="compact"] .lan-scan-hdr { padding: 2px 4px; font-size: var(--text-2xs); }
+[data-mod-density="compact"] .search-wrap input { padding: 4px 8px; font-size: var(--text-xs); }
+
+[data-mod-density="comfortable"] .weather-fc-day { gap: var(--space-2); padding: var(--space-1) 0; }
+[data-mod-density="comfortable"] .notes-editor { padding: var(--space-3) var(--space-4); }
+[data-mod-density="comfortable"] .link-grid-item { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
+[data-mod-density="comfortable"] .link-list-item { padding: var(--space-2) var(--space-2); }
+[data-mod-density="comfortable"] .quotes-text { font-size: var(--text-xl); padding: var(--space-2) 0; }
+[data-mod-density="comfortable"] .timer-display { font-size: var(--text-4xl); padding: var(--space-3) 0; }
+[data-mod-density="comfortable"] .api-row { padding: var(--space-1) 0; }
+[data-mod-density="comfortable"] .dp-stat-row { padding: var(--space-1) 0; }
+[data-mod-density="comfortable"] .lan-scan-line { padding: var(--space-1) 0; font-size: var(--text-sm); }
 
 /* ── Scale overrides for ds-* components ── */
 [data-mod-scale="small"] .ds-stat-value { font-size: var(--text-xs); }

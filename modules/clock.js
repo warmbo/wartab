@@ -1,18 +1,26 @@
 registerModule('clock', {
   defaults: { format24h:false, showDate:true, showCalendar:false },
   css: `
-    .clock-time{font-size:var(--text-3xl);font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;text-shadow:var(--emboss-shadow);}
-    .clock-date{color:var(--text-secondary);margin-top:var(--space-1);letter-spacing:1px;text-transform:uppercase;font-size:var(--text-xs);}
-    .calendar-widget{margin-top:var(--space-2);font-size:var(--text-xs);}
-    .calendar-month{text-align:center;font-weight:600;margin-bottom:var(--space-1);color:var(--text-secondary);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.5px;}
+    .clock-time{font-size:calc(var(--text-3xl) * var(--mod-font-content,1));font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;text-shadow:var(--emboss-shadow);}
+    .clock-date{color:var(--text-secondary);margin-top:var(--space-1);letter-spacing:1px;text-transform:uppercase;font-size:calc(var(--text-xs) * var(--mod-font-secondary,1));}
+    .calendar-widget{margin-top:var(--space-2);font-size:calc(var(--text-xs) * var(--mod-font-secondary,1));}
+    .calendar-month{text-align:center;font-weight:600;margin-bottom:var(--space-1);color:var(--text-secondary);font-size:calc(var(--text-xs) * var(--mod-font-secondary,1));text-transform:uppercase;letter-spacing:0.5px;}
     .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;text-align:center;}
-    .calendar-day-header{font-size:var(--text-3xs);color:var(--text-tertiary);padding:2px 0;text-transform:uppercase;}
+    .calendar-day-header{font-size:calc(var(--text-3xs) * var(--mod-font-secondary,1));color:var(--text-tertiary);padding:2px 0;text-transform:uppercase;}
     .calendar-day{padding:3px 0;font-variant-numeric:tabular-nums;transition:background var(--anim-fast);}
     .calendar-day.today{background:var(--accent-glass);color:var(--text-primary);font-weight:600;}
     .calendar-day.other-month{color:var(--text-tertiary);opacity:0.4;}
 
-    [data-mod-scale="small"] .clock-time{font-size:var(--text-2xl);}
-    [data-mod-scale="large"] .clock-time{font-size:var(--text-4xl);}
+    [data-mod-scale="small"] .clock-time{font-size:calc(var(--text-2xl) * var(--mod-font-content,1));}
+    [data-mod-scale="large"] .clock-time{font-size:calc(var(--text-4xl) * var(--mod-font-content,1));}
+
+    [data-mod-height="large"] .calendar-day{padding:6px 0;}
+    [data-mod-height="large"] .calendar-month{font-size:calc(var(--text-sm) * var(--mod-font-secondary,1));margin-bottom:var(--space-2);}
+    [data-mod-height="large"] .calendar-widget{margin-top:var(--space-3);}
+
+    [data-mod-height="expanded"] .calendar-day{padding:10px 0;}
+    [data-mod-height="expanded"] .calendar-month{font-size:calc(var(--text-base) * var(--mod-font-secondary,1));margin-bottom:var(--space-3);}
+    [data-mod-height="expanded"] .calendar-grid{gap:2px;}
   `,
   render: function(sec, card, cw) {
     var w = document.createElement('div');

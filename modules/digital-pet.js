@@ -40,16 +40,17 @@ registerModule('digital-pet', {
     const sillEl=document.createElement('div');sillEl.className='dp-window-sill';pen.appendChild(sillEl);
     const speech=document.createElement('div');speech.className='dp-speech';pen.appendChild(speech);
     const creature=document.createElement('pre');creature.className='dp-creature';pen.appendChild(creature);
+    const envProps=document.createElement('div');envProps.className='dp-env';pen.appendChild(envProps);
     w.appendChild(pen);
     // Stats
     const stats=document.createElement('div');stats.className='dp-stats';
-    function makeStat(label,getVal){
+    function makeStat(label,getVal,invert){
       const row=document.createElement('div');row.className='dp-stat-row';
       const lbl=document.createElement('span');lbl.className='dp-stat-lbl';lbl.textContent=label;row.appendChild(lbl);
       const bar=document.createElement('div');bar.className='dp-bar';
       const fill=document.createElement('div');fill.className='dp-fill';bar.appendChild(fill);row.appendChild(bar);
       const valEl=document.createElement('span');valEl.className='dp-val';row.appendChild(valEl);
-      const upd=()=>{const v=Math.max(0,Math.min(100,getVal()));fill.style.width=v+'%';fill.style.background=v>50?'var(--accent)':'rgba(200,80,80,0.5)';valEl.textContent=Math.round(v);};
+      const upd=()=>{const v=Math.max(0,Math.min(100,getVal()));fill.style.width=v+'%';var hue=Math.round((invert?100-v:v)*1.2);fill.style.background='hsl('+hue+',70%,45%)';fill.style.boxShadow='0 0 6px hsla('+hue+',70%,45%,0.3)';valEl.textContent=Math.round(v);};
       return {row,upd};
     }
     function elapsed(ts){return(Date.now()-(ts||Date.now()))/60000;}
@@ -58,8 +59,10 @@ registerModule('digital-pet', {
     function curWaste(){return(sec.waste||10)+elapsed(sec.lastCleaned)*0.5;}
     const hS=makeStat('Hunger',curHunger);stats.appendChild(hS.row);
     const haS=makeStat('Mood',curHappy);stats.appendChild(haS.row);
-    const wS=makeStat('Dirt',curWaste);stats.appendChild(wS.row);
+    const wS=makeStat('Dirt',curWaste,true);stats.appendChild(wS.row);
     w.appendChild(stats);
+    // Info line
+    const infoEl=document.createElement('div');infoEl.className='dp-info';infoEl.textContent='';w.appendChild(infoEl);
     // Actions
     const acts=document.createElement('div');acts.className='dp-actions';
     function mkBtn(label,onClick){const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent=label;b.addEventListener('click',function(e){e.stopPropagation();onClick();});acts.appendChild(b);}
@@ -166,6 +169,28 @@ registerModule('digital-pet', {
       if(moodKey!==_mood){_mood=moodKey;}
       moodLabel.textContent=moodTxt;
       setFrame();
+
+      // --- Environment props: ASCII objects in the room ---
+      var envHtml='';
+      // Food bowl (visible when hunger was recently satisfied, lastFed < 3 min ago)
+      if(Date.now()-sec.lastFed<180000)envHtml+='<pre class="dp-env-food" style="left:12px;bottom:20px;">\\___/</pre>';
+      // Trash/dirt piles when waste is high
+      if(wa>50){var piles=Math.min(3,Math.ceil(wa/30));for(var pi=0;pi<piles;pi++)envHtml+='<pre class="dp-env-dirt" style="right:'+(8+pi*18)+'px;bottom:'+(16+pi*4)+'px;">~!~</pre>';}
+      // Sparkles when happy
+      if(ha>70)envHtml+='<pre class="dp-env-sparkle" style="left:50%;top:10px;">✦</pre>';
+      // Heart when loved
+      if(moodKey==='love')envHtml+='<pre class="dp-env-heart" style="left:calc(50% + 24px);top:4px;">♥</pre>';
+      envProps.innerHTML=envHtml;
+
+      // --- Info line ---
+      var infoParts=[];
+      var hRate=Math.round((curHunger()-(sec.hunger||80))/5);
+      if(hRate!==0)infoParts.push('hunger '+hRate+'/5m');
+      var statusTxt=_walking?'walking':'watching';
+      infoParts.push(statusTxt);
+      var haRate=Math.round((curHappy()-(sec.happiness||80))/5);
+      if(haRate!==0)infoParts.push('mood '+haRate+'/5m');
+      infoEl.textContent=infoParts.join(' · ');
     }
     updateAll();
     setInterval(updateAll,5000);

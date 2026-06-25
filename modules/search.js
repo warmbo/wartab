@@ -1,7 +1,7 @@
 registerModule('search', {
   defaults: { placeholder:'Search...', engine:'Google' },
   render: (sec,card,cw)=>{
-    const w=document.createElement('div');w.style.cssText='display:flex;gap:4px;align-items:stretch;';
+    const w=document.createElement('div');w.style.cssText='display:flex;gap:4px;align-items:stretch;justify-content:var(--mod-justify,flex-start);';
     const wr=document.createElement('div');wr.className='inline-search-wrap';wr.innerHTML='<span class="search-icon"><i data-lucide="search"></i></span>';
     const i=document.createElement('input');i.type='text';i.placeholder=sec.placeholder||'Search...';wr.appendChild(i);
     w.appendChild(wr);
