@@ -1,5 +1,6 @@
 • WarTab is running!
-• Click ✎ on any card to edit it inline.
-• Drag ⠿ to reorder cards.
+<br>• Click ✎ on any card to edit it inline.
+<br>• Drag ⠿ to reorder cards.
 
 
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>

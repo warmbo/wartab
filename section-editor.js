@@ -270,6 +270,21 @@ function buildSectionEditor(sec, card, si) {
   if (!sec.styles) sec.styles = {};
   var st = sec.styles;
 
+  // Helper: update CSS vars on the live card preview without re-rendering
+  function applyStyleVars(s) {
+    var pcw = document.querySelector('[data-sec-id="' + s.id + '"]');
+    if (!pcw) return;
+    var ss = s.styles || {};
+    var ds = ss.density === 'compact' ? '0.6' : ss.density === 'comfortable' ? '1.5' : '1';
+    var sc = ss.scale === 'small' ? '0.75' : ss.scale === 'large' ? '1.4' : '1';
+    var al = ss.align || 'left';
+    pcw.style.setProperty('--mod-density-scale', ds);
+    pcw.style.setProperty('--mod-scale', sc);
+    pcw.style.setProperty('--mod-align', al);
+    pcw.style.setProperty('--mod-justify', al === 'center' ? 'center' : al === 'right' ? 'flex-end' : 'flex-start');
+    pcw.style.textAlign = al === 'left' ? '' : al;
+  }
+
   var styleToggle = document.createElement('button');
   styleToggle.className = 'dropdown-toggle';
   styleToggle.style.cssText = 'font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;padding:6px 0;margin-top:4px;cursor:pointer;border:none;background:none;display:flex;align-items:center;gap:4px;width:100%;';
@@ -299,7 +314,8 @@ function buildSectionEditor(sec, card, si) {
       ';color:var(--text-primary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);';
     ab.addEventListener('click', function() {
       st.align = a;
-      saveAndRefresh();
+      saveConfig();
+      applyStyleVars(sec);
     });
     alignRow.appendChild(ab);
   });
@@ -311,7 +327,7 @@ function buildSectionEditor(sec, card, si) {
   styleInner.appendChild(cpSelect(
     [{value:'compact',label:'Compact'},{value:'standard',label:'Standard'},{value:'comfortable',label:'Comfortable'}],
     st.density || 'standard',
-    function(v) { st.density = v; saveAndRefresh(); }
+    function(v) { st.density = v; saveConfig(); applyStyleVars(sec); }
   ));
 
   // Scale
@@ -319,7 +335,7 @@ function buildSectionEditor(sec, card, si) {
   styleInner.appendChild(cpSelect(
     [{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],
     st.scale || 'medium',
-    function(v) { st.scale = v; saveAndRefresh(); }
+    function(v) { st.scale = v; saveConfig(); applyStyleVars(sec); }
   ));
 
   styleBody.appendChild(styleInner);
