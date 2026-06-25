@@ -32,6 +32,7 @@ function emit(ev,data){(_evBus[ev]||[]).forEach(function(fn){try{fn(data);}catch
 const API_PRESETS = [
   { label:'GitHub Repo', url:'https://api.github.com/repos/warmbo/wartab', fields:[{label:'Stars',path:'stargazers_count'},{label:'Forks',path:'forks_count'},{label:'Issues',path:'open_issues_count'}], icon:'github' },
   { label:'Bitcoin Price', url:'https://api.coinbase.com/v2/prices/BTC-USD/spot', fields:[{label:'BTC/USD',path:'data.amount'}], icon:'bitcoin' },
+  { label:'Ethereum Price', url:'https://api.coinbase.com/v2/prices/ETH-USD/spot', fields:[{label:'ETH/USD',path:'data.amount'}], icon:'bitcoin' },
   { label:'Dog API', url:'https://dog.ceo/api/breeds/image/random', fields:[{label:'Breed Image',path:'message'}], icon:'dog' },
   { label:'IP Info', url:'http://ip-api.com/json/', fields:[{label:'IP',path:'query'},{label:'ISP',path:'isp'},{label:'City',path:'city'},{label:'Country',path:'country'}], icon:'map-pin' },
   { label:'Random User', url:'https://randomuser.me/api/', fields:[{label:'Name',path:'results.0.name.first'},{label:'Country',path:'results.0.location.country'}], icon:'users' },
@@ -39,6 +40,11 @@ const API_PRESETS = [
   { label:'Joke', url:'https://v2.jokeapi.dev/joke/Any?type=single', fields:[{label:'Joke',path:'joke'}], icon:'message-circle' },
   { label:'ISS Location', url:'http://api.open-notify.org/iss-now.json', fields:[{label:'Lat',path:'iss_position.latitude'},{label:'Lon',path:'iss_position.longitude'}], icon:'globe' },
   { label:'Nightscout CGM', url:'https://YOUR-SITE.herokuapp.com/api/v1/entries.json?count=1', fields:[{label:'Glucose',path:'0.sgv',format:'number'},{label:'Trend',path:'0.direction'},{label:'Time',path:'0.dateString'}], icon:'activity' },
+  { label:'Uptime Robot', url:'https://api.uptimerobot.com/v2/getMonitors', fields:[{label:'Monitors',path:'monitors'}], icon:'activity' },
+  { label:'Pi-hole Summary', url:'http://pi.hole/admin/api.php?summary', fields:[{label:'Queries',path:'dns_queries_today'},{label:'Blocked',path:'ads_blocked_today'},{label:'Percent',path:'ads_percentage_today',format:'percent'}], icon:'shield' },
+  { label:'Speedtest Results', url:'https://www.speedtest.net/api/js/result/1', fields:[{label:'Download',path:'download'},{label:'Upload',path:'upload'},{label:'Ping',path:'ping'}], icon:'activity' },
+  { label:'Docker Stats', url:'http://localhost:9323/containers/stats', fields:[{label:'Containers',path:'containers'}], icon:'container' },
+  { label:'Home Assistant', url:'http://homeassistant.local:8123/api/states', fields:[{label:'States',path:'length'}], icon:'home' },
 ];
 
 /* ── Icon data ── */

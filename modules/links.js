@@ -48,5 +48,56 @@ registerModule('links', {
     const al=document.createElement('button');al.className='me-link-add';al.textContent='+ Add Link';
     al.addEventListener('click',()=>{sec.links=sec.links||[];sec.links.push({label:'New',url:'https://',icon:'link'});saveAndRefreshStructural();});
     bd.appendChild(al);
+    // Batch add
+    var batchBtn = document.createElement('button');
+    batchBtn.className = 'me-link-add';
+    batchBtn.textContent = '+ Batch Add';
+    batchBtn.style.cssText = 'margin-left:6px;';
+    var batchArea = null;
+    batchBtn.addEventListener('click', function() {
+      if (batchArea) { batchArea.remove(); batchArea = null; batchBtn.textContent = '+ Batch Add'; return; }
+      batchBtn.textContent = 'Cancel Batch';
+      batchArea = document.createElement('div');
+      batchArea.style.cssText = 'margin-top:6px;';
+      batchArea.appendChild(cpLabel('Paste label/URL pairs (one per line):'));
+      var ta = document.createElement('textarea');
+      ta.className = 'cp-input';
+      ta.placeholder = 'Label\tURL\nGitHub\thttps://github.com\nReddit\thttps://reddit.com';
+      ta.style.cssText = 'min-height:80px;resize:vertical;width:100%;font-family:monospace;font-size:var(--text-xs);';
+      batchArea.appendChild(ta);
+      var addAll = document.createElement('button');
+      addAll.className = 'btn btn-glass btn-sm';
+      addAll.textContent = 'Add All';
+      addAll.style.cssText = 'margin-top:4px;';
+      addAll.addEventListener('click', function() {
+        var lines = ta.value.split('\n').filter(function(l) { return l.trim(); });
+        var added = 0;
+        lines.forEach(function(line) {
+          var parts = line.split('\t');
+          if (parts.length >= 2) {
+            var label = parts[0].trim();
+            var url = parts[1].trim();
+            if (label && url) {
+              sec.links = sec.links || [];
+              sec.links.push({ label: label, url: url, icon: 'link' });
+              added++;
+            }
+          } else if (parts.length === 1 && parts[0].match(/^https?:\/\//)) {
+            // URL only — generate label from domain
+            sec.links = sec.links || [];
+            sec.links.push({ label: parts[0].replace(/^https?:\/\//, '').split('/')[0], url: parts[0], icon: 'link' });
+            added++;
+          }
+        });
+        if (added > 0) {
+          saveAndRefreshStructural();
+          toast('Added ' + added + ' links');
+          batchArea.remove(); batchArea = null; batchBtn.textContent = '+ Batch Add';
+        }
+      });
+      batchArea.appendChild(addAll);
+      bd.insertBefore(batchArea, bd.querySelector('.me-link-add') ? bd.querySelector('.me-link-add').nextSibling : null);
+    });
+    bd.appendChild(batchBtn);
   },
 });

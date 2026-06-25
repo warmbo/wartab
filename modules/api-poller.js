@@ -206,13 +206,10 @@ registerModule('api-poller', {
     var connBody = meFieldGroup('Connection', true);
     bd.appendChild(connBody.parentNode);
 
-    connBody.appendChild(cpLabel('API URL'));
-    connBody.appendChild(cpInput('https://api.example.com/status', sec.url || '', v => { sec.url = v; saveConfig(); }));
-
-    // Preset selector
-    connBody.appendChild(cpLabel('Preset'));
+    // Preset selector — FIRST, before URL, because presets are the quickest path
+    connBody.appendChild(cpLabel('Quick Preset'));
     const presetSel = document.createElement('select'); presetSel.className = 'cp-input';
-    presetSel.appendChild(new Option('— None —', ''));
+    presetSel.appendChild(new Option('— Choose a preset —', ''));
     API_PRESETS.forEach(function(p) {
       const opt = new Option(p.label, p.url);
       if (p.url === sec.url) opt.selected = true;
@@ -230,6 +227,9 @@ registerModule('api-poller', {
       }
     });
     connBody.appendChild(presetSel);
+
+    connBody.appendChild(cpLabel('API URL (or pick a preset above)'));
+    connBody.appendChild(cpInput('https://api.example.com/status', sec.url || '', v => { sec.url = v; saveConfig(); }));
 
     // HTTP Method
     connBody.appendChild(cpLabel('Method'));
@@ -302,6 +302,17 @@ registerModule('api-poller', {
         // Row 1: Label + Field path
         const row1 = document.createElement('div');
         row1.style.cssText = 'display:flex;gap:4px;margin-bottom:6px;align-items:center;';
+        // Auto-generate label from field path
+        function autoLabel(p) {
+          if (!p) return '';
+          var last = p.split('.').pop();  // e.g. "stargazers_count"
+          return last
+            .replace(/_/g, ' ')           // "stargazers count"
+            .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase support
+            .replace(/^\w/, function(c) { return c.toUpperCase(); }) // Capitalize
+            .replace(/\s+\w/g, function(c) { return c.toUpperCase(); }); // Title case
+        }
+
         const lInp = document.createElement('input'); lInp.className = 'cp-input';
         lInp.placeholder = 'Label'; lInp.value = m.label || '';
         lInp.style.cssText = 'flex:1;padding:5px 6px;font-size:var(--text-2xs);';
@@ -309,7 +320,15 @@ registerModule('api-poller', {
         const pInp = document.createElement('input'); pInp.className = 'cp-input';
         pInp.placeholder = 'Field path (e.g. data.amount)'; pInp.value = m.field || '';
         pInp.style.cssText = 'flex:2;padding:5px 6px;font-size:var(--text-2xs);';
-        pInp.addEventListener('change', () => { sec.mappings[fi].field = pInp.value; saveConfig(); });
+        pInp.addEventListener('change', () => {
+          sec.mappings[fi].field = pInp.value;
+          // Auto-generate label if current label is empty or auto-generated
+          if (!sec.mappings[fi].label || sec.mappings[fi].label === autoLabel(m.field)) {
+            sec.mappings[fi].label = autoLabel(pInp.value);
+            lInp.value = autoLabel(pInp.value);
+          }
+          saveConfig();
+        });
         const rm = document.createElement('button'); rm.className = 'btn btn-glass btn-sm';
         rm.textContent = '✕'; rm.title = 'Remove';
         rm.style.cssText = 'padding:2px 5px;font-size:var(--text-2xs);';

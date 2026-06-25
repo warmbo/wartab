@@ -257,6 +257,19 @@ registerModule('git', {
   },
 
   editor: (sec, card, bd) => {
+    // Quick setup: paste a repo URL to auto-detect forge + owner + repo
+    bd.appendChild(cpLabel('Quick Setup (paste repo URL)'));
+    var quickInp = cpInput('https://github.com/owner/repo', '', function(v) {
+      var match;
+      match = v.match(/github\.com\/([^\/]+)\/([^\/\?#]+)/);
+      if (match) { sec.forge = 'github'; sec.owner = match[1]; sec.repo = match[2].replace(/\.git$/, ''); saveAndRefreshStructural(); return; }
+      match = v.match(/gitlab\.com\/([^\/]+)\/([^\/\?#]+)/);
+      if (match) { sec.forge = 'gitlab'; sec.owner = match[1]; sec.repo = match[2].replace(/\.git$/, ''); saveAndRefreshStructural(); return; }
+      match = v.match(/(https?:\/\/[^\/]+)\/([^\/]+)\/([^\/\?#]+)/);
+      if (match) { sec.forge = 'gitea'; sec.url = match[1]; sec.owner = match[2]; sec.repo = match[3].replace(/\.git$/, ''); saveAndRefreshStructural(); }
+    });
+    bd.appendChild(quickInp);
+
     bd.appendChild(cpLabel('Git Forge'));
     bd.appendChild(cpSelect(
       [{ value: 'github', label: 'GitHub' },
