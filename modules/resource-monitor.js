@@ -6,7 +6,7 @@
    ═══════════════════════════════════════════ */
 if(!window._rmCache)window._rmCache={};
 registerModule('resource-monitor', {
-  defaults: { source:'local', glancesUrl:'http://localhost:61209', refreshInterval:3, graphMode:true },
+  defaults: { source:'local', glancesUrl:'http://localhost:61209', refreshInterval:3, graphMode:true, ringMode:false },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='resource-monitor';
     w.style.cssText='display:flex;flex-direction:column;gap:8px;padding:4px 0;';
@@ -28,6 +28,8 @@ registerModule('resource-monitor', {
     }
     var metrics=['cpu','ram','disk','gpu'];
     var showMetrics=sec.showMetrics||{cpu:true,ram:true,disk:true,gpu:true,net:true};
+    var ringMode=sec.ringMode;
+    w.dataset.ringMode=ringMode?'1':'0';
     // Canvas sparkline renderer — draws a polyline scaled to fill the canvas
     function hexToRgba(h,a){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return'rgba('+r+','+g+','+b+','+a+')';}
     function drawSparkline(canvas,data,color,fixedMax){
@@ -120,9 +122,18 @@ registerModule('resource-monitor', {
       const labelRow=document.createElement('div');labelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
       const lbl=document.createElement('span');lbl.style.cssText='color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
       lbl.textContent=label;
+      const rightSide=document.createElement('span');rightSide.style.cssText='display:flex;align-items:center;gap:6px;';
       const val=document.createElement('span');val.className='rm-val-'+key;val.style.cssText='color:var(--text-primary);font-variant-numeric:tabular-nums;';
       val.textContent='--';
-      labelRow.appendChild(lbl);labelRow.appendChild(val);row.appendChild(labelRow);
+      rightSide.appendChild(val);
+      // Progress ring for ram/disk when ringMode is on
+      var ring=null;
+      if(ringMode && (key==='ram'||key==='disk')){
+        ring=document.createElement('span');ring.className='rm-ring-'+key;
+        ring.style.cssText='display:inline-flex;align-items:center;';
+        rightSide.appendChild(ring);
+      }
+      labelRow.appendChild(lbl);labelRow.appendChild(rightSide);row.appendChild(labelRow);
       const track=document.createElement('div');track.className='rm-track-'+key;
       track.style.cssText='height:6px;background:rgba(255,255,255,0.06);overflow:hidden;';
       const fill=document.createElement('div');fill.className='rm-fill-'+key;
@@ -132,7 +143,7 @@ registerModule('resource-monitor', {
       var cwrap=document.createElement('div');cwrap.style.cssText='display:none;height:48px;position:relative;';
       cwrap.appendChild(canvas);
       row.appendChild(track);row.appendChild(cwrap);
-      return {row:row,fill:fill,val:val,canvas:canvas,cwrap:cwrap,track:track,key:key};
+      return {row:row,fill:fill,val:val,canvas:canvas,cwrap:cwrap,track:track,key:key,ring:ring};
     }
     var rows={};
     metrics.forEach(function(m){
@@ -269,6 +280,10 @@ registerModule('resource-monitor', {
         var mu=mem.active?Math.round(mem.active/1024/1024/1024*10)/10:0;
         var mt=mem.total?Math.round(mem.total/1024/1024/1024*10)/10:0;
         rows.ram.val.textContent=mu+'/'+mt+'GB';pushGraph('ram',memPct);
+        if(ringMode && rows.ram.ring){
+          rows.ram.ring.innerHTML='';
+          rows.ram.ring.appendChild(ds.progressRing(memPct,100,28,3));
+        }
         // Disk — I/O speed (delta-based, like network)
         var dio=d.disk_io||{};
         var dr=dio.readsectors||0,dw=dio.writesectors||0;
@@ -338,6 +353,7 @@ registerModule('resource-monitor', {
     bd.appendChild(urlWrap);
     bd.appendChild(cpRange('Poll interval (s)',sec.refreshInterval||3,1,60,function(v){sec.refreshInterval=parseInt(v);saveAndRefresh();}));
     bd.appendChild(cpCheck('Show graphs',sec.graphMode,function(v){sec.graphMode=v;saveAndRefresh();}));
+    bd.appendChild(cpCheck('Progress rings (RAM/Disk)',sec.ringMode,function(v){sec.ringMode=v;saveAndRefresh();}));
     // Per-metric toggles
     if(!sec.showMetrics)sec.showMetrics={cpu:true,ram:true,disk:true,gpu:true,net:true};
     bd.appendChild(cpLabel('Show Metrics'));

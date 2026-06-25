@@ -171,7 +171,15 @@ registerModule('weather', {
 
         var feelsEl = document.createElement('div');
         feelsEl.className = 'weather-feels';
-        feelsEl.textContent = desc;
+        // Replace plain text desc with a badge
+        var badgeVariant = 'info';
+        if (code >= 95) badgeVariant = 'error';       // thunderstorm
+        else if (code >= 71) badgeVariant = 'info';    // snow
+        else if (code >= 61) badgeVariant = 'warning'; // rain
+        else if (code >= 51) badgeVariant = 'warning'; // drizzle
+        else if (code >= 45) badgeVariant = ''; // fog
+        if (badgeVariant) feelsEl.appendChild(ds.badge(desc, badgeVariant));
+        else feelsEl.appendChild(ds.badge(desc));
         tempWrap.appendChild(feelsEl);
         contentEl.appendChild(tempWrap);
 
