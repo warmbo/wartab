@@ -40,19 +40,19 @@ function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
   wrapConfigCards(body);
 }
 
-/* ── Dashboard tab: Page + Layout ── */
+/* ── Dashboard tab: Branding + Current Page + Layout defaults ── */
 function buildDashboardPanel(body){
   const brand=config.branding||{};
 
-  body.appendChild(ps('Page'));
+  body.appendChild(ps('Branding'));
   const br=el('div','display:flex;gap:var(--space-2);align-items:flex-start;');
-  const tg=el('div','flex:1;');tg.appendChild(el('label','display:block;font-size:var(--text-sm);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);','Page Title'));
+  const tg=el('div','flex:1;');tg.appendChild(el('label','display:block;font-size:var(--text-sm);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);','Header Title'));
   const ti=el('input','width:100%;padding:8px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;');
   ti.type='text';ti.value=brand.title||'WarTab';
   ti.addEventListener('change',()=>{if(!config.branding)config.branding={};config.branding.title=ti.value;applyTheme();saveConfig();buildConfigPanel();});
   tg.appendChild(ti);br.appendChild(tg);
 
-  const ig=el('div','flex-shrink:0;');ig.appendChild(el('label','display:block;font-size:var(--text-sm);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);','Icon'));
+  const ig=el('div','flex-shrink:0;');ig.appendChild(el('label','display:block;font-size:var(--text-sm);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);','Header Icon'));
   const ir2=el('div','display:flex;gap:4px;align-items:center;');
   const ip=el('span','font-size:var(--text-xl);width:30px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);');
   const bi=brand.icon||'sword';
@@ -62,8 +62,27 @@ function buildDashboardPanel(body){
   ib.addEventListener('click',()=>openIconPicker(url=>{if(!config.branding)config.branding={};config.branding.icon=url;applyTheme();saveConfig();buildConfigPanel();}));
   ir2.appendChild(ib);ig.appendChild(ir2);br.appendChild(ig);body.appendChild(br);
 
-  body.appendChild(ps('Layout'));
-  body.appendChild(pf('range','','Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
+  // Current page name/icon/columns
+  body.appendChild(ps('Current Page'));
+  var _cp = config.pages[config.currentPage];
+  if (_cp) {
+    body.appendChild(pf('text','','Page Name',null,_cp.name||'Untitled',function(v){_cp.name=v;saveConfig();renderPageNav();}));
+    var piRow=el('div','display:flex;gap:6px;align-items:center;margin-bottom:var(--space-3);');
+    piRow.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);','Tab Icon'));
+    var piPrev=document.createElement('span');
+    if (_cp.icon && isLucideName(_cp.icon)) piPrev.appendChild(renderLucideEl(_cp.icon,''));
+    else piPrev.textContent=_cp.icon||'';
+    piPrev.style.cssText='font-size:var(--text-xl);width:30px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);';
+    var piBtn=el('button','','Change');piBtn.className='btn btn-glass btn-sm';
+    piBtn.addEventListener('click',function(){openIconPicker(function(url){_cp.icon=url;saveConfig();renderPageNav();buildConfigPanel();});});
+    piRow.appendChild(piPrev);piRow.appendChild(piBtn);
+    body.appendChild(piRow);
+    body.appendChild(pf('range','','Override Columns',null,_cp.cols||config.layout.cols,function(v){_cp.cols=parseInt(v);saveConfig();renderAll();},{min:1,max:6}));
+  }
+
+  // Layout defaults (global fallback)
+  body.appendChild(ps('Layout Defaults'));
+  body.appendChild(pf('range','','Default Columns',null,config.layout.cols,v=>{config.layout.cols=parseInt(v);applyChanges();renderAll();},{min:1,max:6}));
   body.appendChild(pf('range','','Card Gap (px)',null,config.layout.gap,v=>{config.layout.gap=parseInt(v);applyChanges();renderAll();},{min:4,max:40}));
   body.appendChild(pf('range','','Page Width Padding (%)',null,parseInt(config.layout.pageWidthPadding)||2,v=>{config.layout.pageWidthPadding=parseInt(v);applyChanges();renderAll();},{min:0,max:15}));
   body.appendChild(pf('range','','Page Height Padding (%)',null,config.layout.pagePadding||2,v=>{config.layout.pagePadding=parseInt(v);applyChanges();renderAll();},{min:0,max:15}));
@@ -114,31 +133,8 @@ if(v==='gradient'){if(!config.theme.bgValue.includes(','))config.theme.bgValue='
   body.appendChild(el('div','margin-bottom:var(--space-3);',null,bgr));
   body.appendChild(chk('Random background on load',config.theme.bgRotate,v=>{config.theme.bgRotate=v;saveConfig();}));
 
-  /* Current Page */
-  body.appendChild(ps('Current Page'));
-  var _cp = config.pages[config.currentPage];
-  if (_cp) {
-    body.appendChild(pf('text','','Page Name',null,_cp.name||'Untitled',function(v){_cp.name=v;saveConfig();renderPageNav();}));
-
-    // Icon
-    var iconRow=el('div','display:flex;gap:6px;align-items:center;margin-bottom:var(--space-3);');
-    iconRow.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);','Icon'));
-    var iconPreview=document.createElement('span');
-    if (_cp.icon && isLucideName(_cp.icon)) iconPreview.appendChild(renderLucideEl(_cp.icon,''));
-    else iconPreview.textContent=_cp.icon||'';
-    iconPreview.style.cssText='font-size:var(--text-xl);width:30px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);';
-    var changeBtn=el('button','','Change');changeBtn.className='btn btn-glass btn-sm';
-    changeBtn.addEventListener('click',function(){openIconPicker(function(url){_cp.icon=url;saveConfig();renderPageNav();buildConfigPanel();});});
-    iconRow.appendChild(iconPreview);
-    iconRow.appendChild(changeBtn);
-    body.appendChild(iconRow);
-
-    // Columns
-    body.appendChild(pf('range','','Columns',null,_cp.cols||config.layout.cols,function(v){_cp.cols=parseInt(v);saveConfig();renderAll();},{min:1,max:6}));
-  }
-
-  /* Appearance */
-  body.appendChild(ps('Appearance'));
+  /* Card Styles */
+  body.appendChild(ps('Card Styles'));
   body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark'},{value:'light',label:'Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
   body.appendChild(pf('range','','Card Transparency',null,Math.round((1-(config.theme.cardOpacity||1))*100),v=>{config.theme.cardOpacity=1-(parseInt(v)/100);applyChanges();},{min:0,max:100}));
   body.appendChild(pf('color','','Accent Color',null,config.theme.glow,v=>{config.theme.glow=v;applyChanges();}));
@@ -258,15 +254,6 @@ function buildSystemPanel(body){
   }
   renderSnapshots();
   body.appendChild(snapList);
-
-  /* API Keys */
-  body.appendChild(ps('API Keys'));
-  const apibox=el('div','font-size:var(--text-sm);line-height:1.7;padding:0 0 8px;');
-  apibox.innerHTML='<div style="margin-bottom:var(--space-3);color:var(--text-secondary);">Some modules need a free API key. Get yours here:</div>'+
-    '<div style="display:flex;flex-direction:column;gap:var(--space-2);">'+
-    '<div style="display:flex;gap:var(--space-2);align-items:flex-start;padding:8px 10px;background:rgba(0,0,0,0.2);"><span style="font-size:16px;">🌤</span><div><div style="font-weight:600;font-size:var(--text-sm);">Weather (OpenWeatherMap)</div><div style="font-size:var(--text-2xs);color:var(--text-tertiary);">Free tier, 60 calls/min. Sign up at <a href="https://openweathermap.org/api" target="_blank" style="color:var(--accent);">openweathermap.org/api</a></div></div></div>'+
-    '</div>';
-  body.appendChild(apibox);
 
   /* Credits */
   body.appendChild(ps('Credits'));
