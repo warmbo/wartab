@@ -206,9 +206,9 @@ ds.card = function(opts) {
     frame.appendChild(cw);
   }
 
-  /* ── Secondary (larger cards only) ── */
+  /* ── Secondary (always visible, no height-based hiding) ── */
   if (opts.secondary) {
-    var sw = _el('div', 'ds-module-secondary mod-only-large');
+    var sw = _el('div', 'ds-module-secondary');
     if (Array.isArray(opts.secondary)) {
       opts.secondary.forEach(function(s) { if (s) sw.appendChild(s); });
     } else if (opts.secondary instanceof Element) {

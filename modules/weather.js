@@ -20,9 +20,6 @@ registerModule('weather', {
 
     [data-mod-scale="small"] .weather-temp{font-size:2rem;}
     [data-mod-scale="large"] .weather-temp{font-size:3.6rem;}
-    [data-mod-height="small"] .weather-forecast{display:none;}
-    [data-mod-height="small"] .weather-detail{font-size:var(--text-xs);}
-    [data-mod-height="small"] .weather-wind-row{display:none;}
     [data-mod-height="large"] .weather-forecast{gap:16px;}
     [data-mod-height="expanded"] .weather-forecast{gap:20px;}
   `,
