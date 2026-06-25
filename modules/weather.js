@@ -1,5 +1,5 @@
 registerModule('weather', {
-  defaults: { lat:'', lon:'', units:'celsius' },
+  defaults: { zip:'', country:'US', units:'celsius' },
   css: `
     .weather-widget{text-align:center;}
     .weather-main{display:flex;align-items:center;justify-content:center;gap:12px;padding:4px 0;}
@@ -75,15 +75,43 @@ registerModule('weather', {
     var w = cw.querySelector('.weather-widget');
     if (!w) return;
 
-    function fetchOM() {
-      var lat = sec.lat, lon = sec.lon;
-      if (!lat || !lon) {
-        w.querySelector('.weather-detail').textContent = 'Set lat & lon in card editor';
+    var _cachedLat = null, _cachedLon = null;
+
+    function fetchWeather() {
+      var zip = sec.zip, country = sec.country || 'US';
+      if (!zip) {
+        w.querySelector('.weather-detail').textContent = 'Set zip code in card editor';
         return;
       }
+
+      // Use cached coordinates if available (avoids re-geocoding every 10min)
+      if (_cachedLat && _cachedLon) {
+        doFetch(_cachedLat, _cachedLon);
+        return;
+      }
+
+      // Geocode zip → lat/lon via Open-Meteo geocoding API (free, no key)
+      var geoUrl = 'https://geocoding-api.open-meteo.com/v1/search?name=' +
+        encodeURIComponent(zip) + '&count=1&country=' + encodeURIComponent(country);
+
+      fetch(geoUrl).then(function(r) { return r.json(); }).then(function(geo) {
+        if (!geo.results || !geo.results.length) {
+          w.querySelector('.weather-detail').textContent = 'Location not found for ' + zip;
+          return;
+        }
+        _cachedLat = geo.results[0].latitude;
+        _cachedLon = geo.results[0].longitude;
+        doFetch(_cachedLat, _cachedLon);
+      }).catch(function(err) {
+        w.querySelector('.weather-detail').textContent = 'Geocoding failed';
+        console.error('Open-Meteo geocoding failed:', err);
+      });
+    }
+
+    function doFetch(lat, lon) {
       var isF = sec.units === 'fahrenheit';
-      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + encodeURIComponent(lat) +
-        '&longitude=' + encodeURIComponent(lon) +
+      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' +
+        encodeURIComponent(lat) + '&longitude=' + encodeURIComponent(lon) +
         '&current_weather=true' +
         '&daily=temperature_2m_max,temperature_2m_min,weathercode' +
         '&timezone=auto' +
@@ -99,7 +127,6 @@ registerModule('weather', {
         var wind = cw.windspeed || 0;
         var unit = isF ? '°F' : '°C';
 
-        // Icon mapping (WMO codes)
         var iconMap = {
           0: 'sun', 1: 'sun', 2: 'cloud-sun',
           3: 'cloud',
@@ -129,20 +156,15 @@ registerModule('weather', {
         var icon = iconMap[code] || 'cloud';
         var desc = wmoDescs[code] || '';
 
-        // Temperature element
         w.querySelector('.weather-temp').textContent = temp + unit;
-        // Icon via Lucide
         var ie = w.querySelector('.weather-icon');
         ie.setAttribute('data-lucide', icon);
-        // Description
         w.querySelector('.weather-detail').textContent = desc;
-        // Wind
         var we = w.querySelector('.weather-wind');
         we.style.display = '';
         we.querySelector('.weather-wind-val').textContent = wind + (isF ? ' mph' : ' km/h');
         renderIcons();
 
-        // Forecast
         var daily = d.daily;
         if (daily && daily.temperature_2m_max) {
           var fcEl = w.querySelector('.weather-forecast');
@@ -150,7 +172,6 @@ registerModule('weather', {
           var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
           var today = new Date().getDay();
           var maxTemps = daily.temperature_2m_max;
-          var minTemps = daily.temperature_2m_min || [];
           var wCodes = daily.weathercode || [];
           for (var i = 0; i < Math.min(maxTemps.length, 5); i++) {
             var dayEl = document.createElement('div');
@@ -172,7 +193,6 @@ registerModule('weather', {
           renderIcons();
         }
 
-        // Timestamp
         var ts = cw.time ? new Date(cw.time + 'Z') : new Date();
         w.querySelector('.weather-ts').textContent = 'Updated ' + ts.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 
@@ -183,14 +203,14 @@ registerModule('weather', {
       });
     }
 
-    fetchOM();
+    fetchWeather();
     // Refresh every 10 minutes
     if (card._weatherInterval) clearInterval(card._weatherInterval);
-    card._weatherInterval = setInterval(fetchOM, 600000);
+    card._weatherInterval = setInterval(fetchWeather, 600000);
   },
   settings: [
-    { name:'lat', label:'Latitude', type:'text', placeholder:'e.g. 51.50' },
-    { name:'lon', label:'Longitude', type:'text', placeholder:'e.g. -0.13' },
+    { name:'zip', label:'Zip Code', type:'text', placeholder:'e.g. 90210' },
+    { name:'country', label:'Country Code', type:'text', placeholder:'US', default:'US' },
     { name:'units', label:'Units', type:'select', options:[{value:'celsius',label:'°C'},{value:'fahrenheit',label:'°F'}], default:'celsius' },
   ],
 });
