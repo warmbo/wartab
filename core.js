@@ -48,7 +48,98 @@ const API_PRESETS = [
 ];
 
 /* ── Icon data ── */
-const EMOJIS = ['🔍','🕐','🌐','🖥️','📖','📝','🏠','🎬','🛡️','📊','🐳','🔐','🐙','🦊','📚','📦','🐍','💬','▶️','🎮','🐦','🌍','⚛️','📘','⚔️','⚙️','🔄','✕','🔗','🌟','🔥','💡','🚀','⚡','🎯','🧩','🎨','📡','🔧','🗄️','💾','🖨️','📷','🎥','🎵','🎙️','📻','📺','💻','⌨️','🖱️','📱','💽','💿','📀','🔌','🔋','💎','🧊','⛅','☀️','🌙','⭐','✨','💫','🎆','🌈','☁️','🌊','🔥','🍃','🌱','🌿','☘️','🍀','🏆','🥇','🥈','🥉','🏅','🎖️','🏁','🚩','🎌','📌','📍','🎪','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎸','🎺','🎻','🎲','♟️','🎯','🎳','🎮','🕹️','🎰','🎲','🧩','♠️','♥️','♦️','♣️'];
+
+/**
+ * Generate all Unicode emoji characters from defined ranges.
+ * Covers all Unicode Emoji v15.0 blocks across Supplementary and BMP planes.
+ * No external API, no network requests, no dependencies.
+ */
+function generateEmojis() {
+  var emojis = [];
+  // Unicode emoji ranges: [start, end] as hex strings
+  var ranges = [
+    // Smileys & Emotion
+    ['1F600','1F64F'],
+    // People & Body (supplemental)
+    ['1F900','1F9FF'],
+    ['1FA70','1FAFF'],
+    // Gestures, hand symbols
+    ['1F440','1F4FE'],
+    // Animals & Nature
+    ['1F400','1F43F'],
+    // Food & Drink
+    ['1F330','1F3FF'],
+    // Travel & Places (supplementary)
+    ['1F680','1F6FF'],
+    // Travel & Places (BMP)
+    ['2600','26FF'],
+    // Activities, sports
+    ['1F3A0','1F3FF'],
+    // Objects
+    ['1F500','1F5FF'],
+    // Symbols, arrows, signs (BMP)
+    ['2700','27BF'],
+    ['2B00','2BFF'],
+    ['2900','297F'],
+    ['2300','23FF'],
+    ['25A0','25FF'],
+    ['3000','303F'],
+    ['3200','32FF'],
+    ['A9','A9'],      // ©
+    ['AE','AE'],      // ®
+    // Misc symbols and dingbats
+    ['2E80','2EFF'],
+    ['2000','206F'],
+    ['2100','214F'],
+    ['2400','243F'],
+    ['2440','245F'],
+    ['2460','24FF'],
+    ['2500','257F'],
+    ['2580','259F'],
+    ['2C60','2C7F'],
+    // Playing cards, chess
+    ['1F0A0','1F0FF'],
+    // Geometric shapes, misc
+    ['1F780','1F7FF'],
+    ['1F800','1F8FF'],
+    // Enclosed alphanumerics
+    ['1F100','1F1FF'],
+    // Regional indicator symbols (flags)
+    ['1F1E6','1F1FF'],
+    // Dingbats
+    ['2700','27BF'],
+    // Supplemental arrows
+    ['27F0','27FF'],
+    ['2B00','2BFF'],
+    // CJK symbols
+    ['2FF0','2FFF'],
+    // Tags
+    ['E0000','E007F'],
+  ];
+  ranges.forEach(function(r) {
+    var start = parseInt(r[0], 16);
+    var end = parseInt(r[1], 16);
+    for (var cp = start; cp <= end; cp++) {
+      // Skip non-printable control characters
+      if (cp < 0x20) continue;
+      if (cp >= 0xD800 && cp <= 0xDFFF) continue; // surrogate pairs
+      if (cp >= 0xFE00 && cp <= 0xFE0F) continue; // variation selectors
+      if (cp >= 0x200C && cp <= 0x200F) continue; // zero-width joiners etc
+      if (cp === 0xFEFF) continue; // BOM
+      try {
+        var ch = String.fromCodePoint(cp);
+        // Only include printable characters that don't look like boxes
+        if (ch && ch.trim() !== '') emojis.push(ch);
+      } catch(e) {
+        // Skip invalid codepoints
+      }
+    }
+  });
+  // Deduplicate
+  return emojis.filter(function(e, i) { return emojis.indexOf(e) === i; });
+}
+
+const EMOJIS = generateEmojis();
 
 const LUCIDE_ICONS = ['search', 'clock', 'globe', 'monitor', 'book-open', 'edit-3', 'sword', 'home', 'film', 'shield', 'bar-chart-3', 'container', 'lock', 'github', 'gitlab', 'package', 'code-2', 'message-circle', 'play', 'gamepad-2', 'twitter', 'book', 'settings', 'plus', 'x', 'link', 'star', 'zap', 'flag', 'compass', 'map-pin', 'server', 'database', 'external-link', 'mail', 'music', 'image', 'cpu', 'hard-drive', 'activity', 'wifi', 'radio', 'smartphone', 'tablet', 'laptop', 'watch', 'camera', 'video', 'headphones', 'volume-2', 'monitor-speaker', 'tv', 'layers', 'grid', 'list', 'columns', 'layout', 'panel-top', 'panel-bottom', 'panel-left', 'panel-right', 'square', 'circle', 'triangle', 'hexagon', 'diamond', 'box', 'archive', 'folder', 'file', 'file-text', 'clipboard', 'check-square', 'check', 'x-square', 'trash-2', 'refresh-cw', 'rotate-cw', 'rotate-ccw', 'download', 'upload', 'cloud', 'cloud-drizzle', 'cloud-snow', 'cloud-lightning', 'sun', 'moon', 'thermometer', 'wind', 'droplets', 'umbrella', 'user', 'users', 'user-plus', 'user-check', 'user-x', 'bell', 'bell-ring', 'bell-off', 'eye', 'eye-off', 'lock', 'unlock', 'key', 'fingerprint', 'shield-off', 'alert-triangle', 'alert-circle', 'alert-octagon', 'info', 'help-circle', 'thumbs-up', 'thumbs-down', 'smile', 'frown', 'meh', 'heart', 'calendar', 'calendar-check', 'calendar-x', 'alarm-clock', 'timer', 'hourglass', 'stopwatch', 'map', 'navigation', 'navigation-2', 'crosshair', 'target', 'locate', 'send', 'inbox', 'mail', 'mail-open', 'at-sign', 'phone', 'message-square', 'message-text', 'chat', 'printer', 'scanner', 'bluetooth', 'battery', 'battery-charging', 'power', 'plug', 'bookmark', 'tag', 'award', 'trending-up', 'trending-down', 'pie-chart', 'sliders', 'filter', 'tool', 'wrench', 'hammer', 'paintbrush', 'palette', 'pen-tool', 'eraser', 'scissors', 'copy', 'paste', 'undo', 'redo', 'bold', 'italic', 'underline', 'type', 'hash', 'percent', 'chevron-up', 'chevron-down', 'chevron-left', 'chevron-right', 'chevrons-up', 'chevrons-down', 'chevrons-left', 'chevrons-right', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'maximize', 'minimize', 'expand', 'shrink', 'move', 'menu', 'more-horizontal', 'more-vertical', 'sidebar', 'columns', 'rows', 'split', 'sunrise', 'sunset', 'cloud-sun', 'cloud-moon', 'cloudy', 'cloud-off', 'haze', 'mist', 'snowflake', 'sparkles', 'loader', 'radio'];
 
