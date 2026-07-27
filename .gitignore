@@ -1,0 +1,14 @@
+__pycache__/
+node_modules/
+snapshots/
+dist/
+# icons/ is tracked for extension bundling (selfhst-index.json, extension PNGs)
+uploads/
+uploads/*.svg
+uploads/*.png
+uploads/*.jpg
+uploads/*.webp
+uploads/*.gif
+config.json
+
+notes/

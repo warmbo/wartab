@@ -1,0 +1,62 @@
+"""First-run configuration served when WarTab has no config.json."""
+
+
+def build_minimal_config(git_version):
+    return {
+        "version": git_version or "dev",
+        "branding": {"title": "WarTab", "icon": "sword"},
+        "theme": {
+            "bgType": "gradient",
+            "bgValue": "#0a0a0a, #1a1a1a, #0d0d0d",
+            "bgBlur": 0,
+            "bgDim": 0,
+            "blur": 20,
+            "glow": "#888888",
+            "fontSizeText": 14,
+            "fontSizeHeading": 16,
+            "fontFamily": "Inter",
+            "cardBg": "dark",
+            "fontColor": "#cccccc",
+            "cardOpacity": 1,
+            "cardRadius": 16,
+            "topBarScale": 1,
+            "bgRotate": False,
+            "animations": True,
+            "showAccentBar": True,
+        },
+        "statusBar": {
+            "enabled": False,
+            "source": "local",
+            "glancesUrl": "",
+            "customUrl": "",
+            "refreshInterval": 15,
+            "items": ["cpu", "memory", "disk", "uptime"],
+            "hostname": False,
+        },
+        "layout": {
+            "cols": 4,
+            "gap": 16,
+            "pageWidth": 100,
+            "pagePadding": 2,
+            "pageWidthPadding": 2,
+        },
+        "search": {
+            "engine": "https://www.google.com/search?q=",
+            "engines": {
+                "Google": "https://www.google.com/search?q=",
+                "DuckDuckGo": "https://duckduckgo.com/?q=",
+                "Brave": "https://search.brave.com/search?q=",
+                "Bing": "https://www.bing.com/search?q=",
+                "YouTube": "https://www.youtube.com/results?search_query=",
+                "Reddit": "https://www.reddit.com/search/?q=",
+                "Wikipedia": "https://en.wikipedia.org/w/index.php?search=",
+            },
+            "selected": "Google",
+            "openInNewTab": True,
+        },
+        "currentPage": "page-new-tab",
+        "pageOrder": ["page-new-tab"],
+        "pages": {
+            "page-new-tab": {"name": "New Tab", "icon": "layout", "cards": []}
+        },
+    }

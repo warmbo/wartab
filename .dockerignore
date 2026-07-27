@@ -1,0 +1,16 @@
+# WarTab — .dockerignore
+# Excludes large/unnecessary files from the Docker build context
+
+.git
+.gitignore
+*.md
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+Thumbs.db

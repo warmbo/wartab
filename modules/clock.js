@@ -1,0 +1,115 @@
+registerModule('clock', {
+  defaults: { format24h:false, showDate:true, showCalendar:false },
+  css: `
+    .clock-time{font-size:calc(var(--text-3xl) * var(--mod-font-content,1));font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;text-shadow:var(--emboss-shadow);}
+    .clock-date{color:var(--text-secondary);margin-top:var(--space-1);letter-spacing:1px;text-transform:uppercase;font-size:calc(var(--text-xs) * var(--mod-font-secondary,1));}
+    .calendar-widget{margin-top:var(--space-2);font-size:calc(var(--text-xs) * var(--mod-font-secondary,1));}
+    .calendar-month{text-align:center;font-weight:600;margin-bottom:var(--space-1);color:var(--text-secondary);font-size:calc(var(--text-xs) * var(--mod-font-secondary,1));text-transform:uppercase;letter-spacing:0.5px;}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;text-align:center;}
+    .calendar-day-header{font-size:calc(var(--text-3xs) * var(--mod-font-secondary,1));color:var(--text-tertiary);padding:2px 0;text-transform:uppercase;}
+    .calendar-day{padding:3px 0;font-variant-numeric:tabular-nums;transition:background var(--anim-fast);}
+    .calendar-day.today{background:var(--accent-glass);color:var(--text-primary);font-weight:600;}
+    .calendar-day.other-month{color:var(--text-tertiary);opacity:0.4;}
+
+    [data-mod-scale="small"] .clock-time{font-size:calc(var(--text-2xl) * var(--mod-font-content,1));}
+    [data-mod-scale="large"] .clock-time{font-size:calc(var(--text-4xl) * var(--mod-font-content,1));}
+
+    [data-mod-height="large"] .calendar-day{padding:6px 0;}
+    [data-mod-height="large"] .calendar-month{font-size:calc(var(--text-sm) * var(--mod-font-secondary,1));margin-bottom:var(--space-2);}
+    [data-mod-height="large"] .calendar-widget{margin-top:var(--space-3);}
+
+    [data-mod-height="expanded"] .calendar-day{padding:10px 0;}
+    [data-mod-height="expanded"] .calendar-month{font-size:calc(var(--text-base) * var(--mod-font-secondary,1));margin-bottom:var(--space-3);}
+    [data-mod-height="expanded"] .calendar-grid{gap:2px;}
+  `,
+  render: function(sec, card, cw) {
+    var w = document.createElement('div');
+    w.className = 'clock-widget';
+
+    /* Time — always visible */
+    var timeEl = document.createElement('div');
+    timeEl.className = 'clock-time';
+    timeEl.textContent = '--:--';
+    w.appendChild(timeEl);
+
+    /* Date — controlled by showDate setting */
+    var dateEl = document.createElement('div');
+    dateEl.className = 'clock-date';
+    dateEl.style.display = sec.showDate ? '' : 'none';
+    w.appendChild(dateEl);
+
+    /* Calendar — controlled by showCalendar setting */
+    var calEl = document.createElement('div');
+    calEl.className = 'calendar-widget';
+    calEl.id = 'cal-' + sec.id;
+    calEl.style.display = sec.showCalendar ? '' : 'none';
+    w.appendChild(calEl);
+
+    cw.appendChild(w);
+
+  },
+  onMount: function(sec, card, cw) {
+    var w = cw.querySelector('.clock-widget');
+    if (!w) return;
+
+    function tick() {
+      if (!cw.isConnected) return;
+      var now = new Date();
+      var h = now.getHours();
+      var m = now.getMinutes();
+      var timeStr;
+      if (sec.format24h) {
+        timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+      } else {
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        var h12 = h % 12 || 12;
+        timeStr = h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+      }
+
+      var timeEl = w.querySelector('.clock-time');
+      if (timeEl) timeEl.textContent = timeStr;
+
+      var dateEl = w.querySelector('.clock-date');
+      if (dateEl && sec.showDate) {
+        dateEl.textContent = now.toLocaleDateString('en-US', {
+          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+        }).toUpperCase();
+      }
+
+      /* Calendar */
+      var calEl = w.querySelector('.calendar-widget');
+      if (calEl && sec.showCalendar) {
+        var year = now.getFullYear();
+        var month = now.getMonth();
+        var firstDay = new Date(year, month, 1).getDay();
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
+        var today = now.getDate();
+
+        var months = ['January','February','March','April','May','June','July',
+          'August','September','October','November','December'];
+        var html = '<div class="calendar-month">' + months[month] + ' ' + year + '</div>';
+        html += '<div class="calendar-grid">';
+        ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(function(d) {
+          html += '<div class="calendar-day-header">' + d + '</div>';
+        });
+        for (var i = 0; i < firstDay; i++) {
+          html += '<div class="calendar-day other-month"></div>';
+        }
+        for (var d = 1; d <= daysInMonth; d++) {
+          html += '<div class="calendar-day' + (d === today ? ' today' : '') + '">' + d + '</div>';
+        }
+        html += '</div>';
+        calEl.innerHTML = html;
+      }
+    }
+
+    tick();
+    var interval = setInterval(tick, 10000);
+    return function() { clearInterval(interval); };
+  },
+  settings: [
+    { name:'format24h', label:'Format', type:'select', options:[{value:false,label:'12-hour'},{value:true,label:'24-hour'}], default:false, structural:true },
+    { name:'showDate', label:'Show date', type:'checkbox', default:true, structural:true },
+    { name:'showCalendar', label:'Show calendar', type:'checkbox', default:false, structural:true },
+  ],
+});
