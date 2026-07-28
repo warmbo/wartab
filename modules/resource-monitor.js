@@ -9,7 +9,6 @@ registerModule('resource-monitor', {
   defaults: { source:'local', glancesUrl:'http://localhost:61209', refreshInterval:3, graphMode:true, ringMode:false },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='resource-monitor';
-    w.style.cssText='display:flex;flex-direction:column;gap:8px;padding:4px 0;';
     w.dataset.refresh=sec.refreshInterval||3;
     w.dataset.source=sec.source||'local';w.dataset.glancesUrl=sec.glancesUrl||'';
     w.dataset.graphMode=sec.graphMode?'1':'0';
@@ -33,14 +32,15 @@ registerModule('resource-monitor', {
     // Canvas sparkline renderer — draws a polyline scaled to fill the canvas
     function hexToRgba(h,a){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return'rgba('+r+','+g+','+b+','+a+')';}
     function drawSparkline(canvas,data,color,fixedMax){
-      if(!canvas||!data||!data.length)return;
+      if(!canvas||!data)return;
       var ctx=canvas.getContext('2d');
       var W=canvas.width,H=canvas.height,pad=2;
+      ctx.clearRect(0,0,W,H);
+      if(data.length<2)return;
       var max=fixedMax||0;
       if(!fixedMax)for(var i=0;i<data.length;i++)if(data[i]>max)max=data[i];
       if(max<1)max=1;
       var plotH=H-pad*2,plotW=W-pad*2,plotBot=H-pad;
-      ctx.clearRect(0,0,W,H);
       var pts=[];
       for(var i=0;i<data.length;i++){
         pts.push({x:pad+(i/(data.length-1||1))*plotW,y:pad+plotH-(data[i]/max)*plotH});
@@ -73,15 +73,16 @@ registerModule('resource-monitor', {
       ctx.stroke();
     }
     function drawNetSparkline(canvas,rxData,txData){
-      if(!canvas||!rxData||!rxData.length)return;
+      if(!canvas||!rxData)return;
       var ctx=canvas.getContext('2d');
       var W=canvas.width,H=canvas.height,pad=2;
+      ctx.clearRect(0,0,W,H);
+      if(rxData.length<2)return;
       var max=0;
       for(var i=0;i<rxData.length;i++)if(rxData[i]>max)max=rxData[i];
       for(var i=0;i<txData.length;i++)if(txData[i]>max)max=txData[i];
       if(max<1)max=1;
       var plotH=H-pad*2,plotW=W-pad*2,plotBot=H-pad;
-      ctx.clearRect(0,0,W,H);
       function buildPts(data){
         var p=[];
         for(var i=0;i<data.length;i++)p.push({x:pad+(i/(data.length-1||1))*plotW,y:pad+plotH-(data[i]/max)*plotH});
@@ -118,14 +119,15 @@ registerModule('resource-monitor', {
       drawFilledCurve(rxPts,'rgba(255,255,255,0.08)','rgba(255,255,255,0.7)',1.5);
     }
     function buildMetricRow(key,label){
-      const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;gap:2px;';
-      const labelRow=document.createElement('div');labelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
-      const lbl=document.createElement('span');lbl.style.cssText='color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
+      const row=document.createElement('div');row.className='rm-metric-row';
+      const labelRow=document.createElement('div');labelRow.className='rm-label-row';
+      const lbl=document.createElement('span');lbl.className='rm-label';
       lbl.textContent=label;
-      const rightSide=document.createElement('span');rightSide.style.cssText='display:flex;align-items:center;gap:6px;';
-      const val=document.createElement('span');val.className='rm-val-'+key;val.style.cssText='color:var(--text-primary);font-variant-numeric:tabular-nums;';
+      const rightSide=document.createElement('span');rightSide.className='rm-value-group';
+      const val=document.createElement('span');val.className='rm-value rm-val-'+key;
+      const detail=document.createElement('span');detail.className='rm-value-detail';
       val.textContent='--';
-      rightSide.appendChild(val);
+      rightSide.appendChild(val);rightSide.appendChild(detail);
       // Progress ring for ram/disk when ringMode is on
       var ring=null;
       if(ringMode && (key==='ram'||key==='disk')){
@@ -134,16 +136,15 @@ registerModule('resource-monitor', {
         rightSide.appendChild(ring);
       }
       labelRow.appendChild(lbl);labelRow.appendChild(rightSide);row.appendChild(labelRow);
-      const track=document.createElement('div');track.className='rm-track-'+key;
-      track.style.cssText='height:6px;background:rgba(255,255,255,0.06);overflow:hidden;';
-      const fill=document.createElement('div');fill.className='rm-fill-'+key;
-      fill.style.cssText='height:100%;width:0%;background:var(--accent);transition:width 0.4s ease;';
+      const track=document.createElement('div');track.className='rm-track rm-track-'+key;
+      const fill=document.createElement('div');fill.className='rm-fill rm-fill-'+key;
+      fill.style.width='0%';
       track.appendChild(fill);
       var canvas=document.createElement('canvas');canvas.className='rm-spark-'+key;
-      var cwrap=document.createElement('div');cwrap.style.cssText='display:none;height:48px;position:relative;';
+      var cwrap=document.createElement('div');cwrap.className='rm-chart-wrap';cwrap.style.display='none';
       cwrap.appendChild(canvas);
       row.appendChild(track);row.appendChild(cwrap);
-      return {row:row,fill:fill,val:val,canvas:canvas,cwrap:cwrap,track:track,key:key,ring:ring};
+      return {row:row,fill:fill,val:val,detail:detail,canvas:canvas,cwrap:cwrap,track:track,key:key,ring:ring};
     }
     var rows={};
     metrics.forEach(function(m){
@@ -154,28 +155,27 @@ registerModule('resource-monitor', {
     });
     var netFill, netCanvas, netCwrap, netSpeedRow, rxEl, txEl, netRow, netLabelRow, netLbl, netVal;
     if(showMetrics.net){
-    netRow=document.createElement('div');netRow.style.cssText='display:flex;flex-direction:column;gap:2px;';
-    netLabelRow=document.createElement('div');netLabelRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-2xs);';
-    netLbl=document.createElement('span');netLbl.style.cssText='color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
+    netRow=document.createElement('div');netRow.className='rm-metric-row rm-net-row';
+    netLabelRow=document.createElement('div');netLabelRow.className='rm-label-row';
+    netLbl=document.createElement('span');netLbl.className='rm-label';
     netLbl.textContent='NET';
-    netVal=document.createElement('span');netVal.className='rm-val-net';netVal.style.cssText='color:var(--text-primary);font-variant-numeric:tabular-nums;font-size:var(--text-2xs);';
+    netVal=document.createElement('span');netVal.className='rm-value rm-val-net';
     netVal.textContent='--';
     netLabelRow.appendChild(netLbl);netLabelRow.appendChild(netVal);netRow.appendChild(netLabelRow);
-    netFill=document.createElement('div');netFill.className='rm-fill-net';
-    netFill.style.cssText='height:4px;width:0%;background:var(--accent);transition:width 0.4s ease;';
+    netFill=document.createElement('div');netFill.className='rm-fill rm-fill-net';netFill.style.width='0%';
     netRow.appendChild(netFill);
     netCanvas=document.createElement('canvas');netCanvas.className='rm-spark-net';
-    netCwrap=document.createElement('div');netCwrap.style.cssText='display:none;height:40px;position:relative;';
+    netCwrap=document.createElement('div');netCwrap.className='rm-chart-wrap rm-chart-wrap-net';netCwrap.style.display='none';
     netCwrap.appendChild(netCanvas);
     netRow.appendChild(netCwrap);
-    netSpeedRow=document.createElement('div');netSpeedRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:1px;';
+    netSpeedRow=document.createElement('div');netSpeedRow.className='rm-speed-row';
     rxEl=document.createElement('span');rxEl.className='rm-rx';
     txEl=document.createElement('span');txEl.className='rm-tx';
     netSpeedRow.appendChild(rxEl);netSpeedRow.appendChild(txEl);netRow.appendChild(netSpeedRow);
     w.appendChild(netRow);
     }
     // System info
-    const sysRow=document.createElement('div');sysRow.style.cssText='display:flex;justify-content:space-between;font-size:var(--text-3xs);color:var(--text-tertiary);margin-top:2px;';
+    const sysRow=document.createElement('div');sysRow.className='rm-system-row';
     const hostEl=document.createElement('span');hostEl.className='rm-host';
     const tsEl=document.createElement('span');tsEl.className='rm-ts';
     sysRow.appendChild(hostEl);sysRow.appendChild(tsEl);
@@ -213,6 +213,7 @@ registerModule('resource-monitor', {
       w.dataset.graphMode=enabled?'1':'0';
       metrics.forEach(function(key){
         var r=rows[key];
+        if(!r)return;
         if(enabled){r.track.style.display='none';r.cwrap.style.display='block';}
         else{r.track.style.display='';r.cwrap.style.display='none';}
       });
@@ -270,19 +271,24 @@ registerModule('resource-monitor', {
         var isGraph=w.dataset.graphMode==='1';
         // CPU
         var cpuVal=Math.min(cpuPct,100);
-        rows.cpu.fill.style.width=cpuVal+'%';
-        var cpuExtra=[];if(cpuTemp.celsius>0)cpuExtra.push(cpuTemp.celsius+'°C');if(procs>0)cpuExtra.push(procs+'p');
-        rows.cpu.val.innerHTML=(cpuPct||0).toFixed(1)+'% <span style="opacity:0.5;font-weight:400;font-size:var(--text-3xs)">'+cpuExtra.join(' ')+'</span>';
-        pushGraph('cpu',cpuVal);
+        if(rows.cpu){
+          rows.cpu.fill.style.width=cpuVal+'%';
+          var cpuExtra=[];if(cpuTemp.celsius>0)cpuExtra.push(cpuTemp.celsius+'°C');if(procs>0)cpuExtra.push(procs+'p');
+          rows.cpu.val.textContent=(cpuPct||0).toFixed(1)+'%';
+          rows.cpu.detail.textContent=cpuExtra.join(' ');
+          pushGraph('cpu',cpuVal);
+        }
         // RAM — show active memory (fluctuates with process activity)
         var memPct=typeof mem.active==='number'&&mem.total?mem.active/mem.total*100:0;
-        rows.ram.fill.style.width=Math.min(memPct,100)+'%';
         var mu=mem.active?Math.round(mem.active/1024/1024/1024*10)/10:0;
         var mt=mem.total?Math.round(mem.total/1024/1024/1024*10)/10:0;
-        rows.ram.val.textContent=mu+'/'+mt+'GB';pushGraph('ram',memPct);
-        if(ringMode && rows.ram.ring){
-          rows.ram.ring.innerHTML='';
-          rows.ram.ring.appendChild(ds.progressRing(memPct,100,28,3));
+        if(rows.ram){
+          rows.ram.fill.style.width=Math.min(memPct,100)+'%';
+          rows.ram.val.textContent=mu+'/'+mt+'GB';pushGraph('ram',memPct);
+          if(ringMode && rows.ram.ring){
+            rows.ram.ring.innerHTML='';
+            rows.ram.ring.appendChild(ds.progressRing(memPct,100,28,3));
+          }
         }
         // Disk — I/O speed (delta-based, like network)
         var dio=d.disk_io||{};
@@ -296,25 +302,32 @@ registerModule('resource-monitor', {
             diskWrSpeed=Math.max(0,(dw-_prevDiskWr))*512/ddt;
           }
         }
-        rows.disk.val.textContent=fmtSpeed(diskRdSpeed)+' / '+fmtSpeed(diskWrSpeed);
-        rows.disk.fill.style.width='0%';
-        pushGraph('disk',diskRdSpeed);
+        if(rows.disk){
+          rows.disk.val.textContent=fmtSpeed(diskRdSpeed)+' / '+fmtSpeed(diskWrSpeed);
+          rows.disk.fill.style.width='0%';
+          pushGraph('disk',diskRdSpeed);
+        }
         _prevDiskRd=dr;_prevDiskWr=dw;_prevDiskTs=diskNow;
         // GPU
         var gpuPct=typeof gpu.percent==='number'?gpu.percent:0;
-        rows.gpu.fill.style.width=Math.min(gpuPct,100)+'%';
         var vu=gpu.vram_used?Math.round(gpu.vram_used/1024/1024/1024*100)/100:0;
         var vt=gpu.vram_total?Math.round(gpu.vram_total/1024/1024/1024*100)/100:0;
-        rows.gpu.val.innerHTML=vu+'/'+vt+'GB <span style="opacity:0.5">'+(gpu.temp_c||0)+'°C</span>';
-        pushGraph('gpu',gpuPct);
+        if(rows.gpu){
+          rows.gpu.fill.style.width=Math.min(gpuPct,100)+'%';
+          rows.gpu.val.textContent=vu+'/'+vt+'GB';
+          rows.gpu.detail.textContent=(gpu.temp_c||0)+'°C';
+          pushGraph('gpu',gpuPct);
+        }
         // Network
         var rx=net.rx_bytes||0,tx=net.tx_bytes||0;
         var now=Date.now()/1000;
         var rxSpeed=0,txSpeed=0;
         if(_prevTs>0){var dt=now-_prevTs;if(dt>0){rxSpeed=Math.max(0,(rx-_prevRx))/dt;txSpeed=Math.max(0,(tx-_prevTx))/dt;}}
-        if(isGraph){netVal.textContent=fmtSpeed(rxSpeed)+' / '+fmtSpeed(txSpeed);updateNetGraph(rxSpeed,txSpeed);}
-        else{netVal.textContent=fmtBytes(rx)+' / '+fmtBytes(tx);}
-        rxEl.textContent='▼ '+fmtBytes(rx);txEl.textContent='▲ '+fmtBytes(tx);
+        if(netVal){
+          if(isGraph){netVal.textContent=fmtSpeed(rxSpeed)+' / '+fmtSpeed(txSpeed);updateNetGraph(rxSpeed,txSpeed);}
+          else{netVal.textContent=fmtBytes(rx)+' / '+fmtBytes(tx);}
+          rxEl.textContent='▼ '+fmtBytes(rx);txEl.textContent='▲ '+fmtBytes(tx);
+        }
         _prevRx=rx;_prevTx=tx;_prevTs=now;
         hostEl.textContent=hostname;
         tsEl.textContent='↑ '+(uptime.string||'');

@@ -3,17 +3,15 @@ registerModule('quotes', {
   render: (sec,card,cw)=>{
     const q=document.createElement('div');q.className='quotes-widget';
     q.tabIndex=0;q.setAttribute('role','button');q.setAttribute('aria-label','Show next quote');
-    q.style.cssText='flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:4px 0;';
     const txt=document.createElement('div');txt.className='quotes-text';
-    txt.style.cssText='line-height:1.5;font-style:italic;color:var(--text-primary);position:relative;padding-left:20px;';
-    const qm=document.createElement('span');qm.textContent='\u201c';qm.style.cssText='position:absolute;left:0;top:-4px;font-size:var(--text-2xl);color:var(--accent);opacity:0.5;font-style:normal;';txt.appendChild(qm);
+    const qm=document.createElement('span');qm.className='quotes-mark';qm.textContent='\u201c';txt.appendChild(qm);
     const cont=document.createElement('span');cont.className='quotes-content';cont.textContent='Click to load';
     q.addEventListener('click',function(){fetchQuote(q,sec);});
     q.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();fetchQuote(q,sec);}});
     txt.appendChild(cont);
     q.appendChild(txt);
     const auth=document.createElement('div');auth.className='quotes-author';
-    auth.style.cssText='color:var(--text-secondary);text-align:var(--mod-align,right);padding-right:4px;';
+
     const aName=document.createElement('span');aName.className='quotes-author-name';aName.textContent='';auth.appendChild(aName);
     q.appendChild(auth);
     // Hint: click to cycle (fades in on hover)

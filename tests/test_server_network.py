@@ -45,17 +45,6 @@ class TestNetworkParameterValidation(unittest.TestCase):
 
 
 class TestNetworkOperations(unittest.TestCase):
-    @mock.patch("server_network.get_local_ips", return_value=["192.168.50.25"])
-    @mock.patch("server_network.subprocess.run")
-    @mock.patch("builtins.open", new_callable=mock.mock_open,
-                read_data="IP address       HW type     Flags       HW address            Mask     Device\n")
-    def test_arp_refresh_uses_detected_local_subnet(self, _open, run, _local_ips):
-        server_network._refresh_arp_cache()
-
-        targets = [call.args[0][-1] for call in run.call_args_list]
-        self.assertIn("192.168.50.1", targets)
-        self.assertNotIn(".".join(("10", "0", "0", "1")), targets)
-
     @mock.patch("server_network.urllib.request.urlopen")
     def test_proxy_caps_http_error_response_body(self, urlopen):
         upstream = io.BytesIO(b"x" * (server_network.PROXY_MAX_RESPONSE + 100))

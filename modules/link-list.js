@@ -9,7 +9,7 @@ registerModule('link-list', {
     if (CARD_MODULES['links']) {
       CARD_MODULES['links'].render(sec, card, cw);
     } else {
-      cw.innerHTML = '<div style="padding:8px;text-align:center;color:var(--text-tertiary);font-size:var(--text-sm);">Link list unavailable</div>';
+      cw.innerHTML = '<div style="padding:8px;text-align:var(--mod-align,left);color:var(--text-tertiary);font-size:var(--text-sm);">Link list unavailable</div>';
     }
   },
   editor: function(sec, card, bd) {

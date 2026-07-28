@@ -235,6 +235,59 @@ function doSearch(query, section) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+/** Project persisted section styles onto the rendered title/content pair. */
+function applySectionStyles(section, contentWrap, titleRow) {
+  if (!contentWrap) return;
+  var st = section && section.styles ? section.styles : {};
+  var centeredByDefault = section && ['clock', 'weather', 'timer', 'quotes'].includes(section.type);
+  var align = st.align || (centeredByDefault ? 'center' : 'left');
+  var scale = st.scale || 'medium';
+  var density = st.density || 'standard';
+  var scaleFactor = scale === 'small' ? 0.85 : scale === 'large' ? 1.15 : 1;
+  var densityFactor = density === 'compact' ? 0.6 : density === 'comfortable' ? 1.5 : 1;
+  var fontScale = st.fontScale || {};
+
+  contentWrap.dataset.modScale = scale;
+  contentWrap.dataset.modDensity = density;
+  contentWrap.dataset.modAlign = align;
+  contentWrap.style.setProperty('--mod-align', align);
+  contentWrap.style.setProperty('--mod-justify', align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start');
+  contentWrap.style.setProperty('--mod-density', String(densityFactor));
+  contentWrap.style.setProperty('--mod-scale-factor', String(scaleFactor));
+  contentWrap.style.setProperty('--mod-font-title', String(fontScale.title || 1));
+  contentWrap.style.setProperty('--mod-font-content', String(fontScale.content || 1));
+  contentWrap.style.setProperty('--mod-font-secondary', String(fontScale.secondary || 1));
+  contentWrap.style.textAlign = align === 'left' ? '' : align;
+
+  if (titleRow) {
+    titleRow.style.setProperty('--mod-align', align);
+    titleRow.style.setProperty('--mod-justify', align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start');
+    titleRow.style.setProperty('--mod-scale-factor', String(scaleFactor));
+    titleRow.style.setProperty('--mod-font-title', String(fontScale.title || 1));
+    titleRow.dataset.modScale = scale;
+    titleRow.dataset.modDensity = density;
+  }
+}
+
+window.applySectionStyles = applySectionStyles;
+
+/** Merge a partial style update without resetting sibling options. */
+function patchSectionStyles(section, patch, contentWrap, titleRow) {
+  if (!section) return;
+  section.styles = Object.assign({}, section.styles || {}, patch || {});
+  if (contentWrap) applySectionStyles(section, contentWrap, titleRow);
+}
+
+/** Apply one partial style update to every section in a card. */
+function patchCardSectionStyles(card, patch) {
+  (card && card.sections || []).forEach(function(section) {
+    patchSectionStyles(section, patch);
+  });
+}
+
+window.patchSectionStyles = patchSectionStyles;
+window.patchCardSectionStyles = patchCardSectionStyles;
+
 /**
  * Render a card section (a content block within a card body).
  * Creates a section-title toggle (if labelled, non-clock) + content area with module render output.
@@ -244,10 +297,11 @@ function doSearch(query, section) {
  */
 function renderSection(section, card) {
   const fragment = document.createDocumentFragment();
+  let titleRow = null;
 
   /* ── Section title row (label + collapse toggle) ── */
   if (section.label && section.type !== 'clock') {
-    const titleRow = document.createElement('button');
+    titleRow = document.createElement('button');
     titleRow.className = 'dropdown-toggle' + (section.collapsed ? '' : ' open');
     titleRow.dataset.secId = section.id;
 
@@ -302,17 +356,7 @@ function renderSection(section, card) {
   const contentWrap = document.createElement('div');
   contentWrap.className = 'dropdown-content' + (section.collapsed ? '' : ' open');
 
-  // Apply section styles: alignment, density, scale, and icon controls.
-  // Every module inherits these as CSS variables on the content wrap,
-  // so modules can reference --mod-align, --mod-density-scale, --mod-scale
-  // in their CSS without any JavaScript changes.
-  var st = section.styles || {};
-  contentWrap.style.setProperty('--mod-align', st.align || 'left');
-  contentWrap.style.setProperty('--mod-justify', st.align === 'center' ? 'center' : st.align === 'right' ? 'flex-end' : 'flex-start');
-  contentWrap.style.setProperty('--mod-density-scale', String(st.density === 'compact' ? '0.6' : st.density === 'comfortable' ? '1.5' : '1'));
-  contentWrap.style.setProperty('--mod-scale', String(st.scale === 'small' ? '0.75' : st.scale === 'large' ? '1.4' : '1'));
-  if (st.align === 'center') { contentWrap.style.textAlign = 'center'; }
-  else if (st.align === 'right') { contentWrap.style.textAlign = 'right'; }
+  applySectionStyles(section, contentWrap, titleRow);
 
   // Height-based variant: data-mod-height is set on the card element by
   // renderCard(). Modules can use [data-mod-height="small"] selectors.
@@ -320,22 +364,18 @@ function renderSection(section, card) {
   var _hv = _ch <= 1 ? 'small' : _ch === 2 ? 'medium' : _ch === 3 ? 'large' : 'expanded';
   contentWrap.dataset.modHeight = _hv;
   contentWrap.dataset.secId = section.id;
-  contentWrap.dataset.modScale = st.scale || 'medium';
-  contentWrap.dataset.modDensity = st.density || 'standard';
-  contentWrap.style.setProperty('--mod-df', String(st.density === 'compact' ? '0.6' : st.density === 'comfortable' ? '1.5' : '1'));
-  // Typography scale multipliers
-  var fs = st.fontScale || {};
-  contentWrap.style.setProperty('--mod-font-title', String(fs.title || 1));
-  contentWrap.style.setProperty('--mod-font-content', String(fs.content || 1));
-  contentWrap.style.setProperty('--mod-font-secondary', String(fs.secondary || 1));
+
   // Store a direct DOM reference for the style panel to update without querySelector
   section.__cw = contentWrap;
 
   const module = CARD_MODULES[section.type];
+  const moduleSurface = document.createElement('div');
+  moduleSurface.className = 'module-style-surface';
+  contentWrap.appendChild(moduleSurface);
   if (module && module.render) {
-    module.render(section, card, contentWrap);
+    module.render(section, card, moduleSurface);
   } else {
-    contentWrap.textContent = 'Unknown type: ' + section.type;
+    moduleSurface.textContent = 'Unknown type: ' + section.type;
   }
   // Two-phase render: if module has onMount(), call it after the element is
   // connected to the DOM. requestAnimationFrame fires after the current frame's
@@ -349,7 +389,7 @@ function renderSection(section, card) {
           if (typeof cleanup === 'function') WarTabLifecycle.addCleanup(cw, cleanup);
         }
       });
-    })(contentWrap,section,card);
+    })(moduleSurface,section,card);
   }
   fragment.appendChild(contentWrap);
 

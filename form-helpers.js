@@ -26,6 +26,7 @@ function cpSelect(options, value, onChange) {
     const opt = document.createElement('option');
     opt.value = o.value;
     opt.textContent = o.label;
+    opt.disabled = !!o.disabled;
     if (o.value === value) opt.selected = true;
     s.appendChild(opt);
   });

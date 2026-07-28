@@ -7,7 +7,7 @@ registerModule('image', {
     else{
       const img=document.createElement('img');img.src=sec.url;img.alt=sec.alt||'';
       img.style.cssText='max-width:100%;max-height:100%;object-fit:contain;display:inline-block;';
-      img.onerror=function(){this.style.display='none';this.parentNode.innerHTML='<div style="font-size:var(--text-xs);color:var(--text-tertiary);text-align:center;padding:20px;">Image failed to load</div>';};
+      img.onerror=function(){this.style.display='none';this.parentNode.innerHTML='<div style="font-size:var(--text-xs);color:var(--text-tertiary);text-align:var(--mod-align,left);padding:20px;">Image failed to load</div>';};
       w.appendChild(img);
     }
     cw.appendChild(w);

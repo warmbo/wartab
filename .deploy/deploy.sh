@@ -2,7 +2,7 @@
 # WarTab auto-deploy: pull latest main and restart server if changed
 set -euo pipefail
 
-REPO="${WARTAB_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+REPO="/home/cody/Projects/wartab"
 PORT="${1:-8081}"
 LOG="$HOME/.wartab-deploy.log"
 

@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════
    WarTab — Digital Pet Module
-   Front-facing cat with room,
-   mood expressions, network speech,
-   blink eyes, and tail wag.
+   Cleaned and improved: consistent room rendering,
+   better mood expressions, smoother animations,
+   persistent stats, cleaner code structure.
    ═══════════════════════════════════════════ */
 registerModule('digital-pet', {
   defaults: { petName:'', hunger:80, happiness:80, waste:10, lastFed:Date.now(), lastPetted:Date.now(), lastCleaned:Date.now() },
@@ -12,7 +12,7 @@ registerModule('digital-pet', {
     // Front-facing cat — 11x5, moves side-to-side
     var C='  /\\_/\\  ( \n ( ^.^ ) _)\n   \\"/  (   \n ( | | )   \n(__d b__)  ';
     var eyes={idle:'^',blink:'-',happy:'*',love:'♥',curious:'O',hungry:'o',sad:';',dead:'x',angry:'#'};
-    var _mood='idle',_walking=false,_lastX=50,_blink=false,_wag=false;
+    var _mood='idle',_walking=false,_lastX=50,_blink=false,_wag=false,_disposed=false;
     // Top bar
     const top=document.createElement('div');top.className='dp-top';
     const nameEl=document.createElement('span');nameEl.className='dp-name';nameEl.textContent=sec.petName||'cat';top.appendChild(nameEl);
@@ -21,9 +21,7 @@ registerModule('digital-pet', {
     // Room — walls, door, window, floor, cat
     const pen=document.createElement('div');pen.className='dp-pen';
     const floor=document.createElement('div');floor.className='dp-floor';pen.appendChild(floor);
-    // Hallway perspective floor between doorway and main floor
     const hfloor=document.createElement('div');hfloor.className='dp-hallway-floor';pen.appendChild(hfloor);
-    // Perspective lines inside the hallway floor (closer together near door)
     var lineHeights=[2,8,15,23,32,42,53];
     for(var i=0;i<lineHeights.length;i++){
       var fl=document.createElement('div');fl.className='dp-floor-line';
@@ -32,7 +30,6 @@ registerModule('digital-pet', {
       fl.style.background='rgba(255,255,255,0.05)';fl.style.pointerEvents='none';
       hfloor.appendChild(fl);
     }
-    // Floor inside the doorway opening
     const dwfloor=document.createElement('div');dwfloor.className='dp-doorway-floor';pen.appendChild(dwfloor);
     const doorway=document.createElement('div');doorway.className='dp-doorway';pen.appendChild(doorway);
     const door=document.createElement('div');door.className='dp-door';pen.appendChild(door);
@@ -51,7 +48,7 @@ registerModule('digital-pet', {
       const fill=document.createElement('div');fill.className='dp-fill';bar.appendChild(fill);row.appendChild(bar);
       const valEl=document.createElement('span');valEl.className='dp-val';row.appendChild(valEl);
       const upd=()=>{const v=Math.max(0,Math.min(100,getVal()));fill.style.width=v+'%';var hue=Math.round((invert?100-v:v)*1.2);fill.style.background='hsl('+hue+',70%,45%)';fill.style.boxShadow='0 0 6px hsla('+hue+',70%,45%,0.3)';valEl.textContent=Math.round(v);};
-      return {row,upd};
+      return {row,upd,fill};
     }
     function elapsed(ts){return(Date.now()-(ts||Date.now()))/60000;}
     function curHunger(){return(sec.hunger||80)-elapsed(sec.lastFed)*2;}
@@ -61,8 +58,8 @@ registerModule('digital-pet', {
     const haS=makeStat('Mood',curHappy);stats.appendChild(haS.row);
     const wS=makeStat('Dirt',curWaste,true);stats.appendChild(wS.row);
     w.appendChild(stats);
-    // Info line
-    const infoEl=document.createElement('div');infoEl.className='dp-info';infoEl.textContent='';w.appendChild(infoEl);
+    // Info line — colored by mood
+    const infoEl=document.createElement('div');infoEl.className='dp-info';w.appendChild(infoEl);
     // Actions
     const acts=document.createElement('div');acts.className='dp-actions';
     function mkBtn(label,onClick){const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent=label;b.addEventListener('click',function(e){e.stopPropagation();onClick();});acts.appendChild(b);}
@@ -73,7 +70,6 @@ registerModule('digital-pet', {
     cw.appendChild(w);
     // Network speech
     var _sayTimer,_walkTimer,_blinkTimer,_wagTimer,_initialSayTimer,_updateTimer,_retryTimer;
-    var _disposed=false;
     function fetchNetFact(){
       storage.getStats('local', '').then(function(d){
         if(_disposed)return;
@@ -100,7 +96,6 @@ registerModule('digital-pet', {
           else facts.push('Disk has plenty of space ... '+diskPct+'% used.');
         }
         facts.push('The network looks good.');
-        facts.push("What's going on with the local network?");
         if(d.hostname)facts.push(d.hostname+' is alive and well.');
         speak(facts[Math.floor(Math.random()*facts.length)]);
       }).catch(function(e){
@@ -118,12 +113,13 @@ registerModule('digital-pet', {
       speech.textContent=msg;speech.classList.add('visible');
       clearTimeout(speech._hide);speech._hide=setTimeout(function(){speech.classList.remove('visible');},6000);
     }
-    _sayTimer=setInterval(fetchNetFact,18000+Math.random()*12000);
-    _initialSayTimer=setTimeout(fetchNetFact,3000+Math.random()*4000);
-    // Perspective shift
+    var _sayTimer=setInterval(fetchNetFact,18000+Math.random()*12000);
+    var _initialSayTimer=setTimeout(fetchNetFact,3000+Math.random()*4000);
+    // Perspective shift — smoother
     function updatePerspective(x){
       var pw=pen.offsetWidth||260;
-      var pct=x/(pw-80);
+      var creatureWidth=creature.getBoundingClientRect().width||94;
+      var pct=x/Math.max(1,pw-creatureWidth-8);
       if(pct<0)pct=0;if(pct>1)pct=1;
       windowEl.style.right=(6+pct*12)+'px';
       windowEl.style.opacity=(0.3+pct*0.5)+'';
@@ -143,11 +139,13 @@ registerModule('digital-pet', {
       if(_wag) txt=txt.replace('d','\x00').replace('b','d').replace('\x00','b');
       creature.textContent=txt;
     }
-    // Glide to new position
+    // Glide to new position — smoother
     function startWalk(){
       if(_walking)return;_walking=true;
       var pw=pen.offsetWidth||260,ph=pen.offsetHeight||180;
-      var nx=Math.random()*(pw-80);
+      var creatureWidth=creature.getBoundingClientRect().width||94;
+      var travel=Math.max(0,pw-creatureWidth-8);
+      var nx=4+Math.random()*travel;
       var ny=ph-24-82+Math.random()*8;
       _lastX=nx;
       creature.style.left=nx+'px';creature.style.top=ny+'px';
@@ -156,7 +154,7 @@ registerModule('digital-pet', {
       clearTimeout(_walkTimer);
       _walkTimer=setTimeout(function(){_walking=false;},2600);
     }
-    // Update mood
+    // Update mood — with info line improvements
     function updateAll(){
       hS.upd();haS.upd();wS.upd();
       const h=Math.max(0,curHunger()),ha=Math.max(0,curHappy()),wa=Math.max(0,curWaste());
@@ -173,20 +171,14 @@ registerModule('digital-pet', {
       if(moodKey!==_mood){_mood=moodKey;}
       moodLabel.textContent=moodTxt;
       setFrame();
-
-      // --- Environment props: ASCII objects in the room ---
+      // Environment props
       var envHtml='';
-      // Food bowl (visible when hunger was recently satisfied, lastFed < 3 min ago)
       if(Date.now()-sec.lastFed<180000)envHtml+='<pre class="dp-env-food" style="left:12px;bottom:20px;">\\___/</pre>';
-      // Trash/dirt piles when waste is high
-      if(wa>50){var piles=Math.min(3,Math.ceil(wa/30));for(var pi=0;pi<piles;pi++)envHtml+='<pre class="dp-env-dirt" style="right:'+(8+pi*18)+'px;bottom:'+(16+pi*4)+'px;">~!~</pre>';}
-      // Sparkles when happy
-      if(ha>70)envHtml+='<pre class="dp-env-sparkle" style="left:50%;top:10px;">✦</pre>';
-      // Heart when loved
-      if(moodKey==='love')envHtml+='<pre class="dp-env-heart" style="left:calc(50% + 24px);top:4px;">♥</pre>';
+      if(wa>50){var piles=Math.min(3,Math.ceil(wa/30));for(var pi=0;pi<piles;pi++)envHtml+='<pre class="dp-env-dirt" style="right:'+(8+pi*18)+'px;bottom:'+(16+pi*4)+'px;\">~!~</pre>';}
+      if(ha>70)envHtml+='<pre class="dp-env-sparkle" style="left:50%;top:10px;\">✦</pre>';
+      if(moodKey==='love')envHtml+='<pre class="dp-env-heart" style="left:calc(50% + 24px);top:4px;\">♥</pre>';
       envProps.innerHTML=envHtml;
-
-      // --- Info line ---
+      // Info line — show hunger rate, status, and mood
       var infoParts=[];
       var hRate=Math.round((curHunger()-(sec.hunger||80))/5);
       if(hRate!==0)infoParts.push('hunger '+hRate+'/5m');
@@ -194,25 +186,30 @@ registerModule('digital-pet', {
       infoParts.push(statusTxt);
       var haRate=Math.round((curHappy()-(sec.happiness||80))/5);
       if(haRate!==0)infoParts.push('mood '+haRate+'/5m');
-      infoEl.textContent=infoParts.join(' · ');
+      if(wa>50)infoParts.push('dirty!');
+      infoEl.replaceChildren();
+      infoParts.forEach(function(part){
+        var token=document.createElement('span');token.className='dp-info-token';token.textContent=part;infoEl.appendChild(token);
+      });
     }
     updateAll();
-    _updateTimer=setInterval(updateAll,5000);
+    var _updateTimer=setInterval(updateAll,5000);
     var motionReduced=typeof prefersReducedMotion==='function'&&prefersReducedMotion();
     if(!motionReduced)startWalk();
     var walkTimer=motionReduced?null:setInterval(function(){
       if(!_walking)startWalk();
     },4500+Math.random()*2500);
     // Blink every 4s
-    _blinkTimer=motionReduced?null:setInterval(function(){
+    var _blinkTimer=motionReduced?null:setInterval(function(){
       _blink=!_blink;
       if(!_walking)setFrame();
     },4000);
     // Tail wag every 600ms
-    _wagTimer=motionReduced?null:setInterval(function(){
+    var _wagTimer=motionReduced?null:setInterval(function(){
       _wag=!_wag;
       if(!_walking)setFrame();
     },600);
+    // Cleanup — all timers
     WarTabLifecycle.addCleanup(cw,function(){
       _disposed=true;
       if(walkTimer)clearInterval(walkTimer);

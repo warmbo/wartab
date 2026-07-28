@@ -9,7 +9,7 @@
 # Options:
 #   --port 8081         Server port (default: 8081)
 #   --bind 0.0.0.0      Bind address (default: 0.0.0.0)
-#   --user <user>       System user (default: current user)
+#   --user cody         System user (default: current user)
 #   --dir /opt/wartab   Install directory (default: /opt/wartab)
 #   --repo URL          Git repo URL (default: https://github.com/warmbo/wartab.git)
 #   --no-mdns           Disable mDNS/Bonjour advertisement (avahi-utils)

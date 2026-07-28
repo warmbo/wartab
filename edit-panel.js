@@ -264,68 +264,57 @@ function buildCardEditPanel(card) {
 
   // Compute card-level style defaults from all sections
   function getCardStyles() {
-    var align = 'left', density = 'standard', scale = 'medium';
-    if (card.sections && card.sections.length) {
-      var s = card.sections[0].styles || {};
-      align = s.align || 'left';
-      density = s.density || 'standard';
-      scale = s.scale || 'medium';
+    var sections = card.sections || [];
+    function sharedValue(key, fallback) {
+      var values = sections.map(function(section) { return (section.styles || {})[key] || fallback; });
+      return values.length && values.every(function(value) { return value === values[0]; }) ? values[0] : 'mixed';
     }
+    var align = sharedValue('align', 'left');
+    var density = sharedValue('density', 'standard');
+    var scale = sharedValue('scale', 'medium');
     return { align: align, density: density, scale: scale };
   }
 
-  function applyCardStyles(align, density, scale) {
-    (card.sections || []).forEach(function(sec) {
-      if (!sec.styles) sec.styles = {};
-      sec.styles.align = align;
-      sec.styles.density = density;
-      sec.styles.scale = scale;
-    });
+  var cardSt = getCardStyles();
+
+  function applyCardStylePatch(patch) {
+    patchCardSectionStyles(card, patch);
+    Object.assign(cardSt, patch);
     saveAndRefresh();
-    // Rebuild panel to show updated section editor values
     var title = $('#edit-panel-title');
     if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
   }
-
-  var cardSt = getCardStyles();
 
   // Alignment buttons
   var alGroup = document.createElement('div');
   alGroup.style.cssText = 'margin-bottom:var(--space-2);';
   alGroup.appendChild(cpLabel('Alignment'));
-  var alRow = document.createElement('div');
-  alRow.style.cssText = 'display:flex;gap:4px;';
-  ['left', 'center', 'right'].forEach(function(a) {
-    var ab = document.createElement('button');
-    ab.textContent = a.charAt(0).toUpperCase() + a.slice(1);
-    ab.style.cssText = 'flex:1;padding:4px 6px;border:1px solid var(--surface-border);background:' +
-      (cardSt.align === a ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.2)') +
-      ';color:var(--text-primary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);';
-    ab.addEventListener('click', function() {
-      applyCardStyles(a, cardSt.density, cardSt.scale);
-    });
-    alRow.appendChild(ab);
-  });
-  alGroup.appendChild(alRow);
+  alGroup.appendChild(_buildStyleAlignmentControl(cardSt.align, function(a) {
+    applyCardStylePatch({ align: a });
+  }));
   layoutSec.body.appendChild(alGroup);
 
   // Density
   layoutSec.body.appendChild(cpLabel('Density'));
   layoutSec.body.appendChild(cpSelect(
-    [{value:'compact',label:'Compact'},{value:'standard',label:'Standard'},{value:'comfortable',label:'Comfortable'}],
+    (cardSt.density === 'mixed' ? [{value:'mixed',label:'Mixed',disabled:true}] : []).concat(
+      [{value:'compact',label:'Compact'},{value:'standard',label:'Standard'},{value:'comfortable',label:'Comfortable'}]
+    ),
     cardSt.density,
-    function(v) { applyCardStyles(cardSt.align, v, cardSt.scale); }
+    function(v) { patchCardSectionStyles(card, { density: v }); cardSt.density = v; saveAndRefresh(); }
   ));
 
   // Scale
   layoutSec.body.appendChild(cpLabel('Scale'));
   layoutSec.body.appendChild(cpSelect(
-    [{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],
+    (cardSt.scale === 'mixed' ? [{value:'mixed',label:'Mixed',disabled:true}] : []).concat(
+      [{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}]
+    ),
     cardSt.scale,
-    function(v) { applyCardStyles(cardSt.align, cardSt.density, v); }
+    function(v) { patchCardSectionStyles(card, { scale: v }); cardSt.scale = v; saveAndRefresh(); }
   ));
 
-  layoutSec.body.appendChild(cpHint('Applies to all sections in this card. Override per section in each section editor.'));
+  layoutSec.body.appendChild(cpHint('Controls all sections in this card.'));
 
   /* ── SECTIONS section ── */
   var secSec = _collapsibleSection('Sections', true);

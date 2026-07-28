@@ -7,6 +7,34 @@
                toast (core.js), uid (core.js), CARD_MODULES (core.js)
    ═══════════════════════════════════════════ */
 
+function _buildStyleAlignmentControl(value, onChange) {
+  var row = document.createElement('div');
+  row.className = 'style-choice-row';
+  var buttons = [];
+  function setActive(next) {
+    buttons.forEach(function(button) {
+      var active = button.dataset.value === next;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  }
+  ['left', 'center', 'right'].forEach(function(align) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'style-choice';
+    button.dataset.value = align;
+    button.textContent = align.charAt(0).toUpperCase() + align.slice(1);
+    button.addEventListener('click', function() {
+      setActive(align);
+      onChange(align);
+    });
+    buttons.push(button);
+    row.appendChild(button);
+  });
+  setActive(value || 'left');
+  return row;
+}
+
 function buildSectionEditor(sec, card, si) {
 
   const cardEl = document.createElement('div');
@@ -241,154 +269,6 @@ function buildSectionEditor(sec, card, si) {
   }
 
   if (mc.children.length > 0) bd.appendChild(mc);
-
-  /* ── Style controls (alignment, density, scale) ── */
-  // Universal customization panel for all modules. Controls set CSS variables
-  // on the section content wrap: --mod-align, --mod-density-scale, --mod-scale.
-  if (!sec.styles) sec.styles = {};
-  var st = sec.styles;
-
-  // Helper: update styles on the live card preview without re-render
-  function applyStyleVars(s, editorCardEl) {
-    if (!s || !s.id || !_editingCardId) return;
-    var cardEl = document.querySelector('[data-card-id="' + _editingCardId + '"]');
-    if (!cardEl) return;
-    var pcw = cardEl.querySelector('[data-sec-id="' + s.id + '"]');
-    if (!pcw) return;
-    var ss = s.styles || {};
-    var al = ss.align || 'left';
-    var sc = ss.scale || 'medium';
-    var de = ss.density || 'standard';
-
-    // 1. Alignment (CSS variables)
-    pcw.style.setProperty('--mod-align', al);
-    pcw.style.setProperty('--mod-justify', al === 'center' ? 'center' : al === 'right' ? 'flex-end' : 'flex-start');
-    pcw.style.textAlign = al === 'left' ? '' : al;
-
-    // 2. Scale — directly set font sizes on all text elements within the module.
-    //    This bypasses CSS selector matching issues and always works.
-    var sf = sc === 'small' ? 0.75 : sc === 'large' ? 1.35 : 1;
-    pcw.querySelectorAll('[class]').forEach(function(el){
-      if (el.children.length > 0) return; // skip containers
-      var cs = window.getComputedStyle(el);
-      var fs = parseFloat(cs.fontSize);
-      if (fs && fs > 4) {
-        if (!el._baseFs) el._baseFs = fs;
-        el.style.fontSize = (el._baseFs * sf) + 'px';
-      }
-    });
-
-    // 3. Density — scale gap and padding CSS variables on flex containers
-    var df = de === 'compact' ? 0.6 : de === 'comfortable' ? 1.5 : 1;
-    pcw.style.setProperty('--mod-df', String(df));
-
-    // 4. Editor card scaling (immediate visual feedback)
-    if (editorCardEl) {
-      var esc = sc === 'small' ? 0.85 : sc === 'large' ? 1.2 : 1;
-      editorCardEl.style.fontSize = esc + 'em';
-    }
-
-    // 5. Typography scale — set CSS variables (modules use --mod-font-*)
-    var fs = ss.fontScale || {};
-    pcw.style.setProperty('--mod-font-title', String(fs.title || 1));
-    pcw.style.setProperty('--mod-font-content', String(fs.content || 1));
-    pcw.style.setProperty('--mod-font-secondary', String(fs.secondary || 1));
-  }
-
-  var styleToggle = document.createElement('button');
-  styleToggle.className = 'dropdown-toggle';
-  styleToggle.style.cssText = 'font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;padding:6px 0;margin-top:4px;cursor:pointer;border:none;background:none;display:flex;align-items:center;gap:4px;width:100%;';
-  styleToggle.innerHTML = '<i data-lucide="chevron-right" style="width:12px;height:12px;transition:transform 0.2s;"></i> Style';
-  var styleBody = document.createElement('div');
-  styleBody.style.cssText = 'overflow:hidden;transition:max-height 0.25s ease;max-height:0;';
-  var styleInner = document.createElement('div');
-  styleInner.style.cssText = 'padding:4px 0;';
-
-  styleToggle.addEventListener('click', function() {
-    var isOpen = styleBody.style.maxHeight !== '0px';
-    styleBody.style.maxHeight = isOpen ? '0px' : styleBody.scrollHeight + 'px';
-    styleToggle.querySelector('i').style.transform = isOpen ? '' : 'rotate(90deg)';
-  });
-
-  // Alignment
-  var alignGroup = document.createElement('div');
-  alignGroup.style.cssText = 'margin-bottom:6px;';
-  alignGroup.appendChild(cpLabel('Alignment'));
-  var alignRow = document.createElement('div');
-  alignRow.style.cssText = 'display:flex;gap:4px;';
-  ['left','center','right'].forEach(function(a) {
-    var ab = document.createElement('button');
-    ab.textContent = a.charAt(0).toUpperCase() + a.slice(1);
-    ab.style.cssText = 'flex:1;padding:4px 6px;border:1px solid var(--surface-border);background:' +
-      ((st.align||'left') === a ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.2)') +
-      ';color:var(--text-primary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);';
-    ab.addEventListener('click', function() {
-      st.align = a;
-      saveConfig();
-      applyStyleVars(sec, cardEl);
-    });
-    alignRow.appendChild(ab);
-  });
-  alignGroup.appendChild(alignRow);
-  styleInner.appendChild(alignGroup);
-
-  // Density
-  styleInner.appendChild(cpLabel('Density'));
-  styleInner.appendChild(cpSelect(
-    [{value:'compact',label:'Compact'},{value:'standard',label:'Standard'},{value:'comfortable',label:'Comfortable'}],
-    st.density || 'standard',
-    function(v) { st.density = v; saveConfig(); applyStyleVars(sec, cardEl); }
-  ));
-
-  // Scale
-  styleInner.appendChild(cpLabel('Scale'));
-  styleInner.appendChild(cpSelect(
-    [{value:'small',label:'Small'},{value:'medium',label:'Medium'},{value:'large',label:'Large'}],
-    st.scale || 'medium',
-    function(v) { st.scale = v; saveConfig(); applyStyleVars(sec, cardEl); }
-  ));
-
-  /* Typography controls */
-  var fsDiv = document.createElement('div');
-  fsDiv.style.cssText = 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);';
-  fsDiv.appendChild(cpLabel('Typography'));
-
-  var fs = st.fontScale || {};
-  function mkFontSlider(label, key, min, max) {
-    var row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
-    var lbl = document.createElement('span');
-    lbl.style.cssText = 'font-size:var(--text-2xs);color:var(--text-tertiary);width:60px;flex-shrink:0;';
-    lbl.textContent = label;
-    var rng = document.createElement('input');
-    rng.type = 'range'; rng.min = min || 0.7; rng.max = max || 1.6; rng.step = 0.05;
-    rng.value = fs[key] !== undefined ? fs[key] : 1;
-    rng.style.cssText = 'flex:1;accent-color:var(--accent);height:4px;cursor:pointer;';
-    var val = document.createElement('span');
-    val.style.cssText = 'font-size:var(--text-2xs);color:var(--text-secondary);min-width:24px;text-align:right;font-variant-numeric:tabular-nums;';
-    val.textContent = rng.value + '\u00d7';
-    rng.addEventListener('input', function() {
-      val.textContent = rng.value + '\u00d7';
-    });
-    rng.addEventListener('change', function() {
-      if (!st.fontScale) st.fontScale = { title:1, content:1, secondary:1 };
-      st.fontScale[key] = parseFloat(rng.value);
-      saveConfig();
-      applyStyleVars(sec, cardEl);
-    });
-    row.appendChild(lbl); row.appendChild(rng); row.appendChild(val);
-    return row;
-  }
-
-  fsDiv.appendChild(mkFontSlider('Heading', 'title'));
-  fsDiv.appendChild(mkFontSlider('Content', 'content'));
-  fsDiv.appendChild(mkFontSlider('Secondary', 'secondary'));
-  styleInner.appendChild(fsDiv);
-
-  styleBody.appendChild(styleInner);
-  bd.appendChild(styleToggle);
-  bd.appendChild(styleBody);
-  renderIcons();
 
   cardEl.appendChild(bd);
 

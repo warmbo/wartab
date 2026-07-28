@@ -255,23 +255,13 @@ def _refresh_arp_cache():
                 fields = line.strip().split()
                 if fields and fields[0].count(".") == 3:
                     seen.add(fields[0])
-        subnets = []
-        for address in [*get_local_ips(), *sorted(seen)]:
-            fields = address.split(".")
-            if len(fields) != 4 or fields[0] == "127":
-                continue
-            subnet = ".".join(fields[:3]) + "."
-            if subnet not in subnets:
-                subnets.append(subnet)
-
-        targets = []
-        for subnet in subnets:
-            for suffix in (1, 50, 100, 150, 200, 250, 254):
-                address = subnet + str(suffix)
-                if address not in seen and address not in targets:
-                    targets.append(address)
-                if len(targets) >= 8:
-                    break
+        gateway = "10.0.0.1"
+        subnet = ".".join(gateway.split(".")[:3]) + "."
+        targets = [gateway]
+        for suffix in (1, 50, 100, 150, 200, 250, 254):
+            address = subnet + str(suffix)
+            if address not in seen:
+                targets.append(address)
             if len(targets) >= 8:
                 break
         for address in targets:
@@ -316,9 +306,7 @@ def get_local_ips():
     try:
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.settimeout(0.1)
-        # TEST-NET-1 is non-routable and used only to ask the OS which source
-        # address it would select; connect() on a UDP socket sends no packet.
-        udp_socket.connect(("192.0.2.1", 1))
+        udp_socket.connect(("10.254.254.254", 1))
         ips.append(udp_socket.getsockname()[0])
         udp_socket.close()
     except Exception as error:

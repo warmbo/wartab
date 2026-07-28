@@ -61,15 +61,15 @@ const DEFAULT_CONFIG = {
     showAccentBar: true,          // show 3px accent bar at top of cards
   },
 
-  /* ── Top-bar status display (opt in after installation) ── */
+  /* ── Top-bar status display (CPU, RAM, disk, uptime) ── */
   statusBar: {
-    enabled: false,
+    enabled: true,
     source: 'local',              // 'local' | 'glances' | 'custom'
-    glancesUrl: '',
+    glancesUrl: 'http://localhost:61209',
     customUrl: '',
     refreshInterval: 15,          // seconds
     items: ['cpu', 'memory', 'disk', 'uptime'],  // order/selection of stats
-    hostname: false,
+    hostname: true,
   },
 
   /* ── Grid layout ── */
@@ -98,8 +98,90 @@ const DEFAULT_CONFIG = {
   },
 
   /* ── Cards (each card is a dashboard panel with sections) ── */
-  /* ── Start every installation as a clean, empty new tab. ── */
-  cards: [],
+  /* ── Cards (each card is a dashboard panel with sections) ── */
+  cards: [
+    {
+      id: 'welcome-card', title: 'Welcome to WarTab', icon: 'sword',
+      color: '#888888', width: 2,
+      sections: [
+        {
+          id: 'welcome-intro', type: 'notes', label: 'Your Dashboard',
+          content: 'Welcome to your self-hosted command centre.\n\nThis page is yours to customise — add cards, rearrange them, and connect your services.\n\nStart by clicking the + button in the top bar to add a new card, or the ⚙ gear icon to configure the look and feel.',
+        },
+      ],
+    },
+    {
+      id: 'search-card', title: 'Quick Search', icon: 'search',
+      color: '#999999', width: 2,
+      sections: [
+        { id: 'search-main', type: 'search', engine: 'Google', placeholder: 'Search anything...', label: 'Web Search' },
+      ],
+    },
+    {
+      id: 'clock-card', title: 'Time & Date', icon: 'clock',
+      color: '#aaaaaa', width: 1,
+      sections: [
+        { id: 'clock-main', type: 'clock', format24h: false, showDate: true },
+      ],
+    },
+    {
+      id: 'get-started', title: 'Getting Started', icon: 'compass',
+      color: '#777777', width: 2,
+      sections: [
+        {
+          id: 'start-links', type: 'links', label: 'Resources',
+          links: [
+            { label: 'GitHub', url: 'https://github.com', icon: '/icons/github.svg' },
+            { label: 'Selfhosted', url: 'https://reddit.com/r/selfhosted', icon: '/icons/reddit.svg' },
+            { label: 'Home Assistant', url: 'http://homeassistant.local:8123', icon: '/icons/home-assistant.svg' },
+            { label: 'Jellyfin', url: 'http://jellyfin.local:8096', icon: '/icons/jellyfin.svg' },
+            { label: 'Pi-hole', url: 'http://pi.hole/admin', icon: '/icons/pi-hole.svg' },
+            { label: 'Docker', url: 'https://docs.docker.com', icon: '/icons/docker.svg' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'module-showcase', title: 'Card Modules', icon: 'grid',
+      color: '#9a9a9a', width: 2,
+      sections: [
+        {
+          id: 'showcase-links', type: 'link-list', label: 'Available Modules',
+          links: [
+            { label: 'Links & Bookmarks', url: '', icon: 'link' },
+            { label: 'Search Bar', url: '', icon: 'search' },
+            { label: 'Clock & Calendar', url: '', icon: 'clock' },
+            { label: 'Weather', url: '', icon: 'cloud-sun' },
+            { label: 'Notes', url: '', icon: 'edit-3' },
+            { label: 'API Poller', url: '', icon: 'activity' },
+            { label: 'Resource Monitor', url: '', icon: 'bar-chart-3' },
+            { label: 'Media Card', url: '', icon: 'film' },
+            { label: 'Git Repo', url: '', icon: 'code-2' },
+            { label: 'Proxmox', url: '', icon: 'server' },
+            { label: 'Digital Pet', url: '', icon: 'heart' },
+            { label: 'LAN Scan', url: '', icon: 'radio' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'config-tip', title: 'Configuration', icon: 'settings',
+      color: '#bbbbbb', width: 1,
+      sections: [
+        {
+          id: 'config-notes', type: 'notes', label: 'Tips',
+          content: '• Click the ⚙ icon or press Ctrl+Shift+C to open settings\n• Drag ⠿ to reorder cards\n• Double-click any card title to rename it\n• Upload backgrounds in Appearance settings',
+        },
+      ],
+    },
+    {
+      id: 'system-info', title: 'System', icon: 'cpu',
+      color: '#999999', width: 1,
+      sections: [
+        { id: 'sys-resources', type: 'resource-monitor', source: 'local', glancesUrl: 'http://localhost:61209', refreshInterval: 3, graphMode: false },
+      ],
+    },
+  ],
 };
 
 /* ═══════════════════════════════════════════
@@ -278,6 +360,7 @@ async function init() {
   try {
   await loadConfig(); applyTheme();
   pageInit();  // migrate/init pages
+  if(!config.cards||!config.cards.length){console.warn('Config had no cards — restored defaults');config=cloneObj(DEFAULT_CONFIG);pageInit();saveConfig();}
   await fetchUploads();
   // Random background on load if rotation enabled
   if(config.theme.bgRotate&&uploadedFiles.length>0){

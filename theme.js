@@ -21,21 +21,35 @@ function applyTheme(){
   root.style.setProperty('--accent-glow',hexToRgba(t.glow,0.3));
   root.style.setProperty('--accent-glass',hexToRgba(t.glow,0.12));
 
-  // Font size — compute full scale as CSS variables from numeric px values
-  const tSize = parseInt(t.fontSizeText) || 14;
-  const hSize = parseInt(t.fontSizeHeading) || 16;
-  root.style.fontSize = tSize + 'px';
-  root.style.setProperty('--text-size', tSize + 'px');
-  root.style.setProperty('--text-3xs', Math.max(8, tSize - 5) + 'px');
-  root.style.setProperty('--text-2xs', Math.max(9, tSize - 4) + 'px');
-  root.style.setProperty('--text-xs',  Math.max(10, tSize - 3) + 'px');
-  root.style.setProperty('--text-sm',  Math.max(11, tSize - 2) + 'px');
-  root.style.setProperty('--text-base', tSize + 'px');
-  root.style.setProperty('--text-lg',  (tSize + 2) + 'px');
-  root.style.setProperty('--text-xl',  (tSize + 8) + 'px');
-  root.style.setProperty('--text-2xl', (tSize + 18) + 'px');
-  root.style.setProperty('--text-3xl', (tSize + 26) + 'px');
-  root.style.setProperty('--heading-size', hSize + 'px');
+  // Typography uses one monotonic, bounded scale. Keep the browser root at its
+  // accessibility default; WarTab's setting controls component tokens instead.
+  const tSize = Math.min(28, Math.max(10, parseInt(t.fontSizeText) || 14));
+  const hSize = Math.min(28, Math.max(10, parseInt(t.fontSizeHeading) || 16));
+  const px = value => `${Math.round(value * 100) / 100}px`;
+  const typeScale = {
+    '--text-3xs': Math.max(8, tSize * 0.68),
+    '--text-2xs': Math.max(9, tSize * 0.76),
+    '--text-xs': Math.max(10, tSize * 0.84),
+    '--text-sm': Math.max(10, tSize - 2),
+    '--text-base': tSize,
+    '--text-lg': tSize + 2,
+    '--text-xl': tSize + 6,
+    '--text-2xl': tSize + 10,
+    '--text-3xl': tSize + 18,
+    '--text-4xl': tSize + 26,
+    '--text-5xl': tSize + 38,
+  };
+  root.style.fontSize = '';
+  root.style.setProperty('--text-size', px(tSize));
+  Object.entries(typeScale).forEach(([name, value]) => root.style.setProperty(name, px(value)));
+  root.style.setProperty('--type-body', px(tSize));
+  root.style.setProperty('--type-ui', px(typeScale['--text-sm']));
+  root.style.setProperty('--type-label', px(typeScale['--text-xs']));
+  root.style.setProperty('--type-meta', px(typeScale['--text-2xs']));
+  root.style.setProperty('--type-card-title', px(Math.max(hSize, tSize + 1)));
+  root.style.setProperty('--type-panel-title', px(Math.max(hSize + 2, tSize + 3)));
+  root.style.setProperty('--type-display', px(typeScale['--text-3xl']));
+  root.style.setProperty('--heading-size', px(Math.max(hSize, tSize + 1)));
   root.style.setProperty('--topbar-scale', parseFloat(t.topBarScale) || 1);
   const fn=t.fontFamily||'Inter';
   root.style.setProperty('--font',`'${fn}','Segoe UI',system-ui,-apple-system,sans-serif`);
@@ -66,7 +80,7 @@ function applyTheme(){
   }
   root.style.setProperty('--text-primary',hexToRgba(fc,0.92));
   root.style.setProperty('--text-secondary',hexToRgba(fc,0.60));
-  root.style.setProperty('--text-tertiary',hexToRgba(fc,0.35));
+  root.style.setProperty('--text-tertiary',hexToRgba(fc,0.48));
 
   // Branding
   const brand=$('#brand-text');
@@ -83,7 +97,8 @@ function applyTheme(){
     }else{
       iconWrap.classList.add('emoji-icon');iconWrap.textContent=bi;
     }
-    const title=document.createElement('span');title.textContent=b2.title||'WarTab';
+    const title=document.createElement('span');title.className='brand-title';title.textContent=b2.title||'WarTab';
+    brand.setAttribute('aria-label',b2.title||'WarTab');
     brand.replaceChildren(iconWrap,title);
   }
   document.title=(config.branding||DEFAULT_CONFIG.branding).title||'WarTab';

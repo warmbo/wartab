@@ -48,7 +48,7 @@ const MEDIA_SERVICES = {
 
 function mediaStatRow(label, value, accent) {
   const row = document.createElement('div');
-  row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);';
+  row.style.cssText = 'display:flex;align-items:center;justify-content:var(--mod-justify,space-between);gap:calc(var(--space-2) * var(--mod-density,1));padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);';
   const lbl = document.createElement('span');
   lbl.style.cssText = 'font-size:var(--text-xs);color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
   lbl.textContent = label;

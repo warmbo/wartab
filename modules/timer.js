@@ -1,18 +1,18 @@
 registerModule('timer', {
   defaults: { mode:'interval', duration:300, targetDate:'', label:'' },
   render: (sec,card,cw)=>{
-    const w=document.createElement('div');w.style.cssText='text-align:var(--mod-align,center);padding:8px 0;';
+    const w=document.createElement('div');w.className='timer-widget';
     w.dataset.secId=sec.id;
     const display=document.createElement('div');display.className='timer-display';
-    display.style.cssText='font-size:var(--text-3xl);font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;font-family:var(--font);padding:8px 0;';
+
     display.textContent='--:--';
     w.appendChild(display);
     if(sec.mode==='countdown'){
       // ── Countdown / event timer ──
-      const labelEl=document.createElement('div');labelEl.style.cssText='font-size:var(--text-xs);color:var(--text-secondary);margin-top:2px;';
+      const labelEl=document.createElement('div');labelEl.className='timer-label';
       if(sec.label)labelEl.textContent=sec.label;
       w.appendChild(labelEl);
-      const info=document.createElement('div');info.className='timer-info';info.style.cssText='font-size:var(--text-2xs);color:var(--text-tertiary);margin-top:2px;';
+      const info=document.createElement('div');info.className='timer-info';
       w.appendChild(info);
       function updateCountdown(){
         if(!sec.targetDate){display.textContent='--:--';info.textContent='Set target date in editor';return;}
@@ -27,7 +27,7 @@ registerModule('timer', {
       WarTabLifecycle.addCleanup(cw,function(){clearInterval(_cdInterval);});
     } else {
       // ── Interval timer (existing behavior) ──
-      const btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:6px;justify-content:center;margin-top:4px;';
+      const btnRow=document.createElement('div');btnRow.className='timer-actions';
       const startBtn=document.createElement('button');startBtn.className='btn btn-glass btn-sm';startBtn.textContent='▶ Start';
       const resetBtn=document.createElement('button');resetBtn.className='btn btn-glass btn-sm';resetBtn.textContent='↺ Reset';
       btnRow.appendChild(startBtn);btnRow.appendChild(resetBtn);w.appendChild(btnRow);

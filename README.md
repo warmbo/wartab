@@ -6,15 +6,8 @@ Entirely self-contained — no external network required once loaded.
 
 ```
 🌐 GitHub:  https://github.com/warmbo/wartab
+🌐 Forgejo: http://10.0.0.253:3000/cody/wartab
 ```
-
-![WarTab demo dashboard with clock, search, timer, links, notes, and quote cards](docs/wartab-demo.png)
-
-Fresh installs intentionally open to a clean, empty **New Tab** page. The
-screenshot above uses a temporary, privacy-safe demo configuration to show the
-available card layout. Add only the cards and integrations you want; no example
-dashboard, hostnames, service URLs, notes, API keys, or uploaded media are
-bundled with the project.
 
 ```
 http://localhost:8081   or   http://<your-ip>:8081
@@ -137,7 +130,7 @@ This single command:
 
 - Installs Python 3, git, Pillow, and Avahi/mDNS
 - Clones WarTab to `/opt/wartab`
-- Creates a clean, empty `config.json` from privacy-safe defaults
+- Creates an initial `config.json` from defaults
 - Downloads service icons from selfh.st
 - Starts WarTab as a systemd user service with mDNS advertising
 - Enables linger (keeps running after logout)
@@ -175,8 +168,7 @@ python3 server.py --port 8081 --open         # --open opens browser automaticall
 # python3 server.py --port 8081 --mdns       # advertise via mDNS (install avahi-utils)
 ```
 
-The server works even without `config.json` — it serves the same clean, empty
-new-tab defaults on first run.
+The server works even without `config.json` — it serves built-in defaults on first run.
 
 ### Browser Extension
 
@@ -251,14 +243,14 @@ wartab/
 ├── download_icons.sh  # Fetches service icons from selfh.st CDN
 ├── setup.sh           # Debian install script
 ├── manifest.json      # Chrome extension manifest
-├── config.example.json # Privacy-safe first-run config template
+├── config.json        # Server-side config (auto-managed)
 ├── icons/             # 2,363 SVG service icons (selfhst/icons) + extension icons
 ├── static/
 │   ├── lucide.min.js  # Lucide icon library (local copy, 602KB)
 │   └── fonts/         # Inter font files + CSS
 ├── modules/           # Pluggable card section modules
-├── notes/             # Runtime-only user notes (gitignored)
-├── uploads/           # Runtime-only user images (gitignored)
+├── notes/             # Notes saved as .md files
+├── uploads/           # User-uploaded background images
 ├── extension/         # Browser extension build files and manifests
 ├── PLAN.md            # Architecture design document
 ├── HIERARCHY.md       # Component tree & class naming reference
@@ -292,6 +284,20 @@ For a deeper look at the component hierarchy and data model, see [`HIERARCHY.md`
 
 ## Development
 
+### Dual-Remote Push
+
+Every commit must be pushed to **both** remotes:
+
+```bash
+git push github <branch>
+git push origin <branch>   # Forgejo
+```
+
+| Alias | Target |
+|-------|--------|
+| `github` | `github.com/warmbo/wartab` |
+| `origin` | `10.0.0.253:3000/cody/wartab` (self-hosted Forgejo) |
+
 ### Versioning & Cache Busting
 
 All `<script src>` and `<link rel="stylesheet">` tags in `index.html` use `?v=BUILD` as
@@ -315,7 +321,7 @@ the fallback is `'dev'`.
    - Section editor type selector (around line 760)
    - New card modal (around line 2140)
 3. Add a `<script src="modules/<type>.js?v=BUILD" defer>` to `index.html`
-4. Commit the module and open a pull request
+4. Commit and dual-push to both remotes
 
 ### Branches
 

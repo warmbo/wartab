@@ -6,12 +6,11 @@ registerModule('notes', {
     // --- Toolbar (hidden until editor focused, fades in) ---
     var tb=document.createElement('div');
     tb.className='notes-tb';
-    tb.style.cssText='gap:4px;padding:0;border-bottom:1px solid rgba(255,255,255,0.06);margin:0;flex-wrap:wrap;display:flex;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease, margin 0.3s ease;';
     
     function mkBtn(label,cmd,val){
       var b=document.createElement('button');
       b.textContent=label;
-      b.style.cssText='padding:2px 8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--text-primary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);';
+      b.className='notes-tool-btn';
       b.addEventListener('mousedown',function(ev){ev.preventDefault();});
       b.addEventListener('click',function(){
         e.focus();
@@ -26,7 +25,7 @@ registerModule('notes', {
     mkBtn('I','italic');
     mkBtn('H','formatBlock','h3');
     mkBtn('ul','insertUnorderedList');
-    mkBtn('<>','insertHTML','<code style="background:rgba(255,255,255,0.08);padding:2px 4px;border-radius:3px;font-family:monospace;">code</code>');
+    mkBtn('<>','insertHTML','<code>code</code>');
     
     cw.appendChild(tb);
     
@@ -34,7 +33,6 @@ registerModule('notes', {
     var e=document.createElement('div');
     e.className='notes-editor';
     e.contentEditable=true;
-    e.style.cssText='min-height:90px;max-height:none;overflow-y:auto;padding:8px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.06);color:var(--text-primary);font-size:var(--text-sm);line-height:1.6;outline:none;';
     
     // Use textContent instead of innerHTML for initial empty state
     if(sec.content){
@@ -43,31 +41,31 @@ registerModule('notes', {
       e.textContent='';
     }
     
-    // Use saved editor height or default
+    var LINE_H=13*1.6,MIN_H=Math.round(4*LINE_H),MAX_LINES=15,MAX_H=Math.round(MAX_LINES*LINE_H);
+
+    // Use the saved height within the compact workspace bounds.
     if (sec.editorHeight) {
-      e.style.height = sec.editorHeight + 'px';
-      e.style.maxHeight = 'none';
+      e.style.height = Math.max(MIN_H,Math.min(MAX_H,sec.editorHeight)) + 'px';
     }
     cw.appendChild(e);
 
-    // --- Resize handle (drag to set height, 4–25 lines) ---
+    // --- Resize handle (drag to set height, 4–15 lines) ---
     var rh=document.createElement('div');
-    rh.style.cssText='height:4px;cursor:ns-resize;background:rgba(255,255,255,0.06);border-radius:2px;margin:2px 0;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:3px;';
-    rh.title='Drag to resize (4–25 lines)';
+    rh.className='notes-resize-handle';
+    rh.title='Drag to resize (4–15 lines)';
     rh.tabIndex=0;rh.setAttribute('role','separator');rh.setAttribute('aria-orientation','horizontal');
-    rh.innerHTML='<span style="display:block;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.12);"></span><span style="display:block;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.12);"></span><span style="display:block;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.12);"></span>';
+    for(var dotIdx=0;dotIdx<3;dotIdx++){var dot=document.createElement('span');dot.className='notes-resize-dot';rh.appendChild(dot);}
     cw.appendChild(rh);
 
     var _drag=false,_startY=0,_startH=0;
-    var LINE_H=13*1.6,MIN_H=Math.round(4*LINE_H),MAX_H=Math.round(25*LINE_H);
-    function onMove(ev){if(!_drag)return;var h=Math.max(MIN_H,Math.min(MAX_H,_startH+ev.clientY-_startY));e.style.height=h+'px';e.style.maxHeight='none';}
+    function onMove(ev){if(!_drag)return;var h=Math.max(MIN_H,Math.min(MAX_H,_startH+ev.clientY-_startY));e.style.height=h+'px';}
     function onUp(){if(_drag){_drag=false;document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('pointermove',onMove);document.removeEventListener('pointerup',onUp);sec.editorHeight=e.offsetHeight;saveConfig();}}
     rh.addEventListener('pointerdown',function(ev){ev.preventDefault();_drag=true;_startY=ev.clientY;_startH=e.offsetHeight;rh.setPointerCapture?.(ev.pointerId);document.body.style.cursor='ns-resize';document.body.style.userSelect='none';document.addEventListener('pointermove',onMove);document.addEventListener('pointerup',onUp);});
     rh.addEventListener('keydown',function(ev){if(ev.key!=='ArrowUp'&&ev.key!=='ArrowDown')return;ev.preventDefault();var delta=ev.key==='ArrowUp'?-LINE_H:LINE_H;var h=Math.max(MIN_H,Math.min(MAX_H,e.offsetHeight+delta));e.style.height=Math.round(h)+'px';sec.editorHeight=Math.round(h);saveConfig();});
 
     // --- Toolbar visibility toggle with fade ---
-    function showToolbar(){tb.style.maxHeight='40px';tb.style.opacity='1';tb.style.padding='4px 0';tb.style.margin='0 0 4px 0';}
-    function hideToolbar(){tb.style.maxHeight='0';tb.style.opacity='0';tb.style.padding='0';tb.style.margin='0';}
+    function showToolbar(){tb.classList.add('visible');}
+    function hideToolbar(){tb.classList.remove('visible');}
     var blurTimer=null,disposed=false;
     e.addEventListener('focus',showToolbar);
     e.addEventListener('blur',function(){
@@ -82,13 +80,14 @@ registerModule('notes', {
     
     // --- Bottom row: download button + character count ---
     var br=document.createElement('div');
-    br.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:4px 0;';
+    br.className='notes-bottom-row';
     
     // Download .md button
     var dlBtn=document.createElement('button');
-    dlBtn.innerHTML='&#x2193;';
+    dlBtn.className='notes-download-btn';
+    dlBtn.textContent='↓';
     dlBtn.title='Download .md file';
-    dlBtn.style.cssText='padding:2px 8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--text-secondary);cursor:pointer;border-radius:3px;font-size:var(--text-xs);line-height:1;';
+    dlBtn.setAttribute('aria-label','Download note as Markdown');
     dlBtn.addEventListener('click',function(){
       var content=e.innerHTML;
       var plain=e.textContent||'';
@@ -106,7 +105,7 @@ registerModule('notes', {
     
     // Character count
     var cc=document.createElement('div');
-    cc.style.cssText='font-size:var(--text-xs);color:var(--text-secondary);opacity:0.6;';
+    cc.className='notes-char-count';
     
     function updateCharCount(){
       var txt=e.textContent||'';
@@ -142,11 +141,9 @@ registerModule('notes', {
         else if(b.textContent==='I')cmd='italic';
         else if(b.textContent==='ul')cmd='insertUnorderedList';
         if(cmd&&document.queryCommandState(cmd)){
-          b.style.background='rgba(255,255,255,0.2)';
-          b.style.borderColor='rgba(255,255,255,0.3)';
+          b.classList.add('active');
         }else{
-          b.style.background='rgba(255,255,255,0.05)';
-          b.style.borderColor='rgba(255,255,255,0.1)';
+          b.classList.remove('active');
         }
       });
     }

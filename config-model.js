@@ -71,7 +71,7 @@ var WarTabConfigModel = (function() {
     if (!Object.keys(pages).length) {
       var firstId = nextPageId(makeId, pages);
       pages[firstId] = {
-        name: Array.isArray(config.cards) && config.cards.length ? 'Page 1' : 'New Tab',
+        name: 'Page 1',
         icon: 'layout',
         cards: Array.isArray(config.cards) ? clone(config.cards) : [],
       };

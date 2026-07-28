@@ -28,16 +28,6 @@ describe('production config model', () => {
     expect(config).not.toHaveProperty('cards');
   });
 
-  it('creates an empty first-run page named New Tab', () => {
-    const config = model.normalizePages({ cards: [] }, () => 'generated');
-
-    expect(config.pages).toEqual({
-      'page-generated': { name: 'New Tab', icon: 'layout', cards: [] },
-    });
-    expect(config.pageOrder).toEqual(['page-generated']);
-    expect(config.currentPage).toBe('page-generated');
-  });
-
   it('normalizes legacy page arrays while preserving page ids and order', () => {
     const config = model.normalizePages({
       pages: [
