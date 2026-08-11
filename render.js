@@ -6,17 +6,6 @@
 /* ═══════════════════════════════════════════ RENDER ═══════════════════════════════════════════ */
 // Resolve columns for the current page (per-page setting or global default)
 function getPageCols(){return (config.pages[config.currentPage]&&config.pages[config.currentPage].cols)||config.layout.cols;}
-// Auto-span a dense card: returns a wider column span (or 0) when a link-heavy
-// card would otherwise crowd into one narrow column. Used only when the user
-// has NOT set an explicit width, so manual layouts are never overridden.
-function autoSpanWidth(card, pageCols){
-  if (pageCols < 3) return 0;                 // auto-span needs room
-  const sections = card.sections || [];
-  let links = 0;
-  sections.forEach(s => { if ((s.type === 'links' || s.type === 'link-list')) links += (s.links || []).length; });
-  // Dense threshold: ~12+ links in one card warrants a 2-col span.
-  return links >= 12 ? 2 : 0;
-}
 function rerenderCard(card){
   if(!card)return null;
   const oldEl=document.querySelector('[data-card-id="'+card.id+'"]');
@@ -31,14 +20,8 @@ function rerenderCard(card){
 function renderAll(){if(statsTimer){clearInterval(statsTimer);statsTimer=null;}const grid=$('#card-grid');Array.from(grid.children).forEach(WarTabLifecycle.cleanupSubtree);grid.innerHTML='';var pageCols=getPageCols();grid.style.setProperty('--grid-cols',pageCols);grid.style.gap=config.layout.gap+'px';const appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width
   appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
-  // Side padding is applied as a % by the slider, but an unbounded % blows out
-  // on wide screens (7% @1280px = 88px gutters each side). Clamp the effective
-  // padding in px so the content area stays usable — caps the gutter, keeps the
-  // slider meaningful on smaller viewports.
-  const xPadPct=Math.max(0, parseInt(config.layout.pageWidthPadding)||2);
-  const vw=Math.max(document.documentElement.clientWidth||0, window.innerWidth||0);
-  const xPadPx=Math.min(Math.round(vw*xPadPct/100), 56);
-  appEl.style.paddingLeft=xPadPx+'px';appEl.style.paddingRight=xPadPx+'px';
+  const xPad=parseInt(config.layout.pageWidthPadding)||2;
+  appEl.style.paddingLeft=xPad+'%';appEl.style.paddingRight=xPad+'%';
   // Top/bottom padding: slider (%)
   const yPad=parseInt(config.layout.pagePadding)||2;
   appEl.style.paddingTop=yPad+'%';appEl.style.paddingBottom=yPad+'%';
@@ -139,15 +122,7 @@ function renderCard(card,idx){
   const div = document.createElement('div');
   div.className = 'card';
   div.dataset.cardId = card.id;
-  // Resolve the span. Respect an explicit user-set width; otherwise auto-span
-  // dense link cards (many links) to 2 columns so they use leftover width
-  // instead of crowding into a single narrow column. Capped at page columns.
-  const pageCols = getPageCols();
-  let span = card.width || 1;
-  if ((!card.width || card.width === 1) && autoSpanWidth(card, pageCols)) {
-    span = Math.min(autoSpanWidth(card, pageCols), pageCols);
-  }
-  div.dataset.width = Math.min(span, pageCols);
+  div.dataset.width = Math.min(card.width || 1, getPageCols());
   div.dataset.index = idx;
   div.style.setProperty('--card-accent', card.color || config.theme.glow);
   const ch=Math.min(card.height||1,4);
