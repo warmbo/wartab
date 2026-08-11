@@ -48,7 +48,6 @@ function applyTheme(){
   root.style.setProperty('--type-meta', px(typeScale['--text-2xs']));
   root.style.setProperty('--type-card-title', px(Math.max(hSize, tSize + 1)));
   root.style.setProperty('--type-panel-title', px(Math.max(hSize + 2, tSize + 3)));
-  root.style.setProperty('--type-display', px(typeScale['--text-3xl']));
   root.style.setProperty('--heading-size', px(Math.max(hSize, tSize + 1)));
   root.style.setProperty('--topbar-scale', parseFloat(t.topBarScale) || 1);
   const fn=t.fontFamily||'Inter';
