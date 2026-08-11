@@ -139,7 +139,14 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
         except ValueError:
             return self._json({"error": "invalid id"}, 400)
         note_path = NOTES / f"{note_id}.md"
-        return self._json({"id": note_id, "content": note_path.read_text() if note_path.exists() else ""})
+        if not note_path.exists():
+            return self._json({"id": note_id, "content": ""})
+        try:
+            content = note_path.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            log.error("failed to read note %s: %s", note_id, exc)
+            return self._json({"error": "read_failed"}, 500)
+        return self._json({"id": note_id, "content": content})
 
     def _get_backups(self):
         CONFIG_STORAGE.snapshot_dir.mkdir(exist_ok=True)
@@ -154,7 +161,8 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 data = json.loads(path.read_text())
             except (OSError, json.JSONDecodeError) as error:
-                return self._json({"error": str(error)}, 500)
+                log.error("failed to read config: %s", error)
+                return self._json({"error": "read_failed"}, 500)
             data["_version"] = GIT_VERSION
             return self._json(data)
         data = dict(MINIMAL_CONFIG)
@@ -250,13 +258,19 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             return
         try:
             data = json.loads(body if body else b"{}")
-            valid, message = validate_config(data)
-            if not valid:
-                return self._json({"error": "invalid config: " + message}, 400)
+        except json.JSONDecodeError:
+            return self._json({"error": "invalid json"}, 400)
+        valid, message = validate_config(data)
+        if not valid:
+            return self._json({"error": "invalid config: " + message}, 400)
+        try:
             CONFIG_STORAGE.save(data)
-            self._json({"status": "saved"})
-        except Exception as error:
-            self._json({"error": str(error)}, 400)
+        except OSError as error:
+            # Server-side failure (disk full, permissions) is a 500, not a 400 —
+            # and the raw error is logged, not echoed to the client.
+            log.error("config save failed: %s", error)
+            return self._json({"error": "save_failed"}, 500)
+        self._json({"status": "saved"})
 
     def _post_restore(self):
         try:
@@ -292,7 +306,13 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
         body = self._read_body(1024 * 1024)
         if body is None:
             return
-        (NOTES / f"{note_id}.md").write_text(body.decode() if body else "")
+        # Tolerate non-UTF-8 bytes (replace) so a malformed body returns 200
+        # rather than crashing the handler with an unhandled UnicodeDecodeError.
+        try:
+            (NOTES / f"{note_id}.md").write_text(body.decode("utf-8", "replace") if body else "")
+        except OSError as exc:
+            log.error("failed to write note %s: %s", note_id, exc)
+            return self._json({"error": "write_failed"}, 500)
         self._json({"status": "saved", "id": note_id})
 
     def _post_proxy(self):

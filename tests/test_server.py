@@ -251,6 +251,34 @@ class TestFileBackedEndpoints(unittest.TestCase):
         self.assertTrue(replace.called)
         self.assertEqual(json.loads(config_path.read_text()), config)
 
+    def test_post_config_malformed_json_is_400_not_500(self):
+        from server_config import ConfigStorage
+
+        root = Path(self.temporary.name)
+        self.server_module.CONFIG_STORAGE = ConfigStorage(
+            root / "config.json", root / "snapshots"
+        )
+        status, response = self.request("/api/config", data=b"{not json")
+        self.assertEqual(status, 400)
+        self.assertEqual(response["error"], "invalid json")
+
+    def test_post_config_save_error_is_500_not_400(self):
+        """A server-side storage failure (OSError) must be a 500 with a generic
+        message, not a 400 that echoes the raw error to the client."""
+        from server_config import ConfigStorage
+
+        root = Path(self.temporary.name)
+        self.server_module.CONFIG_STORAGE = ConfigStorage(
+            root / "config.json", root / "snapshots"
+        )
+        config = {"theme": {"bgType": "gradient", "bgValue": "#000", "glow": "#888"}, "layout": {"cols": 4}, "cards": []}
+        with mock.patch.object(ConfigStorage, "save", side_effect=OSError("disk full")):
+            status, response = self.request("/api/config", data=json.dumps(config).encode())
+
+        self.assertEqual(status, 500)
+        self.assertEqual(response["error"], "save_failed")
+        self.assertNotIn("disk full", json.dumps(response))
+
     def test_restore_rejects_invalid_config_and_preserves_current_file(self):
         root = Path(self.temporary.name)
         snapshots = root / "snapshots"
