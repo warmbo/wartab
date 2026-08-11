@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # WarTab Control Panel — start/stop/restart/status via systemd
+# NOTE: wartab runs as a SYSTEM unit (/etc/systemd/system/wartab.service).
+# The old --user variants were stale and never controlled the real service.
 set -euo pipefail
 
 SERVICE="wartab.service"
@@ -13,8 +15,8 @@ echo "╚═══════════════════════�
 echo ""
 
 # Current status
-STATUS="$(systemctl --user is-active "$SERVICE" 2>/dev/null || echo 'inactive')"
-ENABLED="$(systemctl --user is-enabled "$SERVICE" 2>/dev/null || echo 'not-found')"
+STATUS="$(systemctl is-active "$SERVICE" 2>/dev/null || echo 'inactive')"
+ENABLED="$(systemctl is-enabled "$SERVICE" 2>/dev/null || echo 'not-found')"
 PID="$(pgrep -f 'python3.*server.py.*port.*8081' 2>/dev/null || true)"
 
 echo "  Service:   $SERVICE"
@@ -33,11 +35,11 @@ fi
 echo ""
 
 # Menu
-echo "  [1] Start   — systemctl --user start $SERVICE"
-echo "  [2] Stop    — systemctl --user stop $SERVICE"
-echo "  [3] Restart — systemctl --user restart $SERVICE"
-echo "  [4] Status  — journalctl --user -u $SERVICE -n 15 --no-pager"
-echo "  [5] Logs    — journalctl --user -u $SERVICE -f"
+echo "  [1] Start   — systemctl start $SERVICE"
+echo "  [2] Stop    — systemctl stop $SERVICE"
+echo "  [3] Restart — systemctl restart $SERVICE"
+echo "  [4] Status  — journalctl -u $SERVICE -n 15 --no-pager"
+echo "  [5] Logs    — journalctl -u $SERVICE -f"
 echo "  [6] Raw     — python3 server.py --port $PORT (foreground)"
 echo ""
 echo "  [0] Exit"
@@ -49,46 +51,45 @@ echo ""
 case "$choice" in
   1)
     echo "  Starting $SERVICE..."
-    systemctl --user start "$SERVICE"
+    systemctl start "$SERVICE"
     sleep 1
-    systemctl --user is-active "$SERVICE" && echo "  ✓ Started" || echo "  ✗ Failed"
+    systemctl is-active "$SERVICE" && echo "  ✓ Started" || echo "  ✗ Failed"
     ;;
   2)
     echo "  Stopping $SERVICE..."
-    systemctl --user stop "$SERVICE"
+    systemctl stop "$SERVICE"
     sleep 1
-    systemctl --user is-active "$SERVICE" && echo "  ✗ Still running" || echo "  ✓ Stopped"
+    systemctl is-active "$SERVICE" && echo "  ✗ Still running" || echo "  ✓ Stopped"
     ;;
   3)
     echo "  Restarting $SERVICE..."
-    systemctl --user restart "$SERVICE"
+    systemctl restart "$SERVICE"
     sleep 2
     HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT/" 2>/dev/null || echo '000')
     if [ "$HTTP_CODE" = "200" ]; then
       echo "  ✓ Restarted — HTTP $HTTP_CODE"
     else
       echo "  ⚠ Restarted but HTTP $HTTP_CODE — check logs"
-      journalctl --user -u "$SERVICE" -n 5 --no-pager
+      journalctl -u "$SERVICE" -n 5 --no-pager
     fi
     ;;
   4)
-    journalctl --user -u "$SERVICE" -n 15 --no-pager
+    journalctl -u "$SERVICE" -n 15 --no-pager
     ;;
   5)
-    journalctl --user -u "$SERVICE" -f
+    journalctl -u "$SERVICE" -f
     ;;
   6)
     echo "  Starting raw (Ctrl+C to stop)..."
     echo ""
     cd "$REPO"
-    python3 server.py --port "$PORT"
+    exec python3 server.py --port "$PORT"
     ;;
   0)
-    echo "  Bye."
     exit 0
     ;;
   *)
-    echo "  Invalid choice."
-    exit 1
+    echo "  Unknown choice: $choice"
     ;;
 esac
+echo ""

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Restart WarTab service and verify health
+# wartab runs as a SYSTEM unit (/etc/systemd/system/wartab.service).
 set -euo pipefail
 
 PORT="${1:-8081}"
 SERVICE="wartab.service"
 
 echo ":: Restarting ${SERVICE}..."
-systemctl --user restart "${SERVICE}"
+systemctl restart "${SERVICE}"
 sleep 2
 
-STATUS="$(systemctl --user is-active "${SERVICE}" 2>/dev/null || echo 'inactive')"
+STATUS="$(systemctl is-active "${SERVICE}" 2>/dev/null || echo 'inactive')"
 echo "✓ Status: ${STATUS}"
 
 if [ "${STATUS}" = "active" ]; then
@@ -23,6 +24,6 @@ if [ "${STATUS}" = "active" ]; then
   fi
 else
   echo "✗ Service failed to start"
-  echo "  Logs: journalctl --user -u ${SERVICE} -n 20 --no-pager"
+  echo "  Logs: journalctl -u ${SERVICE} -n 20 --no-pager"
   exit 1
 fi
