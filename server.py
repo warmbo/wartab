@@ -45,6 +45,13 @@ GIT_VERSION = detect_git_version(HERE)
 MINIMAL_CONFIG = build_minimal_config(GIT_VERSION)
 
 
+# SPA asset allowlist — the ONLY files served from the repo root. Everything
+# else (source *.py, .git/, config.json, snapshots/, data/, notes, docs, tests,
+# __pycache__) must never be web-served.
+_SERVABLE_ROOTS = {"/", "/static", "/uploads", "/icons", "/notes", "/modules"}
+_SERVABLE_ROOT_EXT = {".js", ".css", ".html", ".json", ".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".woff2", ".woff", ".ttf"}
+
+
 class WarTabHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(HERE), **kwargs)
@@ -332,6 +339,27 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
 
     def _serve_static_or_spa(self):
         translated = Path(self.translate_path(self.path))
+        url_path = urllib.parse.urlparse(self.path).path
+
+        # Hard-block known sensitive paths up front, regardless of existence.
+        # Prevents /data/.update_token, /.git/*, /server.py, /config.json,
+        # /snapshots/*, /docs/*, /tests/* from ever being served.
+        blocked_prefix = (
+            "/.git", "/data/", "/snapshots/", "/__pycache__/", "/docs/",
+            "/tests/", "/.github", "/node_modules", "/.deploy", "/extension",
+        )
+        blocked_exact = {"/config.json", "/server.py", "/server_update.py",
+                         "/server_config.py", "/server_network.py",
+                         "/server_files.py", "/server_startup.py",
+                         "/server_defaults.py", "/stats.py"}
+        if url_path != "/" and (
+            url_path in blocked_exact
+            or any(url_path.startswith(p) for p in blocked_prefix)
+        ):
+            self.send_error(404, "Not Found")
+            return
+
+        # Client-side SPA route (no real file) — fall back to the HTML shell.
         if not translated.is_file() or self.path == "/":
             self.path = "/index.html"
             index = HERE / "index.html"
