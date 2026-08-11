@@ -82,7 +82,10 @@ class TestServerRouting(unittest.TestCase):
         status, headers, body = self.request("/dashboard/page")
         self.assertEqual(status, 200)
         self.assertEqual(body, b"<html>WarTab</html>")
-        self.assertEqual(headers["Access-Control-Allow-Origin"], "*")
+        # Same-origin policy: no wildcard ACAO. A cross-site request (no
+        # matching Origin) must NOT receive an Access-Control-Allow-Origin
+        # header, otherwise any LAN webpage could read/write the API.
+        self.assertNotIn("Access-Control-Allow-Origin", headers)
         self.assertIn("default-src 'self'", headers["Content-Security-Policy"])
 
     @mock.patch("server.handle_ping", return_value=({"host": "lan", "alive": True}, 200))

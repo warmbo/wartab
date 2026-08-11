@@ -34,11 +34,12 @@ NOTES = HERE / "notes"
 for directory in (UPLOADS, ICONS, STATIC / "fonts", ICONS_DIR, NOTES):
     directory.mkdir(parents=True, exist_ok=True)
 CONFIG_STORAGE = ConfigStorage(HERE / "config.json", HERE / "snapshots")
-CORS_HEADERS = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type,X-Filename,X-WarTab-Update-Token",
-}
+# Same-origin CORS. We never send `Access-Control-Allow-Origin: *`: that would
+# let any website on the LAN read/write the API. Instead _cors() reflects the
+# request origin only when it matches the server's own Host (same-origin),
+# and omits the CORS header otherwise. Allowed methods/headers stay fixed.
+CORS_ALLOW_METHODS = "GET,POST,DELETE,OPTIONS"
+CORS_ALLOW_HEADERS = "Content-Type,X-Filename,X-WarTab-Update-Token"
 MAX_W, MAX_H, MAX_BYTES = 99999, 99999, 20 * 1024 * 1024
 
 GIT_VERSION = detect_git_version(HERE)
@@ -396,8 +397,21 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
         return self.rfile.read(length) if length else b""
 
     def _cors(self):
-        for key, value in CORS_HEADERS.items():
-            self.send_header(key, value)
+        # Reflect the request origin ONLY when it matches the server's own host
+        # (same-origin). Cross-site origins get no ACAO header, so their fetch
+        # reads are blocked by the browser and their writes would need CORS too.
+        origin = self.headers.get("Origin")
+        host = self.headers.get("Host")
+        if origin:
+            try:
+                origin_host = urllib.parse.urlparse(origin).netloc
+            except ValueError:
+                origin_host = ""
+            if origin_host == host:
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Vary", "Origin")
+        self.send_header("Access-Control-Allow-Methods", CORS_ALLOW_METHODS)
+        self.send_header("Access-Control-Allow-Headers", CORS_ALLOW_HEADERS)
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache, must-revalidate")
