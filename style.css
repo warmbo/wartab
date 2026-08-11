@@ -1286,7 +1286,12 @@ body.panel-open.panel-left #top-bar {
 /* ══════ Tablet: 2-column layout ══════ */
 @media (min-width: 769px) and (max-width: 1199px) {
   :root { --grid-cols: 2; --grid-gap: 14px; }
-  #card-grid { gap: var(--grid-gap); }
+  /* render.js writes --grid-cols and gap inline on #card-grid, which would
+     otherwise defeat the :root tablet rule and render the desktop column
+     count (e.g. 4 × ~200px). Mirror the mobile pattern: override on the grid
+     element itself with !important so the tablet band truly gets 2 columns.
+     This only corrects the breakpoint; it does not resize any user card. */
+  #card-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 14px !important; }
   .card[data-width="3"], .card[data-width="4"] { grid-column: span 2 !important; }
 }
 
