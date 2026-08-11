@@ -1,5 +1,6 @@
 """Tests for WarTab server utilities using unittest."""
 import json
+import http.client
 import tempfile
 import threading
 import unittest
@@ -279,11 +280,17 @@ class TestFileBackedEndpoints(unittest.TestCase):
                 self.assertEqual(status, 400)
 
     def test_note_body_limit_is_checked_before_writing(self):
-        oversized = b"x" * (1024 * 1024 + 1)
-        status, response = self.request("/api/notes/large", data=oversized)
+        connection = http.client.HTTPConnection("127.0.0.1", self.httpd.server_port)
+        connection.putrequest("POST", "/api/notes/large")
+        connection.putheader("Content-Length", str(1024 * 1024 + 1))
+        connection.endheaders()
+        response = connection.getresponse()
+        status = response.status
+        payload = json.loads(response.read())
+        connection.close()
 
         self.assertEqual(status, 413)
-        self.assertEqual(response, {"error": "too large"})
+        self.assertEqual(payload, {"error": "too large"})
         self.assertFalse((Path(self.temporary.name) / "notes" / "large.md").exists())
 
 

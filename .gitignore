@@ -12,4 +12,6 @@ uploads/*.gif
 config.json
 server.log
 *.bak-*
+# Runtime state for the self-update system (update token, rollback point)
+data/
 notes/

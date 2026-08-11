@@ -55,6 +55,7 @@ FILES=(
   page-editor.js
   dragdrop.js
   arrange-mode.js
+  updates.js
   manifest.json
   modules/
   static/

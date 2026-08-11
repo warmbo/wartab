@@ -275,6 +275,11 @@ function buildSystemPanel(body){
   renderSnapshots();
   body.appendChild(snapList);
 
+  /* Updates */
+  if (window.wartabUpdatesBuild) {
+    body.appendChild(window.wartabUpdatesBuild());
+  }
+
   /* Credits */
   body.appendChild(ps('Credits'));
   const cbox=el('div','font-size:var(--text-xs);line-height:1.7;padding:0 0 8px;color:var(--text-secondary);');
