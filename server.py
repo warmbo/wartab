@@ -15,6 +15,7 @@ from server_files import (IMAGE_EXTENSIONS, list_images, process_icon,
 from server_network import (handle_cert_check, handle_docker, handle_ping,
                             handle_proxy, scan_arp)
 from server_startup import detect_git_version, run
+import server_update
 from stats import build_stats
 
 log = logging.getLogger("wartab")
@@ -36,7 +37,7 @@ CONFIG_STORAGE = ConfigStorage(HERE / "config.json", HERE / "snapshots")
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type,X-Filename",
+    "Access-Control-Allow-Headers": "Content-Type,X-Filename,X-WarTab-Update-Token",
 }
 MAX_W, MAX_H, MAX_BYTES = 99999, 99999, 20 * 1024 * 1024
 
@@ -72,6 +73,8 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             "/api/docker": lambda: self._network_response(handle_docker()),
             "/api/icons/list": self._get_icons,
             "/api/icons/check": self._get_icon_status,
+            "/api/update/status": self._get_update_status,
+            "/api/update/log": self._get_update_log,
         }
         if path in exact:
             exact[path]()
@@ -96,6 +99,8 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             "/api/upload": self._post_upload, "/api/upload-icon": self._post_upload_icon,
             "/api/config": self._post_config, "/api/proxy": self._post_proxy,
             "/api/save-icon": self._post_save_icon,
+            "/api/update": self._post_update,
+            "/api/update/rollback": self._post_rollback,
         }
         if path in exact:
             exact[path]()
@@ -163,6 +168,43 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             except Exception as error:
                 info["error"] = str(error)
         self._json(info)
+
+    def _get_update_status(self):
+        params = {key: values[0] for key, values in urllib.parse.parse_qs(
+            urllib.parse.urlparse(self.path).query).items()}
+        refresh = params.get("refresh", "").lower() in ("1", "true", "yes")
+        self._json(server_update.status(refresh=refresh))
+
+    def _get_update_log(self):
+        if not self._require_update_token():
+            return
+        params = {key: values[0] for key, values in urllib.parse.parse_qs(
+            urllib.parse.urlparse(self.path).query).items()}
+        try:
+            after = int(params.get("after", "0"))
+        except (TypeError, ValueError):
+            after = 0
+        self._json(server_update.get_update_log(after=after))
+
+    def _require_update_token(self):
+        """Return True if the request carries a valid update token."""
+        supplied = self.headers.get("X-WarTab-Update-Token")
+        if server_update.token_matches(supplied):
+            return True
+        self._json({"error": "unauthorized"}, 401)
+        return False
+
+    def _post_update(self):
+        if not self._require_update_token():
+            return
+        self._json({"status": "started"})
+        server_update.apply_async()
+
+    def _post_rollback(self):
+        if not self._require_update_token():
+            return
+        self._json({"status": "started"})
+        server_update.rollback_async()
 
     def _post_upload(self):
         body = self._read_body(MAX_BYTES)

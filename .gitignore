@@ -10,5 +10,7 @@ uploads/*.jpg
 uploads/*.webp
 uploads/*.gif
 config.json
+# Runtime state for the self-update system (update token, rollback point)
+data/
 
 notes/
