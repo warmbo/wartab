@@ -40,7 +40,10 @@ CONFIG_STORAGE = ConfigStorage(HERE / "config.json", HERE / "snapshots")
 # and omits the CORS header otherwise. Allowed methods/headers stay fixed.
 CORS_ALLOW_METHODS = "GET,POST,DELETE,OPTIONS"
 CORS_ALLOW_HEADERS = "Content-Type,X-Filename,X-WarTab-Update-Token"
-MAX_W, MAX_H, MAX_BYTES = 99999, 99999, 20 * 1024 * 1024
+# Clamp image dimensions: 8192 is far above any real dashboard asset and keeps
+# decoded buffers bounded (avoids decompression-bomb OOM). server_files.py
+# additionally rejects anything above MAX_DECODED_PIXELS before decode.
+MAX_W, MAX_H, MAX_BYTES = 8192, 8192, 20 * 1024 * 1024
 
 GIT_VERSION = detect_git_version(HERE)
 MINIMAL_CONFIG = build_minimal_config(GIT_VERSION)

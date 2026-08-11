@@ -19,6 +19,43 @@ _IDENTIFIER = re.compile(r"[A-Za-z0-9_-]+\Z")
 _FILENAME = re.compile(r"[A-Za-z0-9_.-]+\Z")
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg")
 
+# Pixel budget for decoded raster images. A header-only "decompression bomb" can
+# declare dimensions far larger than its compressed size; we reject anything
+# above this before decode to avoid OOM. (~40 MP is ~160MB as RGBA.)
+MAX_DECODED_PIXELS = 40_000_000
+
+
+def _image_too_large(image) -> bool:
+    try:
+        return (image.width or 0) * (image.height or 0) > MAX_DECODED_PIXELS
+    except (ValueError, AttributeError):
+        return True
+
+
+# Magic-byte sniffers for the no-PIL path (P2-7): reject content whose declared
+# extension does not match its actual bytes, so arbitrary files can't be stored
+# and served under a safe-looking image extension.
+_MAGIC = {
+    ".png": b"\x89PNG",
+    ".jpg": b"\xff\xd8",
+    ".jpeg": b"\xff\xd8",
+    ".gif": b"GIF8",
+    ".webp": b"RIFF",  # ...WEBP; RIFF check is cheap, robust enough
+}
+_SVG_PREFIXES = (b"<svg", b"<?xml", b"<!DOCTYPE svg")
+
+
+def _magic_matches(raw_bytes: bytes, extension: str) -> bool:
+    if not raw_bytes:
+        return False
+    if extension == ".svg":
+        stripped = raw_bytes.lstrip()[:512].lower()
+        return any(stripped.startswith(p) for p in _SVG_PREFIXES)
+    expected = _MAGIC.get(extension)
+    if expected is None:
+        return False
+    return raw_bytes[: len(expected)].lower() == expected.lower()
+
 
 def safe_file_identifier(value: str, *, allow_extension: bool = False) -> str:
     """Return a decoded safe identifier, or raise ``ValueError``."""
@@ -49,11 +86,19 @@ def process_image(raw_bytes, filename, uploads, *, max_bytes, max_width, max_hei
     output_name = f"{uuid.uuid4().hex}{output_extension}"
     output_path = Path(uploads) / output_name
     if not HAVE_PIL:
+        # P2-7: without Pillow we can't re-encode, so only accept content whose
+        # magic bytes match the declared extension (prevents storing arbitrary
+        # bytes under a safe-looking image name).
+        if not _magic_matches(raw_bytes, extension):
+            return {"error": "File content does not match its image type"}
         output_path.write_bytes(raw_bytes)
         return {"url": f"/uploads/{output_name}", "path": str(output_path),
                 "size": len(raw_bytes), "name": filename}
     try:
         image = Image.open(io.BytesIO(raw_bytes))
+        # P2-8: reject decompression bombs BEFORE decode (thumbnail decodes).
+        if _image_too_large(image):
+            return {"error": "Image dimensions too large"}
         if image_format == "JPEG" and image.mode in ("RGBA", "P", "LA"):
             image = image.convert("RGB")
         if image.width > max_width or image.height > max_height:
@@ -86,6 +131,9 @@ def process_icon(raw_bytes, icons_dir):
         return {"error": "Pillow is required"}
     try:
         image = Image.open(io.BytesIO(raw_bytes))
+        # P2-8: reject decompression bombs before decode.
+        if _image_too_large(image):
+            return {"error": "Image dimensions too large"}
         image = image.convert("RGBA" if image.mode in ("RGBA", "P", "LA") else "RGB")
         image.thumbnail((48, 48), Image.LANCZOS)
         output_name = f"{uuid.uuid4().hex}.png"
