@@ -78,6 +78,28 @@ class TestServerRouting(unittest.TestCase):
         self.assertEqual(json.loads(body), {"error": "not_found"})
         self.assertTrue(victim.exists())
 
+    def test_delete_upload_via_plural_frontend_path(self):
+        """The frontend deleteFile() sends DELETE /api/uploads/<name> (plural);
+        it must delete the file, not 404."""
+        server.UPLOADS.mkdir(exist_ok=True)
+        victim = server.UPLOADS / "victim.png"
+        victim.write_bytes(b"image")
+
+        status, headers, _ = self.request("/api/uploads/victim.png", method="DELETE")
+
+        self.assertEqual(status, 200)
+        self.assertFalse(victim.exists())
+
+    def test_delete_upload_via_singular_path(self):
+        server.UPLOADS.mkdir(exist_ok=True)
+        victim = server.UPLOADS / "victim.png"
+        victim.write_bytes(b"image")
+
+        status, _, _ = self.request("/api/upload/victim.png", method="DELETE")
+
+        self.assertEqual(status, 200)
+        self.assertFalse(victim.exists())
+
     def test_spa_fallback_remains_last_and_keeps_security_headers(self):
         status, headers, body = self.request("/dashboard/page")
         self.assertEqual(status, 200)

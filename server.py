@@ -114,7 +114,6 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             exact[path]()
             return True
         prefixes = (
-            ("/api/upload/", lambda: self._handle_delete(self.path)),
             ("/api/icons/delete/", self._post_delete_icon),
             ("/api/config/restore/", self._post_restore),
             ("/api/config/delete-snapshot/", self._post_delete_snapshot),
@@ -128,7 +127,9 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_DELETE(self):
         path = urllib.parse.urlparse(self.path).path
-        if path.startswith("/api/upload/"):
+        # Accept both /api/upload/ and /api/uploads/ — the frontend's
+        # deleteFile() sends /api/uploads/<name> (plural).
+        if path.startswith("/api/upload/") or path.startswith("/api/uploads/"):
             return self._handle_delete(self.path)
         self._json({"error": "not_found"}, 404)
 
