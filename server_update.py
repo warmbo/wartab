@@ -45,7 +45,9 @@ UPDATE_BRANCH = os.environ.get("WARTAB_UPDATE_BRANCH", "main")
 STATUS_TTL = float(os.environ.get("WARTAB_UPDATE_STATUS_TTL", "60"))
 # Shared secret for the mutating endpoints. Loaded once at import; if unset we
 # fall back to ``data/.update_token`` (auto-created on first update/check).
-_token: str | None = None
+# _token holds a real secret str, "" (no token configured), or the sentinel
+# object when an existing token file could not be read (fail closed).
+_token: str | object = None
 
 # ── Live terminal log ─────────────────────────
 # Mirrors the Bark pattern: entries get an incrementing seq so the UI can poll
@@ -63,7 +65,13 @@ _cached_at = 0.0
 
 
 # ── Token gate (OPT-IN) ──────────────────────
-def update_token() -> str:
+# Sentinel object used when an existing token file cannot be read. It can
+# never equal any client-supplied string, so token_matches() returns False and
+# the gate fails CLOSED instead of opening on a read error.
+_UNREADABLE_SENTINEL = object()
+
+
+def update_token() -> str | object:
     """The shared secret guarding mutating update endpoints, if configured.
 
     WarTab does NOT require an update token by default. A token is only
@@ -83,8 +91,11 @@ def update_token() -> str:
         try:
             _token = token_file.read_text(encoding="utf-8").strip()
         except OSError as exc:
-            log.warning("could not read update token: %s", exc)
-            _token = ""
+            # The file exists but can't be read — a configured gate we can't
+            # honor. Fail CLOSED: set a sentinel token no client can supply,
+            # so mutating update endpoints are refused rather than opened.
+            log.warning("could not read update token; failing closed: %s", exc)
+            _token = _UNREADABLE_SENTINEL
     else:
         _token = ""
     return _token
@@ -95,8 +106,12 @@ def token_matches(supplied: str | None) -> bool:
 
     No token configured → updates are allowed (no token required).
     Token configured → the supplied header must match (constant-time).
+    Token file exists but could not be read → fail CLOSED (never match).
     """
     token = update_token()
+    if token is _UNREADABLE_SENTINEL:
+        # Configured gate we couldn't honor — refuse (fail closed).
+        return False
     if not token:
         # No token configured anywhere — updates are open (opt-in security).
         return True

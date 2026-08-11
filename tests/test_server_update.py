@@ -39,6 +39,25 @@ class TestUpdateToken(unittest.TestCase):
                     self.assertEqual(server_update.update_token(), "")
                     self.assertFalse((Path(tmp) / "data" / ".update_token").exists())
 
+    def test_fails_closed_when_existing_token_file_unreadable(self):
+        """If an existing token file can't be read, the gate must fail CLOSED
+        (no client can match the sentinel), not open."""
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with tempfile.TemporaryDirectory() as tmp:
+                data_dir = Path(tmp) / "data"
+                data_dir.mkdir(parents=True, exist_ok=True)
+                (data_dir / ".update_token").write_text("real-token")
+                with mock.patch.object(server_update, "HERE", Path(tmp)):
+                    with mock.patch.object(
+                        server_update.Path, "read_text",
+                        side_effect=OSError("permission denied"),
+                    ):
+                        server_update._token = None
+                        self.assertFalse(server_update.token_matches(None))
+                        self.assertFalse(server_update.token_matches(""))
+                        self.assertFalse(server_update.token_matches("real-token"))
+                        self.assertFalse(server_update.token_matches("anything-else"))
+
     def test_matches_explicit_env_token(self):
         with mock.patch.dict("os.environ", {"WARTAB_UPDATE_TOKEN": "secret-abc"}):
             server_update._token = None
