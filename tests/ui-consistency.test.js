@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -153,7 +153,11 @@ describe('interaction consistency contract', () => {
     expect(css).not.toContain('.dp-stat-value');
     expect(css).toContain('font-size: max(11px, var(--type-meta))');
     expect(css).toContain('font-size: max(12px, var(--type-meta))');
-    expect(JSON.parse(source('config.json')).layout.gap).toBe(12);
+    // config.json is gitignored runtime state (absent on fresh clones) — only
+    // assert the layout contract when a live config is actually present.
+    if (existsSync(resolve(repositoryRoot, 'config.json'))) {
+      expect(JSON.parse(source('config.json')).layout.gap).toBe(12);
+    }
 
     const pet = source('modules/digital-pet.js');
     expect(pet).toContain('creature.getBoundingClientRect().width');
