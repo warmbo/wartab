@@ -352,7 +352,7 @@ textarea { font-family: inherit; }
 .btn-search { padding: var(--space-1) var(--space-2); font-size: var(--text-sm); flex-shrink: 0; }
 
 /* ══════ Card Grid ══════ */
-#card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; grid-auto-rows: minmax(140px, auto); transition: opacity var(--anim-fast) ease; margin-top: var(--space-3); }
+#card-grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--grid-gap); align-items: stretch; grid-auto-rows: minmax(140px, auto); grid-auto-flow: dense; transition: opacity var(--anim-fast) ease; margin-top: var(--space-3); }
 
 /* Highlighted card — single declaration */
 .card.card-highlight { position: relative; z-index: var(--z-card-highlight); box-shadow: 0 0 var(--space-5) var(--accent-glow), var(--glass-shadow); border-color: var(--accent); }
@@ -415,7 +415,7 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .icon-box img, .cs-icon-preview img { object-fit: contain; }
 .drag-page-handle { cursor: grab; color: var(--text-tertiary); user-select: none; touch-action: none; padding: var(--space-1); font-size: var(--text-lg); line-height: 1; }
 
-.link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: var(--space-2); }
+.link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--space-2); }
 .link-item { display: flex; flex-direction: column; align-items: var(--mod-justify, center); padding: var(--space-3) 8px; background: var(--card-bg-alt); border: 1px solid color-mix(in srgb, var(--surface-border) 72%, transparent); text-decoration: none; color: var(--text-primary); text-align: var(--mod-align, center); transition: background var(--anim-fast) ease, border-color var(--anim-fast) ease, box-shadow var(--anim-fast) ease, transform var(--anim-fast) ease; cursor: pointer; box-shadow: var(--deboss-shadow); min-height: 76px; justify-content: space-between; }
 .link-item:hover { background: rgba(255,255,255,0.08); border-color: var(--glass-border-hover); box-shadow: 0 -1px 0 var(--accent-glass), 0 3px 10px rgba(0,0,0,0.25); }
 .link-item:active { transform: scale(0.97); box-shadow: var(--deboss-shadow); }
@@ -1318,7 +1318,10 @@ body.panel-open.panel-left #top-bar {
 /* ══════ Tablet: 2-column layout ══════ */
 @media (min-width: 769px) and (max-width: 1199px) {
   :root { --grid-cols: 2; --grid-gap: 14px; }
-  #card-grid { gap: var(--grid-gap); }
+  /* render.js writes --grid-cols inline on #card-grid (per-page override), which
+     would beat this :root rule — target the grid element itself so the tablet
+     2-column layout actually wins (the mobile block does the same). */
+  #card-grid { --grid-cols: 2 !important; grid-template-columns: repeat(2, 1fr) !important; gap: var(--grid-gap); }
   .card[data-width="3"], .card[data-width="4"] { grid-column: span 2 !important; }
 }
 
