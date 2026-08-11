@@ -196,6 +196,10 @@ function loadIconRepo() {
   if (ICON_REPO.length > 0) return Promise.resolve();
   return storage.getIconIndex().then(function(data){
     console.log('loadIconRepo: received', typeof data, Array.isArray(data) ? data.length + ' entries' : 'not an array');
+    // The index may resolve to a non-array (error text, wrapper object, or a
+    // stale cached response). Guard before calling .forEach so the icon
+    // library never crashes on bad data.
+    if (!Array.isArray(data)) { console.warn('loadIconRepo: expected array, got', typeof data); return; }
     data.forEach(function(item){
       if (item.SVG === 'Yes') {
         ICON_REPO.push({name: item.Name, file: item.Reference, tags: [item.Category || '']});
