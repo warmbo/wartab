@@ -6,7 +6,6 @@
    el/ps helpers (config-panel.js).
    ═══════════════════════════════════════════ */
 (function () {
-  const TOKEN_KEY = 'wartab.updateToken';
   const POLL_MS = 900;
 
   let _terminal = null;      // the modal element while open
@@ -14,21 +13,9 @@
   let _after = 0;
   let _done = false;
 
-  function getToken() {
-    try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
-  }
-  function setToken(t) {
-    try {
-      if (t) localStorage.setItem(TOKEN_KEY, t);
-      else localStorage.removeItem(TOKEN_KEY);
-    } catch (e) { /* ignore */ }
-  }
-
   function authHeaders() {
-    const h = { 'Content-Type': 'application/json' };
-    const tok = getToken();
-    if (tok) h['X-WarTab-Update-Token'] = tok;
-    return h;
+    // No token required — update endpoints are open by default (opt-in token).
+    return { 'Content-Type': 'application/json' };
   }
 
   async function api(url, opts) {
@@ -175,32 +162,13 @@
     }
   }
 
-  function tokenRow() {
-    const w = el('div', 'display:flex;gap:var(--space-2);align-items:center;margin:8px 0;');
-    const inp = document.createElement('input');
-    inp.type = 'password';
-    inp.placeholder = 'Update token (required)';
-    inp.value = getToken();
-    inp.style.cssText = 'flex:1;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-sm);outline:none;';
-    inp.addEventListener('change', function () { setToken(inp.value.trim()); });
-    const save = el('button', '', 'Save');
-    save.className = 'btn btn-glass btn-sm';
-    save.addEventListener('click', function () { setToken(inp.value.trim()); toast('Token saved', 'success'); });
-    w.appendChild(inp); w.appendChild(save);
-    return w;
-  }
-
   async function doUpdate(applyFn, confirmMsg, okText) {
-    if (!getToken()) {
-      toast('Set the update token first', 'error');
-      return;
-    }
     showConfirmModal(confirmMsg, async function () {
       openTerminal();
       const url = applyFn === 'update' ? '/api/update' : '/api/update/rollback';
       const r = await api(url, { method: 'POST' });
       if (!r.ok) {
-        finishTerminal('✗ ' + (r.data.error || ('HTTP ' + r.status + ' — wrong token?')));
+        finishTerminal('✗ ' + (r.data.error || ('HTTP ' + r.status)));
         return;
       }
       // Terminal polls until active=false; then offer a manual reload button.
@@ -248,9 +216,6 @@
 
     container.appendChild(statusHolder);
     container.appendChild(btnRow);
-    container.appendChild(tokenRow());
-    container.appendChild(el('div', 'font-size:var(--text-2xs);color:var(--text-tertiary);margin-top:4px;',
-      'The token lives in data/.update_token (auto-generated) or WARTAB_UPDATE_TOKEN. Store it here once — it is kept in your browser only.'));
 
     // Auto-load status (server TTL-caches the git fetch so this is cheap).
     (function () {

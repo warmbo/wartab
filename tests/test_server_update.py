@@ -15,7 +15,29 @@ import server_update
 
 
 class TestUpdateToken(unittest.TestCase):
-    """The mutating-update gate is never accidentally open."""
+    """The mutating-update gate is OPT-IN: no token required by default,
+    only enforced when a token is explicitly configured."""
+
+    def test_no_token_configured_allows_updates(self):
+        """With no env token and no token file, updates are allowed (fail-open)."""
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with tempfile.TemporaryDirectory() as tmp:
+                with mock.patch.object(server_update, "HERE", Path(tmp)):
+                    server_update._token = None
+                    self.assertTrue(server_update.token_matches(None))
+                    self.assertTrue(server_update.token_matches(""))
+                    self.assertTrue(server_update.token_matches("anything"))
+                    self.assertEqual(server_update.update_token(), "")
+
+    def test_no_token_file_is_generated(self):
+        """update_token() must NOT auto-create a token file (that would silently
+        close the gate)."""
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with tempfile.TemporaryDirectory() as tmp:
+                with mock.patch.object(server_update, "HERE", Path(tmp)):
+                    server_update._token = None
+                    self.assertEqual(server_update.update_token(), "")
+                    self.assertFalse((Path(tmp) / "data" / ".update_token").exists())
 
     def test_matches_explicit_env_token(self):
         with mock.patch.dict("os.environ", {"WARTAB_UPDATE_TOKEN": "secret-abc"}):
@@ -24,24 +46,16 @@ class TestUpdateToken(unittest.TestCase):
             self.assertFalse(server_update.token_matches("secret-xyz"))
             self.assertFalse(server_update.token_matches(None))
 
-    def test_fails_closed_when_no_token_available(self):
+    def test_uses_existing_token_file_when_present(self):
         with mock.patch.dict("os.environ", {}, clear=True):
-            with mock.patch.object(server_update.Path, "read_text",
-                                   side_effect=OSError("no token file")):
-                server_update._token = None
-                self.assertFalse(server_update.token_matches("anything"))
-
-    def test_generates_persistent_token_file(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with mock.patch.object(server_update, "HERE", Path(tmp)):
-                with mock.patch.dict("os.environ", {}, clear=True):
+            with tempfile.TemporaryDirectory() as tmp:
+                data_dir = Path(tmp) / "data"
+                data_dir.mkdir(parents=True, exist_ok=True)
+                (data_dir / ".update_token").write_text("file-token")
+                with mock.patch.object(server_update, "HERE", Path(tmp)):
                     server_update._token = None
-                    first = server_update.update_token()
-                    second = server_update.update_token()
-                    self.assertEqual(first, second)  # stable within a run
-                    tok_file = Path(tmp) / "data" / ".update_token"
-                    self.assertTrue(tok_file.exists())
-                    self.assertEqual(tok_file.read_text().strip(), first)
+                    self.assertTrue(server_update.token_matches("file-token"))
+                    self.assertFalse(server_update.token_matches("wrong"))
 
 
 class TestRemoteRepoUrl(unittest.TestCase):
@@ -178,19 +192,34 @@ class TestUpdateRoutes(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)["current_commit"], "abc")
 
+    def test_update_post_allowed_with_no_token_configured(self):
+        """Default (fail-open): no token required to trigger an update."""
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with mock.patch.object(server_update, "HERE",
+                                   Path(self.temporary.name)):
+                server_update._token = None
+                with mock.patch.object(server_update, "apply_async") as apply_mock:
+                    status, body = self.request("/api/update", method="POST")
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body), {"status": "started"})
+        apply_mock.assert_called_once()
+
     @mock.patch.dict("os.environ", {"WARTAB_UPDATE_TOKEN": "tok-123"}, clear=False)
     def test_update_post_rejects_bad_token(self):
+        server_update._token = None  # force re-read of the env token
         status, body = self.request("/api/update", method="POST", token="wrong")
         self.assertEqual(status, 401)
         self.assertEqual(json.loads(body), {"error": "unauthorized"})
 
     @mock.patch.dict("os.environ", {"WARTAB_UPDATE_TOKEN": "tok-123"}, clear=False)
     def test_update_post_requires_token(self):
+        server_update._token = None  # force re-read of the env token
         status, _ = self.request("/api/update", method="POST")
         self.assertEqual(status, 401)
 
     @mock.patch.dict("os.environ", {"WARTAB_UPDATE_TOKEN": "tok-123"}, clear=False)
     def test_update_post_starts_apply_with_valid_token(self):
+        server_update._token = None  # force re-read of the env token
         with mock.patch.object(server_update, "apply_async") as apply_mock:
             status, body = self.request("/api/update", method="POST",
                                         token="tok-123")
@@ -200,6 +229,7 @@ class TestUpdateRoutes(unittest.TestCase):
 
     @mock.patch.dict("os.environ", {"WARTAB_UPDATE_TOKEN": "tok-123"}, clear=False)
     def test_rollback_gated_and_dispatches(self):
+        server_update._token = None  # force re-read of the env token
         with mock.patch.object(server_update, "rollback_async") as rb:
             status, body = self.request("/api/update/rollback", method="POST",
                                         token="tok-123")
@@ -209,6 +239,7 @@ class TestUpdateRoutes(unittest.TestCase):
 
     @mock.patch.dict("os.environ", {"WARTAB_UPDATE_TOKEN": "tok-123"}, clear=False)
     def test_update_log_requires_token(self):
+        server_update._token = None  # force re-read of the env token
         status, _ = self.request("/api/update/log?after=0")
         self.assertEqual(status, 401)
         with mock.patch.object(server_update, "get_update_log",
@@ -216,6 +247,19 @@ class TestUpdateRoutes(unittest.TestCase):
                                              "active": False}):
             status, body = self.request("/api/update/log?after=0",
                                         token="tok-123")
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body), {"entries": [], "last": 0,
+                                            "active": False})
+
+    def test_update_log_open_when_no_token_configured(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with mock.patch.object(server_update, "HERE",
+                                   Path(self.temporary.name)):
+                server_update._token = None
+                with mock.patch.object(server_update, "get_update_log",
+                                       return_value={"entries": [], "last": 0,
+                                                     "active": False}):
+                    status, body = self.request("/api/update/log?after=0")
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body), {"entries": [], "last": 0,
                                             "active": False})

@@ -62,42 +62,44 @@ _cached_status: dict | None = None
 _cached_at = 0.0
 
 
-# ── Token gate ────────────────────────────────
+# ── Token gate (OPT-IN) ──────────────────────
 def update_token() -> str:
-    """The shared secret guarding mutating update endpoints.
+    """The shared secret guarding mutating update endpoints, if configured.
 
-    Prefers the env var; else reads ``data/.update_token``, creating it with a
-    random value on first use so the gate is never accidentally open.
+    WarTab does NOT require an update token by default. A token is only
+    enforced when ``WARTAB_UPDATE_TOKEN`` is explicitly set in the
+    environment (or an existing ``data/.update_token`` file is present).
+    We do NOT auto-generate the file — that would silently close the gate.
     """
     global _token
-    if _token:
+    if _token is not None:
         return _token
     env = os.environ.get("WARTAB_UPDATE_TOKEN", "").strip()
     if env:
         _token = env
         return _token
-    data_dir = HERE / "data"
-    token_file = data_dir / ".update_token"
-    try:
-        data_dir.mkdir(parents=True, exist_ok=True)
-        if not token_file.exists():
-            token_file.write_text(secrets.token_urlsafe(32), encoding="utf-8")
-            try:
-                os.chmod(token_file, 0o600)
-            except OSError:
-                pass
-        _token = token_file.read_text(encoding="utf-8").strip()
-    except OSError as exc:
-        log.warning("could not read/init update token: %s", exc)
+    token_file = HERE / "data" / ".update_token"
+    if token_file.exists():
+        try:
+            _token = token_file.read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            log.warning("could not read update token: %s", exc)
+            _token = ""
+    else:
         _token = ""
     return _token
 
 
 def token_matches(supplied: str | None) -> bool:
+    """Return True when the request may mutate.
+
+    No token configured → updates are allowed (no token required).
+    Token configured → the supplied header must match (constant-time).
+    """
     token = update_token()
     if not token:
-        # No token configured anywhere — refuse to mutate (fail closed).
-        return False
+        # No token configured anywhere — updates are open (opt-in security).
+        return True
     return secrets.compare_digest(supplied or "", token)
 
 
