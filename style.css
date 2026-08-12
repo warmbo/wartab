@@ -1317,6 +1317,13 @@ body.panel-open.panel-left #top-bar {
 .dp-speech.visible { opacity: 1; }
 .dp-speech::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--surface-border); }
 .dp-creature { position: absolute; margin: 0; font-family: 'JetBrains Mono','Cascadia Code','Consolas',monospace; font-size: var(--text-sm); line-height: 1.25; color: var(--text-primary); user-select: none; transition: left var(--anim-slow) ease, top var(--anim-slow) ease; white-space: pre; z-index: 2; }
+/* Sleeping state — dimmed, slightly translucent, closed-eyes frame */
+.dp-creature.dp-sleeping { opacity: 0.55; filter: saturate(0.7); }
+/* Sick state — muted green tint + soft pulse to draw attention */
+.dp-creature.dp-sick { color: #9fb89a; text-shadow: 0 0 6px rgba(120,180,120,0.35); animation: dp-sick-pulse 2s ease-in-out infinite; }
+@keyframes dp-sick-pulse { 0%,100%{ opacity: 0.85; } 50%{ opacity: 1; } }
+.dp-env-zzz { color: rgba(180,200,255,0.7); font-size: var(--text-sm); animation: dp-float 1.6s ease-in-out infinite; }
+.dp-env-sick { color: rgba(160,220,160,0.7); font-size: var(--text-sm); }
 .dp-stats { margin-bottom: var(--space-1); }
 .dp-stat-row { display: flex; align-items: center; gap: var(--space-2); min-height: 22px; margin-bottom: 2px; font-size: var(--type-meta); white-space: nowrap; }
 .dp-stat-lbl { width: 42px; color: var(--text-secondary); flex-shrink: 0; }
