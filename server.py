@@ -438,7 +438,13 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", CORS_ALLOW_HEADERS)
 
     def end_headers(self):
-        self.send_header("Cache-Control", "no-cache, must-revalidate")
+        # ?v= assets are cache-busted by the git hash at serve time (see
+        # _serve_static_or_spa), so they are immutable once deployed: browsers
+        # may cache them forever and a new deploy naturally busts them.
+        if "?v=" in self.path and not self.path.startswith("/api/"):
+            self.send_header("Cache-Control", "public, max-age=31536000, immutable")
+        else:
+            self.send_header("Cache-Control", "no-cache, must-revalidate")
         self.send_header("Content-Security-Policy",
             "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; "
