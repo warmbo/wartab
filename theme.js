@@ -57,7 +57,12 @@ function applyTheme(){
   // Card background — black for dark, white for light, with accent tint
   const h=t.glow.replace('#','');
   const r=parseInt(h[0]+h[1],16),gr=parseInt(h[2]+h[3],16),b=parseInt(h[4]+h[5],16);
-  const mode=t.cardBg||'dark';
+  // Follow-system overrides the explicit card style with the OS preference.
+  const wantFollow = t.followSystem === true &&
+    typeof window !== 'undefined' && !!window.matchMedia;
+  const osLight = wantFollow &&
+    window.matchMedia('(prefers-color-scheme: light)').matches;
+  const mode = osLight ? 'light' : (t.cardBg||'dark');
   const op = t.cardOpacity !== undefined ? t.cardOpacity : 1;
   const base = mode === 'light' ? [255,255,255] : [0,0,0];
   const tint = mode === 'light' ? 0.18 : 0.06;
@@ -104,6 +109,17 @@ function applyTheme(){
   // Toggles
   document.documentElement.dataset.animations=config.theme.animations!==false?'on':'off';
   document.documentElement.dataset.accentBar=config.theme.showAccentBar!==false?'on':'off';
+
+  // Custom CSS injection — user overrides applied last so they win on equal
+  // specificity. Re-applied on every theme change so edits take effect live.
+  var cssEl = document.getElementById('wartab-custom-css');
+  var css = (config.theme && config.theme.customCss) || '';
+  if (css) {
+    if (!cssEl) { cssEl = document.createElement('style'); cssEl.id = 'wartab-custom-css'; document.head.appendChild(cssEl); }
+    if (cssEl.textContent !== css) cssEl.textContent = css;
+  } else if (cssEl) {
+    cssEl.remove();
+  }
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
 function loadGoogleFont(fn,allowReplace){

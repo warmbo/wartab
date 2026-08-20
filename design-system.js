@@ -680,3 +680,51 @@ ds.settingsDrawer = function(fields) {
   renderIcons();
   return wrap;
 };
+
+/* ── Context menu (link tiles, right-click) ── */
+function showLinkContextMenu(x, y, link, onEdit, onDelete) {
+  var existing = document.querySelector('.ctx-menu');
+  if (existing) existing.remove();
+
+  var menu = document.createElement('div');
+  menu.className = 'ctx-menu';
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', 'Link actions');
+
+  function item(label, icon, fn, danger) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ctx-item' + (danger ? ' danger' : '');
+    b.setAttribute('role', 'menuitem');
+    var i = document.createElement('i');
+    i.setAttribute('data-lucide', icon);
+    b.appendChild(i);
+    b.appendChild(document.createTextNode(label));
+    b.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
+    b.addEventListener('click', function () { menu.remove(); fn(); renderIcons(); });
+    menu.appendChild(b);
+  }
+  function sep() { var s = document.createElement('div'); s.className = 'ctx-sep'; menu.appendChild(s); }
+
+  item('Open', 'external-link', function () { window.open(link.url, '_blank', 'noopener'); });
+  item('Copy URL', 'copy', function () {
+    try { navigator.clipboard.writeText(link.url); toast('URL copied', 'success'); }
+    catch (e) { toast('Copy failed', 'error'); }
+  });
+  item('Copy Markdown', 'file-text', function () {
+    try { navigator.clipboard.writeText('[' + (link.label || link.url) + '](' + link.url + ')'); toast('Markdown copied', 'success'); }
+    catch (e) { toast('Copy failed', 'error'); }
+  });
+  sep();
+  if (onEdit) item('Edit link', 'pencil', onEdit);
+  if (onDelete) item('Delete link', 'trash-2', onDelete, true);
+
+  menu.style.left = Math.min(x, window.innerWidth - 190) + 'px';
+  menu.style.top = Math.min(y, window.innerHeight - menu.offsetHeight - 10) + 'px';
+  document.body.appendChild(menu);
+  renderIcons();
+
+  function remove() { menu.remove(); document.removeEventListener('mousedown', onDocDown, true); }
+  function onDocDown(e) { if (!menu.contains(e.target)) remove(); }
+  document.addEventListener('mousedown', onDocDown, true);
+}

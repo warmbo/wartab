@@ -151,6 +151,7 @@ if(v==='gradient'){if(!config.theme.bgValue.includes(','))config.theme.bgValue='
   /* Card Styles */
   body.appendChild(ps('Card Styles'));
   body.appendChild(pf('select','','Card Style',[{value:'dark',label:'Dark'},{value:'light',label:'Light'}],config.theme.cardBg||'dark',v=>{config.theme.cardBg=v;applyChanges();}));
+  body.appendChild(chk('Follow system light/dark',config.theme.followSystem===true,v=>{config.theme.followSystem=v;applyChanges();}));
   body.appendChild(pf('range','','Card Transparency',null,Math.round((1-(config.theme.cardOpacity||1))*100),v=>{config.theme.cardOpacity=1-(parseInt(v)/100);applyChanges();},{min:0,max:100}));
   body.appendChild(pf('range','','Card Corner Radius (px)',null,config.theme.cardRadius !== undefined ? parseInt(config.theme.cardRadius) : 16,function(v){config.theme.cardRadius=parseInt(v);applyChanges();},{min:0,max:24}));
   body.appendChild(pf('color','','Accent Color',null,config.theme.glow,v=>{config.theme.glow=v;applyChanges();}));
@@ -200,6 +201,18 @@ if(v==='gradient'){if(!config.theme.bgValue.includes(','))config.theme.bgValue='
   });
   fsel.addEventListener('change',()=>{config.theme.fontFamily=fsel.value;fsel.style.fontFamily=`'${fsel.value}',sans-serif`;saveConfig();applyTheme();renderAll();});
   fg.appendChild(fsel);body.appendChild(fg);
+
+  /* Custom CSS — advanced theming overrides, applied last */
+  body.appendChild(ps('Custom CSS'));
+  body.appendChild(el('div','font-size:var(--text-xs);color:var(--text-secondary);margin-bottom:var(--space-2);','Advanced: inject your own CSS overrides. Loaded after everything so it wins on equal specificity.'));
+  const cta=document.createElement('textarea');
+  cta.className='cp-input';
+  cta.placeholder='/* e.g. */\n.card { border-radius: 20px; }\n#top-bar { padding: 18px; }';
+  cta.value=config.theme.customCss||'';
+  cta.style.cssText='min-height:120px;resize:vertical;width:100%;font-family:monospace;font-size:var(--text-xs);';
+  cta.addEventListener('input',()=>{config.theme.customCss=cta.value;applyTheme();});
+  cta.addEventListener('change',()=>{saveConfig();});
+  body.appendChild(cta);
 }
 
 /* ── System tab: Status Bar + Data + Snapshots + API Keys + Credits ── */

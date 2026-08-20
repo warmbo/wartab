@@ -56,6 +56,7 @@ FILES=(
   dragdrop.js
   arrange-mode.js
   updates.js
+  command-palette.js
   manifest.json
   modules/
   static/

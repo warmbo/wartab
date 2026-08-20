@@ -59,6 +59,8 @@ const DEFAULT_CONFIG = {
     bgRotate: false,              // rotate background on interval
     animations: true,             // enable CSS transitions/animations
     showAccentBar: true,          // show 3px accent bar at top of cards
+    followSystem: false,          // card style follows the OS light/dark preference
+    customCss: '',                // user-injected CSS overrides (applied last)
   },
 
   /* ── Top-bar status display (CPU, RAM, disk, uptime) ── */
@@ -433,6 +435,24 @@ async function init() {
     $$('.api-ts').forEach(el=>{const t=parseInt(el.dataset.ts);if(t)el.textContent='updated '+timeAgo(t);});
     $$('.weather-ts').forEach(el=>{const t=parseInt(el.dataset.ts);if(t)el.textContent='updated '+timeAgo(t);});
   },15000);
+  // Register the service worker for offline-first app shell — only in the
+  // self-hosted server mode (not the browser extension, where chrome.storage
+  // owns persistence and a SW would fight it).
+  if (!location.protocol.startsWith('chrome-extension')) {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function (err) {
+        console.warn('Service worker registration failed (non-fatal):', err);
+      });
+    }
+  }
+  // Live follow-system: re-apply the theme when the OS light/dark preference
+  // flips while followSystem is enabled.
+  if (config.theme.followSystem && window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: light)');
+    var onOSChange = function () { if (config.theme.followSystem) applyTheme(); };
+    if (mq.addEventListener) mq.addEventListener('change', onOSChange);
+    else if (mq.addListener) mq.addListener(onOSChange);
+  }
   console.log('WarTab initialized');
   // Render any Lucide icons that were added dynamically
   renderIcons();

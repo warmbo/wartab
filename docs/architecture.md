@@ -45,6 +45,8 @@ widgets; widgets are registered as **modules**.
 | Drag / arrange modes | `dragdrop.js`, `arrange-mode.js` |
 | Icon picker / uploads | `icon-picker.js`, `uploads.js` |
 | Self-update UI | `updates.js` |
+| Command palette | `command-palette.js` (Ctrl+K/P launcher) |
+| PWA / offline | `manifest.webmanifest`, `sw.js` (service worker) |
 | Widget-specific behavior | `modules/*.js` |
 
 ---

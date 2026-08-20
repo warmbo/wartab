@@ -1,5 +1,5 @@
 registerModule('clock', {
-  defaults: { format24h:false, showDate:true, showCalendar:false },
+  defaults: { format24h:false, showDate:true, showCalendar:false, zones:[] },
   css: `
     .clock-widget{display:flex;flex-direction:column;align-items:var(--mod-justify,center);text-align:var(--mod-align,center);}
     .clock-time{font-size:clamp(var(--text-xl),calc(var(--text-3xl) * var(--mod-font-content,1)),var(--text-4xl));font-weight:400;line-height:1.05;letter-spacing:-0.035em;font-variant-numeric:tabular-nums;text-shadow:var(--emboss-shadow);}
@@ -21,6 +21,15 @@ registerModule('clock', {
     [data-mod-height="expanded"] .calendar-day{padding:10px 0;}
     [data-mod-height="expanded"] .calendar-month{font-size:calc(var(--text-base) * var(--mod-font-secondary,1));margin-bottom:var(--space-3);}
     [data-mod-height="expanded"] .calendar-grid{gap:2px;}
+
+    /* ── World clock (multiple timezones) ── */
+    .world-clock{width:100%;margin-top:var(--space-2);display:flex;flex-direction:column;gap:4px;font-size:calc(var(--text-xs) * var(--mod-font-secondary,1));}
+    .wc-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:3px 6px;border-radius:var(--radius-sm);transition:background var(--anim-fast);}
+    .wc-row:hover{background:rgba(255,255,255,0.05);}
+    .wc-city{color:var(--text-secondary);font-weight:600;letter-spacing:0.03em;text-transform:uppercase;font-size:calc(var(--text-2xs) * var(--mod-font-secondary,1));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .wc-time{font-variant-numeric:tabular-nums;color:var(--text-primary);font-weight:500;}
+    [data-mod-height="large"] .wc-row{padding:5px 8px;}
+    [data-mod-height="expanded"] .wc-row{padding:7px 10px;}
   `,
   render: function(sec, card, cw) {
     var w = document.createElement('div');
@@ -44,6 +53,13 @@ registerModule('clock', {
     calEl.id = 'cal-' + sec.id;
     calEl.style.display = sec.showCalendar ? '' : 'none';
     w.appendChild(calEl);
+
+    /* World clock — controlled by zones length (dedicated widget) */
+    var wcEl = document.createElement('div');
+    wcEl.className = 'world-clock';
+    var zonesArr = parseZones(sec.zones);
+    wcEl.style.display = zonesArr.length ? '' : 'none';
+    w.appendChild(wcEl);
 
     cw.appendChild(w);
 
@@ -101,6 +117,33 @@ registerModule('clock', {
         html += '</div>';
         calEl.innerHTML = html;
       }
+
+      /* World clock — render each configured IANA timezone */
+      var wcEl = w.querySelector('.world-clock');
+      var zonesArr = parseZones(sec.zones);
+      if (wcEl && zonesArr.length) {
+        wcEl.innerHTML = '';
+        zonesArr.forEach(function (z) {
+          if (!z || !z.tz) return;
+          var row = document.createElement('div');
+          row.className = 'wc-row';
+          var city = document.createElement('span');
+          city.className = 'wc-city';
+          city.textContent = z.label || z.tz;
+          var t = document.createElement('span');
+          t.className = 'wc-time';
+          try {
+            t.textContent = new Date().toLocaleTimeString([], {
+              hour: '2-digit', minute: '2-digit',
+              hour12: !sec.format24h,
+              timeZone: z.tz
+            });
+          } catch (e) { t.textContent = '--:--'; }
+          row.appendChild(city);
+          row.appendChild(t);
+          wcEl.appendChild(row);
+        });
+      }
     }
 
     tick();
@@ -111,5 +154,27 @@ registerModule('clock', {
     { name:'format24h', label:'Format', type:'select', options:[{value:false,label:'12-hour'},{value:true,label:'24-hour'}], default:false, structural:true },
     { name:'showDate', label:'Show date', type:'checkbox', default:true, structural:true },
     { name:'showCalendar', label:'Show calendar', type:'checkbox', default:false, structural:true },
+    { name:'zones', label:'World clock (IANA timezones)', type:'text', placeholder:'Tokyo:Asia/Tokyo, London:Europe/London', default:'' },
   ],
 });
+
+/* Parse the zones field into [{label, tz}]. Accepts either an array of
+   {label, tz} objects (server-loaded) or a comma-separated string of
+   "Label:tz" / "tz" entries (as typed in the editor). */
+function parseZones(zones) {
+  if (Array.isArray(zones)) {
+    return zones.filter(function (z) { return z && z.tz; });
+  }
+  if (typeof zones === 'string' && zones.trim()) {
+    return zones.split(',').map(function (part) {
+      part = part.trim();
+      if (!part) return null;
+      var i = part.lastIndexOf(':');
+      if (i > 0) {
+        return { label: part.slice(0, i).trim(), tz: part.slice(i + 1).trim() };
+      }
+      return { label: part, tz: part };
+    }).filter(function (z) { return z && z.tz; });
+  }
+  return [];
+}

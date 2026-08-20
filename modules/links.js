@@ -1,20 +1,45 @@
 registerModule('links', {
   defaults: { links:[{label:'Example',url:'https://example.com',icon:'link'}], listMode:false },
+  css: `
+    .ctx-menu{position:fixed;z-index:calc(var(--z-modal,200)+20);min-width:180px;background:var(--card-bg,rgba(20,20,20,0.95));border:1px solid var(--glass-border,rgba(255,255,255,0.12));border-radius:var(--radius,12px);box-shadow:0 12px 40px rgba(0,0,0,0.45);padding:4px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-family:var(--font);}
+    .ctx-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-radius:8px;color:var(--text-primary,#eee);font-size:13px;cursor:pointer;text-align:left;}
+    .ctx-item:hover{background:var(--accent-glass,rgba(255,255,255,0.1));}
+    .ctx-item i{width:16px;height:16px;opacity:0.8;}
+    .ctx-sep{height:1px;background:var(--glass-border,rgba(255,255,255,0.08));margin:4px 6px;}
+    .ctx-item.danger{color:var(--color-error,#ff6b6b);}
+    [data-card-bg="light"] .ctx-menu{background:rgba(255,255,255,0.97);color:#111;}
+  `,
   render: (sec,card,cw)=>{
+    const bindCtx=(a,link,idx)=>{
+      a.addEventListener('contextmenu',(ev)=>{
+        ev.preventDefault();
+        ev.stopPropagation();
+        showLinkContextMenu(ev.clientX,ev.clientY,link,()=>{
+          // On edit: open this card's edit panel (module editor) — reopen panel
+          openCardEditPanel(card.id);
+        },()=>{
+          // On delete: remove the link and persist
+          if(sec.links && sec.links.length>1){sec.links.splice(idx,1);}
+          else {sec.links=[];}
+          saveConfig();renderAll();
+        });
+      });
+    };
     if(sec.listMode){
       // ── List view (single-column rows) ──
       const lst=document.createElement('div');lst.className='link-list';
-      (sec.links||[]).forEach(link=>{
+      (sec.links||[]).forEach((link,idx)=>{
         const a=document.createElement('a');a.className='link-row';a.href=link.url;a.target='_blank';a.rel='noopener';
         a.appendChild(renderLinkIcon(link.icon));a.appendChild(document.createTextNode(' '+link.label));
+        bindCtx(a,link,idx);
         lst.appendChild(a);
       });cw.appendChild(lst);shrinkLabels(cw);
     }else{
       // ── Grid view (button cards) ──
-      const ig=document.createElement('div');ig.className='link-grid';(sec.links||[]).forEach(link=>{
+      const ig=document.createElement('div');ig.className='link-grid';(sec.links||[]).forEach((link,idx)=>{
         const a=document.createElement('a');a.className='link-item';a.href=link.url;a.target='_blank';a.rel='noopener';
         a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label';s.textContent=link.label;
-        a.appendChild(s);ig.appendChild(a);
+        a.appendChild(s);bindCtx(a,link,idx);ig.appendChild(a);
       });cw.appendChild(ig);shrinkLabels(cw);
     }
   },

@@ -1,0 +1,15 @@
+{
+  "name": "WarTab",
+  "short_name": "WarTab",
+  "description": "Self-hosted new tab dashboard — glassmorphic cards, widgets, and full customization.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "/icons/extension-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "/icons/extension-48.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "/icons/extension-16.png", "sizes": "16x16", "type": "image/png" }
+  ]
+}

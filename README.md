@@ -24,6 +24,24 @@ http://localhost:8081   or   http://<your-ip>:8081
 - Keyboard-driven page switching with `Ctrl+Tab`
 - Empty pages show a helpful placeholder with an add-card prompt
 
+### Command Palette
+
+Press `Ctrl+K` or `Ctrl+P` for a Spotlight-style launcher: fuzzy-search every page,
+link, and app action (new card, new page, arrange, settings, shortcuts) and run it
+with Enter. Type-ahead ranks results, highlights matches, and opens links in a new
+tab or switches pages in place.
+
+### PWA & Offline
+
+WarTab is installable as a real app (manifest + icons + service worker). The app
+shell and immutable assets are cached offline-first, so repeat loads are near-instant
+and the dashboard works with no network after first load.
+
+### Link Context Menu
+
+Right-click any link tile to open, copy the URL, copy it as Markdown, edit, or delete
+it — no need to open the card editor for quick link management.
+
 ### Card Sections (10 types)
 
 | Section | Description |
@@ -90,12 +108,13 @@ A slide-out right panel organized into card-like sections:
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+L` or `Ctrl+K` | Focus first search bar |
+| `Ctrl+K` or `Ctrl+P` | Open command palette (search pages, links, actions) |
+| `Ctrl+L` | Focus first search bar |
 | `Ctrl+Shift+C` | Toggle config panel |
 | `Ctrl+N` | New card |
 | `Ctrl+Shift+N` | New page |
 | `Ctrl+Tab` | Cycle to next page |
-| `Escape` | Close any open panel (config/edit/icon picker) |
+| `Escape` | Close any open panel (config/edit/icon picker/palette) |
 
 ### System Stats Endpoint
 

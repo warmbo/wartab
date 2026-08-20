@@ -9,6 +9,11 @@
   <title>WarTab</title>
   <meta name="description" content="Self-hosted dashboard and new tab page">
   <meta name="theme-color" content="#0a0a0a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/extension-128.png">
   <link rel="stylesheet" href="static/fonts/inter.css">
   <link rel="stylesheet" href="style.css?v=BUILD">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
@@ -68,6 +73,8 @@
   <script src="modules/proxmox.js?v=BUILD" defer></script>
   <script src="modules/git.js?v=BUILD" defer></script>
   <script src="updates.js?v=BUILD" defer></script>
+  <!-- Command palette (Ctrl+K / Ctrl+P) — after app.js + modules so all globals exist -->
+  <script src="command-palette.js?v=BUILD" defer></script>
 </head>
 <body>
   <div id="page-loader"><div class="loader-spinner"></div></div>

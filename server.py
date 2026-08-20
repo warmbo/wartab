@@ -53,7 +53,7 @@ MINIMAL_CONFIG = build_minimal_config(GIT_VERSION)
 # else (source *.py, .git/, config.json, snapshots/, data/, notes, docs, tests,
 # __pycache__) must never be web-served.
 _SERVABLE_ROOTS = {"/", "/static", "/uploads", "/icons", "/notes", "/modules"}
-_SERVABLE_ROOT_EXT = {".js", ".css", ".html", ".json", ".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".woff2", ".woff", ".ttf"}
+_SERVABLE_ROOT_EXT = {".js", ".css", ".html", ".json", ".webmanifest", ".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".woff2", ".woff", ".ttf"}
 
 
 class WarTabHandler(http.server.SimpleHTTPRequestHandler):
