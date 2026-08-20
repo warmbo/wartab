@@ -27,7 +27,7 @@ function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay
 
 function buildConfigPanel(){const body=$('#config-body');const prevScroll=body.scrollTop;body.innerHTML='';
   const ht=$('#config-header-title');
-  if(ht)ht.innerHTML='<i data-lucide="Settings" style="width:18px;height:18px;vertical-align:middle;margin-right:var(--space-2);"></i><span style="vertical-align:middle;">WarTab Config</span>';
+  if(ht)ht.innerHTML='<i data-lucide="settings" style="width:18px;height:18px;vertical-align:middle;margin-right:var(--space-2);"></i><span style="vertical-align:middle;">WarTab Config</span>';
 
   // Build tab bar
   const tabBar=el('div','display:flex;gap:var(--space-2);margin-bottom:var(--space-4);border-bottom:1px solid var(--glass-border);padding-bottom:10px;');

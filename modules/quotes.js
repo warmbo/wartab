@@ -5,7 +5,7 @@ registerModule('quotes', {
     q.tabIndex=0;q.setAttribute('role','button');q.setAttribute('aria-label','Show next quote');
     const txt=document.createElement('div');txt.className='quotes-text';
     const qm=document.createElement('span');qm.className='quotes-mark';qm.textContent='\u201c';txt.appendChild(qm);
-    const cont=document.createElement('span');cont.className='quotes-content';cont.textContent='Click to load';
+    const cont=document.createElement('span');cont.className='quotes-content';cont.textContent=(sec.quotes&&sec.quotes.length)?'…':(sec.quotes&&sec.quotes.length===0?'Add quotes in settings':'Click to load');
     q.addEventListener('click',function(){fetchQuote(q,sec);});
     q.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();fetchQuote(q,sec);}});
     txt.appendChild(cont);
@@ -19,7 +19,6 @@ registerModule('quotes', {
     hint.className = 'quotes-hint';
     hint.textContent = 'Click to cycle';
     q.appendChild(hint);
-    q.dataset.secId=sec.id;
     cw.appendChild(q);
     WarTabLifecycle.setTimeout(cw,function(){fetchQuote(q,sec);},100);
   },

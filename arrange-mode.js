@@ -160,8 +160,8 @@ function renderArrows(cardId) {
 /* Arrow pixel position relative to the card element (scrolls with card) */
 function getArrowPos(cardW, cardH, dir) {
   var ow = 6;   // overlap with card edge (px)
-  var bw = 56;  // button width
-  var bh = 44;  // button height
+  var bw = 44;  // button width — must match .arr-arrow CSS
+  var bh = 36;  // button height — must match .arr-arrow CSS
   if (dir === 'up')    return { left: Math.round(cardW/2 - bw/2), top: Math.round(-bh + ow) };
   if (dir === 'down')  return { left: Math.round(cardW/2 - bw/2), top: Math.round(cardH - ow) };
   if (dir === 'left')  return { left: Math.round(-bw + ow), top: Math.round(cardH/2 - bh/2) };
