@@ -309,6 +309,8 @@ function renderSection(section, card) {
     titleRow = document.createElement('button');
     titleRow.className = 'dropdown-toggle' + (section.collapsed ? '' : ' open');
     titleRow.dataset.secId = section.id;
+    titleRow.setAttribute('aria-expanded', section.collapsed ? 'false' : 'true');
+    titleRow.setAttribute('aria-controls', 'sec-' + section.id);
 
     const labelSpan = document.createElement('span');
     labelSpan.textContent = section.label;
@@ -323,6 +325,7 @@ function renderSection(section, card) {
       e.stopPropagation();
       section.collapsed = !section.collapsed;
       titleRow.classList.toggle('open');
+      titleRow.setAttribute('aria-expanded', section.collapsed ? 'false' : 'true');
       let c = titleRow.nextElementSibling;
       while (c && !c.classList.contains('section-content') && !c.classList.contains('dropdown-content')) c = c.nextElementSibling;
       if (c) {
