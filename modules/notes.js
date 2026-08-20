@@ -26,6 +26,14 @@ registerModule('notes', {
     mkBtn('H','formatBlock','h3');
     mkBtn('ul','insertUnorderedList');
     mkBtn('<>','insertHTML','<code>code</code>');
+    var findBtn=document.createElement('button');findBtn.className='notes-tool-btn';findBtn.textContent='⌕';findBtn.title='Find in this note';
+    findBtn.addEventListener('mousedown',function(ev){ev.preventDefault();});
+    findBtn.addEventListener('click',function(){var term=window.prompt('Find in note');if(!term)return;var text=e.textContent||'',idx=text.toLowerCase().indexOf(term.toLowerCase());if(idx<0){toast('No match in note','info');return;}var walker=document.createTreeWalker(e,NodeFilter.SHOW_TEXT);var offset=0,node;while((node=walker.nextNode())){var end=offset+node.nodeValue.length;if(idx>=offset&&idx<end){var range=document.createRange();range.setStart(node,idx-offset);range.setEnd(node,Math.min(node.nodeValue.length,idx-offset+term.length));var sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);node.parentElement.scrollIntoView({block:'nearest'});break;}offset=end;}});tb.appendChild(findBtn);
+    var attachBtn=document.createElement('button');attachBtn.className='notes-tool-btn';attachBtn.textContent='＋';attachBtn.title='Attach image';
+    var attachInput=document.createElement('input');attachInput.type='file';attachInput.accept='image/*';attachInput.hidden=true;
+    attachBtn.addEventListener('mousedown',function(ev){ev.preventDefault();});attachBtn.addEventListener('click',function(){attachInput.click();});
+    attachInput.addEventListener('change',function(){var file=attachInput.files&&attachInput.files[0];if(!file)return;storage.uploadFile(file,file.name).then(function(result){var url=result.url||result.path;if(!url)throw new Error('upload returned no URL');e.focus();document.execCommand('insertHTML',false,'<img src="'+escHtml(url)+'" alt="'+escHtml(file.name)+'" style="max-width:100%;height:auto;">');debounceSave();toast('Image attached','success');}).catch(function(error){toast(error.message||'Attachment failed','error');});});
+    tb.appendChild(attachBtn);tb.appendChild(attachInput);
     
     cw.appendChild(tb);
     
@@ -179,5 +187,14 @@ registerModule('notes', {
   },
   editor: (sec,card,bd)=>{
     bd.appendChild(cpHint('✎ Click the card and type directly. Content saved to notes/'+sec.id+'.md'));
+    bd.appendChild(cpLabel('Templates'));
+    var templates={
+      'Meeting notes':'<h3>Meeting Notes</h3><p><strong>Date:</strong> </p><p><strong>Attendees:</strong> </p><h3>Decisions</h3><ul><li></li></ul><h3>Actions</h3><ul><li></li></ul>',
+      'Task list':'<h3>Tasks</h3><ul><li>First task</li></ul>',
+      'Grocery list':'<h3>Grocery List</h3><ul><li></li></ul>'
+    };
+    var row=document.createElement('div');row.className='notes-template-row';
+    var select=cpSelect(Object.keys(templates).map(function(name){return{value:name,label:name};}),Object.keys(templates)[0],function(){});row.appendChild(select);
+    var apply=document.createElement('button');apply.className='btn btn-glass btn-sm';apply.textContent='Apply';apply.addEventListener('click',function(){showConfirmModal('Replace this note with the '+select.value+' template?',function(){sec.content=templates[select.value];storage.saveNote(sec.id,sec.content);saveAndRefresh();},'Apply template');});row.appendChild(apply);bd.appendChild(row);
   },
 });

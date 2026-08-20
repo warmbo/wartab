@@ -438,6 +438,7 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .timer-hint { font-size: var(--text-3xs); color: var(--text-tertiary); text-align: var(--mod-align, center); opacity: 0; transition: opacity var(--anim-fast); margin-top: 2px; }
 .timer-presets { display:flex; flex-wrap:wrap; justify-content:var(--mod-justify,center); gap:var(--space-1); margin-top:var(--space-2); }
 .timer-presets .btn { min-height:26px; padding:3px 8px; font-size:var(--text-2xs); }
+.notes-template-row { display:flex; gap:var(--space-2); }
 body.is-offline #top-stats::after { content:'OFFLINE'; margin-left:var(--space-2); color:var(--color-error); font-size:var(--text-2xs); font-weight:700; letter-spacing:.08em; }
 body.is-offline [data-module-type="weather"] .module-style-surface,
 body.is-offline [data-module-type="git"] .module-style-surface,
