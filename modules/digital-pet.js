@@ -45,7 +45,7 @@ registerModule('digital-pet', {
     const lineHeights = [2, 8, 15, 23, 32, 42, 53];
     for (let i = 0; i < lineHeights.length; i++) {
       const fl = document.createElement('div'); fl.className = 'dp-floor-line';
-      fl.style.cssText = `top:${lineHeights[i]}px;position:absolute;left:0;width:100%;height:1px;background:rgba(255,255,255,0.05);pointer-events:none;`;
+      fl.style.cssText = `top:${lineHeights[i]}px;position:absolute;left:0;width:100%;height:1px;pointer-events:none;`;
       hfloor.appendChild(fl);
     }
     const dwfloor = document.createElement('div'); dwfloor.className = 'dp-doorway-floor'; pen.appendChild(dwfloor);
@@ -107,7 +107,6 @@ registerModule('digital-pet', {
 
     // Actions
     const acts = document.createElement('div'); acts.className = 'dp-actions';
-    const sleepBtn = document.createElement('button');
     function mkBtn(label, onClick) {
       const b = document.createElement('button'); b.className = 'btn btn-glass btn-sm'; b.textContent = label;
       b.addEventListener('click', function (e) { e.stopPropagation(); onClick(b); });
@@ -231,9 +230,17 @@ registerModule('digital-pet', {
       creature.classList.toggle('dp-sick', _mood === 'sick');
     }
 
+    // Visibility gate — declared before startWalk/blink/wag reference it.
+    let _visible = true;
+    const _io = (typeof IntersectionObserver === 'function')
+      ? new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) { _visible = e.isIntersecting; });
+        })
+      : null;
+
     // Glide to new position — smoother
     function startWalk() {
-      if (_walking || sec.sleeping || _disposed) return; _walking = true;
+      if (_walking || sec.sleeping || _disposed || !_visible) return; _walking = true;
       const pw = pen.offsetWidth || 260, ph = pen.offsetHeight || 180;
       const creatureWidth = creature.getBoundingClientRect().width || 94;
       const travel = Math.max(0, pw - creatureWidth - 8);
@@ -275,7 +282,10 @@ registerModule('digital-pet', {
       if (moodKey === 'love') envHtml += '<pre class="dp-env-heart" style="left:calc(50% + 24px);top:4px;">♥</pre>';
       if (sec.sleeping) envHtml += '<pre class="dp-env-zzz" style="right:16px;top:14px;">z Z z</pre>';
       if (moodKey === 'sick') envHtml += '<pre class="dp-env-sick" style="right:24px;top:12px;">💊</pre>';
-      envProps.innerHTML = envHtml;
+      // Only rewrite envProps when the set actually changes — rewriting every
+      // 5s re-creates the CSS-animated props (sparkle/heart/zzz) and restarts
+      // their animations, causing a periodic flicker.
+      if (envProps._lastEnv !== envHtml) { envProps.innerHTML = envHtml; envProps._lastEnv = envHtml; }
 
       // Info line — status + urgency
       const infoParts = [];
@@ -296,9 +306,13 @@ registerModule('digital-pet', {
     _updateTimer = setInterval(updateAll, 5000);
 
     // Persist the ever-moving energy/health baselines periodically so they
-    // don't rewind on reload.
+    // don't rewind on reload. Only write when a value actually moved >2pt to
+    // avoid a config save + snapshot every minute while the pet is mounted.
     _baselineTimer = setInterval(function () {
-      sec.energy = curEnergy(); sec.health = curHealth();
+      const en = curEnergy(), he = curHealth();
+      const moved = Math.abs(en - (sec.energy || 80)) > 2 || Math.abs(he - (sec.health || 100)) > 2;
+      if (!moved) return;
+      sec.energy = en; sec.health = he;
       sec.lastEnergyTs = Date.now(); sec.lastHealthTs = Date.now();
       saveConfig();
     }, 60000);
@@ -307,13 +321,17 @@ registerModule('digital-pet', {
     if (!motionReduced) startWalk();
     const walkTimer = motionReduced ? null : setInterval(function () { if (!_walking && !sec.sleeping) startWalk(); }, 4500 + Math.random() * 2500);
     // Blink every 4s (not while sleeping)
-    _blinkTimer = motionReduced ? null : setInterval(function () { if (!sec.sleeping) { _blink = !_blink; if (!_walking) setFrame(); } }, 4000);
+    _blinkTimer = motionReduced ? null : setInterval(function () { if (_visible && !sec.sleeping) { _blink = !_blink; if (!_walking) setFrame(); } }, 4000);
     // Tail wag every 600ms (not while sleeping)
-    _wagTimer = motionReduced ? null : setInterval(function () { if (!sec.sleeping) { _wag = !_wag; if (!_walking) setFrame(); } }, 600);
+    _wagTimer = motionReduced ? null : setInterval(function () { if (_visible && !sec.sleeping) { _wag = !_wag; if (!_walking) setFrame(); } }, 600);
+
+    // Observe for visibility (declared above). Cards offscreen pause animation.
+    if (_io) _io.observe(cw);
 
     // Cleanup — all timers
     WarTabLifecycle.addCleanup(cw, function () {
       _disposed = true;
+      if (_io) _io.disconnect();
       if (walkTimer) clearInterval(walkTimer);
       if (_walkTimer) clearTimeout(_walkTimer);
       if (_sayTimer) clearInterval(_sayTimer);
