@@ -1,5 +1,5 @@
 registerModule('timer', {
-  defaults: { mode:'interval', duration:300, targetDate:'', label:'' },
+  defaults: { mode:'interval', duration:300, targetDate:'', label:'', presets:'Pomodoro:1500, Short break:300, Deep work:3000' },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='timer-widget';
     w.dataset.secId=sec.id;
@@ -40,6 +40,16 @@ registerModule('timer', {
       const start=()=>{if(interval)return;if(remaining<=0){remaining=sec.duration||300;display.style.color='';}interval=setInterval(()=>{remaining--;updateDisplay();if(remaining<=0)stop();},1000);startBtn.textContent='⏸ Pause';};
       startBtn.addEventListener('click',()=>{if(interval)stop();else start();});
       resetBtn.addEventListener('click',()=>{showConfirmModal('Reset timer?',()=>{stop();remaining=sec.duration||300;display.style.color='';updateDisplay();},'Reset');});
+      const presets=parseTimerPresets(sec.presets);
+      if(presets.length){
+        const presetRow=document.createElement('div');presetRow.className='timer-presets';
+        presets.forEach(function(preset){
+          const pb=document.createElement('button');pb.className='btn btn-glass btn-sm';pb.textContent=preset.label;
+          pb.addEventListener('click',function(){stop();remaining=preset.seconds;display.style.color='';updateDisplay();});
+          presetRow.appendChild(pb);
+        });
+        w.appendChild(presetRow);
+      }
       updateDisplay();
     }
     cw.appendChild(w);
@@ -68,6 +78,9 @@ registerModule('timer', {
     const durRow=document.createElement('div');durRow.style.cssText='display:flex;align-items:center;gap:4px;margin-bottom:10px;';
     durRow.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-right:4px;','Duration'));
     durRow.appendChild(hSel);durRow.appendChild(mSel);intervalFields.appendChild(durRow);
+    intervalFields.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block;','Named Presets'));
+    const presetInput=document.createElement('input');presetInput.className='cp-input';presetInput.value=sec.presets||'';presetInput.placeholder='Pomodoro:1500, Break:300';
+    presetInput.addEventListener('change',function(){sec.presets=presetInput.value;saveAndRefresh();});intervalFields.appendChild(presetInput);
     // Countdown fields
     const dateRow=document.createElement('div');dateRow.style.cssText='margin-bottom:10px;';
     dateRow.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block;','Target Date'));
@@ -90,3 +103,12 @@ registerModule('timer', {
     bd.appendChild(intervalFields);bd.appendChild(countdownFields);
   },
 });
+
+function parseTimerPresets(value){
+  if(!value||typeof value!=='string')return [];
+  return value.split(',').map(function(part){
+    const idx=part.lastIndexOf(':');if(idx<1)return null;
+    const label=part.slice(0,idx).trim(),seconds=parseInt(part.slice(idx+1),10);
+    return label&&seconds>0?{label:label,seconds:seconds}:null;
+  }).filter(Boolean).slice(0,6);
+}

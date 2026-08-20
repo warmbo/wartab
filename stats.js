@@ -3,7 +3,21 @@
    Depends on: $, storage, config
    ═══════════════════════════════════════════ */
 /* ── Status Bar ── */
-function initStatusBar(){renderStatusBar();clearInterval(statsTimer);const sb=config.statusBar;if(!sb||!sb.enabled)return;const ms=(sb.refreshInterval||15)*1000;statsTimer=setInterval(fetchStats,ms);fetchStats();}
+function initStatusBar(){
+  renderStatusBar();
+  if(statsTimer&&typeof statsTimer.dispose==='function')statsTimer.dispose();
+  else clearInterval(statsTimer);
+  statsTimer=null;
+  const sb=config.statusBar;
+  if(!sb||!sb.enabled)return;
+  const ms=Math.max(5000,(sb.refreshInterval||15)*1000);
+  statsTimer=WarTabHttp.createPoller({
+    interval:ms,
+    task:function(){return storage.getStats(sb.source,sb.glancesUrl,sb.customUrl);},
+    onData:function(d){renderStats(d,sb);},
+    onError:function(){const value=$('#stat-loading');if(value)value.textContent='Stats offline';}
+  });
+}
 function renderStatusBar(){const bar=$('#top-stats'),sb=config.statusBar;if(!sb||!sb.enabled){bar.classList.add('hidden');bar.innerHTML='';return;}bar.classList.remove('hidden');bar.innerHTML='<span class="stat-item"><span class="stat-icon">⚡</span><span class="stat-value" id="stat-loading">Connecting...</span></span>';}
 function fetchStats(){const sb=config.statusBar;if(!sb||!sb.enabled)return;storage.getStats(sb.source,sb.glancesUrl).then(function(d){renderStats(d,sb);}).catch(function(){const el=$('#stat-loading');if(el)el.textContent='Stats offline';});}
 // Build stat DOM elements from data and items array — shared by both top-bar and widget renderers

@@ -3,16 +3,23 @@ registerModule('search', {
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='search-widget';
     const wr=document.createElement('div');wr.className='inline-search-wrap';wr.innerHTML='<span class="search-icon"><i data-lucide="search"></i></span>';
-    const i=document.createElement('input');i.type='text';i.placeholder=sec.placeholder||'Search...';i.setAttribute('aria-label','Search query');wr.appendChild(i);
+    const i=document.createElement('input');i.type='text';i.placeholder=sec.placeholder||'Search...';i.setAttribute('aria-label','Search query');
+    const suggestions=document.createElement('datalist');suggestions.id='search-suggestions-'+sec.id;i.setAttribute('list',suggestions.id);
+    const seen={};
+    function addSuggestion(value,label){if(!value||seen[value])return;seen[value]=true;const o=document.createElement('option');o.value=value;if(label)o.label=label;suggestions.appendChild(o);}
+    try{JSON.parse(localStorage.getItem('wartab.search.history')||'[]').forEach(function(h){addSuggestion(h.query,h.engine);});}catch(error){}
+    (config.pageOrder||[]).forEach(function(pageId){const page=config.pages&&config.pages[pageId];(page&&page.cards||[]).forEach(function(c){(c.sections||[]).forEach(function(s){(s.links||[]).forEach(function(link){addSuggestion(link.label,link.url);});});});});
+    wr.appendChild(i);wr.appendChild(suggestions);
     w.appendChild(wr);
     const b=document.createElement('button');b.className='btn btn-glass btn-search';b.innerHTML='<i data-lucide="search"></i>';b.setAttribute('aria-label','Search');
     b.addEventListener('click',()=>doSearch(i.value,sec));i.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch(i.value,sec);});
     w.appendChild(b);cw.appendChild(w);
-    const en=sec.engine||config.search.selected||'Google';const t=document.createElement('div');t.className='search-engine-tag';t.textContent=en;cw.appendChild(t);
+    const en=sec.engine||config.search.selected||'Google';const t=document.createElement('button');t.type='button';t.className='search-engine-tag';t.textContent=en;t.title='Click to change search engine';
+    t.addEventListener('click',function(){const names=Object.keys(config.search.engines);const next=names[(names.indexOf(sec.engine||en)+1)%names.length];sec.engine=next;t.textContent=next;saveConfig();});cw.appendChild(t);
     // Shortcut hint
     var sh = document.createElement('div');
     sh.className = 'search-hint';
-    sh.textContent = 'Ctrl+K to focus';
+    sh.textContent = 'Ctrl+L to focus · prefixes: yt: ddg: r: w:';
     cw.appendChild(sh);
   },
   editor: (sec,card,bd)=>{

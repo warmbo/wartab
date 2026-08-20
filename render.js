@@ -233,9 +233,20 @@ function renderIconElement(icon, cls) {
 
 
 function doSearch(query, section) {
-  const s = (query || '').trim();
+  let s = (query || '').trim();
   if (!s) return;
-  const engine = section.engine || config.search.selected || 'Google';
+  const prefixes = { 'g:':'Google', 'ddg:':'DuckDuckGo', 'br:':'Brave',
+    'b:':'Bing', 'yt:':'YouTube', 'r:':'Reddit', 'w:':'Wikipedia' };
+  let engine = section.engine || config.search.selected || 'Google';
+  const prefix = Object.keys(prefixes).find(function(key){return s.toLowerCase().startsWith(key);});
+  if(prefix){engine=prefixes[prefix];s=s.slice(prefix.length).trim();}
+  if(!s)return;
+  try{
+    const key='wartab.search.history';
+    const history=JSON.parse(localStorage.getItem(key)||'[]').filter(function(item){return item.query!==s||item.engine!==engine;});
+    history.unshift({query:s,engine:engine,ts:Date.now()});
+    localStorage.setItem(key,JSON.stringify(history.slice(0,30)));
+  }catch(error){}
   const url = (config.search.engines[engine] || config.search.engines['Google']) + encodeURIComponent(s);
   window.open(url, '_blank', 'noopener,noreferrer');
 }
@@ -372,6 +383,7 @@ function renderSection(section, card) {
   var _hv = _ch <= 1 ? 'small' : _ch === 2 ? 'medium' : _ch === 3 ? 'large' : 'expanded';
   contentWrap.dataset.modHeight = _hv;
   contentWrap.dataset.secId = section.id;
+  contentWrap.dataset.moduleType = section.type;
 
   // Store a direct DOM reference for the style panel to update without querySelector
   section.__cw = contentWrap;
@@ -479,8 +491,18 @@ function fetchQuote(el, sec) {
     auth.textContent = '';
     return;
   }
-  if (typeof sec._qi !== 'number') sec._qi = -1;
-  sec._qi = (sec._qi + 1) % pool.length;
+  const mode=sec.rotationMode||'sequential';
+  if(mode==='daily'){
+    const day=Math.floor(Date.now()/86400000);
+    sec._qi=day%pool.length;
+  }else if(mode==='shuffle'){
+    let next=Math.floor(Math.random()*pool.length);
+    if(pool.length>1&&next===sec._qi)next=(next+1)%pool.length;
+    sec._qi=next;
+  }else{
+    if (typeof sec._qi !== 'number') sec._qi = -1;
+    sec._qi = (sec._qi + 1) % pool.length;
+  }
   const pick = pool[sec._qi];
   txt.textContent = pick.q;
   auth.textContent = '— ' + pick.a;

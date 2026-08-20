@@ -1,5 +1,5 @@
 registerModule('quotes', {
-  defaults: { quotes:[] },
+  defaults: { quotes:[], rotationMode:'sequential' },
   render: (sec,card,cw)=>{
     const q=document.createElement('div');q.className='quotes-widget';
     q.tabIndex=0;q.setAttribute('role','button');q.setAttribute('aria-label','Show next quote');
@@ -23,7 +23,13 @@ registerModule('quotes', {
     WarTabLifecycle.setTimeout(cw,function(){fetchQuote(q,sec);},100);
   },
   editor: (sec,card,bd)=>{
-    bd.appendChild(cpHint('\u270e Click the quote text to refresh.\nQuotes cycle in order, not randomly.'));
+    bd.appendChild(cpHint('\u270e Click the quote text to refresh. Daily mode holds one quote until tomorrow.'));
+    bd.appendChild(cpLabel('Rotation'));
+    bd.appendChild(cpSelect([
+      {value:'sequential',label:'Sequential'},
+      {value:'shuffle',label:'Shuffle'},
+      {value:'daily',label:'Daily quote'}
+    ],sec.rotationMode||'sequential',function(v){sec.rotationMode=v;sec._qi=undefined;saveAndRefresh();}));
     // User-added quotes
     bd.appendChild(cpLabel('Custom Quotes'));
     const list=document.createElement('div');list.style.cssText='margin-bottom:10px;';

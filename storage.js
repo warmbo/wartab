@@ -38,15 +38,7 @@ const storage = (function() {
           opts.body = JSON.stringify(body);
         }
       }
-      return fetch(BASE + path, opts).then(function(r) {
-        if (!r.ok) return r.json().then(function(e) {
-          throw new Error(e.error || r.statusText);
-        }, function() {
-          throw new Error(r.statusText);
-        });
-        var ct = r.headers.get('Content-Type') || '';
-        return ct.includes('application/json') ? r.json() : r.text();
-      });
+      return WarTabHttp.request(BASE + path, opts);
     }
 
     function getConfig() { return api('/api/config', 'GET'); }
@@ -58,8 +50,8 @@ const storage = (function() {
     function saveNote(id, content) { return api('/api/notes/' + encodeURIComponent(id), 'POST', content); }
 
     function getStats(source, glancesUrl, customUrl) {
-      if (source === 'glances' && glancesUrl) return fetch(glancesUrl + '/api/4').then(function(r) { return r.json(); });
-      if (source === 'custom' && customUrl) return fetch(customUrl).then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+      if (source === 'glances' && glancesUrl) return WarTabHttp.request(glancesUrl + '/api/4');
+      if (source === 'custom' && customUrl) return WarTabHttp.request(customUrl);
       return api('/api/stats', 'GET');
     }
 

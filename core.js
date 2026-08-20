@@ -1276,6 +1276,14 @@ function renderIcons(){
 /* ── DOM helpers ── */
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
+/* Shared element builder for config/editor UI and modules. */
+function el(tag,style,text,children){
+  const e=document.createElement(tag);
+  if(style)e.style.cssText=style;
+  if(text!==undefined&&text!==null)e.textContent=text;
+  if(children)e.appendChild(children);
+  return e;
+}
 function uid(){return Math.random().toString(36).substring(2,9)+Date.now().toString(36);}
 function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function cloneObj(o){return JSON.parse(JSON.stringify(o));}

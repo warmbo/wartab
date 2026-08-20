@@ -423,9 +423,18 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 .inline-search-wrap input { width: 100%; padding: 7px var(--space-2) 7px 30px; background: var(--card-input-bg); border: 1px solid var(--surface-border); color: var(--text-primary); outline: none; font-family: var(--font); transition: border-color var(--anim-fast), box-shadow var(--anim-fast); }
 .inline-search-wrap input:focus { border-color: var(--card-accent,var(--accent)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--card-accent,var(--accent)) 20%, transparent); }
 .inline-search-wrap input::placeholder { color: var(--text-tertiary); }
-.search-engine-tag { color: var(--text-tertiary); margin-top: var(--space-1); text-align: var(--mod-align, right); }
+.search-engine-tag { display:block; margin:var(--space-1) 0 0 auto; padding:2px 6px; border:0; border-radius:var(--radius-sm); background:transparent; color:var(--text-tertiary); text-align:var(--mod-align,right); font:inherit; cursor:pointer; }
+.search-engine-tag:hover { color:var(--text-secondary); background:var(--accent-glass); }
 .search-hint { font-size: var(--text-3xs); color: var(--text-tertiary); text-align: var(--mod-align, right); opacity: 0; transition: opacity var(--anim-fast); margin-top: 2px; }
 .timer-hint { font-size: var(--text-3xs); color: var(--text-tertiary); text-align: var(--mod-align, center); opacity: 0; transition: opacity var(--anim-fast); margin-top: 2px; }
+.timer-presets { display:flex; flex-wrap:wrap; justify-content:var(--mod-justify,center); gap:var(--space-1); margin-top:var(--space-2); }
+.timer-presets .btn { min-height:26px; padding:3px 8px; font-size:var(--text-2xs); }
+body.is-offline #top-stats::after { content:'OFFLINE'; margin-left:var(--space-2); color:var(--color-error); font-size:var(--text-2xs); font-weight:700; letter-spacing:.08em; }
+body.is-offline [data-module-type="weather"] .module-style-surface,
+body.is-offline [data-module-type="git"] .module-style-surface,
+body.is-offline [data-module-type="media"] .module-style-surface,
+body.is-offline [data-module-type="proxmox"] .module-style-surface,
+body.is-offline [data-module-type="api-poller"] .module-style-surface { opacity:.58; filter:saturate(.45); }
 .card:hover .timer-hint, .card:focus-within .timer-hint,
 .timer-hint:hover { opacity: 0.6; }
 .card:hover .search-hint, .card:focus-within .search-hint,

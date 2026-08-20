@@ -453,6 +453,14 @@ async function init() {
     if (mq.addEventListener) mq.addEventListener('change', onOSChange);
     else if (mq.addListener) mq.addListener(onOSChange);
   }
+  function updateOnlineState(){
+    const online=navigator.onLine!==false;
+    document.body.classList.toggle('is-offline',!online);
+    document.body.dataset.network=online?'online':'offline';
+  }
+  window.addEventListener('online',updateOnlineState);
+  window.addEventListener('offline',updateOnlineState);
+  updateOnlineState();
   console.log('WarTab initialized');
   // Render any Lucide icons that were added dynamically
   renderIcons();

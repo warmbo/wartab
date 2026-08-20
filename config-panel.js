@@ -337,14 +337,6 @@ function bgValueRow(body){
   g.appendChild(i);body.appendChild(g);
 }
 
-function el(tag,style,text,children){
-  const e=document.createElement(tag);
-  if(style)e.style.cssText=style;
-  if(text!==undefined&&text!==null)e.textContent=text;
-  if(children)e.appendChild(children);
-  return e;
-}
-
 function chk(label,value,onChange){
   const w=el('div','display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);');
   const c=document.createElement('input');c.type='checkbox';c.checked=!!value;
