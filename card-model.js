@@ -34,6 +34,10 @@ var CARD_TYPE_DEFS = [
   { type: 'media', label: 'Media Card', icon: 'film', sectionOrder: 15 },
   { type: 'proxmox', label: 'Proxmox', icon: 'server', sectionOrder: 16 },
   { type: 'git', label: 'Git Repo', icon: 'code-2', sectionOrder: 17 },
+  { type: 'rss', label: 'RSS Feed', icon: 'rss', sectionOrder: 18 },
+  { type: 'agenda', label: 'Agenda', icon: 'calendar-days', sectionOrder: 19 },
+  { type: 'service-status', label: 'Service Status', icon: 'activity', sectionOrder: 20 },
+  { type: 'markdown', label: 'Markdown', icon: 'file-text', sectionOrder: 21 },
 ];
 
 var WarTabCardModel = (function() {
