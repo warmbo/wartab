@@ -262,7 +262,7 @@ registerModule('media', {
         row1.appendChild(typeSel);
 
         const rmBtn = document.createElement('button'); rmBtn.className = 'btn btn-glass btn-sm';
-        rmBtn.textContent = '✕'; rmBtn.title = 'Remove service';
+        rmBtn.textContent = '✕'; rmBtn.title = 'Remove service'; rmBtn.setAttribute('aria-label','Remove service');
         rmBtn.style.cssText = 'padding:2px 5px;font-size:var(--text-2xs);';
         rmBtn.addEventListener('click', () => {
           sec.services.splice(si, 1);

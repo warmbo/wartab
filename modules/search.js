@@ -3,9 +3,9 @@ registerModule('search', {
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='search-widget';
     const wr=document.createElement('div');wr.className='inline-search-wrap';wr.innerHTML='<span class="search-icon"><i data-lucide="search"></i></span>';
-    const i=document.createElement('input');i.type='text';i.placeholder=sec.placeholder||'Search...';wr.appendChild(i);
+    const i=document.createElement('input');i.type='text';i.placeholder=sec.placeholder||'Search...';i.setAttribute('aria-label','Search query');wr.appendChild(i);
     w.appendChild(wr);
-    const b=document.createElement('button');b.className='btn btn-glass btn-search';b.innerHTML='<i data-lucide="search"></i>';
+    const b=document.createElement('button');b.className='btn btn-glass btn-search';b.innerHTML='<i data-lucide="search"></i>';b.setAttribute('aria-label','Search');
     b.addEventListener('click',()=>doSearch(i.value,sec));i.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch(i.value,sec);});
     w.appendChild(b);cw.appendChild(w);
     const en=sec.engine||config.search.selected||'Google';const t=document.createElement('div');t.className='search-engine-tag';t.textContent=en;cw.appendChild(t);

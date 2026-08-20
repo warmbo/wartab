@@ -136,17 +136,22 @@ registerModule('digital-pet', {
     w.appendChild(acts);
     cw.appendChild(w);
 
-    // Click/tap the pet to pet it
+    // Click/tap or keyboard (Enter/Space) to pet it
     creature.style.cursor = 'pointer';
-    creature.addEventListener('pointerdown', function (e) {
-      e.stopPropagation();
-      if (_disposed) return;
-      if (sec.sleeping) return;
+    creature.setAttribute('role', 'button');
+    creature.setAttribute('aria-label', 'Pet ' + (sec.petName || 'the cat'));
+    creature.tabIndex = 0;
+    function pet() {
+      if (_disposed || sec.sleeping) return;
       sec.lastPetted = Date.now(); sec.happiness = Math.min(100, (sec.happiness || 80) + 8);
       sec.lastHealthTs = Date.now(); saveConfig(); updateAll();
       // brief heart burst
       envProps.innerHTML = '<pre class="dp-env-heart" style="left:50%;top:4px;">♥</pre>';
       setTimeout(() => { if (!_disposed) updateAll(); }, 1200);
+    }
+    creature.addEventListener('pointerdown', function (e) { e.stopPropagation(); pet(); });
+    creature.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); pet(); }
     });
 
     // Network speech
