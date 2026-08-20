@@ -85,7 +85,12 @@ if(!config.cards.length){
 }
 // Ungrouped cards render as normal
 config.cards.forEach((c,i)=>{grid.appendChild(renderCard(c,i));});
-const fs=grid.querySelector('.inline-search-wrap input');if(fs)fs.focus();if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
+// Don't steal focus on every re-render — only focus search on a full load when
+// no panel is open and focus isn't already inside a slide panel (e.g. the user
+// is typing in the config/edit panel while a card re-renders).
+const fs=grid.querySelector('.inline-search-wrap input');
+if(fs && !document.body.classList.contains('panel-open') && !(document.activeElement && document.activeElement.closest('.slide-panel')))fs.focus();
+if(_scrollY)requestAnimationFrame(()=>window.scrollTo(0,_scrollY));
   // Render Lucide icons for any newly created data-lucide elements
   renderIcons();
 }

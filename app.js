@@ -350,6 +350,9 @@ function addNewCard(){
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   overlay.focus();
+  // Dismiss via Escape or clicking the backdrop (the modal's own topmost close)
+  overlay.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.remove(); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
   // Render Lucide icons in the modal
   renderIcons();
 }
@@ -400,13 +403,22 @@ async function init() {
     $('#bg-picker').classList.remove('open');
   });
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'&&configPanelOpen)toggleConfigPanel();
-    if(e.key==='Escape'&&iconPickerOpen)closeIconPicker();
-    if(e.key==='Escape'&&_editPanelOpen)closeCardEditPanel();
-    if(e.key==='Escape'&&document.querySelector('#shortcuts-overlay'))document.querySelector('#shortcuts-overlay').remove();
-    if(e.key==='Escape'&&document.querySelector('#bg-picker.open')){
-      $('#bg-picker-overlay').classList.remove('open');
-      $('#bg-picker').classList.remove('open');
+    if(e.key==='Escape'){
+      // Topmost-first: icon picker before config panel (so one press doesn't
+      // close two surfaces); bg picker next.
+      if(iconPickerOpen)closeIconPicker();
+      else if(configPanelOpen)toggleConfigPanel();
+      if(e.key==='Escape'&&_editPanelOpen)closeCardEditPanel();
+      if(document.querySelector('#shortcuts-overlay'))document.querySelector('#shortcuts-overlay').remove();
+      if(document.querySelector('#bg-picker.open')){
+        $('#bg-picker-overlay').classList.remove('open');
+        $('#bg-picker').classList.remove('open');
+      }
+    }
+    if(e.key==='Escape'&&document.activeElement&&document.activeElement.closest('.slide-panel input,.slide-panel textarea,.slide-panel select')){
+      // First Escape blurs the focused field inside a panel instead of closing
+      // the whole panel while the user is typing.
+      e.preventDefault();document.activeElement.blur();
     }
     if(e.key==='C'&&e.ctrlKey&&e.shiftKey){e.preventDefault();toggleConfigPanel();}
     if((e.key==='l'||e.key==='k')&&(e.ctrlKey||e.metaKey)){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
