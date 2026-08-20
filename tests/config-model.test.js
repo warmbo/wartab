@@ -76,6 +76,23 @@ describe('production config model', () => {
     expect(JSON.parse(JSON.stringify(config))).not.toHaveProperty('cards');
   });
 
+  it('preserves an intentionally empty current page alongside populated pages', () => {
+    const config = model.normalizePages({
+      pages: {
+        home: { name: 'Home', cards: [{ id: 'keep-me' }] },
+        blank: { name: 'Blank', cards: [] },
+      },
+      pageOrder: ['home', 'blank'],
+      currentPage: 'blank',
+    });
+    model.attachCurrentCardsAlias(config);
+
+    expect(config.currentPage).toBe('blank');
+    expect(config.cards).toEqual([]);
+    expect(config.pages.home.cards).toEqual([{ id: 'keep-me' }]);
+    expect(JSON.parse(JSON.stringify(config)).pages.home.cards).toEqual([{ id: 'keep-me' }]);
+  });
+
   it('deep-merges objects and replaces arrays without sharing references', () => {
     const defaults = { theme: { accent: 'blue', nested: { enabled: true } }, cards: [1] };
     const override = { theme: { nested: { enabled: false } }, cards: [2] };

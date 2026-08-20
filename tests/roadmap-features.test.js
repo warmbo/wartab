@@ -51,4 +51,10 @@ describe('roadmap feature contracts', () => {
     expect(render).toContain("'ddg:':'DuckDuckGo'");
     expect(render).toContain('history.slice(0,30)');
   });
+
+  it('never treats an empty current page as an uninitialized config', () => {
+    const app = read('app.js');
+    expect(app).not.toContain("if(!config.cards||!config.cards.length)");
+    expect(app).toContain('An empty current page is valid user state');
+  });
 });

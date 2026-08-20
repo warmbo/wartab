@@ -361,7 +361,9 @@ async function init() {
   try {
   await loadConfig(); applyTheme();
   pageInit();  // migrate/init pages
-  if(!config.cards||!config.cards.length){console.warn('Config had no cards — restored defaults');config=cloneObj(DEFAULT_CONFIG);pageInit();saveConfig();}
+  // An empty current page is valid user state. loadConfig() already chooses
+  // DEFAULT_CONFIG only when storage returns no configuration at all; never
+  // infer "first run" from the current page's card count.
   await fetchUploads();
   // Random background on load if rotation enabled
   if(config.theme.bgRotate&&uploadedFiles.length>0){
