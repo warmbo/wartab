@@ -304,7 +304,9 @@ registerModule('resource-monitor', {
         }
         if(rows.disk){
           rows.disk.val.textContent=fmtSpeed(diskRdSpeed)+' / '+fmtSpeed(diskWrSpeed);
-          rows.disk.fill.style.width='0%';
+          // DISK is I/O speed (not capacity usage) — a fill bar would be
+          // misleading at a fixed 0%, so hide it rather than fake a value.
+          rows.disk.fill.style.display='none';
           pushGraph('disk',diskRdSpeed);
         }
         _prevDiskRd=dr;_prevDiskWr=dw;_prevDiskTs=diskNow;
@@ -315,7 +317,8 @@ registerModule('resource-monitor', {
         if(rows.gpu){
           rows.gpu.fill.style.width=Math.min(gpuPct,100)+'%';
           rows.gpu.val.textContent=vu+'/'+vt+'GB';
-          rows.gpu.detail.textContent=(gpu.temp_c||0)+'°C';
+          // Hide the temp detail when absent (0) instead of showing "0°C"
+          rows.gpu.detail.textContent=(gpu.temp_c||0)>0?(gpu.temp_c)+'°C':'';
           pushGraph('gpu',gpuPct);
         }
         // Network
