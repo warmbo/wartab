@@ -669,7 +669,8 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 #icon-picker-overlay { z-index: calc(var(--z-picker) + 1); }
 #icon-picker { z-index: calc(var(--z-picker) + 2); }
 
-.config-tab.active { border-color: var(--accent); background: var(--accent-glass); color: var(--text-primary); font-weight: 700; opacity: 1 !important; }
+.config-tab.active { border-color: var(--accent); background: var(--accent-glass); color: var(--text-primary); font-weight: 700; }
+.config-tab:not(.active) { opacity: 0.7; }
 
 /* ══════ Card Edit Panel ══════ */
 #edit-panel-overlay { z-index: calc(var(--z-edit-panel) - 1); }
@@ -1682,9 +1683,8 @@ body.panel-open.panel-left #top-bar {
 .card { transition: var(--transition-card); will-change: transform; }
 .card:hover { 
   border-color: var(--glass-border-hover); 
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
+  box-shadow: var(--glass-shadow), 0 0 0 1px rgba(255,255,255,0.05);
 }
-.card:active { }
 
 /* ── Card accent bar — gradient treatment ── */
 .card::before {
@@ -1741,9 +1741,7 @@ body.panel-open.panel-left #top-bar {
 }
 .link-item:hover::after { opacity: 1; }
 .link-item:hover { box-shadow: 0 0 0 1px var(--accent-glass), var(--glass-shadow); }
-.link-item:active { }
 .link-item .link-icon { transition: transform var(--anim-fast); }
-.link-item:hover .link-icon { }
 
 /* ── Link rows — subtle highlight ── */
 .link-row { 

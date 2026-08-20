@@ -41,8 +41,6 @@ function buildConfigPanel(){const body=$('#config-body');const prevScroll=body.s
     btn.className='btn btn-glass btn-sm';
     btn.classList.toggle('config-tab',true);
     btn.classList.toggle('active',_configTab===t.id);
-    if(_configTab!==t.id)btn.style.opacity='0.7';
-    else btn.style.opacity='';
     btn.addEventListener('click',()=>{_configTab=t.id;buildConfigPanel();renderIcons();});
     tabBar.appendChild(btn);
   });
