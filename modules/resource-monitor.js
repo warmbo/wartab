@@ -222,9 +222,9 @@ registerModule('resource-monitor', {
       if(enabled)WarTabLifecycle.setTimeout(cw,sizeAndDrawAll,0);
     }
     setGraphMode(sec.graphMode);
-    // Helpers
-    function fmtBytes(b){if(b<1024)return b.toFixed(0)+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
-    function fmtSpeed(bps){if(bps<1024)return bps.toFixed(0)+'B/s';if(bps<1048576)return(bps/1024).toFixed(1)+'KB/s';return(bps/1048576).toFixed(1)+'MB/s';}
+    // Helpers — GB/TB tiers so large disks/speeds don't render as huge MB strings
+    function fmtBytes(b){if(b<1024)return b.toFixed(0)+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';if(b<1073741824)return(b/1048576).toFixed(1)+'MB';if(b<1099511627776)return(b/1073741824).toFixed(1)+'GB';return(b/1099511627776).toFixed(1)+'TB';}
+    function fmtSpeed(bps){if(bps<1024)return bps.toFixed(0)+'B/s';if(bps<1048576)return(bps/1024).toFixed(1)+'KB/s';if(bps<1073741824)return(bps/1048576).toFixed(1)+'MB/s';if(bps<1099511627776)return(bps/1073741824).toFixed(1)+'GB/s';return(bps/1099511627776).toFixed(1)+'TB/s';}
     function pushGraph(key,val){
       if(_smoothed[key]===undefined)_smoothed[key]=val;
       else _smoothed[key]=_smoothed[key]*0.65+val*0.35;

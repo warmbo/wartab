@@ -244,7 +244,7 @@ registerModule('weather', {
         frame.appendChild(ds.loading(3, 'bar'));
       }
 
-      fetch(geoUrl).then(function(r) { return r.json(); }).then(function(geo) {
+      WarTabHttp.request(geoUrl).then(function(geo) {
         if (!cw.isConnected) return;
         if (!geo.results || !geo.results.length) {
           var errEl = ds.error('Location "' + zip + '" not found in ' + country,
@@ -286,7 +286,7 @@ registerModule('weather', {
         frame.appendChild(ds.loading(3, 'bar'));
       }
 
-      fetch(url).then(function(r) { return r.json(); }).then(function(d) {
+      WarTabHttp.request(url).then(function(d) {
         if (!cw.isConnected) return;
         if (renderData(d)) {
           saveCache({ ts: Date.now(), lat: lat, lon: lon, data: d });

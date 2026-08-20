@@ -1847,7 +1847,7 @@ body.panel-open.panel-left #top-bar {
   line-height: 1.35;
 }
 .rm-label { color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-.rm-value-group { display: inline-flex; align-items: baseline; justify-content: flex-end; gap: 0; min-width: 0; white-space: nowrap; }
+.rm-value-group { display: inline-flex; align-items: baseline; justify-content: flex-end; gap: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .rm-value { color: var(--text-primary); font-size: calc(var(--text-xs) * var(--mod-font-content, 1)); font-weight: 500; font-variant-numeric: tabular-nums; }
 .rm-value-detail { padding-left: var(--space-2); border-left: 1px solid var(--surface-border); color: var(--text-tertiary); font-size: calc(var(--type-meta) * var(--mod-font-secondary, 1)); font-variant-numeric: tabular-nums; }
 .rm-value-detail:empty { display: none; }

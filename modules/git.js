@@ -118,10 +118,9 @@ registerModule('git', {
     const apiUrl = forge.apiUrl(sec.url, sec.owner, sec.repo);
 
     function directFetch(url) {
-      return fetch(url, { headers: headers }).then(function(r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      });
+      // WarTabHttp.request adds a 15s timeout + abort so a hung endpoint
+      // doesn't leave the card stuck on a skeleton/loading state forever.
+      return WarTabHttp.request(url, { headers: headers });
     }
 
     // Header with repo link

@@ -87,10 +87,9 @@ function mediaGroupHeader(label, statusDot, url) {
 /* ── Direct fetch helper (no proxy needed in extension mode) ── */
 
 function mediaFetch(url, headers) {
-  return fetch(url, { headers: headers || {} }).then(function(r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  });
+  // WarTabHttp.request adds a 15s timeout + abort so a hung media service
+  // doesn't leave "Loading media services..." on the card indefinitely.
+  return WarTabHttp.request(url, { headers: headers || {} });
 }
 
 /* ── Parse Plex library sections ── */
