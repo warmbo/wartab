@@ -232,7 +232,14 @@ registerModule('ascii-anim', {
             ng[idx]=grid[idx]===1?(n===2||n===3?1:0):(n===3?1:0);
           }
           grid=ng;
-          if(grid.every(function(c){return c===0;})){pre.textContent='';_timer=requestAnimationFrame(frame);return;}
+          if(grid.every(function(c){return c===0;})){
+            // Extinct grid: re-seed so the animation continues instead of
+            // leaving the card permanently blank.
+            grid=[];
+            for(var si=0;si<W*H;si++)grid[si]=Math.random()<0.3?1:0;
+            pre.textContent='';
+            _timer=requestAnimationFrame(frame);return;
+          }
         }
         var out='';
         for(var y=0;y<H;y++){for(var x=0;x<W;x++)out+=grid[y*W+x]?lum[Math.min(11,Math.round(ct*8))]:' ';out+='\n';}

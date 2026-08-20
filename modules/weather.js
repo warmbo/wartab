@@ -185,7 +185,9 @@ registerModule('weather', {
       }
 
       /* ── Timestamp ── */
-      var ts = cwData.time ? new Date(cwData.time + 'Z') : new Date();
+      // timezone=auto means `time` is a local-time string — parse it as local,
+      // not UTC, or the "updated X ago" readout skews by the timezone offset.
+      var ts = cwData.time ? new Date(cwData.time) : new Date();
       var tsEl = ds.timestamp(ts.getTime());
       secondaryEl.appendChild(tsEl);
 
