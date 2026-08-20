@@ -80,6 +80,7 @@
       if (!page || !page.cards) return;
       page.cards.forEach(function (card) {
         if (!card || !card.sections) return;
+        list.push({kind:'card',label:card.title||'Card',sublabel:(page.name||'Page')+' · '+card.sections.map(function(s){return s.type;}).join(', '),icon:card.icon||'layout',run:function(){switchPage(pageId);setTimeout(function(){var target=document.querySelector('[data-card-id="'+card.id+'"]');if(target){target.scrollIntoView({behavior:'smooth',block:'center'});target.classList.add('highlight');setTimeout(function(){target.classList.remove('highlight');},1200);}},260);}});
         card.sections.forEach(function (sec) {
           if (!sec || !sec.links) return;
           sec.links.forEach(function (link) {
@@ -124,6 +125,11 @@
 
   function renderResults() {
     var query = inputEl.value.trim();
+    var intents = { 'weather today':'weather', 'weather':'weather', 'my notes':'notes',
+      'notes':'notes', 'system status':'resource', 'system':'resource',
+      'time':'clock', 'calendar':'agenda', 'feeds':'rss' };
+    var intent = intents[query.toLowerCase()];
+    if (intent) query = intent;
     var scored = [];
     items.forEach(function (item) {
       var m = bestMatch(query, item.label, item.sublabel);

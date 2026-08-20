@@ -155,6 +155,10 @@ if(v==='gradient'){if(!config.theme.bgValue.includes(','))config.theme.bgValue='
   body.appendChild(pf('range','','Card Transparency',null,Math.round((1-(config.theme.cardOpacity||1))*100),v=>{config.theme.cardOpacity=1-(parseInt(v)/100);applyChanges();},{min:0,max:100}));
   body.appendChild(pf('range','','Card Corner Radius (px)',null,config.theme.cardRadius !== undefined ? parseInt(config.theme.cardRadius) : 16,function(v){config.theme.cardRadius=parseInt(v);applyChanges();},{min:0,max:24}));
   body.appendChild(pf('color','','Accent Color',null,config.theme.glow,v=>{config.theme.glow=v;applyChanges();}));
+  if(config.theme.bgType==='image'&&config.theme.bgValue){
+    const suggest=el('button','','Suggest accent from background');suggest.className='btn btn-glass btn-sm';
+    suggest.addEventListener('click',function(){const img=new Image();img.crossOrigin='anonymous';img.onload=function(){try{const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,32,32);const data=ctx.getImageData(0,0,32,32).data;let r=0,g=0,b=0,n=0;for(let i=0;i<data.length;i+=16){if(data[i+3]<128)continue;r+=data[i];g+=data[i+1];b+=data[i+2];n++;}if(!n)throw new Error('no pixels');const boost=function(v){return Math.max(64,Math.min(220,Math.round(v/n)));};config.theme.glow='#'+[boost(r),boost(g),boost(b)].map(function(v){return v.toString(16).padStart(2,'0');}).join('');applyChanges();buildConfigPanel();toast('Accent sampled from background','success');}catch(error){toast('Could not sample this background','error');}};img.onerror=function(){toast('Could not load background for sampling','error');};img.src=config.theme.bgValue;});body.appendChild(suggest);
+  }
   body.appendChild(pf('range','','Glass Blur (px)',null,config.theme.blur,v=>{config.theme.blur=parseInt(v);applyChanges();},{min:4,max:40}));
   body.appendChild(chk('Animated transitions',config.theme.animations!==false,v=>{config.theme.animations=v;applyChanges();renderAll();}));
   body.appendChild(chk('Card accent bar',config.theme.showAccentBar!==false,v=>{config.theme.showAccentBar=v;applyChanges();renderAll();}));

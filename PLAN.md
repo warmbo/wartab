@@ -1,5 +1,12 @@
 # WarTab — Architecture & Design
 
+> **Archived design snapshot.** This file describes the original 0.2-era
+> concept and is retained for history. The current implementation is documented
+> in [`docs/architecture.md`](docs/architecture.md),
+> [`docs/configuration.md`](docs/configuration.md),
+> [`docs/modules.md`](docs/modules.md), and [`docs/styling.md`](docs/styling.md).
+> Those files are authoritative when this snapshot differs.
+
 This document describes WarTab's internal architecture, data model, and extension points.
 It's intended for developers and contributors. For installation and usage, see [`README.md`](README.md).
 

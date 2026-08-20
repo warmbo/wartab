@@ -42,7 +42,7 @@ and the dashboard works with no network after first load.
 Right-click any link tile to open, copy the URL, copy it as Markdown, edit, or delete
 it — no need to open the card editor for quick link management.
 
-### Card Sections (10 types)
+### Card Sections (23 types)
 
 | Section | Description |
 |---------|-------------|
@@ -56,6 +56,11 @@ it — no need to open the card editor for quick link management.
 | **Quotes** | User-defined quotes with author attribution. Click to cycle. |
 | **Timer** | Hours/minutes dropdown-set countdown with Start/Reset |
 | **API Poller** | Fetch JSON from any endpoint, extract a value via dot-path, auto-refresh |
+| **RSS Feed** | Render recent RSS/Atom headlines through the server proxy |
+| **Agenda** | Read a public iCal feed and list upcoming events |
+| **Service Status** | Monitor a list of HTTP services with latency + online state |
+| **Markdown** | Render safe static Markdown content |
+| **Smart Links** | Local-only most-used or recently-used dashboard links |
 
 ### Icon System — 2,000+ Icons
 

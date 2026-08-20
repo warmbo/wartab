@@ -109,3 +109,4 @@ registerModule('greeting', {
 | `agenda` | information | public iCal through server proxy |
 | `service-status` | information | HTTP service checks through server proxy |
 | `markdown` | information | local static Markdown |
+| `smart-links` | smart-links | local-only usage history |

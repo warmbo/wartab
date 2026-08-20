@@ -37,7 +37,10 @@ registerModule('links', {
       });cw.appendChild(lst);shrinkLabels(cw);
     }else{
       // ── Grid view (button cards) ──
-      const ig=document.createElement('div');ig.className='link-grid';(sec.links||[]).forEach((link,idx)=>{
+      const ig=document.createElement('div');ig.className='link-grid';ig.tabIndex=0;ig.setAttribute('aria-label','Links. Type to filter.');
+      var filter='',filterTimer=null;
+      ig.addEventListener('keydown',function(ev){if(ev.key==='Escape'){filter='';Array.from(ig.children).forEach(function(tile){tile.hidden=false;});return;}if(ev.key==='Backspace'){filter=filter.slice(0,-1);}else if(ev.key.length===1&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey){filter+=ev.key.toLowerCase();}else{return;}ev.preventDefault();clearTimeout(filterTimer);filterTimer=setTimeout(function(){filter='';Array.from(ig.children).forEach(function(tile){tile.hidden=false;});},1800);Array.from(ig.children).forEach(function(tile){tile.hidden=filter&&!tile.textContent.toLowerCase().includes(filter);});});
+      (sec.links||[]).forEach((link,idx)=>{
         const a=document.createElement('a');a.className='link-item';a.href=link.url;a.target='_blank';a.rel='noopener';
         a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label';s.textContent=link.label;
         a.appendChild(s);bindCtx(a,link,idx);ig.appendChild(a);
