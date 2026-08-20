@@ -11,6 +11,7 @@ registerModule('links', {
   `,
   render: (sec,card,cw)=>{
     const bindCtx=(a,link,idx)=>{
+      a.addEventListener('click',()=>recordLinkUsage(link));
       a.addEventListener('contextmenu',(ev)=>{
         ev.preventDefault();
         ev.stopPropagation();

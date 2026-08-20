@@ -1281,6 +1281,15 @@ function uid(){return Math.random().toString(36).substring(2,9)+Date.now().toStr
 function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function cloneObj(o){return JSON.parse(JSON.stringify(o));}
 
+/* Local-only usage intelligence. No telemetry leaves the browser. */
+function getLinkUsage(){try{return JSON.parse(localStorage.getItem('wartab.link.usage')||'{}');}catch(error){return {};}}
+function recordLinkUsage(link){
+  if(!link||!link.url)return;
+  const usage=getLinkUsage(),entry=usage[link.url]||{count:0,last:0,label:link.label||link.url,icon:link.icon||'link'};
+  entry.count++;entry.last=Date.now();entry.label=link.label||entry.label;entry.icon=link.icon||entry.icon;usage[link.url]=entry;
+  try{localStorage.setItem('wartab.link.usage',JSON.stringify(usage));}catch(error){}
+}
+
 /* ── Toast ── */
 function toast(msg,type='info'){
   // Dedup: skip if an identical toast is already visible

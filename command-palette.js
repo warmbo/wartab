@@ -84,10 +84,11 @@
           if (!sec || !sec.links) return;
           sec.links.forEach(function (link) {
             if (!link || !link.url) return;
+            var usage=(typeof getLinkUsage==='function'?getLinkUsage():{})[link.url]||{};
             list.push({
               kind: 'link', label: link.label || link.url, sublabel: link.url,
-              icon: link.icon || 'link',
-              run: function () { window.open(link.url, '_blank', 'noopener'); }
+              icon: link.icon || 'link', usage:usage.count||0,
+              run: function () { if(typeof recordLinkUsage==='function')recordLinkUsage(link);window.open(link.url, '_blank', 'noopener'); }
             });
           });
         });
@@ -128,7 +129,7 @@
       var m = bestMatch(query, item.label, item.sublabel);
       if (m) scored.push({ item: item, match: m });
     });
-    scored.sort(function (a, b) { return b.match.score - a.match.score; });
+    scored.sort(function (a, b) { return (b.match.score+(b.item.usage||0)*0.05) - (a.match.score+(a.item.usage||0)*0.05); });
     scored = scored.slice(0, 20);
 
     resultsEl.innerHTML = '';

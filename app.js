@@ -369,6 +369,10 @@ async function init() {
     if(pick){config.theme.bgType='image';config.theme.bgValue=pick.url;saveConfig();applyTheme();}
   }
   renderAll(); renderPageNav(); initStatusBar();
+  // DNS-prefetch visible dashboard destinations without preloading private data.
+  const domains=new Set();
+  (config.pageOrder||[]).forEach(function(pageId){const page=config.pages&&config.pages[pageId];(page&&page.cards||[]).forEach(function(card){(card.sections||[]).forEach(function(sec){(sec.links||[]).forEach(function(link){try{domains.add(new URL(link.url,location.href).origin);}catch(error){}});});});});
+  Array.from(domains).slice(0,20).forEach(function(origin){if(Array.from(document.head.querySelectorAll('link[data-wartab-dns]')).some(function(link){return link.dataset.wartabDns===origin;}))return;const hint=document.createElement('link');hint.rel='dns-prefetch';hint.href=origin;hint.dataset.wartabDns=origin;document.head.appendChild(hint);});
   // Build version from config metadata (set by server as git hash)
   WARTAB_BUILD = WARTAB_BUILD || config._version || WARTAB_VERSION;
   // Footer — build version with source link

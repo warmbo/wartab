@@ -38,6 +38,7 @@ var CARD_TYPE_DEFS = [
   { type: 'agenda', label: 'Agenda', icon: 'calendar-days', sectionOrder: 19 },
   { type: 'service-status', label: 'Service Status', icon: 'activity', sectionOrder: 20 },
   { type: 'markdown', label: 'Markdown', icon: 'file-text', sectionOrder: 21 },
+  { type: 'smart-links', label: 'Smart Links', icon: 'sparkles', sectionOrder: 22 },
 ];
 
 var WarTabCardModel = (function() {
