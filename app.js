@@ -419,7 +419,9 @@ async function init() {
       e.preventDefault();document.activeElement.blur();
     }
     if(e.key==='C'&&e.ctrlKey&&e.shiftKey){e.preventDefault();toggleConfigPanel();}
-    if((e.key==='l'||e.key==='k')&&(e.ctrlKey||e.metaKey)){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
+    // Ctrl/Cmd+L focuses an inline search card. Ctrl/Cmd+K and P belong
+    // exclusively to command-palette.js so one shortcut never fires twice.
+    if(e.key==='l'&&(e.ctrlKey||e.metaKey)){e.preventDefault();const fs=$('#card-grid .inline-search-wrap input');if(fs)fs.focus();}
     // ? opens shortcuts overlay
     if(e.key==='?'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();showShortcutsOverlay();}
     // Also catch Shift+/ which browsers may report as '/' with shiftKey

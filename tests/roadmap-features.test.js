@@ -21,6 +21,7 @@ describe('roadmap feature contracts', () => {
     expect(palette).toContain("e.key === 'k' || e.key === 'p'");
     expect(palette).toContain("setAttribute('role', 'listbox')");
     expect(palette).toContain("setAttribute('aria-selected'");
+    expect(read('app.js')).not.toContain("e.key==='l'||e.key==='k'");
   });
 
   it('applies custom CSS in a dedicated late style element', () => {
