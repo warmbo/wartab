@@ -87,12 +87,12 @@ registerModule('proxmox', {
       fetchJson('/api2/json/cluster/status').then(nodes => {
         const online = nodes.filter(n => n.type === 'node' && n.status === 'online');
         const offline = nodes.filter(n => n.type === 'node' && n.status === 'offline');
-        // Aggregate CPU and memory from online nodes
+        // Aggregate CPU and memory from online nodes.
+        // cluster/status provides per-node: cpu (0–1 load fraction) and maxcpu.
         let cpuMax = 0, cpuUsed = 0, memMax = 0, memUsed = 0;
         online.forEach(n => {
-          if (n.cpu) cpuMax += n.cpu;
-          if (n.cpuinfo && n.cpuinfo.cpus) cpuMax = n.cpuinfo.cpus;
           if (n.maxcpu) cpuMax += n.maxcpu;
+          if (typeof n.cpu === 'number') cpuUsed += n.cpu;
           if (n.memory && n.memory.total) memMax += n.memory.total;
           if (n.memory && n.memory.used) memUsed += n.memory.used;
         });
@@ -104,25 +104,18 @@ registerModule('proxmox', {
       // Node status
       const allOk = cluster.nodesOffline === 0 || cluster.nodesOffline === '—';
       w.appendChild(groupHeader('Nodes', allOk ? 'var(--color-success)' : 'var(--color-error)'));
-      const nodeCount = cluster.nodesOnline !== '—' ? cluster.nodesOnline + (cluster.nodesOffline > 0 ? '/' + cluster.nodesOffline + ' offline' : ' online') : '—';
-      w.appendChild(statRow('Status', nodeCount, allOk ? 'var(--color-success)' : 'var(--color-error)'));
+      const nodeCount = cluster.nodesOnline !== '—'
+        ? cluster.nodesOnline + (cluster.nodesOffline > 0 ? '/' + cluster.nodesOffline + ' offline' : ' online')
+        : '—';
+      // Only green when there is real data and nothing is offline — a failed
+      // fetch (all '—') must not render a reassuring green dot.
+      const healthy = cluster.nodesOnline !== '—' && cluster.nodesOffline === 0;
+      w.appendChild(statRow('Status', nodeCount, healthy ? 'var(--color-success)' : 'var(--color-error)'));
 
-      // CPU usage
-      if (cluster.cpuMax > 0) {
+      // CPU usage — real cluster average now that cpuUsed is aggregated correctly
+      if (cluster.cpuMax > 0 && cluster.cpuUsed > 0) {
         const cpuPct = Math.min(cluster.cpuUsed / cluster.cpuMax * 100, 100);
-        // Fetch per-node CPU from first online node for actual percentage
-        const firstNode = Array.isArray(cluster.nodes) ? cluster.nodes.find(n => n.type === 'node' && n.status === 'online') : null;
-        if (firstNode) {
-          fetchJson('/api2/json/nodes/' + firstNode.node + '/status').then(nodeStatus => {
-            const cpu = nodeStatus.cpu || 0;
-            const cpuRow = w.querySelector('[data-stat="cpu"]');
-            if (cpuRow) cpuRow.querySelector('.stat-val').textContent = (cpu * 100).toFixed(1) + '%';
-          }).catch(() => {
-            // Node detail is optional; retain the cluster summary already rendered above.
-          });
-        }
-        // Use cluster-level CPU count as baseline
-        w.appendChild(statRow('CPU Cores', Math.round(cluster.cpuMax), 'var(--accent)'));
+        w.appendChild(statRow('CPU', cpuPct.toFixed(0) + '%', cpuPct > 80 ? 'var(--color-warning)' : 'var(--text-primary)'));
       }
 
       // Memory

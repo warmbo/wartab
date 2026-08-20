@@ -85,7 +85,10 @@ function onLinkDragEnd(e) {
       if (!_insertBefore) insertAt = insertAt + 1;
       insertAt = Math.min(insertAt, links.length);
       links.splice(insertAt, 0, moved);
-      saveAndRefresh();
+      // Rebuild the editor body so row closures/data-linkIdx are regenerated
+      // against the new order — otherwise the next remove/edit/drag uses stale
+      // indices and targets the wrong link.
+      saveAndRefreshStructural();
     }
   }
   _linkDrag = null;

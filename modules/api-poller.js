@@ -167,7 +167,7 @@ registerModule('api-poller', {
     WarTabHttp.createPoller({
       owner: cw,
       task: loadData,
-      interval: refresh > 5000 ? refresh : 0,
+      interval: Math.max(refresh, 1000),
       onData: renderData,
       onError: renderError,
     });
