@@ -57,6 +57,7 @@ FILES=(
   arrange-mode.js
   updates.js
   command-palette.js
+  context-menu.js
   manifest.json
   modules/
   static/

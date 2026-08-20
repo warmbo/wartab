@@ -1,30 +1,9 @@
 registerModule('links', {
   defaults: { links:[{label:'Example',url:'https://example.com',icon:'link'}], listMode:false },
-  css: `
-    .ctx-menu{position:fixed;z-index:calc(var(--z-modal,200)+20);min-width:180px;background:var(--card-bg,rgba(20,20,20,0.95));border:1px solid var(--glass-border,rgba(255,255,255,0.12));border-radius:var(--radius,12px);box-shadow:0 12px 40px rgba(0,0,0,0.45);padding:4px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-family:var(--font);}
-    .ctx-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-radius:8px;color:var(--text-primary,#eee);font-size:13px;cursor:pointer;text-align:left;}
-    .ctx-item:hover{background:var(--accent-glass,rgba(255,255,255,0.1));}
-    .ctx-item i{width:16px;height:16px;opacity:0.8;}
-    .ctx-sep{height:1px;background:var(--glass-border,rgba(255,255,255,0.08));margin:4px 6px;}
-    .ctx-item.danger{color:var(--color-error,#ff6b6b);}
-    [data-card-bg="light"] .ctx-menu{background:rgba(255,255,255,0.97);color:#111;}
-  `,
   render: (sec,card,cw)=>{
     const bindCtx=(a,link,idx)=>{
       a.addEventListener('click',()=>recordLinkUsage(link));
-      a.addEventListener('contextmenu',(ev)=>{
-        ev.preventDefault();
-        ev.stopPropagation();
-        showLinkContextMenu(ev.clientX,ev.clientY,link,()=>{
-          // On edit: open this card's edit panel (module editor) — reopen panel
-          openCardEditPanel(card.id);
-        },()=>{
-          // On delete: remove the link and persist
-          if(sec.links && sec.links.length>1){sec.links.splice(idx,1);}
-          else {sec.links=[];}
-          saveConfig();renderAll();
-        });
-      });
+      WarTabContextMenu.registerLink(a,{link:link,section:sec,card:card,index:idx});
     };
     if(sec.listMode){
       // ── List view (single-column rows) ──

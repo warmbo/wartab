@@ -282,4 +282,10 @@
   document.addEventListener('mousedown', function (e) {
     if (palette && e.target === palette) closePalette();
   });
+
+  window.WarTabCommandPalette = {
+    open: openPalette,
+    close: closePalette,
+    toggle: function () { if (palette) closePalette(); else openPalette(); }
+  };
 })();

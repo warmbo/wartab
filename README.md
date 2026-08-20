@@ -37,10 +37,13 @@ WarTab is installable as a real app (manifest + icons + service worker). The app
 shell and immutable assets are cached offline-first, so repeat loads are near-instant
 and the dashboard works with no network after first load.
 
-### Link Context Menu
+### Unified Site Context Menu
 
-Right-click any link tile to open, copy the URL, copy it as Markdown, edit, or delete
-it — no need to open the card editor for quick link management.
+Right-click anywhere in WarTab for a single target-aware menu rendered above every
+panel and overlay. Links get open/copy/edit/delete actions; cards get edit, arrange,
+duplicate, JSON export, and delete; page chrome and blank space expose Command,
+Add Card, Arrange, Pages, Settings, and Reload. Native cut/copy/paste remains available
+inside text inputs and Notes editors.
 
 ### Card Sections (23 types)
 

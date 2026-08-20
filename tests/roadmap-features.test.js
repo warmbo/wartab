@@ -31,14 +31,18 @@ describe('roadmap feature contracts', () => {
     expect(theme).toContain('document.head.appendChild(cssEl)');
   });
 
-  it('provides link context-menu open/copy/edit/delete actions', () => {
-    const design = read('design-system.js');
+  it('provides one site-wide, top-level context menu with target-aware actions', () => {
+    const context = read('context-menu.js');
     const links = read('modules/links.js');
-    expect(design).toContain('function showLinkContextMenu');
-    expect(design).toContain("item('Copy URL'");
-    expect(design).toContain("item('Copy Markdown'");
-    expect(design).toContain("item('Delete link'");
-    expect(links).toContain("addEventListener('contextmenu'");
+    const css = read('style.css');
+    expect(read('index.html')).toContain('context-menu.js?v=BUILD');
+    expect(context).toContain("document.addEventListener('contextmenu'");
+    expect(context).toContain("addItem(items, 'Copy URL'");
+    expect(context).toContain("addItem(items, 'Delete link'");
+    expect(context).toContain("addItem(items, 'Edit card'");
+    expect(context).toContain("addItem(items, 'Command palette'");
+    expect(links).toContain('WarTabContextMenu.registerLink');
+    expect(css).toContain('z-index: 2147483647');
   });
 
   it('keeps search history bounded and supports engine prefixes', () => {

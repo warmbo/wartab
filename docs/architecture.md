@@ -46,6 +46,7 @@ widgets; widgets are registered as **modules**.
 | Icon picker / uploads | `icon-picker.js`, `uploads.js` |
 | Self-update UI | `updates.js` |
 | Command palette | `command-palette.js` (Ctrl+K/P launcher) |
+| Unified context menu | `context-menu.js` (site-wide body portal, target-aware actions) |
 | PWA / offline | `manifest.webmanifest`, `sw.js` (service worker) |
 | Widget-specific behavior | `modules/*.js` |
 

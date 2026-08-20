@@ -29,6 +29,7 @@ function renderPageNav() {
     if (!p) return;
     const tab = document.createElement('button');
     tab.type = 'button';
+    tab.dataset.pageId = id;
     tab.className = 'page-tab' + (id === config.currentPage ? ' active' : '');
     if (id === config.currentPage) tab.setAttribute('aria-current', 'page');
 

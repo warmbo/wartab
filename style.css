@@ -2361,3 +2361,51 @@ code,
 @media (prefers-reduced-motion: reduce) {
   .palette-overlay, .palette-box { animation: none; }
 }
+
+/* ══════ Unified site context menu — body portal, always topmost ══════ */
+#wartab-context-menu-root {
+  position: fixed; inset: 0; z-index: 2147483647;
+  pointer-events: none; isolation: isolate;
+}
+.site-context-menu {
+  position: fixed; min-width: 220px; max-width: min(300px, calc(100vw - 16px));
+  padding: 5px; overflow: hidden; pointer-events: auto;
+  border: 1px solid var(--glass-border-hover);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(24,24,24,.985), rgba(12,12,12,.985));
+  box-shadow: 0 20px 60px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+  font-family: var(--font); animation: site-context-in var(--anim-fast) ease-out;
+}
+.site-context-item {
+  display: grid; grid-template-columns: 20px minmax(0,1fr) auto;
+  align-items: center; gap: 9px; width: 100%; min-height: 36px;
+  padding: 7px 9px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-primary); cursor: pointer;
+  font: inherit; font-size: var(--text-sm); text-align: left;
+}
+.site-context-item:hover,
+.site-context-item:focus-visible { background: var(--accent-glass); color: var(--text-primary); outline: none; }
+.site-context-item i,
+.site-context-item svg { width: 17px; height: 17px; color: var(--text-secondary); stroke-width: 1.8; }
+.site-context-item.danger { color: var(--color-error); }
+.site-context-item.danger i,
+.site-context-item.danger svg { color: var(--color-error); }
+.site-context-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-context-item kbd {
+  padding: 1px 5px; border: 1px solid var(--surface-border); border-radius: 4px;
+  color: var(--text-tertiary); background: rgba(255,255,255,.035);
+  font: 500 var(--text-2xs)/1.5 var(--font); white-space: nowrap;
+}
+.site-context-separator { height: 1px; margin: 4px 7px; background: var(--surface-border); }
+[data-card-bg="light"] .site-context-menu {
+  background: linear-gradient(180deg, rgba(255,255,255,.99), rgba(242,242,242,.99));
+  box-shadow: 0 20px 60px rgba(0,0,0,.28), inset 0 1px 0 #fff;
+}
+@keyframes site-context-in { from { opacity: 0; transform: translateY(-3px) scale(.985); } to { opacity: 1; transform: none; } }
+@media (hover: none) and (pointer: coarse) {
+  .site-context-item { min-height: 44px; padding: 9px 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-context-menu { animation: none; }
+}

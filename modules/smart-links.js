@@ -13,7 +13,7 @@ registerModule('smart-links', {
     rows=rows.slice(0,Math.max(1,parseInt(sec.limit)||6));
     if(!rows.length){cw.appendChild(ds.empty('sparkles','No usage yet','Open dashboard links and your favorites will appear here.'));return;}
     var grid=document.createElement('div');grid.className='smart-links';
-    rows.forEach(function(link){var a=document.createElement('a');a.className='smart-link';a.href=link.url;a.target='_blank';a.rel='noopener';a.appendChild(renderLinkIcon(link.icon));var label=document.createElement('span');label.className='smart-link-label';label.textContent=link.label;a.appendChild(label);var count=document.createElement('span');count.className='smart-link-count';count.textContent=sec.mode==='recent'?'recent':String(link.count);a.appendChild(count);a.addEventListener('click',function(){recordLinkUsage(link);});grid.appendChild(a);});
+    rows.forEach(function(link){var a=document.createElement('a');a.className='smart-link';a.href=link.url;a.target='_blank';a.rel='noopener';a.appendChild(renderLinkIcon(link.icon));var label=document.createElement('span');label.className='smart-link-label';label.textContent=link.label;a.appendChild(label);var count=document.createElement('span');count.className='smart-link-count';count.textContent=sec.mode==='recent'?'recent':String(link.count);a.appendChild(count);a.addEventListener('click',function(){recordLinkUsage(link);});WarTabContextMenu.registerLink(a,{link:link,section:sec,card:card,readonly:true});grid.appendChild(a);});
     cw.appendChild(grid);
   },
   settings:[
