@@ -25,7 +25,7 @@ async function restoreConfigSnapshot(name) {
 
 function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);updateBlurState();if(configPanelOpen){buildConfigPanel();renderIcons();}}
 
-function buildConfigPanel(){const body=$('#config-body');body.innerHTML='';
+function buildConfigPanel(){const body=$('#config-body');const prevScroll=body.scrollTop;body.innerHTML='';
   const ht=$('#config-header-title');
   if(ht)ht.innerHTML='<i data-lucide="Settings" style="width:18px;height:18px;vertical-align:middle;margin-right:var(--space-2);"></i><span style="vertical-align:middle;">WarTab Config</span>';
 
@@ -139,7 +139,9 @@ if(v==='gradient'){if(!config.theme.bgValue.includes(','))config.theme.bgValue='
   if(uploadedFiles.length){const sb=el('button','','Previous Images ('+uploadedFiles.length+')');sb.className='btn btn-glass btn-sm';sb.addEventListener('click',()=>openBgPicker());bgr.appendChild(sb);}
   if(bgType==='image'){
     const setUrlBtn=el('button','','Set URL');setUrlBtn.className='btn btn-glass btn-sm';
-    setUrlBtn.addEventListener('click',()=>{buildConfigPanel();});bgr.appendChild(setUrlBtn);
+    // Reveal the image-URL field directly (was a no-op rebuild that did nothing)
+    setUrlBtn.addEventListener('click',()=>{bgValueRow(body);setUrlBtn.disabled=true;setUrlBtn.textContent='URL set';});
+    bgr.appendChild(setUrlBtn);
   } else {
     const setUrlBtn=el('button','','Set Image URL');setUrlBtn.className='btn btn-glass btn-sm';
     setUrlBtn.addEventListener('click',()=>{config.theme.bgType='image';applyChanges();saveConfig();buildConfigPanel();});
@@ -289,6 +291,9 @@ function buildSystemPanel(body){
     '</div>';
   body.appendChild(cbox);
   body.appendChild(fi2);
+  // Preserve scroll position across rebuilds (e.g. tab switches, status-bar
+  // toggles) instead of jumping to the top.
+  body.scrollTop = prevScroll;
 }
 /* Wrap config panel sections in card containers */
 function wrapConfigCards(body) {
@@ -341,7 +346,7 @@ function chk(label,value,onChange){
 function ps(t){return el('div','','',el('h3','font-size:var(--text-sm);font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:var(--space-3);margin-top:var(--space-3);padding-bottom:4px;border-bottom:1px solid var(--glass-border);font-family:var(--font);',t));}
 function pf(type,key,label,options,value,onChange,attrs){const g=el('div','margin-bottom:var(--space-3);');
   if(type==='select'){g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);',label));const s=document.createElement('select');s.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;cursor:pointer;';(options||[]).forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;if(o.value===value)opt.selected=true;s.appendChild(opt);});s.addEventListener('change',()=>onChange(s.value));g.appendChild(s);}
-  else if(type==='range'){g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);',label));const r=el('div','display:flex;align-items:center;gap:var(--space-2);');const i=document.createElement('input');i.type='range';i.min=attrs.min||0;i.max=attrs.max||100;i.value=value;i.style.cssText='flex:1;accent-color:var(--accent);';const s=el('span','font-size:var(--text-sm);color:var(--text-secondary);min-width:30px;',String(value));i.addEventListener('input',()=>s.textContent=i.value);i.addEventListener('pointerup',()=>onChange(i.value));r.appendChild(i);r.appendChild(s);g.appendChild(r);}
+  else if(type==='range'){g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);',label));const r=el('div','display:flex;align-items:center;gap:var(--space-2);');const i=document.createElement('input');i.type='range';i.min=attrs.min||0;i.max=attrs.max||100;i.value=value;i.style.cssText='flex:1;accent-color:var(--accent);';const s=el('span','font-size:var(--text-sm);color:var(--text-secondary);min-width:30px;',String(value));i.addEventListener('input',()=>s.textContent=i.value);const doChange=()=>onChange(i.value);i.addEventListener('pointerup',doChange);i.addEventListener('keyup',e=>{if(e.key==='Enter')doChange();});i.addEventListener('change',doChange);r.appendChild(i);r.appendChild(s);g.appendChild(r);}
   else if(type==='color'){g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);',label));const r=el('div','display:flex;gap:var(--space-2);align-items:center;');const i=document.createElement('input');i.type='color';i.value=value;i.style.cssText='width:40px;height:34px;padding:2px;cursor:pointer;flex-shrink:0;border:1px solid var(--surface-border);background:rgba(0,0,0,0.3);';const t=document.createElement('input');t.type='text';t.value=value;t.style.cssText='flex:1;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';const sync=v=>{i.value=v;t.value=v;onChange(v);};i.addEventListener('input',()=>sync(i.value));t.addEventListener('change',()=>sync(t.value));r.appendChild(i);r.appendChild(t);g.appendChild(r);}
   else{g.appendChild(el('label','display:block;font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-1);',label));const i=document.createElement('input');i.type='text';i.value=value;i.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;';i.addEventListener('change',()=>onChange(i.value));g.appendChild(i);}
   return g;

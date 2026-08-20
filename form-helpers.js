@@ -61,6 +61,8 @@ function cpRange(label, value, min, max, onChange, step) {
   const doChange = () => { onChange(r.value); s.textContent = r.value; };
   r.addEventListener('pointerup', doChange);
   r.addEventListener('keyup', e => { if (e.key === 'Enter') doChange(); });
+  // 'change' fires on keyboard release too, so arrow-key adjustments persist
+  r.addEventListener('change', doChange);
   row.appendChild(r); row.appendChild(s);
   g.appendChild(row);
   return g;
