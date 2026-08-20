@@ -81,6 +81,7 @@ function openPageEditPanel(pageId) {
   foot.className = 'cp-footer';
 
   const doneBtn = cpBtn('Done');
+  doneBtn.classList.add('ep-action-primary');
 
   doneBtn.addEventListener('click', closeCardEditPanel);
 
@@ -283,6 +284,7 @@ function openPageManagementPanel() {
   foot.appendChild(addBtn);
 
   const doneBtn = cpBtn('Done');
+  doneBtn.classList.add('ep-action-primary');
 
   doneBtn.addEventListener('click', closeCardEditPanel);
 

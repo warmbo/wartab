@@ -2,9 +2,20 @@
    WarTab — Modal Dialogs
    Confirmation and info modals.
    ═══════════════════════════════════════════ */
-/** Simple confirmation overlay */
-function showConfirmModal(msg, onConfirm, okText) {
-  okText = okText || 'Delete';
+/** Simple confirmation overlay.
+ *  Usage: showConfirmModal(msg, onConfirm, okTextOrOptions)
+ *  okTextOrOptions may be a string (label; legacy) or { ok, danger } where
+ *  danger:true styles the OK button as destructive (no longer string-sniffing).
+ */
+function showConfirmModal(msg, onConfirm, okTextOrOptions) {
+  let okText = 'Delete', danger = false;
+  if (okTextOrOptions && typeof okTextOrOptions === 'object') {
+    okText = okTextOrOptions.ok || okText;
+    danger = !!okTextOrOptions.danger;
+  } else {
+    okText = okTextOrOptions || 'Delete';
+    danger = okText === 'Delete';
+  }
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   const box = document.createElement('div');
@@ -18,7 +29,7 @@ function showConfirmModal(msg, onConfirm, okText) {
   btnRow.style.cssText = 'display:flex;gap:var(--space-2);justify-content:center;';
   const okBtn = document.createElement('button');
   okBtn.textContent = okText;
-  okBtn.className = 'btn btn-glass btn-sm' + (okText === 'Delete' ? ' btn-danger' : '');
+  okBtn.className = 'btn btn-glass btn-sm' + (danger ? ' btn-danger' : '');
   okBtn.addEventListener('click', () => { overlay.remove(); onConfirm(); });
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn btn-glass btn-sm';
