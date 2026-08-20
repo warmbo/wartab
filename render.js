@@ -448,20 +448,6 @@ function renderLinkIcon(icon) {
   if (!icon) return renderLucideEl('link', 'link-icon');
   return renderIconElement(icon, 'link-icon');
 }
-/**
- * Find a section by its ID across all cards.
- * @param {string} sectionId   The section.id to find
- * @returns {Array|number} [cardIndex, sectionIndex] or -1 if not found
- */
-function findSection(sectionId) {
-  for (let ci = 0; ci < config.cards.length; ci++) {
-    const sections = config.cards[ci].sections || [];
-    for (let si = 0; si < sections.length; si++) {
-      if (sections[si].id === sectionId) return [ci, si];
-    }
-  }
-  return -1;
-}
 
 /* ── Local quote library ── */
 // Shrink link labels that overflow their container — keeps buttons single-line

@@ -20,13 +20,6 @@ function registerModule(type, module){
   }
 }
 
-/* ── Event Bus (Pub/Sub) ── */
-// Lightweight pub/sub for targeted re-renders instead of calling renderAll().
-// Subscribe with: var unsub = on('config:card:updated', fn)
-// Fire with:      emit('config:card:updated', { cardId: '...' })
-const _evBus={};
-function on(ev,fn){if(!_evBus[ev])_evBus[ev]=[];_evBus[ev].push(fn);return function(){_evBus[ev]=_evBus[ev].filter(function(f){return f!==fn;});};}
-function emit(ev,data){(_evBus[ev]||[]).forEach(function(fn){try{fn(data);}catch(e){console.error('[EventBus]',ev,e);}});}
 
 /* ── Public API presets for API Poller ── */
 const API_PRESETS = [

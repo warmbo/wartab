@@ -119,5 +119,4 @@ function simulateGrid(cards, cols) {
 }
 
 /* ── Gap helpers ── */
-function addGap(){config.cards.push({id:'gap-'+uid(),title:'',icon:'',color:'transparent',width:1,height:1,_isGap:true});saveConfig();renderAll();toast('Gap added','success');}
-function removeGap(idx){config.cards.splice(idx,1);saveConfig();renderAll();}
+

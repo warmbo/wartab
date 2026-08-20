@@ -193,8 +193,8 @@ function buildSectionEditor(sec, card, si) {
 
       if (mod && mod.defaults) Object.assign(sec, cloneObj(mod.defaults));
       // Ensure section style defaults exist
-      if (!sec.styles) sec.styles = { align:'left', density:'standard', scale:'medium' };
-      if (!sec.styles.fontScale) sec.styles.fontScale = { title:1, content:1, secondary:1 };
+      if (!sec.styles) sec.styles = WarTabCardModel.getBaseSectionStyles();
+      if (!sec.styles.fontScale) sec.styles.fontScale = WarTabCardModel.getBaseSectionStyles().fontScale;
 
       saveAndRefreshStructural();
 

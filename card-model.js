@@ -10,7 +10,7 @@ var CARD_TYPE_DEFS = [
   {
     type: 'api-poller', label: 'API Poller', icon: 'activity', sectionOrder: 8,
     sectionDefaults: {
-      url: 'https://api.github.com/repos/nousresearch/wartab',
+      url: 'https://api.github.com/repos/warmbo/wartab',
       refreshInterval: 120,
       fields: [
         { label: 'Stars', path: 'stargazers_count' },
@@ -91,6 +91,10 @@ var WarTabCardModel = (function() {
     return modules[type] && modules[type].defaults ? modules[type].defaults : {};
   }
 
+  function getBaseSectionStyles() {
+    return clone(BASE_SECTION_STYLES);
+  }
+
   function createSection(type, overrides, makeId) {
     var definition = getTypeDef(type) || { type: type, label: type };
     var section = merge(getModuleDefaults(type), definition.sectionDefaults || {});
@@ -154,6 +158,7 @@ var WarTabCardModel = (function() {
     typeDefinitions: CARD_TYPE_DEFS,
     getTypeDef: getTypeDef,
     getSectionTypeOptions: getSectionTypeOptions,
+    getBaseSectionStyles: getBaseSectionStyles,
     createSection: createSection,
     createCard: createCard,
     getCurrentCards: getCurrentCards,

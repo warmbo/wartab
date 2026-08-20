@@ -23,9 +23,9 @@ in `index.html`.
 | `defaults` | recommended | object | Default config for a section of this type |
 | `render` | **required** | `(section, card, contentEl) => void` | Build the widget DOM into `contentEl` |
 | `editor` | optional | `(section, card, editorBody) => void` | Build the config form fields |
+| `settings` | optional | array | Declarative fields auto-rendered by `section-editor.js` |
 | `css` | optional | string | Scoped per-module styles (auto-injected) |
-| `refresh` | optional | function | Start timers/interval refresh |
-| `cleanup` | optional | function | Stop timers, remove listeners |
+| `onMount` | optional | `(section, card, contentEl) => cleanup?` | Start async work after DOM connection; return cleanup |
 
 The `type` string must match the `section.type` value stored in config.
 
@@ -55,7 +55,7 @@ Modules should NOT reimplement these — the framework/core provides them:
 - **DOM element creation** — `el()` helper in `core.js`
 - **Form controls** — `form-helpers.js`
 - **HTTP requests** — `http.js`
-- **Event bus** — `on()`/`emit()` in `core.js` for targeted re-renders
+- **Polling/lifecycle** — `WarTabHttp.createPoller({owner, ...})` and `WarTabLifecycle`
 - **Reduced-motion / animation gating** — `core.js`
 
 ## Minimal example module
@@ -105,3 +105,7 @@ registerModule('greeting', {
 | `lan-scan` | lan-scan | server ARP |
 | `proxmox` | proxmox | server / external |
 | `ascii-anim` | ascii-anim | — |
+| `rss` | information | RSS/Atom through server proxy |
+| `agenda` | information | public iCal through server proxy |
+| `service-status` | information | HTTP service checks through server proxy |
+| `markdown` | information | local static Markdown |

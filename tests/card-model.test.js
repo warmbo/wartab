@@ -57,7 +57,7 @@ describe('production card model', () => {
 
     const section = model.createSection('api-poller', {}, () => 'api');
 
-    expect(section.url).toBe('https://api.github.com/repos/nousresearch/wartab');
+    expect(section.url).toBe('https://api.github.com/repos/warmbo/wartab');
     expect(section.refreshInterval).toBe(120);
     expect(section.fields).toHaveLength(3);
   });

@@ -24,14 +24,6 @@ function fetchLanScan(el){
 }
 
 
-function bumpVersion(){
-  const p=WARTAB_VERSION.split('.');
-  p[p.length-1]=String(parseInt(p[p.length-1])+1);
-  WARTAB_VERSION = p.join('.');
-  const ft=$('#footer-text');
-  if(ft)ft.textContent='WarTab v'+WARTAB_VERSION;
-  return WARTAB_VERSION;
-}
 
 /* ── Edit Panel ── */
 const DEFAULT_CONFIG = {
@@ -242,7 +234,7 @@ const configSaver = WarTabConfigStore.createConfigSaver({
       btn.classList.add('save-ok');
       setTimeout(function() { btn.classList.remove('save-ok'); }, 600);
     }
-    emit('config:saved', { config: snapshot });
+
   },
   onError: function(error) {
     console.error('saveConfig failed:', error);
