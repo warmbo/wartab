@@ -47,16 +47,9 @@ const MEDIA_SERVICES = {
 /* ── Single stat row ── */
 
 function mediaStatRow(label, value, accent) {
-  const row = document.createElement('div');
-  row.style.cssText = 'display:flex;align-items:center;justify-content:var(--mod-justify,space-between);gap:calc(var(--space-2) * var(--mod-density,1));padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);';
-  const lbl = document.createElement('span');
-  lbl.style.cssText = 'font-size:var(--text-xs);color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
-  lbl.textContent = label;
-  const val = document.createElement('span');
-  val.style.cssText = 'font-weight:600;font-variant-numeric:tabular-nums;color:' + (accent || 'var(--text-primary)') + ';';
-  val.textContent = value;
-  row.appendChild(lbl); row.appendChild(val);
-  return row;
+  // Reuse the design-system stat row (label + value + tabular nums) instead of
+  // duplicating its markup.
+  return ds.statRow(label, value, accent);
 }
 
 /* ── Service group header ── */
@@ -185,7 +178,8 @@ registerModule('media', {
       cw.appendChild(w); return;
     }
 
-    w.innerHTML = '<div style="font-size:var(--text-sm);color:var(--text-secondary);padding:8px 0;text-align:center;">Loading media services...</div>';
+    w.innerHTML = '';
+    w.appendChild(ds.loading(3, 'bar'));
     cw.appendChild(w);
 
     Promise.all(services.map(s => fetchServiceData(s)))
@@ -219,7 +213,10 @@ registerModule('media', {
         });
       })
       .catch(err => {
-        w.innerHTML = '<div style="color:var(--color-error);font-size:var(--text-sm);padding:4px 0;">⚠ ' + escHtml(err.message) + '</div>';
+        w.innerHTML = '';
+        w.appendChild(ds.error('Media fetch failed', err.message || 'Check network connection.', {
+          label: 'Retry', onClick: function() { rerenderCard(card); }
+        }));
       });
   },
 
