@@ -6,10 +6,10 @@
    ═══════════════════════════════════════════ */
 if(!window._rmCache)window._rmCache={};
 registerModule('resource-monitor', {
-  defaults: { source:'local', glancesUrl:'http://localhost:61209', refreshInterval:3, graphMode:true, ringMode:false },
+  defaults: { source:'local', glancesUrl:'http://localhost:61209', refreshInterval:5, graphMode:true, ringMode:false },
   render: (sec,card,cw)=>{
     const w=document.createElement('div');w.className='resource-monitor';
-    w.dataset.refresh=sec.refreshInterval||3;
+    w.dataset.refresh=sec.refreshInterval||5;
     w.dataset.source=sec.source||'local';w.dataset.glancesUrl=sec.glancesUrl||'';
     w.dataset.graphMode=sec.graphMode?'1':'0';
     var GRAPH_PTS=25,ck=sec.id,cache=window._rmCache[ck];
@@ -339,7 +339,7 @@ registerModule('resource-monitor', {
         console.error('resource-monitor fetch failed:', err);
       });
     }
-    var poller=WarTabHttp.createPoller({owner:cw,task:fetchData,interval:(sec.refreshInterval||3)*1000});
+    var poller=WarTabHttp.createPoller({owner:cw,task:fetchData,interval:(sec.refreshInterval||5)*1000});
     var _rmObserver=new IntersectionObserver(function(entries){
       entries.forEach(function(e){
         if(e.isIntersecting)poller.resume();
@@ -362,7 +362,7 @@ registerModule('resource-monitor', {
     renderUrl();
     var sel=bd.querySelector('select');if(sel)sel.addEventListener('change',function(){setTimeout(renderUrl,0);});
     bd.appendChild(urlWrap);
-    bd.appendChild(cpRange('Poll interval (s)',sec.refreshInterval||3,1,60,function(v){sec.refreshInterval=parseInt(v);saveAndRefresh();}));
+    bd.appendChild(cpRange('Poll interval (s)',sec.refreshInterval||5,1,60,function(v){sec.refreshInterval=parseInt(v);saveAndRefresh();}));
     bd.appendChild(cpCheck('Show graphs',sec.graphMode,function(v){sec.graphMode=v;saveAndRefresh();}));
     bd.appendChild(cpCheck('Progress rings (RAM/Disk)',sec.ringMode,function(v){sec.ringMode=v;saveAndRefresh();}));
     // Per-metric toggles

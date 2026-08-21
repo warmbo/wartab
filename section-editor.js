@@ -237,7 +237,11 @@ function buildSectionEditor(sec, card, si) {
             num.value=sec[f.name]!==undefined?sec[f.name]:f.default||'';
             num.placeholder=f.placeholder||'';
             if (f.step !== undefined) num.step=f.step;
-            num.addEventListener('change',function(){onChange(num.value);});
+            num.addEventListener('change',function(){
+              var parsed=parseInt(num.value,10);
+              // Store a real number; empty/invalid falls back to the field default.
+              onChange(Number.isFinite(parsed)?parsed:(f.default!==undefined?f.default:0));
+            });
             mc.appendChild(num);
           }
           break;

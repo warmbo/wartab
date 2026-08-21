@@ -66,4 +66,30 @@ describe('audit round 3 fixes', () => {
     expect(css).toContain('.stat-item .stat-label { font-weight: 500; color: var(--text-secondary);');
     expect(css).toContain('border-radius: 999px; color: var(--text-tertiary, rgba(255,255,255,0.5));');
   });
+
+  it('coerces unbounded number settings to real numbers with default fallback', () => {
+    const editor = read('section-editor.js');
+    expect(editor).toContain("var parsed=parseInt(num.value,10);");
+    expect(editor).toContain("Number.isFinite(parsed)?parsed:(f.default!==undefined?f.default:0)");
+  });
+
+  it('bounds the link-usage store with LRU eviction', () => {
+    const core = read('core.js');
+    expect(core).toContain("if(urls.length>120)");
+    expect(core).toContain("urls.sort(function(a,b){return (usage[a].last||0)-(usage[b].last||0);});");
+    expect(core).toContain("urls.slice(0,urls.length-120).forEach(function(u){delete usage[u];});");
+  });
+
+  it('coalesces the module-surface MutationObserver re-tag via rAF', () => {
+    const render = read('render.js');
+    expect(render).toContain("if(_observeRaf)return;");
+    expect(render).toContain("_observeRaf=requestAnimationFrame");
+    expect(render).toContain("cancelAnimationFrame(_observeRaf)");
+  });
+
+  it('raises the resource-monitor default poll interval from 3s to 5s', () => {
+    const rm = read('modules/resource-monitor.js');
+    expect(rm).toContain('refreshInterval:5');
+    expect(rm).not.toContain('refreshInterval||3');
+  });
 });

@@ -438,9 +438,19 @@ function renderSection(section, card) {
     moduleSurface.textContent = 'Unknown type: ' + section.type;
   }
   normalizeModuleSurface(moduleSurface, section.type);
-  var moduleObserver = new MutationObserver(function() { normalizeModuleSurface(moduleSurface, section.type); });
+  // Re-tag on DOM changes, but coalesce via requestAnimationFrame so a burst
+  // of mutations (pet wag, notes keystrokes, poller rewrites) triggers at most
+  // one full subtree walk per frame instead of one per mutation.
+  var _observeRaf=null;
+  var moduleObserver = new MutationObserver(function() {
+    if(_observeRaf)return;
+    _observeRaf=requestAnimationFrame(function(){
+      _observeRaf=null;
+      if(moduleSurface.isConnected)normalizeModuleSurface(moduleSurface, section.type);
+    });
+  });
   moduleObserver.observe(moduleSurface, { childList: true, subtree: true });
-  WarTabLifecycle.addCleanup(moduleSurface, function() { moduleObserver.disconnect(); });
+  WarTabLifecycle.addCleanup(moduleSurface, function() { moduleObserver.disconnect(); if(_observeRaf)cancelAnimationFrame(_observeRaf); });
   // Two-phase render: if module has onMount(), call it after the element is
   // connected to the DOM. requestAnimationFrame fires after the current frame's
   // synchronous DOM mutations (appendChild/replaceWith) complete, guaranteeing

@@ -1287,7 +1287,15 @@ function recordLinkUsage(link){
   if(!link||!link.url)return;
   const usage=getLinkUsage(),entry=usage[link.url]||{count:0,last:0,label:link.label||link.url,icon:link.icon||'link'};
   entry.count++;entry.last=Date.now();entry.label=link.label||entry.label;entry.icon=link.icon||entry.icon;usage[link.url]=entry;
-  try{localStorage.setItem('wartab.link.usage',JSON.stringify(usage));}catch(error){}
+  // Bounded store: keep at most 120 entries; evict least-recently-used beyond that.
+  try{
+    const urls=Object.keys(usage);
+    if(urls.length>120){
+      urls.sort(function(a,b){return (usage[a].last||0)-(usage[b].last||0);});
+      urls.slice(0,urls.length-120).forEach(function(u){delete usage[u];});
+    }
+    localStorage.setItem('wartab.link.usage',JSON.stringify(usage));
+  }catch(error){}
 }
 
 /* ── Toast ── */
