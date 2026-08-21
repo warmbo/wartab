@@ -47,4 +47,10 @@ describe('Personal Command Deck redesign contracts', () => {
     expect(css).toContain('[data-mobile-hidden="true"]');
     expect(css).toContain('--mobile-order');
   });
+
+  it('renders onboarding above every card, panel, modal, and toast', () => {
+    const css = read('style.css');
+    expect(css).toContain('.command-deck-hint{position:fixed');
+    expect(css).toContain('z-index:2147483646');
+  });
 });
