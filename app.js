@@ -312,6 +312,7 @@ function addCardOfType(type, cardOverrides) {
 }
 
 function addNewCard(){
+  if(window.openCardGallery){window.openCardGallery();return;}
   // Card type picker modal — Lucide icons, glass style
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -380,12 +381,11 @@ async function init() {
   // Footer — build version with source link
   var ft=$('#footer-text');if(ft)ft.innerHTML='WarTab <a href="https://github.com/warmbo/wartab" target="_blank" rel="me noopener" style="color:var(--text-secondary);text-decoration:none;">'+WARTAB_BUILD+'</a>';
   loadIconRepo();
-  $('#btn-help').addEventListener('click', function() { showShortcutsOverlay(); });
-  $('#btn-config').addEventListener('click',toggleConfigPanel);
-  $('#btn-add-card').addEventListener('click',()=>{addNewCard();});
+  var helpBtn=$('#btn-help');if(helpBtn)helpBtn.addEventListener('click', function() { showShortcutsOverlay(); });
+  var configBtn=$('#btn-config');if(configBtn)configBtn.addEventListener('click',toggleConfigPanel);
   $('#brand-text').addEventListener('click',()=>{location.reload();});
-  $('#btn-manage-pages').addEventListener('click',openPageManagementPanel);
-  $('#btn-arrange').addEventListener('click',toggleArrangeMode);
+  var pagesBtn=$('#btn-manage-pages');if(pagesBtn)pagesBtn.addEventListener('click',openPageManagementPanel);
+  var arrangeBtn=$('#btn-arrange');if(arrangeBtn)arrangeBtn.addEventListener('click',toggleArrangeMode);
   $('#config-close').addEventListener('click',toggleConfigPanel);
   $('#config-overlay').addEventListener('click',toggleConfigPanel);
   $$('.ip-tab').forEach(t=>t.addEventListener('click',()=>buildIconPicker(t.dataset.tab)));

@@ -58,6 +58,7 @@ FILES=(
   updates.js
   command-palette.js
   context-menu.js
+  ux-system.js
   manifest.json
   modules/
   static/

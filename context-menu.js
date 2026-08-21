@@ -132,6 +132,9 @@
       if (window.WarTabCommandPalette) window.WarTabCommandPalette.open();
     }, { shortcut: 'Ctrl K' });
     addItem(items, 'Add card', 'plus', function () { addNewCard(); });
+    addItem(items, 'Edit mode', 'wand-2', function () { if (window.enterContextualEditMode) window.enterContextualEditMode(); });
+    addItem(items, 'Layout Studio', 'layout-grid', function () { if (window.openLayoutStudio) window.openLayoutStudio(); });
+    addItem(items, 'Experience presets', 'swatch-book', function () { if (window.openExperiencePresets) window.openExperiencePresets(); });
     addItem(items, 'Arrange cards', 'move', function () { toggleArrangeMode(); });
     addItem(items, 'Manage pages', 'layout-dashboard', function () { openPageManagementPanel(); });
     addItem(items, 'Settings', 'settings', function () { if (!configPanelOpen) toggleConfigPanel(); });

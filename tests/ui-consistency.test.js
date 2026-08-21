@@ -105,7 +105,8 @@ describe('interaction consistency contract', () => {
     expect(arrange).toContain("addEventListener('focusin'");
     expect(arrange).toContain("e.key !== 'Enter' && e.key !== ' '");
     expect(arrange).toContain("setAttribute('aria-pressed'");
-    expect(source('index.html')).toContain('aria-label="Arrange cards" aria-pressed="false"');
+    expect(source('index.html')).toContain('data-command="arrange"');
+    expect(source('index.html')).toContain('Quick arrange');
   });
 
   it('gives icon-picker choices keyboard semantics and restores focus', () => {

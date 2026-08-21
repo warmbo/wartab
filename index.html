@@ -80,6 +80,7 @@
   <!-- Command palette (Ctrl+K / Ctrl+P) — after app.js + modules so all globals exist -->
   <script src="command-palette.js?v=BUILD" defer></script>
   <script src="context-menu.js?v=BUILD" defer></script>
+  <script src="ux-system.js?v=BUILD" defer></script>
 </head>
 <body>
   <div id="page-loader"><div class="loader-spinner"></div></div>
@@ -89,13 +90,25 @@
     <div id="top-bar">
       <div class="brand" id="brand-text"><span>⚔️</span><span>WarTab</span></div>
       <div id="page-tabs"></div>
-      <div id="top-stats"></div>
+      <button id="btn-command" class="command-trigger" type="button"><i data-lucide="search"></i><span>Command</span><kbd>Ctrl K</kbd></button>
+      <details class="telemetry-disclosure"><summary aria-label="System telemetry"><i data-lucide="activity"></i><span>System</span></summary><div id="top-stats"></div></details>
       <div id="top-actions">
-        <button class="btn btn-glass btn-icon" id="btn-help" title="Keyboard shortcuts (?)" aria-label="Help"><i data-lucide="help-circle"></i></button>
-        <button class="btn btn-glass btn-icon" id="btn-add-card" title="Add a new card" aria-label="Add card"><i data-lucide="plus"></i></button>
-        <button class="btn btn-glass btn-icon" id="btn-manage-pages" title="Manage pages" aria-label="Manage pages"><i data-lucide="list"></i></button>
-        <button class="btn btn-glass btn-icon" id="btn-arrange" title="Arrange cards (select a card to move it)" aria-label="Arrange cards" aria-pressed="false"><i data-lucide="move"></i></button>
-        <button class="btn btn-glass btn-icon" id="btn-config" title="Configure WarTab" aria-label="Configure"><i data-lucide="settings"></i></button>
+        <button class="btn btn-glass btn-icon history-action" id="btn-undo" title="Undo" aria-label="Undo"><i data-lucide="undo-2"></i></button>
+        <button class="btn btn-glass btn-icon history-action" id="btn-redo" title="Redo" aria-label="Redo"><i data-lucide="redo-2"></i></button>
+        <button class="btn btn-primary command-add" id="btn-add-card" title="Add a new card"><i data-lucide="plus"></i><span>Add</span></button>
+        <div class="command-more-wrap">
+          <button class="btn btn-glass btn-icon" id="btn-more" title="More actions" aria-label="More actions" aria-expanded="false"><i data-lucide="ellipsis"></i></button>
+          <div id="command-deck-menu" class="command-deck-menu" hidden>
+            <button data-command="pages"><i data-lucide="panel-top"></i>Manage pages</button>
+            <button data-command="edit"><i data-lucide="wand-2"></i>Edit mode</button>
+            <button data-command="arrange"><i data-lucide="move"></i>Quick arrange</button>
+            <button data-command="layout"><i data-lucide="layout-grid"></i>Layout Studio</button>
+            <button data-command="presets"><i data-lucide="swatch-book"></i>Experience presets</button>
+            <span></span>
+            <button data-command="settings"><i data-lucide="settings"></i>Settings</button>
+            <button data-command="help"><i data-lucide="circle-help"></i>Keyboard shortcuts</button>
+          </div>
+        </div>
       </div>
     </div>
     <div id="card-grid"></div>

@@ -127,6 +127,9 @@ function renderCard(card,idx){
   const div = document.createElement('div');
   div.className = 'card';
   div.dataset.cardId = card.id;
+  div.dataset.cardRole = WarTabCardModel.getCardRole(card);
+  div.dataset.mobileHidden = card.mobileHidden ? 'true' : 'false';
+  div.style.setProperty('--mobile-order', Number.isFinite(Number(card.mobileOrder)) ? Number(card.mobileOrder) : idx);
   div.dataset.width = Math.min(card.width || 1, getPageCols());
   div.dataset.index = idx;
   div.style.setProperty('--card-accent', card.color || config.theme.glow);
