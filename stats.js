@@ -18,7 +18,7 @@ function initStatusBar(){
     onError:function(){const value=$('#stat-loading');if(value)value.textContent='Stats offline';}
   });
 }
-function renderStatusBar(){const bar=$('#top-stats'),sb=config.statusBar;if(!sb||!sb.enabled){bar.classList.add('hidden');bar.innerHTML='';return;}bar.classList.remove('hidden');bar.innerHTML='<span class="stat-item"><span class="stat-icon">⚡</span><span class="stat-value" id="stat-loading">Connecting...</span></span>';}
+function renderStatusBar(){const bar=$('#top-stats'),sb=config.statusBar;if(!sb||!sb.enabled){bar.classList.add('hidden');bar.innerHTML='';return;}bar.classList.remove('hidden');bar.innerHTML='<span class="stat-item"><span class="stat-icon">⚡</span><span class="stat-value" id="stat-loading">Connecting...</span></span>';const hint=document.createElement('div');hint.className='telemetry-hint';hint.textContent='Server stats — refresh interval configured in Settings';bar.appendChild(hint);}
 function fetchStats(){const sb=config.statusBar;if(!sb||!sb.enabled)return;storage.getStats(sb.source,sb.glancesUrl).then(function(d){renderStats(d,sb);}).catch(function(){const el=$('#stat-loading');if(el)el.textContent='Stats offline';});}
 // Build stat DOM elements from data and items array — shared by both top-bar and widget renderers
 function buildStatItems(data, items){
@@ -30,6 +30,6 @@ function buildStatItems(data, items){
   if(items.includes('uptime')){const u=data.uptime||{};parts.push(stItem('\u23F1\uFE0F','Up',u.string||'--'));}
   return parts;
 }
-function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const parts=buildStatItems(data,sb.items||[]);parts.forEach(function(el,i){if(i>0){const s=document.createElement('span');s.className='stat-sep';s.textContent='\u00B7';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';}
+function renderStats(data,sb){const bar=$('#top-stats');bar.innerHTML='';const parts=buildStatItems(data,sb.items||[]);parts.forEach(function(el,i){if(i>0){const s=document.createElement('span');s.className='stat-sep';s.textContent='\u00B7';bar.appendChild(s);}bar.appendChild(el);});if(!parts.length)bar.innerHTML='<span class="stat-item"><span class="stat-value">No stats</span></span>';const hint=document.createElement('div');hint.className='telemetry-hint';hint.textContent='Server stats — refresh interval configured in Settings';bar.appendChild(hint);}
 // Build a status bar stat element (icon + label + optional progress bar + value)
 function stItem(icon,label,value,pct){const div=document.createElement('span');div.className='stat-item';const ic=document.createElement('span');ic.className='stat-icon';ic.textContent=icon;div.appendChild(ic);if(label){const l=document.createElement('span');l.className='stat-label';l.textContent=label;div.appendChild(l);}if(pct!==null&&pct!==undefined){const b=document.createElement('span');b.className='stat-bar';const f=document.createElement('span');f.className='stat-bar-fill'+(pct>80?' high':pct>60?' mid':'');f.style.width=pct+'%';b.appendChild(f);div.appendChild(b);}const v=document.createElement('span');v.className='stat-value';v.textContent=value;div.appendChild(v);return div;}

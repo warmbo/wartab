@@ -13,8 +13,16 @@ describe('async audit round 2 fixes', () => {
     expect(topbar).toMatch(/z-index:\s*1/);
   });
 
-  it('starts the command-deck menu hidden for non-popover fallback browsers', () => {
-    expect(read('index.html')).toContain('popover="auto" hidden');
+  it('keeps the command-deck menu popover-safe: no hidden attr that breaks showPopover, JS manages the fallback', () => {
+    const html = read('index.html');
+    // hidden + popover="auto" makes showPopover() throw InvalidStateError in
+    // Popover-API browsers — the menu must start without hidden.
+    expect(html).toContain('popover="auto"');
+    expect(html).not.toContain('popover="auto" hidden');
+    const ux = read('ux-system.js');
+    expect(ux).toContain("if(!hasPopover)menu.hidden=true");
+    // Closed state safety via CSS :not(:popover-open) instead of the attribute
+    expect(read('style.css')).toContain('.command-deck-menu:not(:popover-open){display:none}');
   });
 
   it('mirrors the icon-picker z bump for the bg picker overlay and panel', () => {

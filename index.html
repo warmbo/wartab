@@ -92,14 +92,14 @@
       <div class="brand" id="brand-text"><span>⚔️</span><span>WarTab</span></div>
       <div id="page-tabs"></div>
       <button id="btn-command" class="command-trigger" type="button"><i data-lucide="search"></i><span>Command</span><kbd>Ctrl K</kbd></button>
-      <details class="telemetry-disclosure"><summary aria-label="System telemetry"><i data-lucide="activity"></i><span>System</span></summary><div id="top-stats"></div></details>
+      <details class="telemetry-disclosure"><summary aria-label="System telemetry"><i data-lucide="activity"></i><span>System</span></summary><div id="top-stats"><div class="telemetry-hint" style="display:none">Server stats — refresh interval configured in Settings</div></div></details>
       <div id="top-actions">
         <button class="btn btn-glass btn-icon history-action" id="btn-undo" title="Undo" aria-label="Undo"><i data-lucide="undo-2"></i></button>
         <button class="btn btn-glass btn-icon history-action" id="btn-redo" title="Redo" aria-label="Redo"><i data-lucide="redo-2"></i></button>
         <button class="btn btn-primary command-add" id="btn-add-card" title="Add a new card"><i data-lucide="plus"></i><span>Add</span></button>
         <div class="command-more-wrap">
           <button class="btn btn-glass btn-icon" id="btn-more" title="More actions" aria-label="More actions" aria-expanded="false"><i data-lucide="ellipsis"></i></button>
-          <div id="command-deck-menu" class="command-deck-menu" popover="auto" hidden>
+          <div id="command-deck-menu" class="command-deck-menu" popover="auto">
             <div class="command-deck-head"><span class="command-deck-eyebrow">Command deck</span><span class="command-deck-tag">v<span id="deck-version">0.3</span></span></div>
             <div class="command-deck-label">Organize</div>
             <button data-command="pages"><i data-lucide="panel-top"></i>Manage pages</button>
