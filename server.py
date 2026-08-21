@@ -362,6 +362,21 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             thumbnail.unlink()
         self._json({"status": "deleted", "file": filename})
 
+    def _serve_404_page(self):
+        """Serve the branded WarTab 404 page for blocked/unknown paths."""
+        page = HERE / "404.html"
+        try:
+            body = page.read_bytes()
+        except OSError:
+            body = b"404 Not Found"
+        self.send_response(404)
+        self._cors()
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.end_headers()
+        self.wfile.write(body)
+
     def _serve_static_or_spa(self):
         translated = Path(self.translate_path(self.path))
         url_path = urllib.parse.urlparse(self.path).path
@@ -381,7 +396,7 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
             url_path in blocked_exact
             or any(url_path.startswith(p) for p in blocked_prefix)
         ):
-            self.send_error(404, "Not Found")
+            self._serve_404_page()
             return
 
         # Client-side SPA route (no real file) — fall back to the HTML shell.

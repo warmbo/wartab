@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>404 — WarTab</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+  <style>
+    :root {
+      --bg-value: #0a0a0a, #1a1a1a, #0d0d0d;
+      --accent: #888888;
+      --accent-glass: rgba(136, 136, 136, 0.12);
+      --card-bg: rgba(255, 255, 255, 0.06);
+      --card-bg-alt: rgba(0, 0, 0, 0.15);
+      --border: rgba(255, 255, 255, 0.10);
+      --text-primary: #f5f5f4;
+      --text-tertiary: #9c9c9c;
+      --radius: 0px;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--sans);
+      color: var(--text-primary);
+      background: linear-gradient(135deg, var(--bg-value));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* Top bar — mirrors WarTab's glass chrome with an accent underline */
+    #top-bar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    #top-bar::before {
+      content: '';
+      display: block;
+      height: 3px;
+      background: var(--accent);
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+    .brand .swords { font-size: 17px; }
+    .chrome-right { font-family: var(--mono); font-size: 12px; color: var(--text-tertiary); }
+    /* Center card */
+    .stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 44px 46px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.45);
+    }
+    .code {
+      font-family: var(--mono);
+      font-size: 58px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--accent);
+      letter-spacing: -0.04em;
+      margin-bottom: 16px;
+      text-shadow: 0 0 30px var(--accent-glass);
+    }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+    p { color: var(--text-tertiary); font-size: 14px; line-height: 1.6; margin-bottom: 28px; }
+    .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    a.btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-primary);
+      font-size: 14px; font-weight: 500;
+      text-decoration: none;
+      transition: border-color 160ms, background 160ms, opacity 160ms;
+    }
+    a.btn:hover { border-color: var(--accent); }
+    a.btn.primary { background: var(--accent); border-color: var(--accent); color: #0a0a0a; font-weight: 600; }
+    a.btn.primary:hover { opacity: .9; }
+    /* Footer */
+    #footer {
+      padding: 14px 20px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,0.15);
+      font-family: var(--mono);
+    }
+    @media (max-width: 420px) { .card { padding: 30px 22px; } .code { font-size: 46px; } }
+  </style>
+</head>
+<body>
+  <div id="top-bar">
+    <div class="brand"><span class="swords">⚔️</span><span>WarTab</span></div>
+    <div class="chrome-right">404</div>
+  </div>
+  <div class="stage">
+    <div class="card" role="alert">
+      <div class="code">404</div>
+      <h1>Page not found</h1>
+      <p>That page doesn't exist on this dashboard, was moved, or you don't have permission to view it.</p>
+      <div class="actions">
+        <a class="btn primary" href="/">Back to WarTab</a>
+      </div>
+    </div>
+  </div>
+  <div id="footer">warho.me · WarTab</div>
+</body>
+</html>
