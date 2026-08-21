@@ -48,6 +48,29 @@
     return a || b;
   }
 
+  function looksLikeUrl(value) {
+    return /^(https?:\/\/)/i.test(value) || /^(localhost|\d{1,3}(?:\.\d{1,3}){3})(:\d+)?(?:\/|$)/i.test(value) || /^[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/|$)/i.test(value);
+  }
+
+  function parseCommandQuery(raw) {
+    var value=String(raw||'').trim();
+    var engines={ 'g':'Google', 'ddg':'DuckDuckGo', 'b':'Bing', 'br':'Brave', 'yt':'YouTube', 'r':'Reddit', 'w':'Wikipedia' };
+    var prefix=value.match(/^([a-z]+)(?::|\s+)\s*(.+)$/i);
+    var engine=prefix&&engines[prefix[1].toLowerCase()];
+    if(engine)return{query:prefix[2].trim(),engine:engine,explicit:true,scope:'search'};
+    var service=value.match(/^@(?:server|service)\s+(.+)$/i);
+    if(service)return{query:service[1].trim(),scope:'service'};
+    if(value.charAt(0)==='>')return{query:value.slice(1).trim(),scope:'action'};
+    if(looksLikeUrl(value)){var url=/^https?:\/\//i.test(value)?value:'http://'+value;return{query:value,url:url,scope:'url'};}
+    return{query:value,engine:null,scope:'all'};
+  }
+
+  function runWebSearch(query, engine) {
+    var selected=engine||(config.search&&config.search.selected)||'Google';
+    var base=(config.search&&config.search.engines&&config.search.engines[selected])||(config.search&&config.search.engines&&config.search.engines.Google)||'https://www.google.com/search?q=';
+    window.open(base+encodeURIComponent(query),'_blank','noopener,noreferrer');
+  }
+
   /* ── Gather all launchable items from current config ── */
   function gatherItems() {
     var list = [];
@@ -124,7 +147,8 @@
   }
 
   function renderResults() {
-    var query = inputEl.value.trim();
+    var parsed = parseCommandQuery(inputEl.value);
+    var query = parsed.query;
     var intents = { 'weather today':'weather', 'weather':'weather', 'my notes':'notes',
       'notes':'notes', 'system status':'resource', 'system':'resource',
       'time':'clock', 'calendar':'agenda', 'feeds':'rss' };
@@ -132,9 +156,16 @@
     if (intent) query = intent;
     var scored = [];
     items.forEach(function (item) {
+      if(parsed.scope==='action'&&item.kind!=='action')return;
+      if(parsed.scope==='service'&&item.kind!=='link'&&item.kind!=='card')return;
       var m = bestMatch(query, item.label, item.sublabel);
       if (m) scored.push({ item: item, match: m });
     });
+    if(parsed.url){scored.unshift({item:{kind:'service',label:'Open '+parsed.url,sublabel:'Direct address',icon:'external-link',run:function(){window.open(parsed.url,'_blank','noopener');}},match:{score:100,matched:parsed.url}});}
+    if(query&&parsed.scope!=='url'&&parsed.scope!=='action'&&parsed.scope!=='service'){
+      var engine=parsed.engine||(config.search&&config.search.selected)||'Google';
+      scored.push({ item:{ kind: 'search', label:'Search '+engine+' for “'+query+'”',sublabel:parsed.explicit?'Search prefix':'Web search',icon:'search',run:function(){runWebSearch(query,engine);} }, match:{score:parsed.explicit?90:0.75,matched:query} });
+    }
     scored.sort(function (a, b) { return (b.match.score+(b.item.usage||0)*0.05) - (a.match.score+(a.item.usage||0)*0.05); });
     scored = scored.slice(0, 20);
 
@@ -232,7 +263,7 @@
     inputEl = document.createElement('input');
     inputEl.className = 'palette-input';
     inputEl.setAttribute('type', 'text');
-    inputEl.setAttribute('placeholder', 'Search pages, links, actions…  (↑↓ navigate · ↵ open)');
+    inputEl.setAttribute('placeholder', 'Search anything · g query · yt query · @server name · IP address');
     inputEl.setAttribute('aria-label', 'Command palette search');
     inputEl.setAttribute('autocomplete', 'off');
     inputEl.setAttribute('spellcheck', 'false');

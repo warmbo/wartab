@@ -15,6 +15,8 @@ registerModule('weather', {
     .weather-temp{font-size:clamp(var(--text-2xl),calc(var(--text-4xl) * var(--mod-font-content,1)),var(--text-5xl));font-weight:600;line-height:1.05;letter-spacing:-0.035em;font-variant-numeric:tabular-nums;}
     .weather-feels{font-size:calc(var(--text-sm) * var(--mod-font-secondary,1));color:var(--text-tertiary);margin-top:2px;}
     .weather-detail{font-size:calc(var(--text-sm) * var(--mod-font-secondary,1));color:var(--text-secondary);}
+    .weather-context{display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center;color:var(--text-secondary);font-size:var(--text-xs);font-weight:600;}
+    .weather-context span+span::before{content:'·';margin-right:var(--space-2);color:var(--text-tertiary);}
     .weather-fc-day .day{font-weight:600;color:var(--text-secondary);font-size:calc(var(--text-xs) * var(--mod-font-secondary,1));letter-spacing:0.5px;}
     .weather-fc-temp{font-size:calc(var(--text-sm) * var(--mod-font-content,1));color:var(--text-primary);font-weight:600;}
 
@@ -158,6 +160,13 @@ registerModule('weather', {
 
       var daily = d.daily;
       if (daily && daily.temperature_2m_max) {
+        var contextEl = document.createElement('div');
+        contextEl.className = 'weather-context';
+        var high = Math.round(daily.temperature_2m_max[0]);
+        var low = daily.temperature_2m_min ? Math.round(daily.temperature_2m_min[0]) : null;
+        var precip = daily.precipitation_probability_max ? Math.round(daily.precipitation_probability_max[0]) : null;
+        ['High ' + high + '°', low === null ? '' : 'Low ' + low + '°', precip === null ? '' : precip + '% precipitation'].filter(Boolean).forEach(function(value){var item=document.createElement('span');item.textContent=value;contextEl.appendChild(item);});
+        secondaryEl.appendChild(contextEl);
         var fcEl = document.createElement('div');
         fcEl.className = 'weather-forecast';
         var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -215,7 +224,7 @@ registerModule('weather', {
           });
         frame.innerHTML = '';
         frame.appendChild(emptyEl);
-        return;
+        return Promise.resolve();
       }
 
       /* ── Cached forecast: render instantly, fetch only when stale ── */
@@ -224,14 +233,13 @@ registerModule('weather', {
         _cachedLat = cache.lat;
         _cachedLon = cache.lon;
         if (renderData(cache.data)) {
-          if ((Date.now() - cache.ts) < CACHE_TTL) return; // fresh enough
+          if ((Date.now() - cache.ts) < CACHE_TTL) return Promise.resolve(); // fresh enough
           /* stale: fall through and refresh in the background (no skeleton) */
         }
       }
 
       if (_cachedLat && _cachedLon) {
-        doFetch(_cachedLat, _cachedLon);
-        return;
+        return doFetch(_cachedLat, _cachedLon);
       }
 
       /* ── Geocode zip → lat/lon ── */
@@ -244,7 +252,7 @@ registerModule('weather', {
         frame.appendChild(ds.loading(3, 'bar'));
       }
 
-      WarTabHttp.request(geoUrl).then(function(geo) {
+      return WarTabHttp.request(geoUrl).then(function(geo) {
         if (!cw.isConnected) return;
         if (!geo.results || !geo.results.length) {
           var errEl = ds.error('Location "' + zip + '" not found in ' + country,
@@ -258,7 +266,7 @@ registerModule('weather', {
         }
         _cachedLat = geo.results[0].latitude;
         _cachedLon = geo.results[0].longitude;
-        doFetch(_cachedLat, _cachedLon);
+        return doFetch(_cachedLat, _cachedLon);
       }).catch(function(err) {
         if (!cw.isConnected) return;
         var errEl = ds.error('Geocoding failed', 'Open-Meteo geocoding service unreachable.', {
@@ -276,7 +284,7 @@ registerModule('weather', {
       var url = 'https://api.open-meteo.com/v1/forecast?latitude=' +
         encodeURIComponent(lat) + '&longitude=' + encodeURIComponent(lon) +
         '&current_weather=true' +
-        '&daily=temperature_2m_max,temperature_2m_min,weathercode' +
+        '&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max' +
         '&timezone=auto' +
         (isF ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : '&wind_speed_unit=kmh');
 
@@ -286,7 +294,7 @@ registerModule('weather', {
         frame.appendChild(ds.loading(3, 'bar'));
       }
 
-      WarTabHttp.request(url).then(function(d) {
+      return WarTabHttp.request(url).then(function(d) {
         if (!cw.isConnected) return;
         if (renderData(d)) {
           saveCache({ ts: Date.now(), lat: lat, lon: lon, data: d });
@@ -302,12 +310,8 @@ registerModule('weather', {
       });
     }
 
-    /* ── Start fetch ── */
-    fetchWeather();
-
-    /* ── Refresh every 10 minutes ── */
-    var interval = setInterval(fetchWeather, 600000);
-    return function() { clearInterval(interval); };
+    /* Shared lifecycle-aware refresh; cached data remains immediately usable. */
+    return WarTabHttp.createPoller({owner:cw,interval:600000,task:fetchWeather});
   },
   settings: [
     { name:'zip', label:'Zip / Postal Code', type:'text', placeholder:'90210', default:'' },

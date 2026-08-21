@@ -1,6 +1,8 @@
 registerModule('links', {
   defaults: { links:[{label:'Example',url:'https://example.com',icon:'link'}], listMode:false },
   render: (sec,card,cw)=>{
+    const validLinks=(sec.links||[]).filter(function(link){return link&&link.url;});
+    if(!validLinks.length){cw.appendChild(ds.empty('layout-grid','No destinations configured','Add bookmarks or discover a purpose-built card.',{label:'Open Card Gallery',onClick:function(){openCardGallery();}}));return;}
     const bindCtx=(a,link,idx)=>{
       a.addEventListener('click',()=>recordLinkUsage(link));
       WarTabContextMenu.registerLink(a,{link:link,section:sec,card:card,index:idx});
@@ -8,7 +10,7 @@ registerModule('links', {
     if(sec.listMode){
       // ── List view (single-column rows) ──
       const lst=document.createElement('div');lst.className='link-list';
-      (sec.links||[]).forEach((link,idx)=>{
+      validLinks.forEach((link,idx)=>{
         const a=document.createElement('a');a.className='link-row';a.href=link.url;a.target='_blank';a.rel='noopener';
         a.appendChild(renderLinkIcon(link.icon));a.appendChild(document.createTextNode(' '+link.label));
         bindCtx(a,link,idx);
@@ -19,7 +21,7 @@ registerModule('links', {
       const ig=document.createElement('div');ig.className='link-grid';ig.tabIndex=0;ig.setAttribute('aria-label','Links. Type to filter.');
       var filter='',filterTimer=null;
       ig.addEventListener('keydown',function(ev){if(ev.key==='Escape'){filter='';Array.from(ig.children).forEach(function(tile){tile.hidden=false;});return;}if(ev.key==='Backspace'){filter=filter.slice(0,-1);}else if(ev.key.length===1&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey){filter+=ev.key.toLowerCase();}else{return;}ev.preventDefault();clearTimeout(filterTimer);filterTimer=setTimeout(function(){filter='';Array.from(ig.children).forEach(function(tile){tile.hidden=false;});},1800);Array.from(ig.children).forEach(function(tile){tile.hidden=filter&&!tile.textContent.toLowerCase().includes(filter);});});
-      (sec.links||[]).forEach((link,idx)=>{
+      validLinks.forEach((link,idx)=>{
         const a=document.createElement('a');a.className='link-item';a.href=link.url;a.target='_blank';a.rel='noopener';
         a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label';s.textContent=link.label;
         a.appendChild(s);bindCtx(a,link,idx);ig.appendChild(a);

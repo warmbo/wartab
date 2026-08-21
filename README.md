@@ -62,6 +62,18 @@ or Ambient.
 - **Mobile profiles** — explicit per-card hide/order controls independent of desktop
   geometry.
 
+Command accepts bookmarks, pages, cards, actions, direct URLs/IPs, and scoped input:
+
+- `g proxmox clustering`, `yt home server build`, `ddg privacy tools`
+- `@server plex` to search service/bookmark targets
+- `> settings` to restrict results to actions
+- `10.0.0.100` or a hostname to open a direct address
+
+Operational cards use shared healthy/warning/degraded/offline/unknown states, concise
+latency context, expandable details, and checked/stale timestamps. Weather includes
+condition, high, low, precipitation probability, forecast, and freshness without
+becoming a full weather application.
+
 ### Card Sections (23 types)
 
 | Section | Description |

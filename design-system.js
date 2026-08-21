@@ -331,6 +331,34 @@ ds.statRow = function(label, value, accent) {
   return row;
 };
 
+/** Operational status row with textual state, optional context, and action. */
+ds.statusRow = function(opts) {
+  opts = opts || {};
+  var variants = { healthy: 'success', warning: 'warning', degraded: 'warning', offline: 'error', unknown: 'neutral', loading: 'neutral', stale: 'warning' };
+  var state = opts.state || 'unknown';
+  var row = _el(opts.href ? 'a' : 'div', 'ds-status-row ds-status-' + state);
+  if (opts.href) { row.href = opts.href; row.target = '_blank'; row.rel = 'noopener'; }
+  var dot = _el('span', 'ds-status-indicator'); dot.setAttribute('aria-hidden', 'true'); row.appendChild(dot);
+  var copy = _el('span', 'ds-status-copy');
+  copy.appendChild(_txt('strong', 'ds-status-name', opts.label || 'Service'));
+  if (opts.context) copy.appendChild(_txt('small', 'ds-status-context', opts.context));
+  row.appendChild(copy);
+  row.appendChild(ds.badge(opts.status || state, variants[state]));
+  if (opts.meta) row.appendChild(_txt('span', 'ds-status-meta', opts.meta));
+  if (opts.onClick) row.addEventListener('click', opts.onClick);
+  return row;
+};
+
+/** Freshness label with stale-state semantics. */
+ds.freshness = function(ts, staleAfterMs) {
+  var age = Math.max(0, Date.now() - Number(ts || 0));
+  var stale = !!staleAfterMs && age > staleAfterMs;
+  var el = _txt('span', 'ds-freshness' + (stale ? ' is-stale' : ''), (stale ? 'Stale · ' : 'Checked ') + timeAgo(ts || Date.now()));
+  el.dataset.timestamp = String(ts || Date.now());
+  if (stale) el.setAttribute('aria-label', 'Data is stale; last checked ' + timeAgo(ts));
+  return el;
+};
+
 /**
  * Action button — consistent small action button
  * @param {string} label  Button text
