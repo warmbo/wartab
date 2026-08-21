@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a reproducible WarTab defect
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include passwords, tokens, private configuration, or sensitive host details."
+  - type: input
+    id: version
+    attributes:
+      label: WarTab commit/version
+      placeholder: abc1234
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Deployment mode
+      options: [Self-hosted server, Browser extension, PWA, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open…\n2. Click…\n3. Observe…"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Browser, OS, viewport, and relevant configuration
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Console output or screenshots
+      description: Remove secrets and private addresses first.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Verification
+      options:
+        - label: I reproduced this on the latest release.
+        - label: I removed secrets and private customer data.
+          required: true

@@ -24,9 +24,10 @@ describe('unified site context menu', () => {
       { label: 'Danger', icon: 'trash-2', action: vi.fn(), danger: true },
     ]);
 
-    const root = document.querySelector('#wartab-context-menu-root');
+    const root = document.querySelector('[data-ui="context-layer"]');
     const menu = root.querySelector('[role="menu"]');
     expect(root.parentElement).toBe(document.body);
+    expect(root.getAttribute('popover')).toBe('manual');
     expect(menu).not.toBeNull();
     expect(menu.querySelectorAll('[role="menuitem"]')).toHaveLength(2);
     expect(menu.querySelector('.danger')).not.toBeNull();

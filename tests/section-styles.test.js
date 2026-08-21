@@ -75,8 +75,8 @@ describe('section style projection', () => {
     // Card-level Layout section in edit-panel.js drives all sections
     expect(editPanel).toContain("patchCardSectionStyles(card, { density: v })");
     expect(editPanel).toContain("patchCardSectionStyles(card, { scale: v })");
-    expect(render).toContain("moduleSurface.className = 'module-style-surface'");
-    expect(css).toMatch(/\.module-style-surface\s*\{[^}]*zoom:\s*var\(--mod-scale-factor/s);
+    expect(render).toContain("moduleSurface.className = 'ui-module'");
+    expect(css).toMatch(/\.ui-module\s*\{[^}]*zoom:\s*var\(--mod-scale-factor/);
     expect(editor).not.toContain('_baseFs');
     expect(editor).not.toContain('el.style.fontSize =');
   });

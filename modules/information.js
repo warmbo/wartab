@@ -3,13 +3,14 @@
   function text(tag,cls,value){const e=document.createElement(tag);e.className=cls||'';e.textContent=value||'';return e;}
   function proxyText(url){return WarTabHttp.request('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,method:'GET'})}).then(function(result){return typeof result==='string'?result:(result.body||result.data||'');});}
   function fillError(root,message,retry){root.replaceChildren(ds.error(message,'Check the URL and network access.',{label:'Retry',onClick:retry}));}
+  function safeHref(href){const raw=String(href||'').trim();if(!raw)return'';if(/^[a-z][a-z0-9+.-]*:/i.test(raw)&&!/^https?:/i.test(raw))return'';return raw;}
 
   registerModule('rss',{
     defaults:{url:'',limit:6,refreshInterval:900},
     css:`.info-list{display:flex;flex-direction:column;gap:var(--space-1)}.info-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-2);align-items:center;padding:6px 8px;border-radius:var(--radius-sm);color:var(--text-primary);text-decoration:none}.info-row:hover{background:var(--accent-glass)}.info-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.info-meta{font-size:var(--text-2xs);color:var(--text-tertiary);white-space:nowrap}`,
     render:function(sec,card,cw){cw.appendChild(ds.loading(4,'bar'));},
     onMount:function(sec,card,cw){
-      function load(){if(!sec.url){cw.replaceChildren(ds.empty('rss','No feed configured','Add an RSS/Atom URL in the card editor.'));return Promise.resolve();}return proxyText(sec.url).then(function(xml){const doc=new DOMParser().parseFromString(xml,'text/xml');const nodes=Array.from(doc.querySelectorAll('item, entry')).slice(0,Math.max(1,parseInt(sec.limit)||6));const list=text('div','info-list');nodes.forEach(function(node){const title=(node.querySelector('title')||{}).textContent||'Untitled';const linkNode=node.querySelector('link');const href=(linkNode&&linkNode.getAttribute('href'))||(linkNode&&linkNode.textContent)||'#';const a=text('a','info-row');a.href=href;a.target='_blank';a.rel='noopener';a.appendChild(text('span','info-title',title.trim()));const date=node.querySelector('pubDate, published, updated');a.appendChild(text('span','info-meta',date?new Date(date.textContent).toLocaleDateString():''));list.appendChild(a);});cw.replaceChildren(nodes.length?list:ds.empty('rss','No feed entries','The feed returned no readable items.'));}).catch(function(){fillError(cw,'Feed unavailable',load);});}
+      function load(){if(!sec.url){cw.replaceChildren(ds.empty('rss','No feed configured','Add an RSS/Atom URL in the card editor.'));return Promise.resolve();}return proxyText(sec.url).then(function(xml){const doc=new DOMParser().parseFromString(xml,'text/xml');const nodes=Array.from(doc.querySelectorAll('item, entry')).slice(0,Math.max(1,parseInt(sec.limit)||6));const list=text('div','info-list');nodes.forEach(function(node){const title=(node.querySelector('title')||{}).textContent||'Untitled';const linkNode=node.querySelector('link');const rawHref=(linkNode&&linkNode.getAttribute('href'))||(linkNode&&linkNode.textContent)||'#';const a=text('a','info-row');const href=safeHref(rawHref);a.href=href||'#';a.target='_blank';a.rel='noopener';a.appendChild(text('span','info-title',title.trim()));const date=node.querySelector('pubDate, published, updated');a.appendChild(text('span','info-meta',date?new Date(date.textContent).toLocaleDateString():''));list.appendChild(a);});cw.replaceChildren(nodes.length?list:ds.empty('rss','No feed entries','The feed returned no readable items.'));}).catch(function(){fillError(cw,'Feed unavailable',load);});}
       return WarTabHttp.createPoller({owner:cw,interval:Math.max(60000,(parseInt(sec.refreshInterval)||900)*1000),task:load});
     },
     settings:[{name:'url',label:'RSS / Atom URL',type:'text',placeholder:'https://example.com/feed.xml'},{name:'limit',label:'Entries',type:'number',default:6},{name:'refreshInterval',label:'Refresh seconds',type:'number',default:900}]
@@ -27,7 +28,7 @@
   });
 
   registerModule('service-status',{
-    defaults:{services:'WarTab|https://tab.warho.me',refreshInterval:60},
+    defaults:{services:'',refreshInterval:60},
     css:`.service-summary{display:grid;gap:var(--space-1);padding:var(--space-2) 0 var(--space-3)}.service-summary-line{font-size:var(--text-lg);font-weight:700;color:var(--text-primary)}.service-summary-meta{display:flex;align-items:center;gap:var(--space-2);color:var(--text-secondary);font-size:var(--text-xs)}.service-details summary{min-height:36px;display:flex;align-items:center;gap:var(--space-2);cursor:pointer;color:var(--text-secondary);font-size:var(--text-xs)}.service-details summary::marker{color:var(--text-tertiary)}`,
     render:function(sec,card,cw){cw.appendChild(ds.loading(4,'bar'));},
     onMount:function(sec,card,cw){
@@ -44,7 +45,7 @@
       function load(){const services=parse();if(!services.length){cw.replaceChildren(ds.empty('activity','No services configured','Add services to monitor or launch.',{label:'Configure',onClick:function(){openCardEditPanel(card.id);}}));return Promise.resolve();}return Promise.all(services.map(function(s){const started=Date.now();return WarTabHttp.request('/api/proxy',{method:'POST',timeout:8000,headers:{'Content-Type':'application/json'},body:JSON.stringify({url:s.url,method:'GET',timeout:5})}).then(function(){return{s:s,state:'healthy',ms:Date.now()-started};},function(){return{s:s,state:'offline',ms:Date.now()-started};});})).then(function(rows){renderRows(rows,Date.now());});}
       return WarTabHttp.createPoller({owner:cw,interval:Math.max(15000,(parseInt(sec.refreshInterval)||60)*1000),task:load});
     },
-    settings:[{name:'services',label:'Services (Label|URL per line)',type:'textarea',placeholder:'WarTab|https://tab.warho.me'},{name:'refreshInterval',label:'Refresh seconds',type:'number',default:60}]
+    settings:[{name:'services',label:'Services (Label|URL per line)',type:'textarea',placeholder:'Service|https://example.com'},{name:'refreshInterval',label:'Refresh seconds',type:'number',default:60}]
   });
 
   function markdown(input){return escHtml(String(input||'')).replace(/^### (.*)$/gm,'<h3>$1</h3>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/^# (.*)$/gm,'<h1>$1</h1>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`(.+?)`/g,'<code>$1</code>').replace(/^[-*] (.*)$/gm,'<li>$1</li>').replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');}

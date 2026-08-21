@@ -15,7 +15,9 @@
   function ensureRoot() {
     if (root && root.isConnected) return root;
     root = document.createElement('div');
-    root.id = 'wartab-context-menu-root';
+    root.className = 'ui-top-layer';
+    root.dataset.ui = 'context-layer';
+    root.setAttribute('popover', 'manual');
     root.setAttribute('aria-live', 'polite');
     document.body.appendChild(root);
     return root;
@@ -26,6 +28,7 @@
     if (menu) menu.remove();
     menu = null;
     if (root) root.replaceChildren();
+    if (root && typeof root.hidePopover === 'function') { try { root.hidePopover(); } catch (error) {} }
     if (options.restoreFocus && returnFocus && typeof returnFocus.focus === 'function') {
       returnFocus.focus({ preventScroll: true });
     }
@@ -197,6 +200,7 @@
     });
 
     root.appendChild(menu);
+    if (typeof root.showPopover === 'function') { try { root.showPopover(); } catch (error) {} }
     positionMenu(x, y);
     renderIcons();
     var first = menu.querySelector('[role="menuitem"]');

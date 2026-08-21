@@ -1,12 +1,13 @@
 # ⚔️ WarTab — Self-Hosted New Tab Page
 
-A lean, self-hosted new tab page with **glassmorphic** + **skeuomorphic** styling.
-Card-based dashboard with multi-page support, fully customizable from the UI.
+A fast, self-hosted personal startpage, command palette, bookmark manager, and
+service dashboard. Card-based, multi-page, keyboard-friendly, and configurable
+without a production build step.
 Entirely self-contained — no external network required once loaded.
 
 ```
 🌐 GitHub:  https://github.com/warmbo/wartab
-🌐 Forgejo: http://10.0.0.253:3000/cody/wartab
+🌐 Forgejo: https://forgejo.example.com/cody/wartab   (replace with your instance)
 ```
 
 ```
@@ -67,7 +68,7 @@ Command accepts bookmarks, pages, cards, actions, direct URLs/IPs, and scoped in
 - `g proxmox clustering`, `yt home server build`, `ddg privacy tools`
 - `@server plex` to search service/bookmark targets
 - `> settings` to restrict results to actions
-- `10.0.0.100` or a hostname to open a direct address
+- `192.168.1.100` or a hostname to open a direct address
 
 Operational cards use shared healthy/warning/degraded/offline/unknown states, concise
 latency context, expandable details, and checked/stale timestamps. Weather includes
@@ -82,7 +83,7 @@ becoming a full weather application.
 | **Link List** | Single-column inline link rows |
 | **Search** | Inline search bar with per-section engine selector (Google, DuckDuckGo, Bing, etc.) |
 | **Clock** | Live time (12/24h) + date + optional calendar |
-| **Weather** | OpenWeatherMap widget (free API key) — zip code + country code, °F/°C/K |
+| **Weather** | Cached Open-Meteo conditions, high/low, precipitation, wind, and forecast — no API key |
 | **Iframe** | Embed any self-hosted app (Home Assistant, Jellyfin, Grafana) |
 | **Notes** | Inline editing directly on the card (click to type, Esc to finish) |
 | **Quotes** | User-defined quotes with author attribution. Click to cycle. |
@@ -105,15 +106,12 @@ becoming a full weather application.
 
 All icons — card titles, link items, page tabs, and branding — use the same unified picker.
 
-### Drag & Drop Card Reordering
+### Manual Card Arrangement
 
-- Pointer-event-based drag with a floating ghost overlay (follows cursor)
-- **simGrid preview** — CSS Grid auto-placement simulation shows each card's exact position while dragging
-- Cards displaced by a drag show vertical-only movement (clean row-wrap preview)
-- Column-snap logic: dragged cards snap to the nearest column boundary
-- **FLIP animation** on drop — all shifted cards animate smoothly to their new positions
-- Gap cards — invisible spacer cells with hover controls (edit, drag, double-click to delete)
-- Configurable gap card width and min-height in pixels
+- **Quick Arrange** provides keyboard/touch directional movement.
+- **Layout Studio** stages width, height, mobile visibility, and mobile order.
+- Geometry changes apply only after explicit confirmation and can be undone.
+- WarTab never automatically resizes, spans, packs, or reorders a user's cards.
 
 ### Edit Panel (per-card)
 
@@ -169,7 +167,25 @@ All assets can be shipped with the repo or downloaded on demand:
 - **Quotes** — user-defined only, no network calls
 
 Only the Font Family's non-Inter options require network (Google Fonts),
-and OpenWeatherMap API — both degrade gracefully.
+and external integration endpoints; built-in weather uses Open-Meteo without a key.
+
+---
+
+## Project documentation
+
+- [Architecture](docs/architecture.md)
+- [Configuration schema](docs/configuration.md)
+- [Module authoring](docs/modules.md)
+- [Module UI contract](docs/module-ui-contract.md)
+- [API reference](docs/api.md)
+- [Testing guide](TESTING.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Customer release checklist](docs/release-checklist.md)
+- [Consolidation roadmap](docs/consolidation-roadmap.md)
+
+> **Distribution note:** WarTab does not yet include a selected open-source license.
+> Do not assume redistribution rights until the maintainers add one.
 
 ---
 
@@ -353,7 +369,7 @@ git push origin <branch>   # Forgejo
 | Alias | Target |
 |-------|--------|
 | `github` | `github.com/warmbo/wartab` |
-| `origin` | `10.0.0.253:3000/cody/wartab` (self-hosted Forgejo) |
+| `origin` | self-hosted Forgejo remote (e.g. `forgejo.example.com/cody/wartab`) |
 
 ### Versioning & Cache Busting
 

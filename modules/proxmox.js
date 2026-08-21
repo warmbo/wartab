@@ -29,10 +29,7 @@ registerModule('proxmox', {
     const headers = { 'Authorization': 'Basic ' + auth };
 
     function fetchJson(endpoint) {
-      return fetch(base + endpoint, { headers: headers }).then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      }).then(data => {
+      return WarTabHttp.request(base + endpoint, { headers: headers, timeout: 15000 }).then(data => {
         if (data && data.data !== undefined) return data.data;
         return data;
       });
@@ -69,70 +66,73 @@ registerModule('proxmox', {
     w.innerHTML = '<div style="font-size:var(--text-sm);color:var(--text-secondary);padding:8px 0;text-align:center;">Loading Proxmox...</div>';
     cw.appendChild(w);
 
-    // Parallel fetches: cluster resources + cluster status
-    Promise.all([
-      // Cluster resources — gives total VMs/LXCs with status
-      fetchJson('/api2/json/cluster/resources').then(items => {
-        const vms = items.filter(i => i.type === 'qemu');
-        const lxc = items.filter(i => i.type === 'lxc');
-        return {
-          vmsTotal: vms.length,
-          vmsRunning: vms.filter(v => v.status === 'running').length,
-          lxcTotal: lxc.length,
-          lxcRunning: lxc.filter(l => l.status === 'running').length,
-        };
-      }).catch(() => ({ vmsTotal: '—', vmsRunning: '—', lxcTotal: '—', lxcRunning: '—' })),
+    function load() {
+      // Parallel fetches: cluster resources + cluster status
+      return Promise.all([
+        // Cluster resources — gives total VMs/LXCs with status
+        fetchJson('/api2/json/cluster/resources').then(items => {
+          const vms = items.filter(i => i.type === 'qemu');
+          const lxc = items.filter(i => i.type === 'lxc');
+          return {
+            vmsTotal: vms.length,
+            vmsRunning: vms.filter(v => v.status === 'running').length,
+            lxcTotal: lxc.length,
+            lxcRunning: lxc.filter(l => l.status === 'running').length,
+          };
+        }).catch(() => ({ vmsTotal: '—', vmsRunning: '—', lxcTotal: '—', lxcRunning: '—' })),
 
-      // Cluster status — gives node CPU/memory info
-      fetchJson('/api2/json/cluster/status').then(nodes => {
-        const online = nodes.filter(n => n.type === 'node' && n.status === 'online');
-        const offline = nodes.filter(n => n.type === 'node' && n.status === 'offline');
-        // Aggregate CPU and memory from online nodes.
-        // cluster/status provides per-node: cpu (0–1 load fraction) and maxcpu.
-        let cpuMax = 0, cpuUsed = 0, memMax = 0, memUsed = 0;
-        online.forEach(n => {
-          if (n.maxcpu) cpuMax += n.maxcpu;
-          if (typeof n.cpu === 'number') cpuUsed += n.cpu;
-          if (n.memory && n.memory.total) memMax += n.memory.total;
-          if (n.memory && n.memory.used) memUsed += n.memory.used;
-        });
-        return { nodesOnline: online.length, nodesOffline: offline.length, cpuMax, cpuUsed, memMax, memUsed, nodes };
-      }).catch(() => ({ nodesOnline: '—', nodesOffline: '—', cpuMax: 0, cpuUsed: 0, memMax: 0, memUsed: 0, nodes: [] }))
-    ]).then(([resources, cluster]) => {
-      w.innerHTML = '';
+        // Cluster status — gives node CPU/memory information
+        fetchJson('/api2/json/cluster/status').then(nodes => {
+          const online = nodes.filter(n => n.type === 'node' && n.status === 'online');
+          const offline = nodes.filter(n => n.type === 'node' && n.status === 'offline');
+          // Aggregate CPU and memory from online nodes.
+          // cluster/status provides per-node: cpu (0–1 load fraction) and maxcpu.
+          let cpuMax = 0, cpuUsed = 0, memMax = 0, memUsed = 0;
+          online.forEach(n => {
+            if (n.maxcpu) cpuMax += n.maxcpu;
+            if (typeof n.cpu === 'number') cpuUsed += n.cpu;
+            if (n.memory && n.memory.total) memMax += n.memory.total;
+            if (n.memory && n.memory.used) memUsed += n.memory.used;
+          });
+          return { nodesOnline: online.length, nodesOffline: offline.length, cpuMax, cpuUsed, memMax, memUsed, nodes };
+        }).catch(() => ({ nodesOnline: '—', nodesOffline: '—', cpuMax: 0, cpuUsed: 0, memMax: 0, memUsed: 0, nodes: [] }))
+      ]).then(([resources, cluster]) => {
+        w.innerHTML = '';
 
-      // Node status
-      const allOk = cluster.nodesOffline === 0 || cluster.nodesOffline === '—';
-      w.appendChild(groupHeader('Nodes', allOk ? 'var(--color-success)' : 'var(--color-error)'));
-      const nodeCount = cluster.nodesOnline !== '—'
-        ? cluster.nodesOnline + (cluster.nodesOffline > 0 ? '/' + cluster.nodesOffline + ' offline' : ' online')
-        : '—';
-      // Only green when there is real data and nothing is offline — a failed
-      // fetch (all '—') must not render a reassuring green dot.
-      const healthy = cluster.nodesOnline !== '—' && cluster.nodesOffline === 0;
-      w.appendChild(statRow('Status', nodeCount, healthy ? 'var(--color-success)' : 'var(--color-error)'));
+        // Node status
+        const allOk = cluster.nodesOffline === 0 || cluster.nodesOffline === '—';
+        w.appendChild(groupHeader('Nodes', allOk ? 'var(--color-success)' : 'var(--color-error)'));
+        const nodeCount = cluster.nodesOnline !== '—'
+          ? cluster.nodesOnline + (cluster.nodesOffline > 0 ? '/' + cluster.nodesOffline + ' offline' : ' online')
+          : '—';
+        // Only green when there is real data and nothing is offline — a failed
+        // fetch (all '—') must not render a reassuring green dot.
+        const healthy = cluster.nodesOnline !== '—' && cluster.nodesOffline === 0;
+        w.appendChild(statRow('Status', nodeCount, healthy ? 'var(--color-success)' : 'var(--color-error)'));
 
-      // CPU usage — real cluster average now that cpuUsed is aggregated correctly
-      if (cluster.cpuMax > 0 && cluster.cpuUsed > 0) {
-        const cpuPct = Math.min(cluster.cpuUsed / cluster.cpuMax * 100, 100);
-        w.appendChild(statRow('CPU', cpuPct.toFixed(0) + '%', cpuPct > 80 ? 'var(--color-warning)' : 'var(--text-primary)'));
-      }
+        // CPU usage — real cluster average now that cpuUsed is aggregated correctly
+        if (cluster.cpuMax > 0 && cluster.cpuUsed > 0) {
+          const cpuPct = Math.min(cluster.cpuUsed / cluster.cpuMax * 100, 100);
+          w.appendChild(statRow('CPU', cpuPct.toFixed(0) + '%', cpuPct > 80 ? 'var(--color-warning)' : 'var(--text-primary)'));
+        }
 
-      // Memory
-      if (cluster.memMax > 0) {
-        const memPct = cluster.memUsed / cluster.memMax * 100;
-        const mu = Math.round(cluster.memUsed / 1024 / 1024 / 1024 * 10) / 10;
-        const mt = Math.round(cluster.memMax / 1024 / 1024 / 1024 * 10) / 10;
-        w.appendChild(statRow('Memory', mu + '/' + mt + ' GB', memPct > 80 ? 'var(--color-warning)' : 'var(--text-primary)'));
-      }
+        // Memory
+        if (cluster.memMax > 0) {
+          const memPct = cluster.memUsed / cluster.memMax * 100;
+          const mu = Math.round(cluster.memUsed / 1024 / 1024 / 1024 * 10) / 10;
+          const mt = Math.round(cluster.memMax / 1024 / 1024 / 1024 * 10) / 10;
+          w.appendChild(statRow('Memory', mu + '/' + mt + ' GB', memPct > 80 ? 'var(--color-warning)' : 'var(--text-primary)'));
+        }
 
-      // VMs
-      w.appendChild(groupHeader('Virtual Machines', 'var(--accent)'));
-      w.appendChild(statRow('QEMU', resources.vmsRunning + ' / ' + resources.vmsTotal + ' running', resources.vmsRunning > 0 ? 'var(--color-success)' : 'var(--text-secondary)'));
-      w.appendChild(statRow('LXC', resources.lxcRunning + ' / ' + resources.lxcTotal + ' running', resources.lxcRunning > 0 ? 'var(--color-success)' : 'var(--text-secondary)'));
-    }).catch(err => {
-      w.innerHTML = '<div style="color:var(--color-error);font-size:var(--text-sm);padding:4px 0;">⚠ ' + escHtml(err.message) + '</div>';
-    });
+        // VMs
+        w.appendChild(groupHeader('Virtual Machines', 'var(--accent)'));
+        w.appendChild(statRow('QEMU', resources.vmsRunning + ' / ' + resources.vmsTotal + ' running', resources.vmsRunning > 0 ? 'var(--color-success)' : 'var(--text-secondary)'));
+        w.appendChild(statRow('LXC', resources.lxcRunning + ' / ' + resources.lxcTotal + ' running', resources.lxcRunning > 0 ? 'var(--color-success)' : 'var(--text-secondary)'));
+      }).catch(err => {
+        w.innerHTML = '<div style="color:var(--color-error);font-size:var(--text-sm);padding:4px 0;">⚠ ' + escHtml(err.message) + '</div>';
+      });
+    }
+    WarTabHttp.createPoller({ owner: cw, interval: 60000, task: load, onError: function() {} });
   },
 
   editor: (sec, card, bd) => {

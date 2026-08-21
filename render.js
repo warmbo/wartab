@@ -307,6 +307,31 @@ function patchCardSectionStyles(card, patch) {
 window.patchSectionStyles = patchSectionStyles;
 window.patchCardSectionStyles = patchCardSectionStyles;
 
+/** Apply the customer-facing shared DOM contract without erasing semantic hooks. */
+function normalizeModuleSurface(surface, moduleType) {
+  if (!surface) return;
+  surface.dataset.ui = 'module';
+  surface.dataset.module = moduleType || 'unknown';
+  var root = surface.firstElementChild;
+  if (root) { root.classList.add('ui-module-root'); root.dataset.ui = 'module-root'; }
+  Array.from(surface.querySelectorAll('*')).forEach(function(element) {
+    if (element === root) return;
+    var tag = element.tagName;
+    var classes = typeof element.className === 'string' ? element.className.toLowerCase() : '';
+    if (tag === 'BUTTON') element.dataset.ui = 'control';
+    else if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') element.dataset.ui = 'field';
+    else if (tag === 'A') element.dataset.ui = 'link';
+    else if (tag === 'DETAILS') element.dataset.ui = 'disclosure';
+    else if (tag === 'SUMMARY') element.dataset.ui = 'disclosure-trigger';
+    else if (tag === 'CANVAS' || tag === 'IFRAME' || tag === 'IMG' || tag === 'PRE') element.dataset.ui = 'media';
+    else if (/loading|skeleton|error|empty/.test(classes)) element.dataset.ui = 'state';
+    else if (/row|item/.test(classes)) element.dataset.ui = 'row';
+    else if (/value|temp|time|display/.test(classes)) element.dataset.ui = 'value';
+    else if (/meta|hint|detail|label|date|author|\bts\b/.test(classes)) element.dataset.ui = 'meta';
+    else if (/list|grid|stats|forecast|actions/.test(classes)) element.dataset.ui = 'collection';
+  });
+}
+
 /**
  * Render a card section (a content block within a card body).
  * Creates a section-title toggle (if labelled, non-clock) + content area with module render output.
@@ -393,13 +418,17 @@ function renderSection(section, card) {
 
   const module = CARD_MODULES[section.type];
   const moduleSurface = document.createElement('div');
-  moduleSurface.className = 'module-style-surface';
+  moduleSurface.className = 'ui-module';
   contentWrap.appendChild(moduleSurface);
   if (module && module.render) {
     module.render(section, card, moduleSurface);
   } else {
     moduleSurface.textContent = 'Unknown type: ' + section.type;
   }
+  normalizeModuleSurface(moduleSurface, section.type);
+  var moduleObserver = new MutationObserver(function() { normalizeModuleSurface(moduleSurface, section.type); });
+  moduleObserver.observe(moduleSurface, { childList: true, subtree: true });
+  WarTabLifecycle.addCleanup(moduleSurface, function() { moduleObserver.disconnect(); });
   // Two-phase render: if module has onMount(), call it after the element is
   // connected to the DOM. requestAnimationFrame fires after the current frame's
   // synchronous DOM mutations (appendChild/replaceWith) complete, guaranteeing
@@ -409,6 +438,7 @@ function renderSection(section, card) {
       requestAnimationFrame(function(){
         if(cw.isConnected) {
           var cleanup = module.onMount(sec, cd, cw);
+          normalizeModuleSurface(cw, sec.type);
           if (typeof cleanup === 'function') WarTabLifecycle.addCleanup(cw, cleanup);
         }
       });

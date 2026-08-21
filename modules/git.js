@@ -196,13 +196,13 @@ registerModule('git', {
       if (repo.stars !== '—') {
         const starEl = document.createElement('span');
         starEl.style.cssText = 'display:flex;align-items:center;gap:3px;font-size:var(--text-xs);color:var(--text-secondary);';
-        starEl.innerHTML = '★ <strong style="color:var(--text-primary);font-weight:600;">' + repo.stars + '</strong>';
+        starEl.innerHTML = '★ <strong style="color:var(--text-primary);font-weight:600;">' + escHtml(repo.stars) + '</strong>';
         statsRow.appendChild(starEl);
       }
       if (repo.forks !== '—') {
         const forkEl = document.createElement('span');
         forkEl.style.cssText = 'display:flex;align-items:center;gap:3px;font-size:var(--text-xs);color:var(--text-secondary);';
-        forkEl.innerHTML = '⑂ <strong style="color:var(--text-primary);font-weight:600;">' + repo.forks + '</strong>';
+        forkEl.innerHTML = '⑂ <strong style="color:var(--text-primary);font-weight:600;">' + escHtml(repo.forks) + '</strong>';
         statsRow.appendChild(forkEl);
       }
       if (repo.language) {
