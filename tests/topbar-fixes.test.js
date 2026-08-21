@@ -15,8 +15,11 @@ describe('top bar fixes', () => {
 
   it('telemetry dropdown opens as a rich panel with row layout + hint', () => {
     const css = readFileSync('style.css', 'utf8');
-    expect(css).toContain('.telemetry-disclosure[open] #top-stats{');
+    expect(css).toContain('.telemetry-disclosure[open] #top-stats:not(.hidden){');
     expect(css).toContain('width:280px');
+    expect(css).toContain('min-width:280px');
+    expect(css).toContain('max-width:280px');
+    expect(css).toContain('overflow:visible');
     expect(css).toContain('.telemetry-disclosure[open] #top-stats .stat-item{');
     expect(css).toContain('flex-direction:column');
     const stats = readFileSync('stats.js', 'utf8');

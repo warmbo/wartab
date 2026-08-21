@@ -94,9 +94,9 @@ describe('interaction consistency contract', () => {
 
   it('progressively discloses top-bar telemetry before it can overlap navigation', () => {
     const compactTelemetry = css.match(/@media \(max-width: 1400px\) \{([\s\S]*?)\n\}/);
-    expect(compactTelemetry?.[1]).toContain('#top-stats .stat-bar');
-    expect(compactTelemetry?.[1]).toContain('#top-stats .stat-item:first-child');
-    expect(compactTelemetry?.[1]).toContain('#top-stats .stat-item:last-child');
+    expect(compactTelemetry?.[1]).toContain('.telemetry-disclosure:not([open]) #top-stats .stat-bar');
+    expect(compactTelemetry?.[1]).toContain('.telemetry-disclosure:not([open]) #top-stats .stat-item:first-child');
+    expect(compactTelemetry?.[1]).toContain('.telemetry-disclosure:not([open]) #top-stats .stat-item:last-child');
   });
 
   it('keeps arrange mode available to touch and keyboard users', () => {

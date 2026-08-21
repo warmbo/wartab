@@ -24,7 +24,7 @@ function refreshAllCards(){
   renderIcons();
 }
 // Full page re-render: destroys and rebuilds grid from config
-function renderAll(){if(statsTimer){clearInterval(statsTimer);statsTimer=null;}const grid=$('#card-grid');Array.from(grid.children).forEach(WarTabLifecycle.cleanupSubtree);grid.innerHTML='';var pageCols=getPageCols();grid.style.setProperty('--grid-cols',pageCols);grid.style.gap=config.layout.gap+'px';const appEl=$('#app');if(appEl){
+function renderAll(){if(statsTimer){if(typeof statsTimer.dispose==='function')statsTimer.dispose();else clearInterval(statsTimer);statsTimer=null;}const grid=$('#card-grid');Array.from(grid.children).forEach(WarTabLifecycle.cleanupSubtree);grid.innerHTML='';var pageCols=getPageCols();grid.style.setProperty('--grid-cols',pageCols);grid.style.gap=config.layout.gap+'px';const appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width
   appEl.style.maxWidth=(parseInt(config.layout.pageWidth)||100)+'%';
   const xPad=parseInt(config.layout.pageWidthPadding)||2;
@@ -257,7 +257,12 @@ function doSearch(query, section) {
     history.unshift({query:s,engine:engine,ts:Date.now()});
     localStorage.setItem(key,JSON.stringify(history.slice(0,30)));
   }catch(error){}
-  const url = (config.search.engines[engine] || config.search.engines['Google']) + encodeURIComponent(s);
+  // Resolve the engine URL with a hard fallback — a deleted/renamed engine
+  // must never produce "undefined"+query. Falls back through: exact engine →
+  // selected → Google → a known DuckDuckGo default.
+  const engines=config.search&&config.search.engines?config.search.engines:{};
+  const fallbackUrl='https://duckduckgo.com/?q=';
+  const url=(engines[engine]||engines[config.search&&config.search.selected]||engines['Google']||fallbackUrl)+encodeURIComponent(s);
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 

@@ -21,8 +21,9 @@ describe('async audit round 2 fixes', () => {
     expect(html).not.toContain('popover="auto" hidden');
     const ux = read('ux-system.js');
     expect(ux).toContain("if(!hasPopover)menu.hidden=true");
-    // Closed state safety via CSS :not(:popover-open) instead of the attribute
-    expect(read('style.css')).toContain('.command-deck-menu:not(:popover-open){display:none}');
+    // Closed state safety via CSS :not(:popover-open) inside @supports so the
+    // no-popover fallback (hidden attr managed by JS) still works.
+    expect(read('style.css')).toContain('@supports selector(:popover-open){.command-deck-menu:not(:popover-open){display:none}}');
   });
 
   it('mirrors the icon-picker z bump for the bg picker overlay and panel', () => {

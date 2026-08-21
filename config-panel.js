@@ -246,19 +246,11 @@ if(v==='gradient'){if(!config.theme.bgValue.includes(','))config.theme.bgValue='
 /* ── Search tab: default engine + engine list management ── */
 function buildSearchPanel(body){
   const search=config.search||{};
-  const engines=search.engines||{};
-  const names=Object.keys(engines);
-  const selected=search.selected||(names[0]||'Google');
 
   /* Default engine */
   body.appendChild(ps('Default Engine'));
-  if(names.length){
-    body.appendChild(pf('select','','Engine',names.map(n=>({value:n,label:n})),selected,v=>{
-      config.search=config.search||{};config.search.selected=v;saveConfig();
-    }));
-  } else {
-    body.appendChild(el('div','font-size:var(--text-xs);color:var(--text-tertiary);','No engines configured — add one below.'));
-  }
+  const engineSelectWrap=el('div','','');
+  body.appendChild(engineSelectWrap);
 
   /* Open in new tab */
   body.appendChild(chk('Open results in a new tab',search.openInNewTab!==false,v=>{config.search=config.search||{};config.search.openInNewTab=v;saveConfig();}));
@@ -266,42 +258,6 @@ function buildSearchPanel(body){
   /* Engine list editor */
   body.appendChild(ps('Engines'));
   const list=el('div','display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-3);');
-  function renderEngines(){
-    list.innerHTML='';
-    const cur=Object.keys(config.search.engines||{});
-    if(!cur.length){
-      list.appendChild(el('div','font-size:var(--text-xs);color:var(--text-tertiary);padding:var(--space-2) 0;','No engines yet.'));
-    }
-    cur.forEach(name=>{
-      const row=el('div','display:flex;gap:6px;align-items:center;');
-      const nameInput=document.createElement('input');
-      nameInput.type='text';nameInput.value=name;
-      nameInput.className='cp-input';nameInput.style.cssText='flex:0 0 130px;padding:6px 8px;font-size:var(--text-xs);';
-      nameInput.placeholder='Name';
-      nameInput.addEventListener('change',()=>{
-        const val=nameInput.value.trim();if(!val||val===name)return;
-        const es=config.search.engines||{};es[val]=es[name];delete es[name];
-        if(config.search.selected===name)config.search.selected=val;
-        saveConfig();renderEngines();
-      });
-      const urlInput=document.createElement('input');
-      urlInput.type='text';urlInput.value=engines[name]||'';
-      urlInput.className='cp-input';urlInput.style.cssText='flex:1;padding:6px 8px;font-size:var(--text-xs);font-family:monospace;';
-      urlInput.placeholder='https://example.com/search?q=';
-      urlInput.addEventListener('change',()=>{config.search.engines[name]=urlInput.value;saveConfig();});
-      const rm=document.createElement('button');
-      rm.type='button';rm.className='btn btn-glass btn-sm';rm.style.cssText='flex-shrink:0;padding:2px 8px;';
-      rm.textContent='✕';rm.title='Remove engine';rm.setAttribute('aria-label','Remove '+name);
-      rm.addEventListener('click',()=>{
-        delete config.search.engines[name];
-        if(config.search.selected===name)config.search.selected=Object.keys(config.search.engines)[0];
-        saveConfig();renderEngines();
-      });
-      row.appendChild(nameInput);row.appendChild(urlInput);row.appendChild(rm);
-      list.appendChild(row);
-    });
-  }
-  renderEngines();
   body.appendChild(list);
 
   const addBtn=el('button','','+ Add Engine');addBtn.className='btn btn-glass btn-sm';
@@ -310,7 +266,7 @@ function buildSearchPanel(body){
     let n='New Engine',i=1;
     while(config.search.engines[n]){n='New Engine '+(++i);}
     config.search.engines[n]='https://';
-    saveConfig();renderEngines();
+    saveConfig();renderSearchPanel();
   });
   body.appendChild(addBtn);
 
@@ -320,6 +276,69 @@ function buildSearchPanel(body){
   body.appendChild(ps('Shortcuts'));
   body.appendChild(el('div','font-size:var(--text-xs);color:var(--text-secondary);line-height:1.7;',
     'Prefix a query to force an engine: <code>g: cats</code> Google · <code>ddg: cats</code> DuckDuckGo · <code>yt: cats</code> YouTube · <code>r: cats</code> Reddit · <code>w: cats</code> Wikipedia.'));
+
+  function renderSearchPanel(){
+    const es=config.search&&config.search.engines?config.search.engines:{};
+    const names=Object.keys(es);
+    // Default-engine select — rebuilt every time so add/remove/rename never
+    // leaves a stale/deleted option selectable.
+    engineSelectWrap.innerHTML='';
+    if(names.length){
+      const sel=document.createElement('select');
+      sel.className='cp-select';
+      sel.style.cssText='width:100%;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--surface-border);color:var(--text-primary);font-size:var(--text-base);outline:none;cursor:pointer;';
+      names.forEach(n=>{
+        const o=document.createElement('option');o.value=n;o.textContent=n;
+        if(n===config.search.selected)o.selected=true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener('change',()=>{config.search.selected=sel.value;saveConfig();});
+      engineSelectWrap.appendChild(sel);
+    } else {
+      engineSelectWrap.appendChild(el('div','font-size:var(--text-xs);color:var(--text-tertiary);','No engines configured — add one below.'));
+    }
+
+    // Row list
+    list.innerHTML='';
+    if(!names.length){
+      list.appendChild(el('div','font-size:var(--text-xs);color:var(--text-tertiary);padding:var(--space-2) 0;','No engines yet.'));
+    }
+    names.forEach(name=>{
+      const row=el('div','display:flex;gap:6px;align-items:center;');
+      const nameInput=document.createElement('input');
+      nameInput.type='text';nameInput.value=name;
+      nameInput.className='cp-input';nameInput.style.cssText='flex:0 0 130px;padding:6px 8px;font-size:var(--text-xs);';
+      nameInput.placeholder='Name';
+      nameInput.addEventListener('change',()=>{
+        const val=nameInput.value.trim();if(!val||val===name)return;
+        const map=config.search.engines||{};
+        // Collision guard: refuse to silently overwrite an existing engine.
+        if(val in map&&map[val]!==undefined){toast('An engine named "'+val+'" already exists','warning');nameInput.value=name;return;}
+        map[val]=map[name];delete map[name];
+        if(config.search.selected===name)config.search.selected=val;
+        saveConfig();renderSearchPanel();
+      });
+      const urlInput=document.createElement('input');
+      urlInput.type='text';urlInput.value=es[name]||'';
+      urlInput.className='cp-input';urlInput.style.cssText='flex:1;padding:6px 8px;font-size:var(--text-xs);font-family:monospace;';
+      urlInput.placeholder='https://example.com/search?q=';
+      urlInput.addEventListener('change',()=>{config.search.engines[name]=urlInput.value;saveConfig();});
+      const rm=document.createElement('button');
+      rm.type='button';rm.className='btn btn-glass btn-sm';rm.style.cssText='flex-shrink:0;padding:2px 8px;';
+      rm.textContent='✕';rm.title='Remove engine';rm.setAttribute('aria-label','Remove '+name);
+      rm.addEventListener('click',()=>{
+        delete config.search.engines[name];
+        if(config.search.selected===name){
+          const left=Object.keys(config.search.engines||{});
+          config.search.selected=left[0]||'';
+        }
+        saveConfig();renderSearchPanel();
+      });
+      row.appendChild(nameInput);row.appendChild(urlInput);row.appendChild(rm);
+      list.appendChild(row);
+    });
+  }
+  renderSearchPanel();
 }
 
 /* ── System tab: Status Bar + Data + Snapshots + API Keys + Credits ── */

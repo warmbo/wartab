@@ -404,6 +404,11 @@ async function init() {
     $('#bg-picker-overlay').classList.remove('open');
     $('#bg-picker').classList.remove('open');
   });
+  // System telemetry dropdown — close when clicking anywhere outside it.
+  document.addEventListener('click',function(e){
+    const telemetry=document.querySelector('.telemetry-disclosure[open]');
+    if(telemetry&&!telemetry.contains(e.target))telemetry.removeAttribute('open');
+  },true);
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
       // Topmost-first: icon picker before config panel (so one press doesn't
@@ -416,6 +421,9 @@ async function init() {
         $('#bg-picker-overlay').classList.remove('open');
         $('#bg-picker').classList.remove('open');
       }
+      // System telemetry dropdown — details only closes by re-click; let Esc dismiss it.
+      const telemetry=document.querySelector('.telemetry-disclosure[open]');
+      if(telemetry)telemetry.removeAttribute('open');
     }
     if(e.key==='Escape'&&document.activeElement&&document.activeElement.closest('.slide-panel input,.slide-panel textarea,.slide-panel select')){
       // First Escape blurs the focused field inside a panel instead of closing
