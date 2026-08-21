@@ -380,6 +380,8 @@ async function init() {
   WARTAB_BUILD = WARTAB_BUILD || config._version || WARTAB_VERSION;
   // Footer — build version with source link
   var ft=$('#footer-text');if(ft)ft.innerHTML='WarTab <a href="https://github.com/warmbo/wartab" target="_blank" rel="me noopener" style="color:var(--text-secondary);text-decoration:none;">'+WARTAB_BUILD+'</a>';
+  // Command-deck menu version tag
+  var dv=$('#deck-version');if(dv)dv.textContent=WARTAB_BUILD;
   loadIconRepo();
   var helpBtn=$('#btn-help');if(helpBtn)helpBtn.addEventListener('click', function() { showShortcutsOverlay(); });
   var configBtn=$('#btn-config');if(configBtn)configBtn.addEventListener('click',toggleConfigPanel);

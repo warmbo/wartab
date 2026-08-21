@@ -29,7 +29,7 @@ registerModule('network-status', {
     return WarTabHttp.createPoller({owner:cw,interval:Math.max(30000,(parseInt(sec.refreshInterval)||60)*1000),task:refresh});
   },
   settings:[
-    {name:'targets',label:'Targets (Label|Host per line)',type:'textarea',placeholder:'Gateway|10.0.0.1\nInternet|1.1.1.1\nDNS|10.0.0.2'},
+    {name:'targets',label:'Targets',type:'rows',placeholder:'Label',valuePlaceholder:'10.0.0.1'},
     {name:'refreshInterval',label:'Refresh seconds',type:'number',default:60}
   ]
 });

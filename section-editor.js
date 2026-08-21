@@ -254,6 +254,15 @@ function buildSectionEditor(sec, card, si) {
           ta.addEventListener('change',function(){onChange(ta.value);});
           mc.appendChild(ta);
           break;
+        case 'rows':
+          mc.appendChild(cpLabel(f.label));
+          mc.appendChild(cpRows({
+            value: sec[f.name] !== undefined ? sec[f.name] : (f.default || ''),
+            labelPh: f.placeholder || 'Label',
+            valuePh: f.valuePlaceholder || 'Value',
+            onChange: onChange
+          }));
+          break;
       }
     });
   } else if (mod && mod.editor) {

@@ -94,23 +94,84 @@ function showShortcutsOverlay() {
   if (existing) { existing.remove(); return; }
   const overlay = document.createElement('div');
   overlay.id = 'shortcuts-overlay';
-  overlay.className = 'modal-overlay';
+  overlay.className = 'modal-overlay shortcuts-overlay';
   const box = document.createElement('div');
-  box.className = 'modal-box';
-  box.style.maxWidth = '420px';
-  box.innerHTML = '<div style="font-size:var(--heading-size);font-weight:700;color:var(--text-primary);margin-bottom:var(--space-4);">Keyboard Shortcuts</div>' +
-    '<div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-3);">Press a key while this window is open:</div>' +
-    '<div class="shortcut-grid">' +
-    '<kbd class="kbd-shortcut">N</kbd><span>Add new card</span>' +
-    '<kbd class="kbd-shortcut">S</kbd><span>Focus search bar</span>' +
-    '<kbd class="kbd-shortcut">P</kbd><span>New page</span>' +
-    '<kbd class="kbd-shortcut">C</kbd><span>Toggle config panel</span>' +
-    '<kbd class="kbd-shortcut">?</kbd><span>Close this window</span>' +
-    '</div>' +
-    '<div style="text-align:center;margin-top:var(--space-4);font-size:var(--text-2xs);color:var(--text-tertiary);">Esc to close · Ctrl+K to search anytime</div>';
+  box.className = 'modal-box shortcuts-box';
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-modal', 'true');
+  box.setAttribute('aria-label', 'Keyboard shortcuts');
+
+  // Header with icon, title, close button — matching slide-panel-header convention
+  const hdr = document.createElement('div');
+  hdr.className = 'shortcuts-head';
+  hdr.innerHTML = '<span class="shortcuts-title"><i data-lucide="keyboard"></i>Keyboard Shortcuts</span>';
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'btn btn-glass btn-icon';
+  closeBtn.setAttribute('aria-label', 'Close shortcuts');
+  closeBtn.textContent = '✕';
+  closeBtn.addEventListener('click', () => overlay.remove());
+  hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+
+  // Grouped shortcut list — every real keybinding in the app
+  const groups = [
+    { title: 'Navigate', rows: [
+      ['Ctrl K', 'Command palette', 'Search anything · links · actions'],
+      ['Ctrl L', 'Focus search bar', 'First search card on the page'],
+      ['Ctrl Tab', 'Next page', 'Cycle through dashboard pages'],
+      ['Ctrl Shift C', 'Settings', 'Open configuration panel'],
+    ]},
+    { title: 'While palette is open', rows: [
+      ['↑ ↓', 'Move selection', 'Arrow keys navigate results'],
+      ['↵', 'Open selected', 'Launch the highlighted item'],
+      ['Esc', 'Close overlay', 'Dismiss palette or menu'],
+    ]},
+    { title: 'Actions', rows: [
+      ['N', 'Add new card', 'Open the card gallery'],
+      ['P', 'New page', 'Create and switch to a new page'],
+      ['S', 'Focus search', 'Jump to the search input'],
+      ['C', 'Toggle settings', 'Open or close config panel'],
+      ['?', 'Close this window', 'Press again to dismiss'],
+    ]},
+  ];
+  groups.forEach(g => {
+    const group = document.createElement('div');
+    group.className = 'shortcuts-group';
+    const title = document.createElement('div');
+    title.className = 'shortcuts-group-title';
+    title.textContent = g.title;
+    group.appendChild(title);
+    const grid = document.createElement('div');
+    grid.className = 'shortcut-grid';
+    g.rows.forEach(r => {
+      const k = document.createElement('kbd');
+      k.className = 'kbd-shortcut';
+      k.textContent = r[0];
+      const label = document.createElement('span');
+      label.textContent = r[1];
+      const hint = document.createElement('small');
+      hint.className = 'shortcuts-hint';
+      hint.textContent = r[2];
+      const cell = document.createElement('span');
+      cell.appendChild(label);
+      cell.appendChild(hint);
+      grid.appendChild(k);
+      grid.appendChild(cell);
+    });
+    group.appendChild(grid);
+    box.appendChild(group);
+  });
+
+  const foot = document.createElement('div');
+  foot.className = 'shortcuts-foot';
+  foot.textContent = 'Esc closes this window · Ctrl+K searches anytime';
+  box.appendChild(foot);
+
   overlay.appendChild(box);
   overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
   document.body.appendChild(overlay);
+  renderIcons();
   // Focus the overlay so keydown events fire
   overlay.setAttribute('tabindex', '-1');
   overlay.focus();

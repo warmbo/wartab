@@ -75,6 +75,15 @@ function applyTheme(){
   document.documentElement.dataset.cardBg=mode;
   // Card radius
   root.style.setProperty('--card-radius', (t.cardRadius !== undefined ? parseInt(t.cardRadius) : 16) + 'px');
+  // Surface radius — menus, panels, gallery, palette follow the card-radius
+  // setting so controls never look disconnected from the cards. Clamped so an
+  // aggressive 0-radius choice still keeps tiny chips readable (they use
+  // --radius-sm directly and are unaffected).
+  var cardR = t.cardRadius !== undefined ? parseInt(t.cardRadius) : 16;
+  root.style.setProperty('--radius', Math.max(2, Math.min(cardR || 16, 24)) + 'px');
+  // Control radius — buttons/inputs/menu items scale at ~half the card radius
+  // so they stay readable but always feel like part of the same product.
+  root.style.setProperty('--control-radius', Math.max(3, Math.min(Math.round((cardR || 16) / 2), 12)) + 'px');
 
   // Font color from config — invert in light card mode for readability
   var fc=t.fontColor||'#cccccc';

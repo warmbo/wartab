@@ -90,6 +90,81 @@ function cpBtn(text, danger) {
   return b;
 }
 
+/**
+ * Structured row editor — turns "Label|URL per line" style fields into real
+ * label+value input rows with add/remove. Stores back into the same
+ * newline-delimited, pipe-separated string so existing module parsers keep
+ * working unchanged.
+ * @param {object} opts
+ * @param {string} [opts.value]       Current pipe-string value (or array)
+ * @param {string} [opts.labelPh]     Placeholder for the first column
+ * @param {string} [opts.valuePh]     Placeholder for the second column
+ * @param {function} [opts.onChange]  Called with the serialized string
+ * @returns {HTMLElement}
+ */
+function cpRows(opts) {
+  opts = opts || {};
+  var wrap = document.createElement('div');
+  wrap.className = 'cp-rows';
+
+  function parse() {
+    var rows = [];
+    if (Array.isArray(opts.value)) return opts.value.slice();
+    String(opts.value || '').split('\n').forEach(function(line) {
+      if (!line.trim()) return;
+      var p = line.split('|');
+      rows.push([(p[0] || '').trim(), (p[1] || '').trim()]);
+    });
+    return rows;
+  }
+  function serialize(rows) {
+    return rows.map(function(r) { return (r[0] || '').trim() + '|' + (r[1] || '').trim(); }).join('\n');
+  }
+  function emit(rows) {
+    if (opts.onChange) opts.onChange(serialize(rows));
+  }
+
+  var rows = parse();
+
+  function render() {
+    wrap.innerHTML = '';
+    rows.forEach(function(row, i) {
+      var line = document.createElement('div');
+      line.className = 'me-link-tr';
+      var l = document.createElement('input');
+      l.className = 'cp-input';
+      l.placeholder = opts.labelPh || 'Label';
+      l.value = row[0];
+      l.setAttribute('aria-label', 'Row ' + (i + 1) + ' label');
+      l.addEventListener('change', function() { rows[i][0] = l.value; emit(rows); });
+      var v = document.createElement('input');
+      v.className = 'cp-input';
+      v.placeholder = opts.valuePh || 'Value';
+      v.value = row[1];
+      v.setAttribute('aria-label', 'Row ' + (i + 1) + ' value');
+      v.addEventListener('change', function() { rows[i][1] = v.value; emit(rows); });
+      var rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'me-icon-btn';
+      rm.textContent = '✕';
+      rm.title = 'Remove row';
+      rm.setAttribute('aria-label', 'Remove row ' + (i + 1));
+      rm.addEventListener('click', function() { rows.splice(i, 1); emit(rows); render(); });
+      line.appendChild(l); line.appendChild(v); line.appendChild(rm);
+      wrap.appendChild(line);
+    });
+    var add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'me-link-add';
+    add.textContent = '+ Add Row';
+    add.addEventListener('click', function() { rows.push(['', '']); emit(rows); render(); });
+    wrap.appendChild(add);
+  }
+
+  render();
+  return wrap;
+}
+
 /* ── Collapsible field group for module editors ── */
 function meFieldGroup(label, defaultOpen) {
   var wrap = document.createElement('div');

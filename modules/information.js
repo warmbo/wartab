@@ -45,7 +45,7 @@
       function load(){const services=parse();if(!services.length){cw.replaceChildren(ds.empty('activity','No services configured','Add services to monitor or launch.',{label:'Configure',onClick:function(){openCardEditPanel(card.id);}}));return Promise.resolve();}return Promise.all(services.map(function(s){const started=Date.now();return WarTabHttp.request('/api/proxy',{method:'POST',timeout:8000,headers:{'Content-Type':'application/json'},body:JSON.stringify({url:s.url,method:'GET',timeout:5})}).then(function(){return{s:s,state:'healthy',ms:Date.now()-started};},function(){return{s:s,state:'offline',ms:Date.now()-started};});})).then(function(rows){renderRows(rows,Date.now());});}
       return WarTabHttp.createPoller({owner:cw,interval:Math.max(15000,(parseInt(sec.refreshInterval)||60)*1000),task:load});
     },
-    settings:[{name:'services',label:'Services (Label|URL per line)',type:'textarea',placeholder:'Service|https://example.com'},{name:'refreshInterval',label:'Refresh seconds',type:'number',default:60}]
+    settings:[{name:'services',label:'Services',type:'rows',placeholder:'Name',valuePlaceholder:'https://…'},{name:'refreshInterval',label:'Refresh seconds',type:'number',default:60}]
   });
 
   function markdown(input){return escHtml(String(input||'')).replace(/^### (.*)$/gm,'<h3>$1</h3>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/^# (.*)$/gm,'<h1>$1</h1>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`(.+?)`/g,'<code>$1</code>').replace(/^[-*] (.*)$/gm,'<li>$1</li>').replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');}
