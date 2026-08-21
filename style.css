@@ -224,6 +224,10 @@ textarea { font-family: inherit; }
   backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur));
   border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
   position: relative;
+  /* backdrop-filter creates a stacking context at z-auto; without a z-index the
+     whole bar subtree (including the telemetry dropdown) paints below cards,
+     which come later in DOM order. Lift the bar so its popovers stay visible. */
+  z-index: 1;
   border-radius: var(--card-radius, 0px);
 }
 #top-bar::before { content: ''; display: block; height: 3px; background: var(--accent); position: absolute; top: 0; left: 0; right: 0; border-radius: var(--card-radius, 0px) var(--card-radius, 0px) 0 0; }
@@ -678,7 +682,9 @@ body.is-offline [data-module-type="api-poller"] .ui-module { opacity:.58; filter
 /* Icon picker — inherits .slide-panel */
 .icon-picker { z-index: var(--z-picker); }
 #icon-picker-overlay { z-index: calc(var(--z-picker) + 1); }
+#bg-picker-overlay { z-index: calc(var(--z-picker) + 1); }
 #icon-picker { z-index: calc(var(--z-picker) + 2); }
+#bg-picker { z-index: calc(var(--z-picker) + 2); }
 
 .config-tab.active { border-color: var(--accent); background: var(--accent-glass); color: var(--text-primary); font-weight: 700; }
 .config-tab:not(.active) { opacity: 0.7; }

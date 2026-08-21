@@ -37,11 +37,13 @@
     if (_terminal) return;
     _after = 0;
     _done = false;
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    const box = document.createElement('div');
-    box.className = 'modal-box update-terminal-box';
-    box.style.cssText = 'max-width:680px;width:90%;text-align:left;padding:0;overflow:hidden;';
+    const m = openModal({ label: 'WarTab Update', align: 'left', width: '680px', beforeClose: function() {
+      // Block Esc/backdrop dismissal while an update is running — the only
+      // safe exit is the Close button, which is disabled until it finishes.
+      return closeBtn ? !closeBtn.disabled : true;
+    } });
+    const box = m.box;
+    box.style.cssText = 'width:90%;text-align:left;padding:0;overflow:hidden;';
     const head = el('div', 'padding:12px 16px;border-bottom:1px solid var(--glass-border);font-weight:700;font-size:var(--text-base);display:flex;justify-content:space-between;align-items:center;',
       '🔄 WarTab Update');
     const pre = document.createElement('pre');
@@ -53,17 +55,14 @@
     closeBtn.disabled = true;
     closeBtn.addEventListener('click', () => {
       stopPolling();
-      overlay.remove();
+      m.close();
       _terminal = null;
     });
     foot.appendChild(closeBtn);
     box.appendChild(head);
     box.appendChild(pre);
     box.appendChild(foot);
-    overlay.appendChild(box);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) return; });
-    document.body.appendChild(overlay);
-    _terminal = { overlay: overlay, pre: pre, closeBtn: closeBtn };
+    _terminal = { overlay: m.overlay, pre: pre, closeBtn: closeBtn, close: m.close };
 
     appendLine('Updating…', 'dim');
     _pollTimer = setInterval(pollLog, POLL_MS);

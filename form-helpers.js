@@ -106,19 +106,23 @@ function cpRows(opts) {
   opts = opts || {};
   var wrap = document.createElement('div');
   wrap.className = 'cp-rows';
+  // Pair/row delimiters — default pipe+newline ("Label|URL\n…"); clock and
+  // timer use colon+comma ("Tokyo:Asia/Tokyo, …"). Stored format is preserved.
+  var pairSep = opts.pairSeparator || '|';
+  var rowSep = opts.rowSeparator || '\n';
 
   function parse() {
     var rows = [];
     if (Array.isArray(opts.value)) return opts.value.slice();
-    String(opts.value || '').split('\n').forEach(function(line) {
+    String(opts.value || '').split(rowSep).forEach(function(line) {
       if (!line.trim()) return;
-      var p = line.split('|');
-      rows.push([(p[0] || '').trim(), (p[1] || '').trim()]);
+      var p = line.split(pairSep);
+      rows.push([(p[0] || '').trim(), (p.slice(1).join(pairSep) || '').trim()]);
     });
     return rows;
   }
   function serialize(rows) {
-    return rows.map(function(r) { return (r[0] || '').trim() + '|' + (r[1] || '').trim(); }).join('\n');
+    return rows.map(function(r) { return (r[0] || '').trim() + pairSep + (r[1] || '').trim(); }).join(rowSep);
   }
   function emit(rows) {
     if (opts.onChange) opts.onChange(serialize(rows));

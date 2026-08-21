@@ -79,8 +79,14 @@ registerModule('timer', {
     durRow.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-right:4px;','Duration'));
     durRow.appendChild(hSel);durRow.appendChild(mSel);intervalFields.appendChild(durRow);
     intervalFields.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block;','Named Presets'));
-    const presetInput=document.createElement('input');presetInput.className='cp-input';presetInput.value=sec.presets||'';presetInput.placeholder='Pomodoro:1500, Break:300';
-    presetInput.addEventListener('change',function(){sec.presets=presetInput.value;saveAndRefresh();});intervalFields.appendChild(presetInput);
+    intervalFields.appendChild(cpRows({
+      value: sec.presets || '',
+      labelPh: 'Pomodoro',
+      valuePh: '1500',
+      pairSeparator: ':',
+      rowSeparator: ',',
+      onChange: function(v){ sec.presets = v; saveAndRefresh(); }
+    }));
     // Countdown fields
     const dateRow=document.createElement('div');dateRow.style.cssText='margin-bottom:10px;';
     dateRow.appendChild(el('label','font-size:var(--text-xs);font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block;','Target Date'));

@@ -154,7 +154,7 @@ registerModule('clock', {
     { name:'format24h', label:'Format', type:'select', options:[{value:false,label:'12-hour'},{value:true,label:'24-hour'}], default:false, structural:true },
     { name:'showDate', label:'Show date', type:'checkbox', default:true, structural:true },
     { name:'showCalendar', label:'Show calendar', type:'checkbox', default:false, structural:true },
-    { name:'zones', label:'World clock (IANA timezones)', type:'text', placeholder:'Tokyo:Asia/Tokyo, London:Europe/London', default:'' },
+    { name:'zones', label:'World clock', type:'rows', placeholder:'Label', valuePlaceholder:'Asia/Tokyo', pairSeparator:':', rowSeparator:',', default:'' },
   ],
 });
 

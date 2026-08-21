@@ -23,14 +23,24 @@ async function restoreConfigSnapshot(name) {
   return config;
 }
 
-function toggleConfigPanel(){configPanelOpen=!configPanelOpen;$('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);updateBlurState();if(configPanelOpen){buildConfigPanel();renderIcons();}}
+function toggleConfigPanel(){
+  configPanelOpen=!configPanelOpen;
+  if(configPanelOpen&&!window._configReturnFocus){
+    window._configReturnFocus=document.activeElement&&!document.activeElement.closest('#config-panel')?document.activeElement:null;
+  }
+  $('#config-overlay').classList.toggle('open',configPanelOpen);$('#config-panel').classList.toggle('open',configPanelOpen);updateBlurState();
+  if(configPanelOpen){buildConfigPanel();renderIcons();const fb=$('#config-body');if(fb){fb.setAttribute('tabindex','-1');fb.focus({preventScroll:true});}}
+  else if(window._configReturnFocus&&typeof window._configReturnFocus.focus==='function'){try{window._configReturnFocus.focus({preventScroll:true});}catch(e){}window._configReturnFocus=null;}
+}
 
 function buildConfigPanel(){const body=$('#config-body');const prevScroll=body.scrollTop;body.innerHTML='';
   const ht=$('#config-header-title');
   if(ht)ht.innerHTML='<i data-lucide="settings" style="width:18px;height:18px;vertical-align:middle;margin-right:var(--space-2);"></i><span style="vertical-align:middle;">WarTab Config</span>';
 
-  // Build tab bar
+  // Build tab bar — proper tabs with aria-selected + arrow-key navigation
   const tabBar=el('div','display:flex;gap:var(--space-2);margin-bottom:var(--space-4);border-bottom:1px solid var(--glass-border);padding-bottom:10px;');
+  tabBar.setAttribute('role','tablist');
+  tabBar.setAttribute('aria-label','Configuration sections');
   const tabs=[
     {id:'dashboard',label:'Dashboard',icon:'layout-dashboard'},
     {id:'appearance',label:'Appearance',icon:'palette'},
@@ -42,7 +52,19 @@ function buildConfigPanel(){const body=$('#config-body');const prevScroll=body.s
     btn.className='btn btn-glass btn-sm';
     btn.classList.toggle('config-tab',true);
     btn.classList.toggle('active',_configTab===t.id);
+    btn.setAttribute('role','tab');
+    btn.setAttribute('aria-selected',String(_configTab===t.id));
+    btn.id='config-tab-'+t.id;
     btn.addEventListener('click',()=>{_configTab=t.id;buildConfigPanel();renderIcons();});
+    btn.addEventListener('keydown',e=>{
+      if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+      e.preventDefault();
+      const ids=tabs.map(x=>x.id);
+      const cur=ids.indexOf(_configTab);
+      const next=e.key==='ArrowRight'?(cur+1)%ids.length:(cur-1+ids.length)%ids.length;
+      _configTab=ids[next];buildConfigPanel();renderIcons();
+      const el2=document.getElementById('config-tab-'+ids[next]);if(el2)el2.focus();
+    });
     tabBar.appendChild(btn);
   });
   body.appendChild(tabBar);

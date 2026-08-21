@@ -226,8 +226,20 @@ function buildSectionEditor(sec, card, si) {
           break;
         case 'number':
           mc.appendChild(cpLabel(f.label));
-          var mn=f.min||0,mx=f.max||100;
-          mc.appendChild(cpRange(f.label,sec[f.name]!==undefined?sec[f.name]:f.default||mn,mn,mx,onChange,f.step));
+          if (f.min !== undefined || f.max !== undefined) {
+            var mn=f.min||0,mx=f.max||100;
+            mc.appendChild(cpRange(f.label,sec[f.name]!==undefined?sec[f.name]:f.default||mn,mn,mx,onChange,f.step));
+          } else {
+            // No explicit bounds (e.g. rss/agenda refresh intervals of 900/1800s):
+            // a slider would pin the thumb at 100 and snap the value on drag.
+            var num=document.createElement('input');
+            num.type='number';num.className='cp-input';
+            num.value=sec[f.name]!==undefined?sec[f.name]:f.default||'';
+            num.placeholder=f.placeholder||'';
+            if (f.step !== undefined) num.step=f.step;
+            num.addEventListener('change',function(){onChange(num.value);});
+            mc.appendChild(num);
+          }
           break;
         case 'select':
           mc.appendChild(cpLabel(f.label)); mc.appendChild(cpSelect(f.options||[],sec[f.name]!==undefined?sec[f.name]:f.default||'',onChange));
@@ -260,6 +272,8 @@ function buildSectionEditor(sec, card, si) {
             value: sec[f.name] !== undefined ? sec[f.name] : (f.default || ''),
             labelPh: f.placeholder || 'Label',
             valuePh: f.valuePlaceholder || 'Value',
+            pairSeparator: f.pairSeparator,
+            rowSeparator: f.rowSeparator,
             onChange: onChange
           }));
           break;

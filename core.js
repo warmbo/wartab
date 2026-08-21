@@ -1297,8 +1297,8 @@ function toast(msg,type='info'){
   for (var i = 0; i < existing.length; i++) {
     if (existing[i].textContent === msg) return;
   }
-  const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;$('#toast-container').appendChild(el);setTimeout(()=>el.remove(),3000);}
-function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored','success');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>el.remove(),5000);}
+  const el=document.createElement('div');el.className=`toast ${type}`;el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.textContent=msg;$('#toast-container').appendChild(el);setTimeout(()=>el.remove(),3000);}
+function toastWithUndo(msg,undoFn){const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.style.cssText='display:flex;align-items:center;gap:10px;';const t=document.createElement('span');t.textContent=msg;const b=document.createElement('button');b.className='btn btn-glass btn-sm';b.textContent='Undo';b.style.fontWeight='700';b.addEventListener('click',()=>{undoFn();el.remove();toast('Restored','success');});el.appendChild(t);el.appendChild(b);$('#toast-container').appendChild(el);setTimeout(()=>el.remove(),5000);}
 
 /* ── Time utilities ── */
 function prefersReducedMotion() {
