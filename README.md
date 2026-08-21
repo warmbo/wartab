@@ -45,6 +45,23 @@ duplicate, JSON export, and delete; page chrome and blank space expose Command,
 Add Card, Arrange, Pages, Settings, and Reload. Native cut/copy/paste remains available
 inside text inputs and Notes editors.
 
+### Personal Command Deck
+
+The shell now centers daily actions around a visible **Command** trigger, prominent
+**Add** button, compact telemetry disclosure, undo/redo, and a single overflow menu.
+Cards render as one of five semantic visual roles: Launcher, Metric, Canvas, Feed,
+or Ambient.
+
+- **Card Gallery** — search and filter all modules, see purpose/setup/manual-size
+  guidance, or apply a first-run page template.
+- **Edit Mode** — select cards directly and open common or advanced editing tools.
+- **Layout Studio** — preview manual width, height, mobile visibility, and mobile
+  order changes; nothing mutates until **Apply layout**.
+- **Experience Presets** — Command Center, Dense Homelab, Calm Minimal, Ambient
+  Glass, and Mobile First; presets never move or resize cards.
+- **Mobile profiles** — explicit per-card hide/order controls independent of desktop
+  geometry.
+
 ### Card Sections (23 types)
 
 | Section | Description |

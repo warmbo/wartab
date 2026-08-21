@@ -405,6 +405,11 @@ Cohesive visual/layout presets with previews: Command Center, Dense Homelab, Cal
 
 # Implementation plan
 
+> **Implementation status (2026-08-20): shipped.** The production direction combines
+> Command Deck hierarchy, Dense Homelab information efficiency, and Ambient Glass
+> role surfaces. Prototype source and desktop/tablet/mobile captures live under
+> `docs/prototypes/`. All geometry tools remain manual-preview/apply only.
+
 ## Phase 0 — Baseline and design prototypes
 
 1. Preserve current live version as rollback baseline.
