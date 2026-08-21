@@ -1,3 +1,8 @@
+function normalizeBookmarkUrl(value){
+  var raw=String(value||'').trim();if(!raw)return'';
+  try{var parsed=new URL(raw);parsed.hostname=parsed.hostname.toLowerCase();parsed.hash='';if(parsed.pathname==='/'&&!parsed.search)parsed.pathname='';return parsed.toString().replace(/\/$/,'').toLowerCase();}catch(e){return raw.replace(/\/$/,'').toLowerCase();}
+}
+
 registerModule('links', {
   defaults: { links:[{label:'Example',url:'https://example.com',icon:'link'}], listMode:false },
   render: (sec,card,cw)=>{
@@ -81,29 +86,27 @@ registerModule('links', {
       addAll.style.cssText = 'margin-top:4px;';
       addAll.addEventListener('click', function() {
         var lines = ta.value.split('\n').filter(function(l) { return l.trim(); });
-        var added = 0;
+        var added = 0, duplicateCount = 0;
+        var existing=new Set((sec.links||[]).map(function(link){return normalizeBookmarkUrl(link.url);}));
+        function appendUnique(label,url){var normalized=normalizeBookmarkUrl(url);if(!normalized||existing.has(normalized)){duplicateCount++;return;}existing.add(normalized);sec.links=sec.links||[];sec.links.push({label:label,url:url,icon:'link'});added++;}
         lines.forEach(function(line) {
           var parts = line.split('\t');
           if (parts.length >= 2) {
             var label = parts[0].trim();
             var url = parts[1].trim();
             if (label && url) {
-              sec.links = sec.links || [];
-              sec.links.push({ label: label, url: url, icon: 'link' });
-              added++;
+              appendUnique(label,url);
             }
           } else if (parts.length === 1 && parts[0].match(/^https?:\/\//)) {
             // URL only — generate label from domain
-            sec.links = sec.links || [];
-            sec.links.push({ label: parts[0].replace(/^https?:\/\//, '').split('/')[0], url: parts[0], icon: 'link' });
-            added++;
+            appendUnique(parts[0].replace(/^https?:\/\//, '').split('/')[0],parts[0]);
           }
         });
         if (added > 0) {
           saveAndRefreshStructural();
-          toast('Added ' + added + ' links');
+          toast('Added ' + added + ' links' + (duplicateCount ? ' · Skipped ' + duplicateCount + ' duplicates' : ''));
           batchArea.remove(); batchArea = null; batchBtn.textContent = '+ Batch Add';
-        }
+        } else if(duplicateCount){toast('Skipped '+duplicateCount+' duplicate links','warning');}
       });
       batchArea.appendChild(addAll);
       bd.insertBefore(batchArea, bd.querySelector('.me-link-add') ? bd.querySelector('.me-link-add').nextSibling : null);

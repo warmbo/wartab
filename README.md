@@ -74,7 +74,7 @@ latency context, expandable details, and checked/stale timestamps. Weather inclu
 condition, high, low, precipitation probability, forecast, and freshness without
 becoming a full weather application.
 
-### Card Sections (23 types)
+### Card Sections (24 types)
 
 | Section | Description |
 |---------|-------------|
@@ -90,7 +90,8 @@ becoming a full weather application.
 | **API Poller** | Fetch JSON from any endpoint, extract a value via dot-path, auto-refresh |
 | **RSS Feed** | Render recent RSS/Atom headlines through the server proxy |
 | **Agenda** | Read a public iCal feed and list upcoming events |
-| **Service Status** | Monitor a list of HTTP services with latency + online state |
+| **Service Status** | Monitor HTTP services with summary health, latency, detail, and freshness |
+| **Network** | Check gateway, DNS, and internet reachability with summary latency |
 | **Markdown** | Render safe static Markdown content |
 | **Smart Links** | Local-only most-used or recently-used dashboard links |
 

@@ -42,4 +42,22 @@ describe('operational startpage improvements', () => {
     expect(links).toContain('openCardGallery');
     expect(links).toContain('filter(function(link){return link&&link.url;})');
   });
+
+  it('ships a compact summary-first network health module', () => {
+    const network = read('modules/network-status.js');
+    expect(network).toContain("registerModule('network-status'");
+    expect(network).toContain("WarTabHttp.request('/api/ping?host=");
+    expect(network).toContain('targets reachable');
+    expect(network).toContain('ds.statusRow');
+    expect(network).toContain('ds.freshness');
+    expect(network).toContain("state:'unknown'");
+    expect(network).toContain('Network checks unavailable');
+  });
+
+  it('normalizes URLs and skips duplicates during bookmark batch import', () => {
+    const links = read('modules/links.js');
+    expect(links).toContain('normalizeBookmarkUrl');
+    expect(links).toContain('duplicateCount');
+    expect(links).toContain('Skipped ');
+  });
 });

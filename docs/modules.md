@@ -108,5 +108,6 @@ registerModule('greeting', {
 | `rss` | information | RSS/Atom through server proxy |
 | `agenda` | information | public iCal through server proxy |
 | `service-status` | information | HTTP service checks through server proxy |
+| `network-status` | network-status | gateway/DNS/internet reachability via `/api/ping` |
 | `markdown` | information | local static Markdown |
 | `smart-links` | smart-links | local-only usage history |

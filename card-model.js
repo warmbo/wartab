@@ -37,8 +37,9 @@ var CARD_TYPE_DEFS = [
   { type: 'rss', label: 'RSS Feed', icon: 'rss', role: 'feed', category: 'Feeds', description: 'Recent headlines from an RSS or Atom source.', recommendedSize: '2 × 2', setup: 'Feed URL', sectionOrder: 18 },
   { type: 'agenda', label: 'Agenda', icon: 'calendar-days', role: 'feed', category: 'Productivity', description: 'Upcoming events from a public calendar feed.', recommendedSize: '2 × 1', setup: 'Calendar URL', sectionOrder: 19 },
   { type: 'service-status', label: 'Service Status', icon: 'activity', role: 'metric', category: 'Systems', description: 'Live health and latency for important services.', recommendedSize: '2 × 1', setup: 'Service URLs', sectionOrder: 20 },
-  { type: 'markdown', label: 'Markdown', icon: 'file-text', role: 'canvas', category: 'Create', description: 'A safe rendered Markdown canvas.', recommendedSize: '2 × 2', sectionOrder: 21 },
-  { type: 'smart-links', label: 'Smart Links', icon: 'sparkles', role: 'launcher', category: 'Launch', description: 'Your most-used or recently opened links.', recommendedSize: '1 × 1', sectionOrder: 22 },
+  { type: 'network-status', label: 'Network', icon: 'network', role: 'metric', category: 'Systems', description: 'Gateway, DNS, and internet reachability with latency.', recommendedSize: '2 × 1', setup: 'Ping targets', sectionOrder: 21 },
+  { type: 'markdown', label: 'Markdown', icon: 'file-text', role: 'canvas', category: 'Create', description: 'A safe rendered Markdown canvas.', recommendedSize: '2 × 2', sectionOrder: 22 },
+  { type: 'smart-links', label: 'Smart Links', icon: 'sparkles', role: 'launcher', category: 'Launch', description: 'Your most-used or recently opened links.', recommendedSize: '1 × 1', sectionOrder: 23 },
 ];
 
 var WarTabCardModel = (function() {

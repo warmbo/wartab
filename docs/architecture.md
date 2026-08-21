@@ -129,10 +129,10 @@ containing one `registerModule(type, { defaults, render, editor?, css?, … })`
 call. `registerModule` (in `core.js`) stores the module in `CARD_MODULES` and
 injects per-module CSS. See `docs/modules.md` for the full contract.
 
-Registered types (23): `api-poller`, `ascii-anim`, `clock`, `digital-pet`,
+Registered types (24): `api-poller`, `ascii-anim`, `clock`, `digital-pet`,
 `git`, `iframe`, `image`, `lan-scan`, `link-list`, `links`, `media`, `notes`,
 `proxmox`, `quotes`, `resource-monitor`, `search`, `timer`, `weather`, `rss`,
-`agenda`, `service-status`, `markdown`, `smart-links`.
+`agenda`, `service-status`, `network-status`, `markdown`, `smart-links`.
 
 ---
 
