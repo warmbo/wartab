@@ -5,7 +5,7 @@
    ═══════════════════════════════════════════ */
 /* ═══════════════════════════════════════════ CONFIG PANEL ═══════════════════════════════════════════ */
 let configPanelOpen=false;
-let _configTab='dashboard'; // 'dashboard' | 'appearance' | 'system'
+let _configTab='dashboard'; // 'dashboard' | 'appearance' | 'search' | 'system'
 
 async function persistImportedConfig(cleaned) {
   config=deepMerge(cloneObj(DEFAULT_CONFIG),cleaned);
@@ -34,6 +34,7 @@ function buildConfigPanel(){const body=$('#config-body');const prevScroll=body.s
   const tabs=[
     {id:'dashboard',label:'Dashboard',icon:'layout-dashboard'},
     {id:'appearance',label:'Appearance',icon:'palette'},
+    {id:'search',label:'Search',icon:'search'},
     {id:'system',label:'System',icon:'settings-2'},
   ];
   tabs.forEach(t=>{
@@ -49,6 +50,7 @@ function buildConfigPanel(){const body=$('#config-body');const prevScroll=body.s
   // Call the appropriate sub-panel builder
   if(_configTab==='dashboard')buildDashboardPanel(body);
   else if(_configTab==='appearance')buildAppearancePanel(body);
+  else if(_configTab==='search')buildSearchPanel(body);
   else buildSystemPanel(body);
 
   wrapConfigCards(body);
@@ -217,6 +219,85 @@ if(v==='gradient'){if(!config.theme.bgValue.includes(','))config.theme.bgValue='
   cta.addEventListener('input',()=>{config.theme.customCss=cta.value;applyTheme();});
   cta.addEventListener('change',()=>{saveConfig();});
   body.appendChild(cta);
+}
+
+/* ── Search tab: default engine + engine list management ── */
+function buildSearchPanel(body){
+  const search=config.search||{};
+  const engines=search.engines||{};
+  const names=Object.keys(engines);
+  const selected=search.selected||(names[0]||'Google');
+
+  /* Default engine */
+  body.appendChild(ps('Default Engine'));
+  if(names.length){
+    body.appendChild(pf('select','','Engine',names.map(n=>({value:n,label:n})),selected,v=>{
+      config.search=config.search||{};config.search.selected=v;saveConfig();
+    }));
+  } else {
+    body.appendChild(el('div','font-size:var(--text-xs);color:var(--text-tertiary);','No engines configured — add one below.'));
+  }
+
+  /* Open in new tab */
+  body.appendChild(chk('Open results in a new tab',search.openInNewTab!==false,v=>{config.search=config.search||{};config.search.openInNewTab=v;saveConfig();}));
+
+  /* Engine list editor */
+  body.appendChild(ps('Engines'));
+  const list=el('div','display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-3);');
+  function renderEngines(){
+    list.innerHTML='';
+    const cur=Object.keys(config.search.engines||{});
+    if(!cur.length){
+      list.appendChild(el('div','font-size:var(--text-xs);color:var(--text-tertiary);padding:var(--space-2) 0;','No engines yet.'));
+    }
+    cur.forEach(name=>{
+      const row=el('div','display:flex;gap:6px;align-items:center;');
+      const nameInput=document.createElement('input');
+      nameInput.type='text';nameInput.value=name;
+      nameInput.className='cp-input';nameInput.style.cssText='flex:0 0 130px;padding:6px 8px;font-size:var(--text-xs);';
+      nameInput.placeholder='Name';
+      nameInput.addEventListener('change',()=>{
+        const val=nameInput.value.trim();if(!val||val===name)return;
+        const es=config.search.engines||{};es[val]=es[name];delete es[name];
+        if(config.search.selected===name)config.search.selected=val;
+        saveConfig();renderEngines();
+      });
+      const urlInput=document.createElement('input');
+      urlInput.type='text';urlInput.value=engines[name]||'';
+      urlInput.className='cp-input';urlInput.style.cssText='flex:1;padding:6px 8px;font-size:var(--text-xs);font-family:monospace;';
+      urlInput.placeholder='https://example.com/search?q=';
+      urlInput.addEventListener('change',()=>{config.search.engines[name]=urlInput.value;saveConfig();});
+      const rm=document.createElement('button');
+      rm.type='button';rm.className='btn btn-glass btn-sm';rm.style.cssText='flex-shrink:0;padding:2px 8px;';
+      rm.textContent='✕';rm.title='Remove engine';rm.setAttribute('aria-label','Remove '+name);
+      rm.addEventListener('click',()=>{
+        delete config.search.engines[name];
+        if(config.search.selected===name)config.search.selected=Object.keys(config.search.engines)[0];
+        saveConfig();renderEngines();
+      });
+      row.appendChild(nameInput);row.appendChild(urlInput);row.appendChild(rm);
+      list.appendChild(row);
+    });
+  }
+  renderEngines();
+  body.appendChild(list);
+
+  const addBtn=el('button','','+ Add Engine');addBtn.className='btn btn-glass btn-sm';
+  addBtn.addEventListener('click',()=>{
+    config.search=config.search||{};config.search.engines=config.search.engines||{};
+    let n='New Engine',i=1;
+    while(config.search.engines[n]){n='New Engine '+(++i);}
+    config.search.engines[n]='https://';
+    saveConfig();renderEngines();
+  });
+  body.appendChild(addBtn);
+
+  body.appendChild(el('div','font-size:var(--text-2xs);color:var(--text-tertiary);margin-top:var(--space-2);','Engines appear in search cards and the command palette. The query is appended to the URL (e.g. https://www.google.com/search?q=).'));
+
+  /* Search prefixes */
+  body.appendChild(ps('Shortcuts'));
+  body.appendChild(el('div','font-size:var(--text-xs);color:var(--text-secondary);line-height:1.7;',
+    'Prefix a query to force an engine: <code>g: cats</code> Google · <code>ddg: cats</code> DuckDuckGo · <code>yt: cats</code> YouTube · <code>r: cats</code> Reddit · <code>w: cats</code> Wikipedia.'));
 }
 
 /* ── System tab: Status Bar + Data + Snapshots + API Keys + Credits ── */

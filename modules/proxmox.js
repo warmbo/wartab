@@ -128,8 +128,18 @@ registerModule('proxmox', {
         w.appendChild(groupHeader('Virtual Machines', 'var(--accent)'));
         w.appendChild(statRow('QEMU', resources.vmsRunning + ' / ' + resources.vmsTotal + ' running', resources.vmsRunning > 0 ? 'var(--color-success)' : 'var(--text-secondary)'));
         w.appendChild(statRow('LXC', resources.lxcRunning + ' / ' + resources.lxcTotal + ' running', resources.lxcRunning > 0 ? 'var(--color-success)' : 'var(--text-secondary)'));
+
+        // Freshness — same primitive the network/service modules use
+        const tsEl = document.createElement('div');
+        tsEl.style.cssText = 'padding-top:4px;';
+        tsEl.appendChild(ds.freshness(Date.now(), 180000));
+        w.appendChild(tsEl);
       }).catch(err => {
-        w.innerHTML = '<div style="color:var(--color-error);font-size:var(--text-sm);padding:4px 0;">⚠ ' + escHtml(err.message) + '</div>';
+        w.innerHTML = '';
+        w.appendChild(ds.error('Proxmox unavailable', escHtml(err.message || 'Check the URL and credentials.'), {
+          label: 'Retry',
+          onClick: load
+        }));
       });
     }
     WarTabHttp.createPoller({ owner: cw, interval: 60000, task: load, onError: function() {} });

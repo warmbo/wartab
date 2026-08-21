@@ -345,6 +345,7 @@ ds.statusRow = function(opts) {
   row.appendChild(copy);
   row.appendChild(ds.badge(opts.status || state, variants[state]));
   if (opts.meta) row.appendChild(_txt('span', 'ds-status-meta', opts.meta));
+  if (opts.title || opts.label) row.title = opts.title || (opts.label || 'Service') + ' — ' + (opts.status || state);
   if (opts.onClick) row.addEventListener('click', opts.onClick);
   return row;
 };
@@ -356,6 +357,7 @@ ds.freshness = function(ts, staleAfterMs) {
   var el = _txt('span', 'ds-freshness' + (stale ? ' is-stale' : ''), (stale ? 'Stale · ' : 'Checked ') + timeAgo(ts || Date.now()));
   el.dataset.timestamp = String(ts || Date.now());
   if (stale) el.setAttribute('aria-label', 'Data is stale; last checked ' + timeAgo(ts));
+  el.title = new Date(Number(ts || Date.now())).toLocaleString() + (stale ? ' — data is stale' : '');
   return el;
 };
 

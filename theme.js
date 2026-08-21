@@ -122,6 +122,16 @@ function applyTheme(){
   }
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
+
+/** Explicitly flip the card theme (dark/light), overriding follow-system for the session. */
+function toggleTheme(){
+  config.theme = config.theme || {};
+  config.theme.followSystem = false;
+  config.theme.cardBg = (config.theme.cardBg === 'light') ? 'dark' : 'light';
+  applyTheme();
+  saveConfig();
+  toast('Theme: ' + (config.theme.cardBg === 'light' ? 'Light' : 'Dark'), 'success');
+}
 function loadGoogleFont(fn,allowReplace){
   if(fn==='Inter')return; // Inter loaded from local inter.css
   const id='wartab-font-'+fn.replace(/[^a-zA-Z0-9]/g,'').toLowerCase();

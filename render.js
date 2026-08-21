@@ -16,6 +16,13 @@ function rerenderCard(card){
   oldEl.replaceWith(newEl);
   return newEl;
 }
+
+/** Re-run every card on the current page (refetches module data, restarts pollers). */
+function refreshAllCards(){
+  (config.cards||[]).forEach(function(card){ rerenderCard(card); });
+  toast('Dashboard refreshed', 'success');
+  renderIcons();
+}
 // Full page re-render: destroys and rebuilds grid from config
 function renderAll(){if(statsTimer){clearInterval(statsTimer);statsTimer=null;}const grid=$('#card-grid');Array.from(grid.children).forEach(WarTabLifecycle.cleanupSubtree);grid.innerHTML='';var pageCols=getPageCols();grid.style.setProperty('--grid-cols',pageCols);grid.style.gap=config.layout.gap+'px';const appEl=$('#app');if(appEl){
   // Page width: slider percentage (50-100), side padding only at full width

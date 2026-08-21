@@ -83,8 +83,22 @@
       { label: 'Arrange Cards', icon: 'move', run: toggleArrangeMode },
       { label: 'Open Settings', icon: 'settings', run: toggleConfigPanel },
       { label: 'Keyboard Shortcuts', icon: 'keyboard', run: showShortcutsOverlay },
+      { label: 'Toggle Theme', icon: 'sun-moon', run: function () { if (typeof toggleTheme === 'function') toggleTheme(); else toast('Theme toggle unavailable', 'error'); } },
+      { label: 'Refresh Data', icon: 'refresh-cw', run: function () { if (typeof refreshAllCards === 'function') refreshAllCards(); else toast('Refresh unavailable', 'error'); } },
     ];
     actions.forEach(function (a) { list.push({ kind: 'action', label: a.label, icon: a.icon, run: a.run }); });
+
+    // Recent searches (bounded, newest first) — shown above generic results.
+    try {
+      (JSON.parse(localStorage.getItem('wartab.search.history') || '[]') || []).slice(0, 5).forEach(function(h){
+        if(!h || !h.query) return;
+        list.push({
+          kind: 'recent-search', label: h.query, sublabel: 'Recent · ' + (h.engine || 'Search'),
+          icon: 'history',
+          run: function () { runWebSearch(h.query, h.engine); }
+        });
+      });
+    } catch (error) {}
 
     // Pages
     var order = config.pageOrder || [];
@@ -166,7 +180,12 @@
       var engine=parsed.engine||(config.search&&config.search.selected)||'Google';
       scored.push({ item:{ kind: 'search', label:'Search '+engine+' for “'+query+'”',sublabel:parsed.explicit?'Search prefix':'Web search',icon:'search',run:function(){runWebSearch(query,engine);} }, match:{score:parsed.explicit?90:0.75,matched:query} });
     }
-    scored.sort(function (a, b) { return (b.match.score+(b.item.usage||0)*0.05) - (a.match.score+(a.item.usage||0)*0.05); });
+    var emptyBoost = !query;
+    scored.sort(function (a, b) {
+      var ka = emptyBoost ? (a.item.kind === 'action' ? 100 : a.item.kind === 'recent-search' ? 80 : 0) : 0;
+      var kb = emptyBoost ? (b.item.kind === 'action' ? 100 : b.item.kind === 'recent-search' ? 80 : 0) : 0;
+      return (kb + b.match.score + (b.item.usage || 0) * 0.05) - (ka + a.match.score + (a.item.usage || 0) * 0.05);
+    });
     scored = scored.slice(0, 20);
 
     resultsEl.innerHTML = '';
