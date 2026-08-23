@@ -312,44 +312,12 @@ function addCardOfType(type, cardOverrides) {
 }
 
 function addNewCard(){
+  // The Card Gallery (ux-system.js) is the canonical "add" surface. It is
+  // always loaded by click-time in production; the old hand-rolled type-picker
+  // modal is dead and was removed (Design Bible §8/§12 — one modal system).
   if(window.openCardGallery){window.openCardGallery();return;}
-  // Card type picker modal — Lucide icons, glass style
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.setAttribute('tabindex','-1');
-  const box = document.createElement('div');
-  box.className = 'modal-box';
-  const label = document.createElement('div');
-  label.textContent = 'New Card';
-  label.className = 'modal-title';
-  box.appendChild(label);
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;';
-  CARD_TYPE_DEFS.forEach(t => {
-    const btn = document.createElement('button');
-    btn.className = 'cp-type-btn';
-    btn.innerHTML = '<i data-lucide="'+t.icon+'" style="width:22px;height:22px;"></i><span style="font-size:var(--text-xs);color:var(--text-secondary);">'+t.label+'</span>';
-    btn.addEventListener('click', () => {
-      overlay.remove();
-      addCardOfType(t.type);
-    });
-    grid.appendChild(btn);
-  });
-  box.appendChild(grid);
-  const cancelBtn = document.createElement('button');
-  cancelBtn.className = 'btn btn-glass btn-sm';
-  cancelBtn.textContent = 'Cancel';
-  cancelBtn.style.cssText = 'width:100%;justify-content:center;';
-  cancelBtn.addEventListener('click', () => overlay.remove());
-  box.appendChild(cancelBtn);
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-  overlay.focus();
-  // Dismiss via Escape or clicking the backdrop (the modal's own topmost close)
-  overlay.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.remove(); });
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-  // Render Lucide icons in the modal
-  renderIcons();
+  // Defensive fallback only if the gallery failed to load at all.
+  showConfirmModal('The Card Gallery failed to load. Reload the dashboard to restore it.', null, {ok:'OK'});
 }
 function applyChanges(){saveConfig();applyTheme();}
 

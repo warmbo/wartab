@@ -37,18 +37,18 @@
     if (_terminal) return;
     _after = 0;
     _done = false;
-    const m = openModal({ label: 'WarTab Update', align: 'left', width: '680px', beforeClose: function() {
+    const m = openModal({ label: 'WarTab Update', align: 'left', beforeClose: function() {
       // Block Esc/backdrop dismissal while an update is running — the only
       // safe exit is the Close button, which is disabled until it finishes.
       return closeBtn ? !closeBtn.disabled : true;
     } });
     const box = m.box;
-    box.style.cssText = 'width:90%;text-align:left;padding:0;overflow:hidden;';
+    box.classList.add('update-terminal-box');
+    // Design Bible §12: keep openModal()'s shell; only widen box via a class.
     const head = el('div', 'padding:12px 16px;border-bottom:1px solid var(--glass-border);font-weight:700;font-size:var(--text-base);display:flex;justify-content:space-between;align-items:center;',
       '🔄 WarTab Update');
     const pre = document.createElement('pre');
     pre.className = 'update-terminal';
-    pre.style.cssText = 'margin:0;padding:14px 16px;max-height:420px;overflow-y:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:var(--text-xs);line-height:1.55;color:var(--text-primary);background:rgba(0,0,0,0.5);white-space:pre-wrap;word-break:break-word;';
     const foot = el('div', 'padding:10px 16px;border-top:1px solid var(--glass-border);display:flex;justify-content:flex-end;gap:var(--space-2);');
     const closeBtn = el('button', '', 'Close');
     closeBtn.className = 'btn btn-glass btn-sm';

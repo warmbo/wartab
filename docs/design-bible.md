@@ -300,9 +300,10 @@ focus return/focus-in. Escape paths funnel through the shared `openModal()` /
 Exceptions must be rare and must have a concrete UX reason documented here. When a
 page cannot use the standard structure, add it below before diverging.
 
-| Exception | Why | Where |
-|-----------|-----|-------|
-| (none currently) | — | — |
+| Surface | Why it diverges | Where |
+|---------|-----------------|-------|
+| Keyboard-shortcuts overlay | A data-driven keyboard-reference table (`kbd` cells + grouped rows); its `.shortcuts-*` classes are specialized table anatomy, not a generic modal shell. Still uses `modal-overlay`/`modal-box` + `role=dialog`. | pages.js `showShortcutsOverlay()` |
+| Update terminal modal | A live-log terminal surface (persistent polling, disabled Close while running); widens the shared modal shell to 90% and owns the mono `pre` terminal geometry. Funnels through `openModal()` (label + beforeClose). | updates.js `openTerminal()` |
 
 ---
 

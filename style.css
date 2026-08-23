@@ -883,20 +883,6 @@ body.is-offline [data-module-type="api-poller"] .ui-module { opacity:.58; filter
 .me-field-group-body.me-fg-collapsed { max-height: 0; opacity: 0; padding: 0; margin: 0; }
 .me-field-group-body .cp-label:first-child { margin-top: 0; }
 
-.cp-type-btn {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px; padding: 14px 6px var(--space-2);
-  background: var(--card-bg-alt);
-  border: 1px solid var(--surface-border);
-  color: var(--text-primary); cursor: pointer;
-  transition: background var(--anim-fast), border-color var(--anim-fast);
-  font-family: var(--font);
-}
-.cp-type-btn:hover {
-  background: rgba(255,255,255,0.08);
-  border-color: var(--accent);
-}
-
 /* ── LAN Scan ── */
 .lan-scan-widget { display:flex;flex-direction:column; }
 .lan-scan-hdr { display:flex;align-items:center;gap:var(--space-2); padding:var(--space-1) 0 var(--space-2);border-bottom:1px solid var(--surface-border); margin-bottom:6px; }
@@ -1189,9 +1175,20 @@ body.panel-open.panel-left #top-bar {
 .modal-box { background:var(--surface-panel);border:1px solid var(--glass-border);padding:24px;min-width:320px;max-width:90vw;max-height:80vh;overflow-y:auto; }
 .modal-title { font-size:var(--heading-size);font-weight:600;color:var(--text-primary);margin-bottom:16px; }
 
-/* WarTab update terminal modal */
-.update-terminal-box .modal-box, .update-terminal-box { box-shadow: 0 0 0 1px rgba(103,232,249,0.15), 0 20px 60px rgba(0,0,0,0.6); }
-.update-terminal { scrollbar-width: thin; }
+/* WarTab update terminal modal — Design Bible §12: shell inherited from
+   openModal(); only the specialized full-width terminal geometry lives here. */
+.update-terminal-box .modal-box, .update-terminal-box {
+  box-shadow: 0 0 0 1px rgba(103,232,249,0.15), 0 20px 60px rgba(0,0,0,0.6);
+}
+.update-terminal-box { width: 90%; text-align: left; padding: 0; overflow: hidden; }
+.update-terminal {
+  margin: 0; padding: 14px 16px; max-height: 420px; overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--text-xs); line-height: 1.55;
+  color: var(--text-primary); background: rgba(0,0,0,0.5);
+  white-space: pre-wrap; word-break: break-word;
+  scrollbar-width: thin;
+}
 .update-terminal::-webkit-scrollbar { width: 8px; }
 .update-terminal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
 
@@ -1938,15 +1935,7 @@ body.panel-open.panel-left #top-bar {
 }
 .se-card-header { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
 
-/* ── Card type picker buttons — premium hover ── */
-.cp-type-btn {
-  border-radius: var(--radius-sm);
-  transition: background var(--anim-fast), border-color var(--anim-fast), transform var(--anim-fast), box-shadow var(--anim-fast);
-}
-.cp-type-btn:hover { 
-  border-color: var(--accent); 
-  box-shadow: 0 0 0 1px var(--accent-glass);
-}
+/* ── Resource monitor — better metric bar styling ── */
 
 /* ═══════════════════════════════════════════
    VISUALIZATION COMPONENTS — Progress Rings, Trends, Badges, Delight
