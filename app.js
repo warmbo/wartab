@@ -217,7 +217,7 @@ function loadIconRepo() {
 }
 
 let config = {}, statsTimer = null;
-let _linkDrag = null, iconPickerCallback = null;
+let _linkDrag = null, iconPickerCallback = null, iconPickerOpen = false;
 let uploadedFiles = [];
 const configSaver = WarTabConfigStore.createConfigSaver({
   write: function(snapshot) {
