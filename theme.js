@@ -3,13 +3,67 @@
    applyTheme, hexToRgba, loadGoogleFont.
    Depends on: $, config, DEFAULT_CONFIG (from app.js)
    ═══════════════════════════════════════════ */
-/* ── Theme & Branding ── */
+/* ── Background image display-size cap ──
+   Uploaded wallpapers can be 4K+ (a 3840×2160 source decodes to a ~33MB RGBA
+   texture the compositor must also blur). `background-size: cover` downscales
+   to the viewport for display, so a display-sized source renders pixel-identical
+   while the GPU holds a fraction of the memory. We apply the raw URL immediately
+   (no visual regression / async gap), then swap in a display-resolution copy once
+   it has been downscaled to an offscreen canvas. */
+const _bgCache = new Map();        // url -> downscaled dataURL (or raw when not downscaleable)
+const _bgInFlight = new Set();     // urls currently being processed
+function _capBgToDisplay(url){
+  if(_bgCache.has(url)) return _bgCache.get(url);
+  if(_bgInFlight.has(url)) return url;                 // in progress — keep raw meanwhile
+  if(!url || typeof Image==='undefined' || typeof document==='undefined'||!document.createElement('canvas')) return url;
+  _bgInFlight.add(url);
+  const dpr = Math.max(1, (window.devicePixelRatio||1));
+  // Enough for any screen: 2× viewport to cover retina, hard-capped to keep texture small.
+  const maxSide = Math.min(2560, Math.max(1600, 2 * Math.max(window.innerWidth, window.innerHeight) * dpr));
+  const img = new Image();
+  img.onload = function(){
+    try{
+      if(img.naturalWidth <= maxSide && img.naturalHeight <= maxSide){
+        _bgCache.set(url, url);                         // already small enough
+      }else{
+        const scale = Math.min(1, maxSide/Math.max(img.naturalWidth, img.naturalHeight));
+        const c=document.createElement('canvas');
+        c.width=Math.max(1,Math.round(img.naturalWidth*scale));
+        c.height=Math.max(1,Math.round(img.naturalHeight*scale));
+        const ctx=c.getContext('2d');
+        ctx.drawImage(img,0,0,c.width,c.height);
+        _bgCache.set(url, c.toDataURL('image/jpeg',0.82));
+      }
+    }catch(e){ _bgCache.set(url, url); }               // fall back to raw on any error
+    _bgInFlight.delete(url);
+    _applyCachedBg(url);
+  };
+  img.onerror = function(){ _bgCache.set(url, url); _bgInFlight.delete(url); _applyCachedBg(url); };
+  img.src = url;
+  return url;
+}
+function _applyCachedBg(url){
+  // Only swap if this url is still the active image background.
+  const t=config&&config.theme;
+  if(!t || t.bgType!=='image' || t.bgValue!==url) return;
+  const bg=typeof $==='function'?$('#bg-canvas'):null;
+  if(!bg) return;
+  const cached=_bgCache.get(url)||url;
+  const isData=String(cached).slice(0,5)==='data:';
+  bg.style.background=`url(${isData?'':'"'}${cached}${isData?'':'"'}) center/cover no-repeat`;
+}
 function applyTheme(){
   const t=config.theme,bg=$('#bg-canvas');
   switch(t.bgType){
     case'gradient':bg.style.background=`linear-gradient(135deg,${t.bgValue})`;break;
     case'solid':bg.style.background=t.bgValue.split(',')[0].trim();break;
-    case'image':bg.style.background=`url(${t.bgValue.trim()}) center/cover no-repeat fixed`;break;
+    case'image':{
+      const u=t.bgValue.trim();
+      bg.style.background=`url("${u}") center/cover no-repeat`;
+      const capped=_capBgToDisplay(u);                 // kick off (or reuse) display-size downscale
+      if(capped!==u) bg.style.background=`url("${capped}") center/cover no-repeat`;
+      break;
+    }
     default:bg.style.background=`linear-gradient(135deg,${DEFAULT_CONFIG.theme.bgValue})`;
   }
   const root=document.documentElement;

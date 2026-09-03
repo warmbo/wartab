@@ -377,7 +377,6 @@ body.panel-open .card:not(.card-highlight) { filter: blur(3px); opacity: var(--o
 /* ══════ Card ══════ */
 .card { 
   background: var(--card-bg);
-  backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur));
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow), inset 0 1px 0 var(--bevel-light);
   transition: border-color var(--anim-fast), box-shadow var(--anim-fast);
@@ -604,7 +603,6 @@ body.is-offline [data-module-type="api-poller"] .ui-module { opacity:.58; filter
 .slide-panel {
   position: fixed; top: 0; right: 0; bottom: 0; width: var(--panel-width); max-width: 100vw;
   background: linear-gradient(180deg, rgba(16,16,16,0.97) 0%, rgba(10,10,10,0.97) 100%);
-  backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
   border-left: 1px solid var(--glass-border);
   transform: translateX(100%);
   transition: var(--transition-panel);
