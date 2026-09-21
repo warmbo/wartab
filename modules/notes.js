@@ -26,6 +26,18 @@ registerModule('notes', {
     mkBtn('H','formatBlock','h3');
     mkBtn('ul','insertUnorderedList');
     mkBtn('<>','insertHTML','<code>code</code>');
+    var linkBtn=document.createElement('button');linkBtn.className='notes-tool-btn';linkBtn.textContent='link';linkBtn.title='Link the selected text';
+    linkBtn.addEventListener('mousedown',function(ev){ev.preventDefault();});
+    linkBtn.addEventListener('click',function(){
+      var u=window.prompt('Link URL (leave blank to unlink)');
+      if(u===null)return;
+      e.focus();
+      if(!u){document.execCommand('unlink');debounceSave();return;}
+      if(!/^https?:\/\//i.test(u))u='https://'+u;
+      document.execCommand('createLink',false,u);
+      linkify();debounceSave();
+    });
+    tb.appendChild(linkBtn);
     var findBtn=document.createElement('button');findBtn.className='notes-tool-btn';findBtn.textContent='⌕';findBtn.title='Find in this note';
     findBtn.addEventListener('mousedown',function(ev){ev.preventDefault();});
     findBtn.addEventListener('click',function(){var term=window.prompt('Find in note');if(!term)return;var text=e.textContent||'',idx=text.toLowerCase().indexOf(term.toLowerCase());if(idx<0){toast('No match in note','info');return;}var walker=document.createTreeWalker(e,NodeFilter.SHOW_TEXT);var offset=0,node;while((node=walker.nextNode())){var end=offset+node.nodeValue.length;if(idx>=offset&&idx<end){var range=document.createRange();range.setStart(node,idx-offset);range.setEnd(node,Math.min(node.nodeValue.length,idx-offset+term.length));var sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);node.parentElement.scrollIntoView({block:'nearest'});break;}offset=end;}});tb.appendChild(findBtn);
@@ -41,6 +53,40 @@ registerModule('notes', {
     var e=document.createElement('div');
     e.className='notes-editor';
     e.contentEditable=true;
+
+    // --- Links: a contenteditable region swallows anchor clicks, so open them ourselves ---
+    function safeHref(h){return /^https?:\/\//i.test(h||'')?h:null;}
+    // ponytail: linkify runs on load/blur only — rewriting text nodes mid-typing would move the caret
+    function linkify(){
+      var w=document.createTreeWalker(e,NodeFilter.SHOW_TEXT,null),nodes=[],n;
+      while((n=w.nextNode())){
+        if(n.parentElement&&n.parentElement.closest('a'))continue;
+        if(!/https?:\/\//i.test(n.nodeValue))continue;
+        nodes.push(n);
+      }
+      nodes.forEach(function(node){
+        var parts=node.nodeValue.split(/(https?:\/\/[^\s<>"']+)/g);
+        if(parts.length<2)return;
+        var frag=document.createDocumentFragment();
+        parts.forEach(function(p){
+          if(!p)return;
+          if(/^https?:\/\//i.test(p)){var a=document.createElement('a');a.setAttribute('href',p);a.textContent=p;a.target='_blank';a.rel='noopener';frag.appendChild(a);}
+          else frag.appendChild(document.createTextNode(p));
+        });
+        node.parentNode.replaceChild(frag,node);
+      });
+      return nodes.length;
+    }
+    e.addEventListener('click',function(ev){
+      var a=ev.target.closest?ev.target.closest('a[href]'):null;
+      if(!a)return;
+      var sel=window.getSelection();
+      if(sel&&!sel.isCollapsed)return; // selecting text, not clicking the link
+      var href=safeHref(a.getAttribute('href'));
+      if(!href)return;
+      ev.preventDefault();
+      window.open(href,'_blank','noopener');
+    });
     
     // Use textContent instead of innerHTML for initial empty state
     if(sec.content){
@@ -77,6 +123,7 @@ registerModule('notes', {
     var blurTimer=null,disposed=false;
     e.addEventListener('focus',showToolbar);
     e.addEventListener('blur',function(){
+      if(linkify())debounceSave(); // turn typed/pasted URLs into real links once editing stops
       // Delay hide so toolbar button clicks register before the editor blurs
       clearTimeout(blurTimer);
       blurTimer=setTimeout(function(){
@@ -175,6 +222,7 @@ registerModule('notes', {
     storage.getNote(sec.id).then(function(d){
       if(disposed)return;
       if(d.content&&d.content!==sec.content){sec.content=d.content;e.innerHTML=d.content;updateCharCount();}
+      linkify(); // existing plain-text URLs become clickable links on load
     }).catch(function(err){if(disposed)return;console.error('notes load failed:', err);toast('Note load failed','error');});
     
     // --- Cleanup ---

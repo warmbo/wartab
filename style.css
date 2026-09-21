@@ -510,6 +510,7 @@ body.is-offline [data-module-type="api-poller"] .ui-module { opacity:.58; filter
   line-height: 1.6;
 }
 .notes-editor code { padding: 2px var(--space-1); border-radius: var(--radius-sm); background: rgba(255,255,255,0.08); }
+.notes-editor a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .notes-resize-handle {
   height: 8px;
   margin: var(--space-1) 0;
