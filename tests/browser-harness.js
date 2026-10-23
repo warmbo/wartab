@@ -10,14 +10,14 @@ let exposureCounter = 0;
  * Evaluate a classic browser script read from the repository in an isolated
  * jsdom window and expose selected top-level bindings from that same script.
  */
-export function loadBrowserScript(scriptPath, exposedNames, globals = {}) {
+export function loadBrowserScript(scriptPath, exposedNames, globals = {}, html = '') {
   const absolutePath = resolve(REPOSITORY_ROOT, scriptPath);
   if (absolutePath !== REPOSITORY_ROOT && !absolutePath.startsWith(REPOSITORY_ROOT + sep)) {
     throw new Error(`Browser script must be inside the repository: ${scriptPath}`);
   }
 
   const source = readFileSync(absolutePath, 'utf8');
-  const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+  const dom = new JSDOM('<!doctype html><html><head></head><body>' + html + '</body></html>', {
     runScripts: 'outside-only',
     url: 'https://wartab.test/',
   });

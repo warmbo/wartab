@@ -107,4 +107,102 @@ describe('production config save queue', () => {
     expect(consoleError).toHaveBeenCalledTimes(2);
     consoleError.mockRestore();
   });
+
+  it('retries a failed write once before reporting the change as lost', async () => {
+    vi.useFakeTimers();
+    const operations = [deferred(), deferred()];
+    const onSaved = vi.fn();
+    const onError = vi.fn();
+    let index = 0;
+    const saver = store.createConfigSaver({
+      write() { return operations[index++].promise; },
+      onSaved,
+      onError,
+    });
+
+    const saved = saver.save({ value: 1 });
+    operations[0].reject(new Error('socket hang up'));
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(index).toBe(2);
+    expect(onError).not.toHaveBeenCalled();
+    operations[1].resolve();
+    await expect(saved).resolves.toEqual({ value: 1 });
+    expect(onSaved).toHaveBeenCalledWith({ value: 1 });
+    expect(onError).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('reports the failure when the retry fails too', async () => {
+    vi.useFakeTimers();
+    const operations = [deferred(), deferred()];
+    const onError = vi.fn();
+    let index = 0;
+    const saver = store.createConfigSaver({
+      write() { return operations[index++].promise; },
+      onError,
+    });
+
+    const saved = saver.save({ value: 1 });
+    operations[0].reject(new Error('server restarting'));
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(1000);
+    operations[1].reject(new Error('still down'));
+
+    await expect(saved).rejects.toThrow('still down');
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(index).toBe(2);
+    vi.useRealTimers();
+  });
+
+  it('lets a save queued during the retry delay supersede the retried snapshot', async () => {
+    vi.useFakeTimers();
+    const operations = [deferred(), deferred()];
+    const writes = [];
+    let index = 0;
+    const saver = store.createConfigSaver({
+      write(snapshot) { writes.push(snapshot); return operations[index++].promise; },
+    });
+
+    const first = saver.save({ value: 1 });
+    operations[0].reject(new Error('blip'));
+    await Promise.resolve();
+    await Promise.resolve(); // let the failure surface and schedule the retry
+    const second = saver.save({ value: 2 });
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(writes).toEqual([{ value: 1 }, { value: 2 }]);
+    operations[1].resolve();
+    await expect(Promise.all([first, second])).resolves.toEqual([{ value: 2 }, { value: 2 }]);
+    vi.useRealTimers();
+  });
+
+  it('drops non-enumerable derived aliases from the persisted payload', async () => {
+    // config-model attaches a non-enumerable `cards` accessor for current-page
+    // cards. It must never be serialized: pages are the source of truth, and a
+    // stale cards array on disk would be re-applied as a legacy single page.
+    const writes = [];
+    const saver = store.createConfigSaver({
+      write(snapshot) { writes.push(snapshot); return Promise.resolve(); },
+    });
+    const live = { pages: { a: { cards: [{ id: 'c1' }] } }, currentPage: 'a' };
+    Object.defineProperty(live, 'cards', {
+      configurable: true,
+      enumerable: false,
+      get() { return live.pages[live.currentPage].cards; },
+      set(cards) { live.pages[live.currentPage].cards = cards; },
+    });
+    expect(live.cards).toEqual([{ id: 'c1' }]);
+
+    const saved = await saver.save(live);
+
+    expect(writes).toHaveLength(1);
+    expect('cards' in writes[0]).toBe(false);
+    expect(writes[0]).toEqual({ pages: { a: { cards: [{ id: 'c1' }] } }, currentPage: 'a' });
+    // Clones (persisted payload, onSaved argument, undo snapshots) lose the
+    // accessor, so consumers must resolve current cards from pages.
+    expect(saved.cards).toBeUndefined();
+    expect(live.cards).toEqual([{ id: 'c1' }]);
+  });
 });

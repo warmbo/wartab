@@ -127,6 +127,12 @@ function applyTheme(){
     ? `rgba(0,0,0,${0.06 * op})`
     : `rgba(255,255,255,${0.15 * op})`);
   document.documentElement.dataset.cardBg=mode;
+  // Readable accent foreground. --accent stays the user's ornamental choice
+  // (bars, borders, glows); text/focus that must be legible uses --accent-fg,
+  // derived from the accent but pushed toward the card's contrast side so a
+  // black or near-black accent never renders invisible text.
+  root.style.setProperty('--accent-fg', accentForeground(t.glow, mode));
+  root.style.setProperty('--action-text', mode === 'light' ? '#ffffff' : '#111111');
   // Card radius
   root.style.setProperty('--card-radius', (t.cardRadius !== undefined ? parseInt(t.cardRadius) : 16) + 'px');
   // Surface radius — menus, panels, gallery, palette follow the card-radius
@@ -185,6 +191,24 @@ function applyTheme(){
   }
 }
 function hexToRgba(h,a){const c=h.replace('#','');return`rgba(${parseInt(c[0]+c[1],16)},${parseInt(c[2]+c[3],16)},${parseInt(c[4]+c[5],16)},${a})`;}
+/* Derive a legible accent foreground from the user's accent, preserving hue
+   where possible. Dark cards push the accent toward white until it reads;
+   light cards push it toward black. Use linearized sRGB luminance, not
+   gamma-encoded brightness, so saturated accents remain readable too. */
+function accentForeground(glow,mode){
+  const c=String(glow||'#888888').replace('#','');
+  if(!/^[0-9a-fA-F]{6}$/.test(c)) return mode==='light'?'#222222':'#e6e6e6';
+  let r=parseInt(c.slice(0,2),16),g=parseInt(c.slice(2,4),16),b=parseInt(c.slice(4,6),16);
+  const linear=v=>{v/=255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4;};
+  const lum=()=>0.2126*linear(r)+0.7152*linear(g)+0.0722*linear(b);
+  const target=mode==='light'?0.10:0.40;
+  for(let i=0;i<24;i++){
+    if(mode==='light'){ if(lum()<=target) break; r=Math.round(r*0.82); g=Math.round(g*0.82); b=Math.round(b*0.82); }
+    else { if(lum()>=target) break; r=Math.round(r+(255-r)*0.22); g=Math.round(g+(255-g)*0.22); b=Math.round(b+(255-b)*0.22); }
+  }
+  const hx=v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0');
+  return '#'+hx(r)+hx(g)+hx(b);
+}
 
 /** Explicitly flip the card theme (dark/light), overriding follow-system for the session. */
 function toggleTheme(){

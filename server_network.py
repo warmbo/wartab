@@ -247,6 +247,28 @@ def scan_arp():
         return _arp_cache
 
 
+def _default_gateway() -> str:
+    """The host's default-route gateway, read from /proc/net/route.
+
+    Previously hardcoded to the author's home subnet — that leaked a
+    private-instance detail into a public file and probed the wrong network on
+    any other LAN. Returns "" when no default route is parseable.
+    """
+    try:
+        with open("/proc/net/route", encoding="utf-8") as routes:
+            next(routes, None)
+            for line in routes:
+                fields = line.split()
+                if len(fields) >= 3 and fields[1] == "00000000" and fields[2] != "00000000":
+                    raw = int(fields[2], 16)
+                    return ".".join(
+                        str((raw >> shift) & 0xFF) for shift in (0, 8, 16, 24)
+                    )
+    except (OSError, ValueError) as error:
+        log.debug("default gateway lookup failed: %s", error)
+    return ""
+
+
 def _refresh_arp_cache():
     try:
         seen = set()
@@ -255,7 +277,9 @@ def _refresh_arp_cache():
                 fields = line.strip().split()
                 if fields and fields[0].count(".") == 3:
                     seen.add(fields[0])
-        gateway = "10.0.0.1"
+        gateway = _default_gateway()
+        if not gateway or gateway.count(".") != 3:
+            return
         subnet = ".".join(gateway.split(".")[:3]) + "."
         targets = [gateway]
         for suffix in (1, 50, 100, 150, 200, 250, 254):

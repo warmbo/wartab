@@ -171,11 +171,12 @@ const storage = (function() {
 
   function getNote(id) {
     return new Promise(function(resolve, reject) {
-      if (_notesCache[id] !== undefined) { resolve(_notesCache[id]); return; }
+      if (_notesCache[id] !== undefined) { resolve({ id: id, content: _notesCache[id] }); return; }
       var key = NOTES_PREFIX + id;
       chromeGet(key).then(function(data) {
         _notesCache[id] = data[key] || '';
-        resolve(_notesCache[id]);
+        // Same shape as server mode ({"id","content"}) — callers read .content.
+        resolve({ id: id, content: _notesCache[id] });
       }).catch(reject);
     });
   }

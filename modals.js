@@ -31,7 +31,19 @@ function openModal(opts) {
     }
   }
   function onKey(e) {
+    // Only the newest shared modal owns keyboard dismissal and focus.
+    if (overlay !== Array.from(document.querySelectorAll('.modal-overlay')).pop()) return;
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    if (e.key === 'Tab') {
+      var controls = Array.from(box.querySelectorAll('button,input,select,textarea,a[href],[tabindex]'))
+        .filter(function(el) { return !el.disabled && el.tabIndex >= 0 && !el.closest('[hidden]'); });
+      var first = controls[0] || box, last = controls[controls.length - 1] || box;
+      if (!box.contains(document.activeElement) || (e.shiftKey && document.activeElement === first)) {
+        e.preventDefault(); (e.shiftKey ? last : first).focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
+    }
   }
   overlay.addEventListener('click', function (e) {
     if (e.target === overlay) close();

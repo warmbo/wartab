@@ -1,3 +1,66 @@
+/* ── Paste / link safety helpers (used by the notes module below) ── */
+
+// Only http(s) is ever navigable; everything else (javascript:, data:, …) is dropped.
+function notesSafeHref(href) { return /^https?:\/\//i.test(href || '') ? href : null; }
+
+// Pasted images may only point at http(s) or the app's own upload/icon paths.
+function notesSafeSrc(src) {
+  src = src || '';
+  if (/^https?:\/\//i.test(src)) return src;
+  if (/^\/(uploads|icons)\//.test(src)) return src;
+  return null;
+}
+
+// Trailing sentence punctuation is not part of the URL (but a ) that closes a
+// ( inside the URL is, Wikipedia-style).
+function notesTrimUrl(raw) {
+  var url = String(raw || '').replace(/[.,;:!?\]]+$/, '');
+  while (url.slice(-1) === ')' && (url.match(/\(/g) || []).length < (url.match(/\)/g) || []).length) url = url.slice(0, -1);
+  while (url.slice(-1) === '}') url = url.slice(0, -1);
+  return url;
+}
+
+var NOTES_PASTE_TAGS = { B: 1, I: 1, STRONG: 1, EM: 1, U: 1, S: 1, DEL: 1, H3: 1, H4: 1, P: 1, BR: 1, UL: 1, OL: 1, LI: 1, CODE: 1, PRE: 1, BLOCKQUOTE: 1, A: 1, IMG: 1 };
+var NOTES_PASTE_DROP = { SCRIPT: 1, STYLE: 1, IFRAME: 1, FRAME: 1, OBJECT: 1, EMBED: 1, LINK: 1, META: 1, BASE: 1, FORM: 1, INPUT: 1, BUTTON: 1, SELECT: 1, TEXTAREA: 1, SVG: 1, MATH: 1, TEMPLATE: 1, CANVAS: 1, VIDEO: 1, AUDIO: 1, SOURCE: 1 };
+
+// Allowlist sanitizer for pasted rich text: template content is inert (no
+// image/script loading) and every kept element is rebuilt without attributes,
+// so pasted scripts, event handlers, inline styles and media can't survive.
+// ponytail: no paste-as-markdown converter — unwrap unknown tags, keep their text.
+function notesSanitizePaste(html) {
+  var holder = document.createElement('template');
+  holder.innerHTML = html || '';
+  var out = document.createElement('div');
+  (function walk(source, dest) {
+    Array.prototype.slice.call(source.childNodes).forEach(function(child) {
+      if (child.nodeType === 3) { dest.appendChild(document.createTextNode(child.nodeValue)); return; }
+      if (child.nodeType !== 1) return;
+      var tag = child.tagName.toUpperCase();
+      if (NOTES_PASTE_DROP[tag]) return;
+      if (!NOTES_PASTE_TAGS[tag]) { walk(child, dest); return; }
+      var clean = document.createElement(child.tagName.toLowerCase());
+      if (tag === 'A') {
+        var href = notesSafeHref(child.getAttribute('href'));
+        // Unsafe target: keep the link text, drop the link.
+        if (!href) { walk(child, dest); return; }
+        clean.setAttribute('href', href);
+        clean.setAttribute('target', '_blank');
+        clean.setAttribute('rel', 'noopener');
+      } else if (tag === 'IMG') {
+        var src = notesSafeSrc(child.getAttribute('src'));
+        if (!src) return;
+        clean.setAttribute('src', src);
+        clean.setAttribute('alt', child.getAttribute('alt') || '');
+        clean.style.maxWidth = '100%';
+        clean.style.height = 'auto';
+      }
+      dest.appendChild(clean);
+      walk(child, clean);
+    });
+  })(holder.content, out);
+  return out.innerHTML;
+}
+
 registerModule('notes', {
   defaults: { content:'' },
   render: (sec,card,cw)=>{
@@ -55,7 +118,6 @@ registerModule('notes', {
     e.contentEditable=true;
 
     // --- Links: a contenteditable region swallows anchor clicks, so open them ourselves ---
-    function safeHref(h){return /^https?:\/\//i.test(h||'')?h:null;}
     // ponytail: linkify runs on load/blur only — rewriting text nodes mid-typing would move the caret
     function linkify(){
       var w=document.createTreeWalker(e,NodeFilter.SHOW_TEXT,null),nodes=[],n;
@@ -70,8 +132,12 @@ registerModule('notes', {
         var frag=document.createDocumentFragment();
         parts.forEach(function(p){
           if(!p)return;
-          if(/^https?:\/\//i.test(p)){var a=document.createElement('a');a.setAttribute('href',p);a.textContent=p;a.target='_blank';a.rel='noopener';frag.appendChild(a);}
-          else frag.appendChild(document.createTextNode(p));
+          if(!/^https?:\/\//i.test(p)){frag.appendChild(document.createTextNode(p));return;}
+          var url=notesTrimUrl(p);
+          if(!/^https?:\/\/./i.test(url)){frag.appendChild(document.createTextNode(p));return;}
+          var a=document.createElement('a');a.setAttribute('href',url);a.textContent=url;a.target='_blank';a.rel='noopener';frag.appendChild(a);
+          var trail=p.slice(url.length);
+          if(trail)frag.appendChild(document.createTextNode(trail));
         });
         node.parentNode.replaceChild(frag,node);
       });
@@ -82,10 +148,22 @@ registerModule('notes', {
       if(!a)return;
       var sel=window.getSelection();
       if(sel&&!sel.isCollapsed)return; // selecting text, not clicking the link
-      var href=safeHref(a.getAttribute('href'));
+      var href=notesSafeHref(a.getAttribute('href'));
       if(!href)return;
       ev.preventDefault();
       window.open(href,'_blank','noopener');
+    });
+    // Pasted rich text is sanitized to a formatting allowlist; plain text stays plain.
+    e.addEventListener('paste',function(ev){
+      var dt=ev.clipboardData;
+      if(!dt)return;
+      ev.preventDefault();
+      var html=dt.getData('text/html');
+      var clean=html?notesSanitizePaste(html):'';
+      if(clean)document.execCommand('insertHTML',false,clean);
+      else document.execCommand('insertText',false,dt.getData('text/plain')||'');
+      updateCharCount();
+      debounceSave();
     });
     
     // Use textContent instead of innerHTML for initial empty state

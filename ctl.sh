@@ -6,7 +6,7 @@ set -euo pipefail
 
 SERVICE="wartab.service"
 PORT="${1:-8081}"
-REPO="/home/cody/Projects/wartab"
+REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 tput clear
 echo "╔══════════════════════════════════════╗"
@@ -30,7 +30,7 @@ if [ "$STATUS" = "active" ]; then
   HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT/" 2>/dev/null || echo '000')
   echo "  HTTP:      $HTTP_CODE"
   echo "  URL:       http://localhost:$PORT"
-  echo "  Caddy:     https://tab.warho.me"
+  if [ -n "${WARTAB_PUBLIC_URL:-}" ]; then printf "  Public:    %s\n" "$WARTAB_PUBLIC_URL"; fi
 fi
 echo ""
 

@@ -1,5 +1,9 @@
 /* Ordered, coalescing persistence for WarTab configuration changes. */
 var WarTabConfigStore = (function() {
+  // A single delayed retry: a transient failure must not silently drop the
+  // newest config, since the in-memory state is only re-persisted on next edit.
+  var RETRY_DELAY_MS = 1000;
+
   function clone(value) {
     if (value === undefined || value === null || typeof value !== 'object') return value;
     if (Array.isArray(value)) return value.map(clone);
@@ -21,6 +25,12 @@ var WarTabConfigStore = (function() {
       catch (error) { console.error('Config persistence notification failed:', error); }
     }
 
+    function fail(job, error) {
+      notify(options.onError, error);
+      advance();
+      job.waiters.forEach(function(waiter) { waiter.reject(error); });
+    }
+
     function run(job) {
       active = true;
       var operation;
@@ -36,9 +46,23 @@ var WarTabConfigStore = (function() {
           job.waiters.forEach(function(waiter) { waiter.resolve(clone(job.snapshot)); });
         })
         .catch(function(error) {
-          notify(options.onError, error);
-          advance();
-          job.waiters.forEach(function(waiter) { waiter.reject(error); });
+          if (!pending && !job.retried) {
+            // ponytail: one retry, no backoff — add backoff only if writes stay flaky.
+            job.retried = true;
+            setTimeout(function() {
+              if (pending) {
+                // A newer save arrived while waiting: it supersedes this snapshot,
+                // so this caller rides along and is settled by that write.
+                pending.waiters = job.waiters.concat(pending.waiters);
+                active = false;
+                advance();
+                return;
+              }
+              run(job);
+            }, RETRY_DELAY_MS);
+            return;
+          }
+          fail(job, error);
         });
     }
 

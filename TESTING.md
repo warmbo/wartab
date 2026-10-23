@@ -28,6 +28,24 @@ for file in *.js modules/*.js; do node --check "$file"; done
 python3 -m compileall -q server.py server_*.py
 ```
 
+## Real-browser smoke (Node 22+, no new dependencies)
+
+Launch an isolated Chromium profile, never your everyday browser profile:
+
+```bash
+chromium --headless=new --disable-dev-shm-usage --remote-debugging-port=9335 \
+  --user-data-dir="$(mktemp -d)" about:blank
+node tests/browser-smoke.mjs http://localhost:8081 http://localhost:9335
+```
+
+Run against a disposable copy for development. The sweep disables HTTP cache and service workers,
+uses reduced motion for stable captures, and checks every configured page at all seven viewports
+in dark/light mode. It also checks gallery filtering, Layout Studio reopening and preview widths,
+and cancellation preserving manual geometry. Optional third argument: screenshot directory.
+It disables startup background rotation only in the QA-fetched configuration and blocks outgoing
+writes, failing if an unexpected write is attempted. It never clicks Save, Apply, template
+confirmation, or page-switch controls.
+
 ## Customer journey matrix
 
 Exercise these journeys before release. Use a disposable configuration or snapshot first.

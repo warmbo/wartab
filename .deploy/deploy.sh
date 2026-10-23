@@ -5,7 +5,7 @@
 # `systemctl restart` (never nohup) so the service stays under systemd control.
 set -euo pipefail
 
-REPO="/home/cody/Projects/wartab"
+REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 PORT="${1:-8081}"
 SERVICE="wartab.service"
 LOG="$HOME/.wartab-deploy.log"

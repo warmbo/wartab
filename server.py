@@ -5,6 +5,7 @@ import glob
 import http.server
 import json
 import logging
+import posixpath
 import urllib.parse
 from pathlib import Path
 
@@ -381,6 +382,26 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
         translated = Path(self.translate_path(self.path))
         url_path = urllib.parse.urlparse(self.path).path
 
+        # Reject non-origin-form request targets up front. A bare relative
+        # target like `GET config.json` has no leading slash, so it would skip
+        # the leading-slash blocklist below and translate_path would resolve it
+        # against the served root — leaking config.json/server.py/data/.
+        if not url_path.startswith("/"):
+            self._serve_404_page()
+            return
+
+        # Normalize the URL path the SAME way SimpleHTTPRequestHandler's
+        # translate_path does (percent-decode + POSIX normpath) BEFORE applying
+        # the blocklist. Without this, "/static/%2e%2e/server.py" collapses to
+        # "/server.py" at serve time but never matches the raw-path blocklist —
+        # leaking source, config.json and data/.update_token. `..` and %2e%2e
+        # both collapse here, so the blocklist sees the real target.
+        try:
+            checked_path = posixpath.normpath(urllib.parse.unquote(url_path))
+        except (UnicodeDecodeError, ValueError):
+            self._serve_404_page()
+            return
+
         # Hard-block known sensitive paths up front, regardless of existence.
         # Prevents /data/.update_token, /.git/*, /server.py, /config.json,
         # /snapshots/*, /docs/*, /tests/* from ever being served.
@@ -392,10 +413,21 @@ class WarTabHandler(http.server.SimpleHTTPRequestHandler):
                          "/server_config.py", "/server_network.py",
                          "/server_files.py", "/server_startup.py",
                          "/server_defaults.py", "/stats.py"}
-        if url_path != "/" and (
-            url_path in blocked_exact
-            or any(url_path.startswith(p) for p in blocked_prefix)
+        if checked_path != "/" and (
+            checked_path in blocked_exact
+            or any(checked_path.startswith(p) for p in blocked_prefix)
         ):
+            self._serve_404_page()
+            return
+
+        # Defense in depth: the resolved target must stay inside the served
+        # root. translate_path already normalizes, so this only trips on a
+        # traversal it couldn't collapse — cheap insurance.
+        try:
+            if not translated.resolve().is_relative_to(HERE):
+                self._serve_404_page()
+                return
+        except OSError:
             self._serve_404_page()
             return
 

@@ -1,6 +1,7 @@
 """HTTP routing characterization tests for WarTab."""
 
 import json
+import os
 import socket
 import tempfile
 import threading
@@ -61,6 +62,21 @@ class TestServerRouting(unittest.TestCase):
         status = int(head.split(b"\r\n", 1)[0].split()[1])
         return status, json.loads(body)
 
+    def raw_status_and_body(self, request_bytes):
+        host, port = self.httpd.server_address[:2]
+        with socket.create_connection((str(host), port), timeout=2) as client:
+            client.sendall(request_bytes)
+            client.shutdown(socket.SHUT_WR)
+            response = bytearray()
+            while True:
+                chunk = client.recv(65536)
+                if not chunk:
+                    break
+                response.extend(chunk)
+        head, body = bytes(response).split(b"\r\n\r\n", 1)
+        status = int(head.split(b"\r\n", 1)[0].split()[1])
+        return status, body
+
     def test_unknown_api_get_is_json_404_not_spa_html(self):
         status, headers, body = self.request("/api/not-a-route")
         self.assertEqual(status, 404)
@@ -99,6 +115,55 @@ class TestServerRouting(unittest.TestCase):
 
         self.assertEqual(status, 200)
         self.assertFalse(victim.exists())
+
+    def test_encoded_traversal_cannot_bypass_static_blocklist(self):
+        """A path that normalize-collapses onto a blocked target (literal or
+        %2e%2e dots) must 404, not leak source/secrets."""
+        secrets = {
+            "server.py": b"SECRET SOURCE",
+            "config.json": b'{"token": "leak-me"}',
+            "data/.update_token": b"update-token-secret",
+            "snapshots/config_x.json": b"{}",
+        }
+        for relative, content in secrets.items():
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+
+        for route in (
+            "/static/%2e%2e/server.py",
+            "/static/../server.py",
+            "/%2e%2e/config.json",
+            "/x/%2e%2e%2fconfig.json",
+            "/static/%2e%2e/data/.update_token",
+            "/static/%2e%2e/snapshots/config_x.json",
+        ):
+            with self.subTest(route=route):
+                status, _, body = self.request(route)
+                self.assertEqual(status, 404)
+                for secret in secrets.values():
+                    self.assertNotIn(secret, body)
+
+    def test_relative_request_target_cannot_bypass_static_blocklist(self):
+        """A bare relative target (`GET config.json`) has no leading slash, so
+        the leading-slash blocklist would skip it and translate_path would
+        resolve it against the served root — leaking config.json. It must 404."""
+        secret = b'{"token": "leak-me"}'
+        (self.root / "config.json").write_bytes(secret)
+        # translate_path resolves relative to the process cwd; point it at the
+        # served root so the relative target maps to the private file.
+        cwd = os.getcwd()
+        os.chdir(self.root)
+        try:
+            status, body = self.raw_status_and_body(
+                b"GET config.json HTTP/1.1\r\nHost: localhost\r\n"
+                b"Connection: close\r\n\r\n"
+            )
+        finally:
+            os.chdir(cwd)
+
+        self.assertEqual(status, 404)
+        self.assertNotIn(secret, body)
 
     def test_spa_fallback_remains_last_and_keeps_security_headers(self):
         status, headers, body = self.request("/dashboard/page")

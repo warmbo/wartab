@@ -28,7 +28,17 @@ var WarTabHttp = (function() {
           });
         }
         var contentType = response.headers.get('Content-Type') || '';
-        return contentType.includes('json') ? response.json() : response.text();
+        return response.text().then(function(text) {
+          if (!/json/i.test(contentType)) return text;
+          // A successful empty body (204/no-content, or a JSON endpoint with
+          // nothing to say) is not a parse failure — only malformed JSON is.
+          if (!text) return null;
+          try {
+            return JSON.parse(text);
+          } catch (error) {
+            throw new Error('Invalid JSON response');
+          }
+        });
       })
       .catch(function(error) {
         if (timedOut) throw new Error('Request timed out');

@@ -25,10 +25,28 @@ describe('production HTTP and polling helpers', () => {
   it('rejects non-success responses and parses successful content by type', async () => {
     const fetcher = vi.fn()
       .mockResolvedValueOnce({ ok: false, status: 503, text: () => Promise.resolve('offline'), headers: { get: () => 'text/plain' } })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ ok: true }), headers: { get: () => 'application/json' } });
+      .mockResolvedValueOnce({ ok: true, status: 200, text: () => Promise.resolve('{"ok":true}'), headers: { get: () => 'application/json' } })
+      .mockResolvedValueOnce({ ok: true, status: 200, text: () => Promise.resolve('plain body'), headers: { get: () => 'text/plain' } });
 
     await expect(http.request('/fail', { fetch: fetcher })).rejects.toThrow('HTTP 503: offline');
     await expect(http.request('/ok', { fetch: fetcher })).resolves.toEqual({ ok: true });
+    await expect(http.request('/text', { fetch: fetcher })).resolves.toBe('plain body');
+  });
+
+  it('treats an empty successful JSON body as null instead of a parse failure', async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true, status: 204, text: () => Promise.resolve(''), headers: { get: () => 'application/json' },
+    });
+
+    await expect(http.request('/no-content', { fetch: fetcher })).resolves.toBeNull();
+  });
+
+  it('reports malformed JSON as a request failure', async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true, status: 200, text: () => Promise.resolve('<html>oops</html>'), headers: { get: () => 'application/json' },
+    });
+
+    await expect(http.request('/broken-json', { fetch: fetcher })).rejects.toThrow('Invalid JSON response');
   });
 
   it('aborts requests that exceed their timeout', async () => {

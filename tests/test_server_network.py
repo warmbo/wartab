@@ -101,5 +101,55 @@ class TestNetworkOperations(unittest.TestCase):
         self.assertEqual(result["containers"][0]["name"], "web")
 
 
+class TestDefaultGateway(unittest.TestCase):
+    """/proc/net/route is parsed rather than hardcoding a private LAN gateway."""
+
+    ROUTE = (
+        "Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\n"
+        "eth0\t00000000\t0100000A\t0003\t0\t0\t0\t00000000\n"
+        "eth0\t0000A8C0\t00000000\t0001\t0\t0\t0\t00FFFFFF\n"
+    )
+
+    def test_parses_default_route_gateway(self):
+        with mock.patch("builtins.open", mock.mock_open(read_data=self.ROUTE)):
+            self.assertEqual(server_network._default_gateway(), "10.0.0.1")
+
+    def test_missing_default_route_returns_empty(self):
+        header_only = self.ROUTE.splitlines()[0] + "\n"
+        with mock.patch("builtins.open", mock.mock_open(read_data=header_only)):
+            self.assertEqual(server_network._default_gateway(), "")
+
+    def test_unreadable_route_table_returns_empty(self):
+        with mock.patch("builtins.open", side_effect=OSError("no proc")):
+            self.assertEqual(server_network._default_gateway(), "")
+
+    ONLINK_ROUTE = (
+        "Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\n"
+        "tun0\t00000000\t00000000\t0001\t0\t0\t0\t00000000\n"
+        "eth0\t00000000\t0100000A\t0003\t0\t0\t0\t00000000\n"
+    )
+
+    def test_skips_gatewayless_onlink_default_route(self):
+        """/proc/net/route lists on-link default routes (Gateway 00000000)
+        before a real one; those must be skipped, not parsed into 0.0.0.0."""
+        with mock.patch("builtins.open", mock.mock_open(read_data=self.ONLINK_ROUTE)):
+            self.assertEqual(server_network._default_gateway(), "10.0.0.1")
+
+    def test_onlink_only_default_route_returns_empty(self):
+        header_only = self.ONLINK_ROUTE.splitlines()[0] + "\n"
+        onlink_only = header_only + "tun0\t00000000\t00000000\t0001\t0\t0\t0\t00000000\n"
+        with mock.patch("builtins.open", mock.mock_open(read_data=onlink_only)):
+            self.assertEqual(server_network._default_gateway(), "")
+
+    @mock.patch("server_network.subprocess.run")
+    def test_arp_refresh_does_not_probe_zero_subnet_without_gateway(self, run):
+        """No real gateway → don't ARP-ping 0.0.0.x."""
+        header_only = self.ONLINK_ROUTE.splitlines()[0] + "\n"
+        onlink_only = header_only + "tun0\t00000000\t00000000\t0001\t0\t0\t0\t00000000\n"
+        with mock.patch("builtins.open", mock.mock_open(read_data=onlink_only)):
+            server_network._refresh_arp_cache()
+        run.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()
