@@ -320,7 +320,7 @@ ds.sectionHeader = function(label, opts) {
 ds.statRow = function(label, value, accent) {
   var row = _el('div', 'ds-stat-row');
   row.appendChild(_txt('span', 'ds-stat-label', label));
-  if (typeof value === 'string') {
+  if (typeof value === 'string' || typeof value === 'number') {
     var valEl = _txt('span', 'ds-stat-value', value);
     if (accent) valEl.style.color = accent;
     row.appendChild(valEl);

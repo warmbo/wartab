@@ -41,10 +41,11 @@ registerModule('quotes', {
         card.style.cssText='background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.06);padding:10px 12px;margin-bottom:8px;border-left:2px solid var(--accent);';
         const qText=document.createElement('div');
         qText.style.cssText='font-size:var(--text-xs);line-height:1.5;color:var(--text-primary);margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;';
-        qText.textContent='\u201c'+qt.q+'\u201d';
+        qText.textContent='\u201c'+(qt.q||'')+'\u201d';
         const aText=document.createElement('div');
         aText.style.cssText='font-size:var(--text-2xs);color:var(--text-secondary);font-style:italic;';
-        aText.textContent='\u2014 '+qt.a;
+        // Imported/legacy quotes may omit the author; never print "undefined".
+        aText.textContent='\u2014 '+(qt.a||'Anonymous');
         card.appendChild(qText);card.appendChild(aText);
         // Actions
         const acts=document.createElement('div');acts.style.cssText='display:flex;gap:4px;margin-top:6px;';

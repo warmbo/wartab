@@ -13,7 +13,7 @@ describe('customer-facing hardening', () => {
 
   it('renders a configure empty state when iframe has no URL', () => {
     const src = read('modules/iframe.js');
-    expect(src).toContain("if(!sec.url)");
+    expect(src).toContain("if(!String(sec.url||'').trim())");
     expect(src).toContain("ds.empty('frame'");
   });
 

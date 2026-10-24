@@ -23,7 +23,7 @@ registerModule('network-status', {
     }
     function refresh(){
       var targets=parse();if(!targets.length){cw.replaceChildren(ds.empty('network','No network targets','Add a gateway, DNS server, or public host to check.',{label:'Configure',onClick:function(){openCardEditPanel(card.id);}}));return Promise.resolve();}
-      return Promise.all(targets.map(function(target){return WarTabHttp.request('/api/ping?host='+encodeURIComponent(target.host)+'&count=2',{timeout:10000}).then(function(data){return{label:target.label,host:target.host,state:data.alive?'healthy':(String(data.error||'').toLowerCase().includes('timeout')?'offline':'unknown'),avg_ms:Number(data.avg_ms),error:friendlyError(data.error)};},function(){return{label:target.label,host:target.host,state:'unknown',avg_ms:null,error:'Check unavailable'};});})).then(function(rows){var now=Date.now();saveCache(rows,now);renderRows(rows,now);});
+      return Promise.all(targets.map(function(target){return WarTabHttp.request('/api/ping?host='+encodeURIComponent(target.host)+'&count=2',{timeout:10000}).then(function(data){data=data||{};return{label:target.label,host:target.host,state:data.alive?'healthy':(String(data.error||'').toLowerCase().includes('timeout')?'offline':'unknown'),avg_ms:Number(data.avg_ms),error:friendlyError(data.error)};},function(){return{label:target.label,host:target.host,state:'unknown',avg_ms:null,error:'Check unavailable'};});})).then(function(rows){var now=Date.now();saveCache(rows,now);renderRows(rows,now);});
     }
     var cached=loadCache();if(cached&&cached.rows)renderRows(cached.rows,cached.ts);
     return WarTabHttp.createPoller({owner:cw,interval:Math.max(30000,(parseInt(sec.refreshInterval)||60)*1000),task:refresh});

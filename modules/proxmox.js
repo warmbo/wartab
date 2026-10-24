@@ -24,15 +24,29 @@ registerModule('proxmox', {
     }
 
     const base = sec.url.replace(/\/+$/, '');
-    // Basic auth: username is "user@realm!tokenid", password is the token secret
-    const auth = btoa(sec.username + ':' + sec.password);
-    const headers = { 'Authorization': 'Basic ' + auth };
+    // Proxmox API tokens authenticate with a dedicated header, not HTTP Basic:
+    //   Authorization: PVEAPIToken=user@realm!tokenid=secret
+    // Legacy config keeps the same two fields — username holds
+    // "user@realm!tokenid" and password holds the token secret.
+    const headers = { 'Authorization': 'PVEAPIToken=' + sec.username + '=' + sec.password };
+
+    function authHint(message) {
+      // Turn an opaque HTTP status into something the operator can act on.
+      if (/\b40[13]\b/.test(String(message))) {
+        return sec.username.indexOf('!') === -1
+          ? 'Authentication failed — the token ID must look like user@realm!tokenid.'
+          : 'Authentication failed — check the API token ID and secret, and that the token has permissions.';
+      }
+      return message;
+    }
+
+    function isAuthError(err) { return /Authentication failed/.test(String(err && err.message)); }
 
     function fetchJson(endpoint) {
       return WarTabHttp.request(base + endpoint, { headers: headers, timeout: 15000 }).then(data => {
         if (data && data.data !== undefined) return data.data;
         return data;
-      });
+      }, err => { throw new Error(authHint(err && err.message)); });
     }
 
     function statRow(label, value, accent) {
@@ -74,53 +88,51 @@ registerModule('proxmox', {
           const vms = items.filter(i => i.type === 'qemu');
           const lxc = items.filter(i => i.type === 'lxc');
           return {
+            nodes: items.filter(i => i.type === 'node'),
             vmsTotal: vms.length,
             vmsRunning: vms.filter(v => v.status === 'running').length,
             lxcTotal: lxc.length,
             lxcRunning: lxc.filter(l => l.status === 'running').length,
           };
-        }).catch(() => ({ vmsTotal: '—', vmsRunning: '—', lxcTotal: '—', lxcRunning: '—' })),
+        }).catch(err => { if (isAuthError(err)) throw err; return { vmsTotal: '—', vmsRunning: '—', lxcTotal: '—', lxcRunning: '—' }; }),
 
-        // Cluster status — gives node CPU/memory information
+        // Cluster membership and availability
         fetchJson('/api2/json/cluster/status').then(nodes => {
-          const online = nodes.filter(n => n.type === 'node' && n.status === 'online');
-          const offline = nodes.filter(n => n.type === 'node' && n.status === 'offline');
-          // Aggregate CPU and memory from online nodes.
-          // cluster/status provides per-node: cpu (0–1 load fraction) and maxcpu.
-          let cpuMax = 0, cpuUsed = 0, memMax = 0, memUsed = 0;
-          online.forEach(n => {
-            if (n.maxcpu) cpuMax += n.maxcpu;
-            if (typeof n.cpu === 'number') cpuUsed += n.cpu;
-            if (n.memory && n.memory.total) memMax += n.memory.total;
-            if (n.memory && n.memory.used) memUsed += n.memory.used;
-          });
-          return { nodesOnline: online.length, nodesOffline: offline.length, cpuMax, cpuUsed, memMax, memUsed, nodes };
-        }).catch(() => ({ nodesOnline: '—', nodesOffline: '—', cpuMax: 0, cpuUsed: 0, memMax: 0, memUsed: 0, nodes: [] }))
+          // /cluster/status exposes online (boolean/0/1), not resource metrics.
+          const online = nodes.filter(n => n.type === 'node' && (n.online === 1 || n.online === true));
+          const offline = nodes.filter(n => n.type === 'node' && (n.online === 0 || n.online === false));
+          return { nodesOnline: online.length, nodesOffline: offline.length };
+        }).catch(err => { if (isAuthError(err)) throw err; return { nodesOnline: '—', nodesOffline: '—' }; })
       ]).then(([resources, cluster]) => {
         w.innerHTML = '';
+        // /cluster/resources provides load fractions and byte-valued mem/maxmem.
+        let cpuMax=0,cpuUsed=0,memMax=0,memUsed=0;
+        (resources.nodes||[]).filter(n=>n.status==='online').forEach(n=>{
+          if(Number.isFinite(n.maxcpu)&&n.maxcpu>0&&Number.isFinite(n.cpu)){cpuMax+=n.maxcpu;cpuUsed+=n.cpu*n.maxcpu;}
+          if(Number.isFinite(n.maxmem)&&n.maxmem>0&&Number.isFinite(n.mem)){memMax+=n.maxmem;memUsed+=n.mem;}
+        });
 
-        // Node status
-        const allOk = cluster.nodesOffline === 0 || cluster.nodesOffline === '—';
-        w.appendChild(groupHeader('Nodes', allOk ? 'var(--color-success)' : 'var(--color-error)'));
+        // Node status — only green when there is real data and nothing is
+        // offline. A failed fetch (all '—') must not render a reassuring green
+        // dot on either the header or the status row.
+        const healthy = cluster.nodesOnline > 0 && cluster.nodesOffline === 0;
         const nodeCount = cluster.nodesOnline !== '—'
           ? cluster.nodesOnline + (cluster.nodesOffline > 0 ? '/' + cluster.nodesOffline + ' offline' : ' online')
           : '—';
-        // Only green when there is real data and nothing is offline — a failed
-        // fetch (all '—') must not render a reassuring green dot.
-        const healthy = cluster.nodesOnline !== '—' && cluster.nodesOffline === 0;
+        w.appendChild(groupHeader('Nodes', healthy ? 'var(--color-success)' : 'var(--color-error)'));
         w.appendChild(statRow('Status', nodeCount, healthy ? 'var(--color-success)' : 'var(--color-error)'));
 
         // CPU usage — real cluster average now that cpuUsed is aggregated correctly
-        if (cluster.cpuMax > 0 && cluster.cpuUsed > 0) {
-          const cpuPct = Math.min(cluster.cpuUsed / cluster.cpuMax * 100, 100);
+        if (cpuMax > 0) {
+          const cpuPct = Math.min(cpuUsed / cpuMax * 100, 100);
           w.appendChild(statRow('CPU', cpuPct.toFixed(0) + '%', cpuPct > 80 ? 'var(--color-warning)' : 'var(--text-primary)'));
         }
 
         // Memory
-        if (cluster.memMax > 0) {
-          const memPct = cluster.memUsed / cluster.memMax * 100;
-          const mu = Math.round(cluster.memUsed / 1024 / 1024 / 1024 * 10) / 10;
-          const mt = Math.round(cluster.memMax / 1024 / 1024 / 1024 * 10) / 10;
+        if (memMax > 0) {
+          const memPct = memUsed / memMax * 100;
+          const mu = Math.round(memUsed / 1024 / 1024 / 1024 * 10) / 10;
+          const mt = Math.round(memMax / 1024 / 1024 / 1024 * 10) / 10;
           w.appendChild(statRow('Memory', mu + '/' + mt + ' GB', memPct > 80 ? 'var(--color-warning)' : 'var(--text-primary)'));
         }
 
@@ -154,6 +166,6 @@ registerModule('proxmox', {
     const pi = cpInput('Token secret', sec.password || '', v => { sec.password = v; saveConfig(); });
     pi.type = 'password';
     bd.appendChild(pi);
-    bd.appendChild(cpHint('Create an API token in Datacenter > Permissions > API Tokens. Use user@pam!tokenid as the username and the secret as the password.'));
+    bd.appendChild(cpHint('Create an API token in Datacenter > Permissions > API Tokens. Use user@realm!tokenid as the token ID and the token secret below. WarTab sends it as an Authorization: PVEAPIToken header — the token needs at least PVEAuditor for read-only stats.'));
   },
 });

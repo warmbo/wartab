@@ -40,7 +40,7 @@ describe('operational startpage improvements', () => {
     const links = read('modules/links.js');
     expect(links).toContain('No destinations configured');
     expect(links).toContain('openCardGallery');
-    expect(links).toContain('filter(function(link){return link&&link.url;})');
+    expect(links).toContain('filter(function(link){return link&&bookmarkHref(link.url);})');
   });
 
   it('ships a compact summary-first network health module', () => {

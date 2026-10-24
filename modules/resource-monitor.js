@@ -140,7 +140,7 @@ registerModule('resource-monitor', {
       const fill=document.createElement('div');fill.className='rm-fill rm-fill-'+key;
       fill.style.width='0%';
       track.appendChild(fill);
-      var canvas=document.createElement('canvas');canvas.className='rm-spark-'+key;
+      var canvas=document.createElement('canvas');canvas.className='rm-spark-'+key;canvas.setAttribute('aria-hidden','true');
       var cwrap=document.createElement('div');cwrap.className='rm-chart-wrap';cwrap.style.display='none';
       cwrap.appendChild(canvas);
       row.appendChild(track);row.appendChild(cwrap);
@@ -164,7 +164,7 @@ registerModule('resource-monitor', {
     netLabelRow.appendChild(netLbl);netLabelRow.appendChild(netVal);netRow.appendChild(netLabelRow);
     netFill=document.createElement('div');netFill.className='rm-fill rm-fill-net';netFill.style.width='0%';
     netRow.appendChild(netFill);
-    netCanvas=document.createElement('canvas');netCanvas.className='rm-spark-net';
+    netCanvas=document.createElement('canvas');netCanvas.className='rm-spark-net';netCanvas.setAttribute('aria-hidden','true');
     netCwrap=document.createElement('div');netCwrap.className='rm-chart-wrap rm-chart-wrap-net';netCwrap.style.display='none';
     netCwrap.appendChild(netCanvas);
     netRow.appendChild(netCwrap);

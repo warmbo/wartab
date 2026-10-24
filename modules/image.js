@@ -2,13 +2,16 @@ registerModule('image', {
   defaults: { url:'', alt:'' },
   render: (sec,card,cw)=>{
     cw.style.flex='1';cw.style.display='flex';cw.style.flexDirection='column';cw.style.width='100%';
-    const w=document.createElement('div');w.style.cssText='flex:1;padding:4px 0;';
-    if(!sec.url){w.innerHTML='<div style="font-size:var(--text-xs);color:var(--text-tertiary);padding:20px;">No image selected. Edit to add one.</div>';}
+    const w=document.createElement('div');w.className='image-widget';w.style.cssText='flex:1;min-width:0;padding:4px 0;';
+    if(!sec.url){w.appendChild(ds.empty('image','No image selected','Choose an uploaded image or enter an image URL.',{label:'Choose image',onClick:()=>openCardEditPanel(card.id)}));}
     else{
-      const img=document.createElement('img');img.src=sec.url;img.alt=sec.alt||'';
-      img.style.cssText='max-width:100%;max-height:100%;object-fit:contain;display:inline-block;';
-      img.onerror=function(){this.style.display='none';this.parentNode.innerHTML='<div style="font-size:var(--text-xs);color:var(--text-tertiary);text-align:var(--mod-align,left);padding:20px;">Image failed to load</div>';};
-      w.appendChild(img);
+      function loadImage(){
+        const img=document.createElement('img');img.src=sec.url;img.alt=sec.alt||'';img.loading='lazy';img.decoding='async';
+        img.style.cssText='max-width:100%;max-height:100%;object-fit:contain;display:inline-block;';
+        img.onerror=function(){w.replaceChildren(ds.error('Image unavailable','Check the image URL or try loading it again.',{label:'Retry',onClick:loadImage}));};
+        w.replaceChildren(img);
+      }
+      loadImage();
     }
     cw.appendChild(w);
   },

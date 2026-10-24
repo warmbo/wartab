@@ -15,7 +15,16 @@ registerModule('ascii-anim', {
     var sp=(parseFloat(sec.speed)||10)/10;
     var ct=(parseFloat(sec.contrast)||10)/10;
     var ghostOn=!!sec.ghost;
+    pre.setAttribute('role','img');pre.setAttribute('aria-label','ASCII '+(sec.anim||'donut')+' animation');pre.style.fontFamily="'JetBrains Mono','Cascadia Code','Fira Code','Consolas',monospace";
     cw.appendChild(pre);
+    var toggle=document.createElement('button');toggle.className='btn btn-glass btn-sm ascii-toggle';
+    function updateToggle(){toggle.textContent=running?'Pause animation':'Play animation';}
+    toggle.onclick=function(){
+      running=!running;
+      if(running){pre.style.whiteSpace='pre';startAnim();}
+      else if(_timer){cancelAnimationFrame(_timer);_timer=null;}
+      updateToggle();
+    };updateToggle();cw.appendChild(toggle);
 
     var lum='.,-~:;=!*#$@';
     var ghostBuf=null,ghostDecay=0.88;
@@ -276,6 +285,8 @@ registerModule('ascii-anim', {
 
     // ── Start selected animation ──
     function startAnim(){
+      if(!running)return;
+      pre.style.lineHeight='1';
       ghostBuf=null;
       if(_timer){cancelAnimationFrame(_timer);_timer=null;}
       sizeFont();
@@ -290,13 +301,14 @@ registerModule('ascii-anim', {
       }
     }
 
-    if(!motionReduced&&window.ResizeObserver){
+    if(window.ResizeObserver){
       ro=new ResizeObserver(function(){
+        if(!running)return;
         if(sizeFont()&&_timer){cancelAnimationFrame(_timer);_timer=null;startAnim();}
       });
       ro.observe(pre);
     }
-    if(motionReduced)pre.textContent='Animations paused — enable in Edit panel';
+    if(motionReduced){pre.style.whiteSpace='pre-wrap';pre.style.fontSize='var(--text-sm)';pre.style.lineHeight='1.5';pre.textContent='Paused: reduced motion is enabled. Choose Play to animate.';}
     var startTimer=motionReduced?null:setTimeout(startAnim,200);
 
     WarTabLifecycle.addCleanup(cw,function(){
@@ -311,7 +323,9 @@ registerModule('ascii-anim', {
       ct=(parseFloat(sec.contrast)||10)/10;
       ghostOn=!!sec.ghost;
       motionReduced=typeof prefersReducedMotion==='function'&&prefersReducedMotion();running=!motionReduced;
-      if(motionReduced){pre.textContent='Animations paused — enable in Edit panel';return;}
+      updateToggle();
+      if(motionReduced){if(_timer){cancelAnimationFrame(_timer);_timer=null;}pre.style.whiteSpace='pre-wrap';pre.style.fontSize='var(--text-sm)';pre.style.lineHeight='1.5';pre.textContent='Paused: reduced motion is enabled. Choose Play to animate.';return;}
+      pre.style.whiteSpace='pre';
       startAnim();
     }
     sec._asciiRestart=restart;

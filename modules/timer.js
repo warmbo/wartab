@@ -16,8 +16,11 @@ registerModule('timer', {
       w.appendChild(info);
       function updateCountdown(){
         if(!sec.targetDate){display.textContent='--:--';info.textContent='Set target date in editor';return;}
-        const now=Date.now(),target=new Date(sec.targetDate).getTime(),diff=target-now;
-        if(diff<=0){display.textContent='★ EVENT PASSED ★';display.style.color='var(--accent)';info.textContent='Target was '+new Date(sec.targetDate).toLocaleDateString();return;}
+        const target=new Date(sec.targetDate).getTime();
+        // ponytail: an unparsable date would otherwise render "NaNd NaNh 00m 00s".
+        if(!isFinite(target)){display.textContent='--:--';display.style.color='';info.textContent='Invalid target date';return;}
+        const now=Date.now(),diff=target-now;
+        if(diff<=0){display.textContent='★ EVENT PASSED ★';display.style.color='var(--accent-fg)';info.textContent='Target was '+new Date(sec.targetDate).toLocaleDateString();return;}
         const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
         display.style.color='';display.textContent=d+'d '+String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';
         info.textContent=diff>86400000?Math.floor(diff/86400000)+' days until' :'Today!';
@@ -31,15 +34,15 @@ registerModule('timer', {
       const startBtn=document.createElement('button');startBtn.className='btn btn-glass btn-sm';startBtn.textContent='▶ Start';
       const resetBtn=document.createElement('button');resetBtn.className='btn btn-glass btn-sm';resetBtn.textContent='↺ Reset';
       btnRow.appendChild(startBtn);btnRow.appendChild(resetBtn);w.appendChild(btnRow);
-      let remaining=sec.duration||300;
+      let remaining=timerSeconds(sec.duration);
       let interval=null;
       const fmt=s=>{const m=Math.floor(s/60);const s2=s%60;return String(m).padStart(2,'0')+':'+String(s2).padStart(2,'0');};
-      const updateDisplay=()=>{display.textContent=fmt(remaining);if(remaining<=0){display.textContent='★ TIME UP ★';display.style.color='var(--accent)';}};
+      const updateDisplay=()=>{display.textContent=fmt(remaining);if(remaining<=0){display.textContent='★ TIME UP ★';display.style.color='var(--accent-fg)';}};
       const stop=()=>{if(interval){clearInterval(interval);interval=null;startBtn.textContent='▶ Start';}};
       WarTabLifecycle.addCleanup(cw,stop);
-      const start=()=>{if(interval)return;if(remaining<=0){remaining=sec.duration||300;display.style.color='';}interval=setInterval(()=>{remaining--;updateDisplay();if(remaining<=0)stop();},1000);startBtn.textContent='⏸ Pause';};
+      const start=()=>{if(interval)return;if(remaining<=0){remaining=timerSeconds(sec.duration);display.style.color='';}interval=setInterval(()=>{remaining--;updateDisplay();if(remaining<=0)stop();},1000);startBtn.textContent='⏸ Pause';};
       startBtn.addEventListener('click',()=>{if(interval)stop();else start();});
-      resetBtn.addEventListener('click',()=>{showConfirmModal('Reset timer?',()=>{stop();remaining=sec.duration||300;display.style.color='';updateDisplay();},'Reset');});
+      resetBtn.addEventListener('click',()=>{showConfirmModal('Reset timer?',()=>{stop();remaining=timerSeconds(sec.duration);display.style.color='';updateDisplay();},'Reset');});
       const presets=parseTimerPresets(sec.presets);
       if(presets.length){
         const presetRow=document.createElement('div');presetRow.className='timer-presets';
@@ -117,4 +120,12 @@ function parseTimerPresets(value){
     const label=part.slice(0,idx).trim(),seconds=parseInt(part.slice(idx+1),10);
     return label&&seconds>0?{label:label,seconds:seconds}:null;
   }).filter(Boolean).slice(0,6);
+}
+
+/* Coerce a configured duration to a positive whole number of seconds.
+   Guards against missing, string, negative or NaN values reaching the
+   countdown maths (a negative duration used to render "-1:-5"). */
+function timerSeconds(value, fallback){
+  const n = parseInt(value, 10);
+  return isFinite(n) && n > 0 ? n : (fallback || 300);
 }

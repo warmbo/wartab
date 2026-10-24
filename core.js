@@ -1282,11 +1282,11 @@ function escHtml(s){const d=document.createElement('div');d.textContent=s;return
 function cloneObj(o){return JSON.parse(JSON.stringify(o));}
 
 /* Local-only usage intelligence. No telemetry leaves the browser. */
-function getLinkUsage(){try{return JSON.parse(localStorage.getItem('wartab.link.usage')||'{}');}catch(error){return {};}}
+function getLinkUsage(){try{const data=JSON.parse(localStorage.getItem('wartab.link.usage')||'{}');return Object.assign(Object.create(null),data&&typeof data==='object'&&!Array.isArray(data)?data:{});}catch(error){return Object.create(null);}}
 function recordLinkUsage(link){
   if(!link||!link.url)return;
-  const usage=getLinkUsage(),entry=usage[link.url]||{count:0,last:0,label:link.label||link.url,icon:link.icon||'link'};
-  entry.count++;entry.last=Date.now();entry.label=link.label||entry.label;entry.icon=link.icon||entry.icon;usage[link.url]=entry;
+  const usage=getLinkUsage(),stored=usage[link.url],entry=stored&&typeof stored==='object'&&!Array.isArray(stored)?stored:{count:0,last:0,label:link.label||link.url,icon:link.icon||'link'};
+  entry.count=(Number.isFinite(Number(entry.count))?Math.max(0,Number(entry.count)):0)+1;entry.last=Date.now();entry.label=link.label||entry.label;entry.icon=link.icon||entry.icon;usage[link.url]=entry;
   // Bounded store: keep at most 120 entries; evict least-recently-used beyond that.
   try{
     const urls=Object.keys(usage);

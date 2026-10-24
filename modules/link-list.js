@@ -4,10 +4,10 @@
    Delegation happens at render time so load order doesn't matter.
    ═══════════════════════════════════════════ */
 registerModule('link-list', {
-  defaults: CARD_MODULES['links'] ? CARD_MODULES['links'].defaults : { links: [{label:'Example',url:'https://example.com',icon:'link'}], listMode: true },
+  defaults: Object.assign({}, CARD_MODULES['links'] ? CARD_MODULES['links'].defaults : { links: [{label:'Example',url:'https://example.com',icon:'link'}] }, { listMode:true }),
   render: function(sec, card, cw) {
     if (CARD_MODULES['links']) {
-      CARD_MODULES['links'].render(sec, card, cw);
+      CARD_MODULES['links'].render(Object.assign({},sec,{listMode:true}), card, cw);
     } else {
       cw.innerHTML = '<div style="padding:8px;text-align:var(--mod-align,left);color:var(--text-tertiary);font-size:var(--text-sm);">Link list unavailable</div>';
     }

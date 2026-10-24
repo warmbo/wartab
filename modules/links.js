@@ -1,12 +1,17 @@
 function normalizeBookmarkUrl(value){
   var raw=String(value||'').trim();if(!raw)return'';
-  try{var parsed=new URL(raw);parsed.hostname=parsed.hostname.toLowerCase();parsed.hash='';if(parsed.pathname==='/'&&!parsed.search)parsed.pathname='';return parsed.toString().replace(/\/$/,'').toLowerCase();}catch(e){return raw.replace(/\/$/,'').toLowerCase();}
+  try{var parsed=new URL(raw);parsed.hostname=parsed.hostname.toLowerCase();return parsed.toString();}catch(e){return raw;}
+}
+
+function bookmarkHref(value){
+  var raw=String(value||'').trim();if(!raw)return '';
+  try{var url=new URL(raw,document.baseURI);return ['javascript:','data:','vbscript:'].includes(url.protocol)?'':url.href;}catch(error){return '';}
 }
 
 registerModule('links', {
   defaults: { links:[{label:'Example',url:'https://example.com',icon:'link'}], listMode:false },
   render: (sec,card,cw)=>{
-    const validLinks=(sec.links||[]).filter(function(link){return link&&link.url;});
+    const validLinks=(sec.links||[]).filter(function(link){return link&&bookmarkHref(link.url);});
     if(!validLinks.length){cw.appendChild(ds.empty('layout-grid','No destinations configured','Add bookmarks or discover a purpose-built card.',{label:'Open Card Gallery',onClick:function(){openCardGallery();}}));return;}
     const bindCtx=(a,link,idx)=>{
       a.addEventListener('click',()=>recordLinkUsage(link));
@@ -16,10 +21,10 @@ registerModule('links', {
       // ── List view (single-column rows) ──
       const lst=document.createElement('div');lst.className='link-list';
       validLinks.forEach((link,idx)=>{
-        const a=document.createElement('a');a.className='link-row';a.href=link.url;a.target='_blank';a.rel='noopener';
+        const a=document.createElement('a');a.className='link-row';a.href=bookmarkHref(link.url);a.target='_blank';a.rel='noopener';
         if(link.label)a.title=link.label;
         a.appendChild(renderLinkIcon(link.icon));a.appendChild(document.createTextNode(' '+link.label));
-        bindCtx(a,link,idx);
+        bindCtx(a,link,(sec.links||[]).indexOf(link));
         lst.appendChild(a);
       });cw.appendChild(lst);
     }else{
@@ -28,10 +33,10 @@ registerModule('links', {
       var filter='',filterTimer=null;
       ig.addEventListener('keydown',function(ev){if(ev.key==='Escape'){filter='';Array.from(ig.children).forEach(function(tile){tile.hidden=false;});return;}if(ev.key==='Backspace'){filter=filter.slice(0,-1);}else if(ev.key.length===1&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey){filter+=ev.key.toLowerCase();}else{return;}ev.preventDefault();clearTimeout(filterTimer);filterTimer=setTimeout(function(){filter='';Array.from(ig.children).forEach(function(tile){tile.hidden=false;});},1800);Array.from(ig.children).forEach(function(tile){tile.hidden=filter&&!tile.textContent.toLowerCase().includes(filter);});});
       validLinks.forEach((link,idx)=>{
-        const a=document.createElement('a');a.className='link-item';a.href=link.url;a.target='_blank';a.rel='noopener';
+        const a=document.createElement('a');a.className='link-item';a.href=bookmarkHref(link.url);a.target='_blank';a.rel='noopener';
         if(link.label)a.title=link.label;
         a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label';s.textContent=link.label;
-        a.appendChild(s);bindCtx(a,link,idx);ig.appendChild(a);
+        a.appendChild(s);bindCtx(a,link,(sec.links||[]).indexOf(link));ig.appendChild(a);
       });cw.appendChild(ig);
     }
   },

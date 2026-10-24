@@ -15,6 +15,7 @@ function fmtBytes(v) {
   if (v === null || v === undefined) return '—';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let i = 0; let val = Number(v);
+  if (!Number.isFinite(val)) return '—';
   while (val >= 1024 && i < units.length - 1) { val /= 1024; i++; }
   return val.toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
 }
@@ -22,6 +23,7 @@ function fmtBytes(v) {
 function fmtDuration(seconds) {
   if (seconds === null || seconds === undefined) return '—';
   const s = Number(seconds);
+  if (!Number.isFinite(s)) return '—';
   if (s < 60) return Math.round(s) + 's';
   if (s < 3600) return Math.floor(s / 60) + 'm ' + Math.round(s % 60) + 's';
   if (s < 86400) return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
@@ -30,7 +32,8 @@ function fmtDuration(seconds) {
 
 function fmtPercent(v) {
   if (v === null || v === undefined) return '—';
-  return Number(v).toFixed(1) + '%';
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(1) + '%' : '—';
 }
 
 function fmtText(v) {
@@ -158,7 +161,7 @@ registerModule('api-poller', {
           const lo = w.dataset.lastOk;
           w.innerHTML = '<div class="api-row"><span class="api-label">' +
             escHtml(sec.label || 'Error') +
-            '</span><span class="api-value api-error">⚠ ' + escHtml(err.message) +
+            '</span><span class="api-value api-error">⚠ ' + escHtml((err && err.message) || String(err)) +
             '</span></div>' +
             '<div class="api-ts">' + (lo ? 'last ok: ' + timeAgo(parseInt(lo)) : '') + '</div>';
     }

@@ -77,6 +77,12 @@ registerModule('weather', {
       try { localStorage.setItem(cacheKey, JSON.stringify(o)); } catch (e) {}
     }
 
+    /* Cache is only valid for the location + unit it was fetched for; without
+       this, editing the zip or switching °C/°F kept showing the old city/units
+       for up to CACHE_TTL. Caches written before this key existed simply miss
+       once and refresh. */
+    function cacheKeyFor(s) { return (s.zip || '') + '|' + (s.country || 'US') + '|' + (s.units || 'celsius'); }
+
     /* ── Render a full weather card from API data (live fetch or cache) ── */
     function renderData(d) {
       var isF = sec.units === 'fahrenheit';
@@ -162,11 +168,18 @@ registerModule('weather', {
       if (daily && daily.temperature_2m_max) {
         var contextEl = document.createElement('div');
         contextEl.className = 'weather-context';
-        var high = Math.round(daily.temperature_2m_max[0]);
-        var low = daily.temperature_2m_min ? Math.round(daily.temperature_2m_min[0]) : null;
-        var precip = daily.precipitation_probability_max ? Math.round(daily.precipitation_probability_max[0]) : null;
-        ['High ' + high + '°', low === null ? '' : 'Low ' + low + '°', precip === null ? '' : precip + '% precipitation'].filter(Boolean).forEach(function(value){var item=document.createElement('span');item.textContent=value;contextEl.appendChild(item);});
-        secondaryEl.appendChild(contextEl);
+        /* Open-Meteo returns null for a whole day when a value is unavailable;
+           Math.round(null) is 0, which fabricated "High 0°" / "0% precipitation". */
+        var num = function (v) { return typeof v === 'number' && isFinite(v) ? Math.round(v) : null; };
+        var high = num(daily.temperature_2m_max[0]);
+        var low = daily.temperature_2m_min ? num(daily.temperature_2m_min[0]) : null;
+        var precip = daily.precipitation_probability_max ? num(daily.precipitation_probability_max[0]) : null;
+        var highItems = [];
+        if (high !== null) highItems.push('High ' + high + '°');
+        if (low !== null) highItems.push('Low ' + low + '°');
+        if (precip !== null) highItems.push(precip + '% precipitation');
+        highItems.forEach(function(value){var item=document.createElement('span');item.textContent=value;contextEl.appendChild(item);});
+        if (contextEl.children.length) secondaryEl.appendChild(contextEl);
         var fcEl = document.createElement('div');
         fcEl.className = 'weather-forecast';
         var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -174,6 +187,8 @@ registerModule('weather', {
         var maxTemps = daily.temperature_2m_max;
         var wCodes = daily.weathercode || [];
         for (var i = 0; i < Math.min(maxTemps.length, 5); i++) {
+          var dayTemp = num(maxTemps[i]);
+          if (dayTemp === null) continue; // no data for this day — skip, don't show 0°
           var dayEl = document.createElement('div');
           dayEl.className = 'weather-fc-day';
           var dName = document.createElement('div');
@@ -184,7 +199,7 @@ registerModule('weather', {
           fIcon.className = 'weather-fc-icon';
           var ft = document.createElement('div');
           ft.className = 'weather-fc-temp';
-          ft.textContent = Math.round(maxTemps[i]) + '°';
+          ft.textContent = dayTemp + '°';
           dayEl.appendChild(dName);
           dayEl.appendChild(fIcon);
           dayEl.appendChild(ft);
@@ -229,7 +244,7 @@ registerModule('weather', {
 
       /* ── Cached forecast: render instantly, fetch only when stale ── */
       var cache = loadCache();
-      if (cache && cache.data) {
+      if (cache && cache.data && cache.key === cacheKeyFor(sec)) {
         _cachedLat = cache.lat;
         _cachedLon = cache.lon;
         if (renderData(cache.data)) {
@@ -297,7 +312,7 @@ registerModule('weather', {
       return WarTabHttp.request(url).then(function(d) {
         if (!cw.isConnected) return;
         if (renderData(d)) {
-          saveCache({ ts: Date.now(), lat: lat, lon: lon, data: d });
+          saveCache({ ts: Date.now(), key: cacheKeyFor(sec), lat: lat, lon: lon, data: d });
         }
       }).catch(function(err) {
         if (!cw.isConnected) return;

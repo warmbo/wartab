@@ -13,7 +13,7 @@ const MEDIA_SERVICES = {
     defaultKeyLabel: 'API key (Settings > General)',
     defaultPort: 8989,
     fields: [
-      { id: 'series', label: 'Series', endpoint: '/api/v3/series', parser: d => Array.isArray(d) ? d.length : 0, accent: 'var(--accent)' },
+      { id: 'series', label: 'Series', endpoint: '/api/v3/series', parser: d => Array.isArray(d) ? d.length : 0, accent: 'var(--accent-fg, var(--accent))' },
       { id: 'wanted', label: 'Wanted', endpoint: '/api/v3/wanted/missing?page=1&pageSize=1', parser: d => d.totalRecords !== undefined ? d.totalRecords : '—', accent: 'var(--color-warning)' },
     ],
     optionalFields: [
@@ -26,7 +26,7 @@ const MEDIA_SERVICES = {
     defaultKeyLabel: 'API key (Settings > General)',
     defaultPort: 7878,
     fields: [
-      { id: 'movies', label: 'Movies', endpoint: '/api/v3/movie', parser: d => Array.isArray(d) ? d.length : 0, accent: 'var(--accent)' },
+      { id: 'movies', label: 'Movies', endpoint: '/api/v3/movie', parser: d => Array.isArray(d) ? d.length : 0, accent: 'var(--accent-fg, var(--accent))' },
       { id: 'missing', label: 'Missing', endpoint: '/api/v3/wanted/missing?page=1&pageSize=1', parser: d => d.totalRecords !== undefined ? d.totalRecords : '—', accent: 'var(--color-warning)' },
     ],
     optionalFields: [
@@ -62,8 +62,8 @@ function mediaGroupHeader(label, statusDot, url) {
     hdr.title = 'Open ' + label;
     hdr.tabIndex = 0;
     hdr.setAttribute('role', 'link');
-    hdr.addEventListener('click', function () { window.open(url, '_blank'); });
-    hdr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.open(url, '_blank'); } });
+    hdr.addEventListener('click', function () { window.open(url, '_blank', 'noopener,noreferrer'); });
+    hdr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.open(url, '_blank', 'noopener,noreferrer'); } });
   }
   if (statusDot) {
     const dot = document.createElement('span');
@@ -118,9 +118,9 @@ function fetchServiceData(svc) {
         const mc = d.MediaContainer || {};
         return mc.Size !== undefined ? mc.Size : 0;
       }).catch(() => '—'),
-      mediaFetch(base + '/library/sections', headers).then(d => parsePlexLib(d)).catch(() => ({})),
+      mediaFetch(base + '/library/sections', headers).then(d => parsePlexLib(d)).catch(() => null),
     ]).then(([streams, lib]) => {
-      return { type: 'plex', label: svc.label || 'Plex', streams, lib, error: null, url: base };
+      return { type: 'plex', label: svc.label || 'Plex', streams, lib, error: streams === '—' && lib === null ? 'Service unavailable — check the URL, credentials and network.' : null, url: base };
     }).catch(err => ({ type: 'plex', label: svc.label || 'Plex', error: err.message, url: base }));
   }
 
@@ -146,7 +146,7 @@ function fetchServiceData(svc) {
   return Promise.all(promises).then(values => {
     const results = {};
     fieldMeta.forEach((f, i) => { results[f.id] = { value: values[i], label: f.label, accent: f.accent }; });
-    return { type: svc.type, label: svc.label || def.label, results, error: null, url: base };
+    return { type: svc.type, label: svc.label || def.label, results, error: values.every(value => value === '—') ? 'Service unavailable — check the URL, credentials and network.' : null, url: base };
   }).catch(err => ({ type: svc.type, label: svc.label || def.label, error: err.message, url: base }));
 }
 
@@ -182,7 +182,7 @@ registerModule('media', {
     w.appendChild(ds.loading(3, 'bar'));
     cw.appendChild(w);
 
-    Promise.all(services.map(s => fetchServiceData(s)))
+    function load(){return Promise.all(services.map(s => fetchServiceData(s)))
       .then(results => {
         w.innerHTML = '';
         results.forEach(r => {
@@ -198,7 +198,7 @@ registerModule('media', {
             const libLabels = MEDIA_SERVICES.plex.libraryTypes;
             Object.keys(libLabels).forEach(type => {
               const count = (r.lib && r.lib[type]) || 0;
-              if (count > 0) w.appendChild(mediaStatRow(libLabels[type], count, 'var(--accent)'));
+              if (count > 0) w.appendChild(mediaStatRow(libLabels[type], count, 'var(--accent-fg, var(--accent))'));
             });
             return;
           }
@@ -217,7 +217,8 @@ registerModule('media', {
         w.appendChild(ds.error('Media fetch failed', err.message || 'Check network connection.', {
           label: 'Retry', onClick: function() { rerenderCard(card); }
         }));
-      });
+      });}
+    return WarTabHttp.createPoller({owner:cw,interval:Math.max(15000,(parseInt(sec.refreshInterval)||60)*1000),task:load});
   },
 
   editor: (sec, card, bd) => {

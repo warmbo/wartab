@@ -147,8 +147,19 @@ registerModule('clock', {
     }
 
     tick();
-    var interval = setInterval(tick, 10000);
-    return function() { clearInterval(interval); };
+    // Refresh on the minute boundary rather than on a blind 10s interval, which
+    // could show a minute that rolled up to ~10s ago. Self-reschedules so a
+    // long sleep (laptop lid) still lands on the next boundary.
+    var timer = null;
+    function schedule() {
+      timer = setTimeout(function () {
+        if (!cw.isConnected) return;
+        tick();
+        schedule();
+      }, 60000 - (Date.now() % 60000));
+    }
+    schedule();
+    return function() { clearTimeout(timer); };
   },
   settings: [
     { name:'format24h', label:'Format', type:'select', options:[{value:false,label:'12-hour'},{value:true,label:'24-hour'}], default:false, structural:true },

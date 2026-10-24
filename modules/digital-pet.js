@@ -63,22 +63,22 @@ registerModule('digital-pet', {
     function makeStat(label, getVal, invert) {
       const row = document.createElement('div'); row.className = 'dp-stat-row';
       const lbl = document.createElement('span'); lbl.className = 'dp-stat-lbl'; lbl.textContent = label; row.appendChild(lbl);
-      const bar = document.createElement('div'); bar.className = 'dp-bar';
+      const bar = document.createElement('div'); bar.className = 'dp-bar';bar.setAttribute('role','progressbar');bar.setAttribute('aria-label',label);bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');
       const fill = document.createElement('div'); fill.className = 'dp-fill'; bar.appendChild(fill); row.appendChild(bar);
       const valEl = document.createElement('span'); valEl.className = 'dp-val'; row.appendChild(valEl);
-      const upd = () => { const v = Math.max(0, Math.min(100, getVal())); fill.style.width = v + '%'; const hue = Math.round((invert ? 100 - v : v) * 1.2); fill.style.background = `hsl(${hue},70%,45%)`; fill.style.boxShadow = `0 0 6px hsla(${hue},70%,45%,0.3)`; valEl.textContent = Math.round(v); };
+      const upd = () => { const v = Math.max(0, Math.min(100, getVal())); bar.setAttribute('aria-valuenow',Math.round(v)); fill.style.width = v + '%'; const hue = Math.round((invert ? 100 - v : v) * 1.2); fill.style.background = `hsl(${hue},70%,45%)`; fill.style.boxShadow = `0 0 6px hsla(${hue},70%,45%,0.3)`; valEl.textContent = Math.round(v); };
       return { row, upd, fill };
     }
     const elapsed = (ts) => (Date.now() - (ts || Date.now())) / 60000;
 
     // ── Derived stats ──
     // Hunger drains ~2/min; happiness ~1/min; dirt rises ~0.5/min (existing).
-    const curHunger = () => Math.max(0, (sec.hunger || 80) - elapsed(sec.lastFed) * 2);
-    const curHappy = () => Math.max(0, (sec.happiness || 80) - elapsed(sec.lastPetted) * 1);
-    const curWaste = () => Math.min(100, (sec.waste || 10) + elapsed(sec.lastCleaned) * 0.5);
+    const curHunger = () => Math.max(0, (sec.hunger ?? 80) - elapsed(sec.lastFed) * 2);
+    const curHappy = () => Math.max(0, (sec.happiness ?? 80) - elapsed(sec.lastPetted) * 1);
+    const curWaste = () => Math.min(100, (sec.waste ?? 10) + elapsed(sec.lastCleaned) * 0.5);
     // Energy: drains ~1.2/min awake, recovers ~2.5/min while sleeping.
     const curEnergy = () => {
-      const base = sec.energy || 80;
+      const base = sec.energy ?? 80;
       const mins = elapsed(sec.lastEnergyTs || sec.lastSlept);
       const delta = sec.sleeping ? mins * 2.5 : -mins * 1.2;
       return Math.max(0, Math.min(100, base + delta));
@@ -86,7 +86,7 @@ registerModule('digital-pet', {
     // Health: drains when neglected (very hungry, very dirty, or exhausted);
     // slowly recovers toward ~80 when cared for. Floors at 15 — never dies.
     const curHealth = () => {
-      const base = sec.health || 100;
+      const base = sec.health ?? 100;
       const mins = elapsed(sec.lastHealthTs || sec.lastFed);
       const h = curHunger(), wa = curWaste(), en = curEnergy();
       let rate = 1.2; // gentle recovery by default
@@ -99,7 +99,7 @@ registerModule('digital-pet', {
     const haS = makeStat('Mood', curHappy); stats.appendChild(haS.row);
     const wS = makeStat('Dirt', curWaste, true); stats.appendChild(wS.row);
     const eS = makeStat('Energy', curEnergy); stats.appendChild(eS.row);
-    const heS = makeStat('Health', curHealth, true); stats.appendChild(heS.row);
+    const heS = makeStat('Health', curHealth); stats.appendChild(heS.row);
     w.appendChild(stats);
 
     // Info line — colored by mood / urgency
@@ -112,10 +112,10 @@ registerModule('digital-pet', {
       b.addEventListener('click', function (e) { e.stopPropagation(); onClick(b); });
       acts.appendChild(b); return b;
     }
-    mkBtn('Feed', () => { sec.lastFed = Date.now(); sec.hunger = Math.min(100, (sec.hunger || 80) + 30); sec.happiness = Math.min(100, (sec.happiness || 80) + 5); sec.waste = Math.min(100, (sec.waste || 10) + 10); sec.lastEnergyTs = Date.now(); sec.lastHealthTs = Date.now(); saveConfig(); updateAll(); speak('Nom nom nom...'); });
-    mkBtn('Pet', () => { sec.lastPetted = Date.now(); sec.happiness = Math.min(100, (sec.happiness || 80) + 20); sec.lastHealthTs = Date.now(); saveConfig(); updateAll(); speak('Purr... purr...'); });
-    mkBtn('Clean', () => { sec.lastCleaned = Date.now(); sec.waste = Math.max(0, (sec.waste || 10) - 40); sec.lastHealthTs = Date.now(); saveConfig(); updateAll(); speak('Ahh, much cleaner!'); });
-    mkBtn('Play', () => { sec.lastPlayed = Date.now(); sec.happiness = Math.min(100, (sec.happiness || 80) + 25); sec.energy = Math.max(0, (sec.energy || 80) - 15); sec.waste = Math.min(100, (sec.waste || 10) + 5); sec.lastEnergyTs = Date.now(); sec.lastHealthTs = Date.now(); saveConfig(); updateAll(); speak('Wheee! That was fun!'); });
+    mkBtn('Feed', () => { sec.lastFed = Date.now(); sec.hunger = Math.min(100, (sec.hunger ?? 80) + 30); sec.happiness = Math.min(100, (sec.happiness ?? 80) + 5); sec.waste = Math.min(100, (sec.waste ?? 10) + 10); sec.lastEnergyTs = Date.now(); sec.lastHealthTs = Date.now(); saveConfig(); updateAll(); speak('Nom nom nom...'); });
+    mkBtn('Pet', () => { sec.lastPetted = Date.now(); sec.happiness = Math.min(100, (sec.happiness ?? 80) + 20); sec.lastHealthTs = Date.now(); saveConfig(); updateAll(); speak('Purr... purr...'); });
+    mkBtn('Clean', () => { sec.lastCleaned = Date.now(); sec.waste = Math.max(0, (sec.waste ?? 10) - 40); sec.lastHealthTs = Date.now(); saveConfig(); updateAll(); speak('Ahh, much cleaner!'); });
+    mkBtn('Play', () => { sec.lastPlayed = Date.now(); sec.happiness = Math.min(100, (sec.happiness ?? 80) + 25); sec.energy = Math.max(0, (sec.energy ?? 80) - 15); sec.waste = Math.min(100, (sec.waste ?? 10) + 5); sec.lastEnergyTs = Date.now(); sec.lastHealthTs = Date.now(); saveConfig(); updateAll(); speak('Wheee! That was fun!'); });
     // Sleep toggles a sustained state; energy recovers while asleep.
     mkBtn('Sleep', (btn) => {
       sec.sleeping = !sec.sleeping;
@@ -128,7 +128,7 @@ registerModule('digital-pet', {
     });
     mkBtn('Medicine', () => {
       sec.lastMed = Date.now();
-      sec.health = Math.min(100, (sec.health || 100) + 55);   // strong boost
+      sec.health = Math.min(100, (sec.health ?? 100) + 55);   // strong boost
       sec.lastHealthTs = Date.now();
       saveConfig(); updateAll(); speak('Feeling much better!');
     });
@@ -142,7 +142,7 @@ registerModule('digital-pet', {
     creature.tabIndex = 0;
     function pet() {
       if (_disposed || sec.sleeping) return;
-      sec.lastPetted = Date.now(); sec.happiness = Math.min(100, (sec.happiness || 80) + 8);
+      sec.lastPetted = Date.now(); sec.happiness = Math.min(100, (sec.happiness ?? 80) + 8);
       sec.lastHealthTs = Date.now(); saveConfig(); updateAll();
       // brief heart burst
       envProps.innerHTML = '<pre class="dp-env-heart" style="left:50%;top:4px;">♥</pre>';
@@ -310,7 +310,7 @@ registerModule('digital-pet', {
     // avoid a config save + snapshot every minute while the pet is mounted.
     _baselineTimer = setInterval(function () {
       const en = curEnergy(), he = curHealth();
-      const moved = Math.abs(en - (sec.energy || 80)) > 2 || Math.abs(he - (sec.health || 100)) > 2;
+      const moved = Math.abs(en - (sec.energy ?? 80)) > 2 || Math.abs(he - (sec.health ?? 100)) > 2;
       if (!moved) return;
       sec.energy = en; sec.health = he;
       sec.lastEnergyTs = Date.now(); sec.lastHealthTs = Date.now();

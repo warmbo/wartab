@@ -2483,3 +2483,10 @@ code,
 [data-card-bg="light"] .command-deck-hint button { color: rgba(0,0,0,.86); border-color: rgba(0,0,0,.12); }
 [data-card-bg="light"] #context-edit-bar { background: rgba(250,250,250,.97); border-color: rgba(0,0,0,.12); box-shadow: 0 20px 70px rgba(0,0,0,.28); }
 [data-card-bg="light"] .context-edit-actions button { color: rgba(0,0,0,.65); }
+.iframe-fallback { align-self:flex-end; display:inline-flex; align-items:center; min-height:32px; padding:4px 0; font-size:var(--text-xs); color:var(--accent-fg); text-underline-offset:3px; }
+.ascii-toggle { align-self:flex-start; flex-shrink:0; }
+.lan-scan-line { display:flex; flex-direction:column; gap:2px; padding:6px 0; }
+.service-details summary::after, .network-details summary::after { content:'+'; margin-left:auto; font-size:1rem; }
+.service-details[open] summary::after, .network-details[open] summary::after { content:'−'; }
+@media (hover:none) and (pointer:coarse) { .service-details summary,.network-details summary { min-height:44px; } }
+@media (hover:none) and (pointer:coarse) { .iframe-fallback { min-height:44px; } }

@@ -336,7 +336,7 @@ function normalizeModuleSurface(surface, moduleType) {
     else if (tag === 'DETAILS') element.dataset.ui = 'disclosure';
     else if (tag === 'SUMMARY') element.dataset.ui = 'disclosure-trigger';
     else if (tag === 'CANVAS' || tag === 'IFRAME' || tag === 'IMG' || tag === 'PRE') element.dataset.ui = 'media';
-    else if (/loading|skeleton|error|empty/.test(classes)) element.dataset.ui = 'state';
+    else if (element.classList.contains('ds-state')) element.dataset.ui = 'state';
     else if (/row|item/.test(classes)) element.dataset.ui = 'row';
     else if (/value|temp|time|display/.test(classes)) element.dataset.ui = 'value';
     else if (/meta|hint|detail|label|date|author|\bts\b/.test(classes)) element.dataset.ui = 'meta';
