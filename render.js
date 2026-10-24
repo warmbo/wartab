@@ -131,7 +131,7 @@ function renderCard(card,idx){
     return div;
   }
   /* ── Regular card ── */
-  const div = document.createElement('div');
+  const div = document.createElement('article');
   div.className = 'card';
   div.dataset.cardId = card.id;
   div.dataset.cardRole = WarTabCardModel.getCardRole(card);
@@ -151,8 +151,8 @@ function renderCard(card,idx){
   const hdr = document.createElement('div');
   hdr.className = 'card-header';
 
-  const title = document.createElement('div');
-  title.className = 'card-title';
+  const title = document.createElement('h2');
+  title.className = 'card-title';title.id='card-title-'+(card.id||Math.random().toString(36).slice(2));div.setAttribute('aria-labelledby',title.id);
   const iconEl=renderIconElement(card.icon, 'card-icon');if(iconEl)title.appendChild(iconEl);
   title.appendChild(document.createTextNode(' ' + (card.title || '')));
   // Inline editing: double-click card title to rename
@@ -163,15 +163,16 @@ function renderCard(card,idx){
     input.type = 'text';
     input.value = current;
     input.className = 'card-title-input';
-    input.style.cssText = 'background:var(--card-input-bg);border:1px solid var(--accent);color:var(--text-primary);font:inherit;font-size:var(--heading-size);font-weight:600;padding:2px 6px;width:100%;outline:none;border-radius:0;';
+    input.setAttribute('aria-label','Card title');
     this.innerHTML = '';
     this.appendChild(input);
     input.focus();
     input.select();
+    let finished=false;
     const finish = function() {
-      const val = input.value.trim() || current;
-      card.title = val;
-      saveConfig();
+      if(finished)return;finished=true;
+      const val=input.value.trim()||current;
+      if(val!==current){card.title=val;saveConfig();}
       renderAll();
     };
     input.addEventListener('blur', finish);
@@ -354,14 +355,17 @@ function normalizeModuleSurface(surface, moduleType) {
 function renderSection(section, card) {
   const fragment = document.createDocumentFragment();
   let titleRow = null;
+  const contentId='sec-'+(section.id||Math.random().toString(36).slice(2));
+  const collapsed=!!section.label&&section.type!=='clock'&&!!section.collapsed;
 
   /* ── Section title row (label + collapse toggle) ── */
   if (section.label && section.type !== 'clock') {
     titleRow = document.createElement('button');
+    titleRow.type='button';
     titleRow.className = 'dropdown-toggle' + (section.collapsed ? '' : ' open');
     titleRow.dataset.secId = section.id;
     titleRow.setAttribute('aria-expanded', section.collapsed ? 'false' : 'true');
-    titleRow.setAttribute('aria-controls', 'sec-' + section.id);
+    titleRow.setAttribute('aria-controls',contentId);
 
     const labelSpan = document.createElement('span');
     labelSpan.textContent = section.label;
@@ -377,9 +381,9 @@ function renderSection(section, card) {
       section.collapsed = !section.collapsed;
       titleRow.classList.toggle('open');
       titleRow.setAttribute('aria-expanded', section.collapsed ? 'false' : 'true');
-      let c = titleRow.nextElementSibling;
-      while (c && !c.classList.contains('section-content') && !c.classList.contains('dropdown-content')) c = c.nextElementSibling;
+      const c=contentWrap;
       if (c) {
+        c.inert=!!section.collapsed;c.setAttribute('aria-hidden',String(!!section.collapsed));
         if (section.collapsed) {
           // Collapse: remove open class (gets overflow:hidden, removes flex:1),
           // pin to current height, then animate max-height to 0 via CSS transition
@@ -413,7 +417,8 @@ function renderSection(section, card) {
 
   /* ── Content area ── */
   const contentWrap = document.createElement('div');
-  contentWrap.className = 'dropdown-content' + (section.collapsed ? '' : ' open');
+  contentWrap.id=contentId;contentWrap.inert=collapsed;contentWrap.setAttribute('aria-hidden',String(collapsed));
+  contentWrap.className = 'dropdown-content' + (collapsed ? '' : ' open');
 
   applySectionStyles(section, contentWrap, titleRow);
 
@@ -489,14 +494,10 @@ function renderSection(section, card) {
 function renderLinkIcon(icon) {
   /* Image URL needs link-custom-icon class for object-fit sizing */
   if (icon && (icon.startsWith('http') || icon.startsWith('data:') || icon.startsWith('/'))) {
-    if (icon.startsWith('file:')) return renderLinkIcon('');
     const img = document.createElement('img');
     img.className = 'link-custom-icon'; img.src = icon; img.alt = '';
     img.onerror = function() {
-      const fallback = document.createElement('i');
-      fallback.className = 'link-icon'; fallback.setAttribute('data-lucide', 'link');
-      this.parentNode.replaceChild(fallback, this);
-      renderIcons();
+      this.replaceWith(renderLucideEl('link','link-icon'));
     };
     return img;
   }
@@ -505,23 +506,6 @@ function renderLinkIcon(icon) {
 }
 
 /* ── Local quote library ── */
-// Shrink link labels that overflow their container — keeps buttons single-line
-function shrinkLabels(container) {
-  setTimeout(function() {
-    if (!container || !container.parentNode) return;
-    container.querySelectorAll('.link-label').forEach(function(el) {
-      if (el.scrollWidth > el.clientWidth) {
-        let fs = parseInt(window.getComputedStyle(el).fontSize);
-        while (el.scrollWidth > el.clientWidth && fs > 8) {
-          el.style.fontSize = (--fs) + 'px';
-        }
-      }
-    });
-  }, 0);
-}
-
-
-
 function fetchQuote(el, sec) {
   const txt = el.querySelector('.quotes-content'),
       auth = el.querySelector('.quotes-author-name');

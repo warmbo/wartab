@@ -27,6 +27,8 @@ describe('customer module UI contract',()=>{
   it('uses IDs only for the few functional association cases in modules',()=>{
     const sources=fs.readdirSync('modules').filter(x=>x.endsWith('.js')).map(x=>read(path.join('modules',x))).join('\n');
     const ids=(sources.match(/\.id\s*=|\bid=/g)||[]).length;
-    expect(ids).toBeLessThanOrEqual(5);
+    // Five existing functional IDs plus the search editor's two label/control associations.
+    // Their actual targets are exercised in visual-cleanup.test.js.
+    expect(ids).toBeLessThanOrEqual(7);
   });
 });

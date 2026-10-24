@@ -26,7 +26,8 @@ function _collapsibleSection(label, defaultOpen) {
   var hdr = document.createElement('button');
   hdr.className = 'ep-section-hdr';
   hdr.type = 'button';
-  hdr.innerHTML = '<span class="ep-section-arrow">▶</span><span class="ep-section-label">' + label + '</span>';
+  hdr.innerHTML = '<span class="ep-section-arrow" aria-hidden="true">▶</span><span class="ep-section-label">' + escHtml(label) + '</span>';
+  hdr.setAttribute('aria-expanded',String(!!defaultOpen));
   wrap.appendChild(hdr);
 
   var body = document.createElement('div');
@@ -40,7 +41,7 @@ function _collapsibleSection(label, defaultOpen) {
   hdr.addEventListener('click', function() {
     var isOpen = !body.classList.contains('ep-collapsed');
     body.classList.toggle('ep-collapsed', isOpen);
-    hdr.classList.toggle('ep-collapsed', isOpen);
+    hdr.classList.toggle('ep-collapsed', isOpen);hdr.setAttribute('aria-expanded',String(!isOpen));
   });
 
   return { wrap: wrap, body: body, hdr: hdr };
@@ -90,7 +91,7 @@ function openCardEditPanel(cardId) {
     });
   }
   const title = $('#edit-panel-title');
-  if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
+  if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : (card.title || 'Untitled'));
 }
 
 function updateBlurState() {
@@ -134,7 +135,7 @@ function saveAndRefresh(structural) {
       const cardEl = document.querySelector(`[data-card-id="${_editingCardId}"]`);
       if (cardEl) cardEl.classList.add('card-highlight');
       const title = $('#edit-panel-title');
-      if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
+      if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : (card.title || 'Untitled'));
     }
     renderIcons();
     _restoreScroll();
@@ -147,7 +148,7 @@ function saveAndRefresh(structural) {
         newEl.classList.add('card-highlight');
       }
       const title = $('#edit-panel-title');
-      if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
+      if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : (card.title || 'Untitled'));
     }
     renderIcons();
     _restoreScroll();
@@ -282,7 +283,7 @@ function buildCardEditPanel(card) {
     Object.assign(cardSt, patch);
     saveAndRefresh();
     var title = $('#edit-panel-title');
-    if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : escHtml(card.title || 'Untitled'));
+    if (title) title.textContent = '✎ ' + (card._isGap ? 'Edit Gap' : (card.title || 'Untitled'));
   }
 
   // Alignment buttons

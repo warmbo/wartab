@@ -14,7 +14,7 @@ function cpInput(placeholder, value, onChange) {
   i.className = 'cp-input';
   i.type = 'text';
   i.placeholder = placeholder || '';
-  i.value = value || '';
+  i.value = value ?? '';
   if (onChange) i.addEventListener('change', () => onChange(i.value));
   return i;
 }
@@ -30,7 +30,7 @@ function cpSelect(options, value, onChange) {
     if (o.value === value) opt.selected = true;
     s.appendChild(opt);
   });
-  s.addEventListener('change', () => onChange(s.value));
+  if(onChange)s.addEventListener('change', () => onChange(s.value));
   return s;
 }
 
@@ -49,19 +49,18 @@ function cpCheck(label, checked, onChange) {
 function cpRange(label, value, min, max, onChange, step) {
   const g = document.createElement('div');
   g.className = 'cp-range';
-  g.appendChild(cpLabel(label));
+  const labelEl=cpLabel(label);g.appendChild(labelEl);
   const row = document.createElement('div');
   row.className = 'cp-range-row';
   const r = document.createElement('input');
+  r.id='cp-range-'+(cpRange.nextId=(cpRange.nextId||0)+1);labelEl.htmlFor=r.id;
   r.type = 'range'; r.min = min; r.max = max; r.value = value; if(step!==undefined) r.step = step;
-  const s = document.createElement('span');
+  const s = document.createElement('output');s.htmlFor=r.id;s.setAttribute('aria-hidden','true');
   s.className = 'cp-range-val';
   s.textContent = value;
   r.addEventListener('input', () => { s.textContent = r.value; });
   const doChange = () => { onChange(r.value); s.textContent = r.value; };
-  r.addEventListener('pointerup', doChange);
-  r.addEventListener('keyup', e => { if (e.key === 'Enter') doChange(); });
-  // 'change' fires on keyboard release too, so arrow-key adjustments persist
+  // Native change covers pointer and keyboard commits without duplicate saves.
   r.addEventListener('change', doChange);
   row.appendChild(r); row.appendChild(s);
   g.appendChild(row);
@@ -83,7 +82,7 @@ function cpDivider(text) {
 }
 
 function cpBtn(text, danger) {
-  const b = document.createElement('button');
+  const b = document.createElement('button');b.type='button';
   b.className = 'btn btn-glass btn-sm' + (danger ? ' btn-danger' : '');
   b.textContent = text;
   if (danger) b.title = text;

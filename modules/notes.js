@@ -68,11 +68,11 @@ registerModule('notes', {
     
     // --- Toolbar (hidden until editor focused, fades in) ---
     var tb=document.createElement('div');
-    tb.className='notes-tb';
+    tb.className='notes-tb';tb.setAttribute('role','group');tb.setAttribute('aria-label','Note formatting');
     
     function mkBtn(label,cmd,val){
       var b=document.createElement('button');
-      b.textContent=label;
+      b.textContent=label;b.title={bold:'Bold',italic:'Italic',formatBlock:'Heading',insertUnorderedList:'Bulleted list',insertHTML:'Inline code'}[cmd]||label;
       b.className='notes-tool-btn';
       b.addEventListener('mousedown',function(ev){ev.preventDefault();});
       b.addEventListener('click',function(){
@@ -110,12 +110,13 @@ registerModule('notes', {
     attachInput.addEventListener('change',function(){var file=attachInput.files&&attachInput.files[0];if(!file)return;storage.uploadFile(file,file.name).then(function(result){var url=result.url||result.path;if(!url)throw new Error('upload returned no URL');e.focus();document.execCommand('insertHTML',false,'<img src="'+escHtml(url)+'" alt="'+escHtml(file.name)+'" style="max-width:100%;height:auto;">');debounceSave();toast('Image attached','success');}).catch(function(error){toast(error.message||'Attachment failed','error');});});
     tb.appendChild(attachBtn);tb.appendChild(attachInput);
     
+    tb.querySelectorAll('button').forEach(button=>{button.type='button';button.setAttribute('aria-label',button.title||button.textContent);});
     cw.appendChild(tb);
     
     // --- Editor ---
     var e=document.createElement('div');
     e.className='notes-editor';
-    e.contentEditable=true;
+    e.contentEditable=true;e.setAttribute('role','textbox');e.setAttribute('aria-multiline','true');e.setAttribute('aria-label',(sec.label||card.title||'Dashboard')+' note');e.dataset.placeholder='Write a note…';
 
     // --- Links: a contenteditable region swallows anchor clicks, so open them ourselves ---
     // ponytail: linkify runs on load/blur only — rewriting text nodes mid-typing would move the caret

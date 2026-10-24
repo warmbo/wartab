@@ -35,7 +35,7 @@ registerModule('links', {
       validLinks.forEach((link,idx)=>{
         const a=document.createElement('a');a.className='link-item';a.href=bookmarkHref(link.url);a.target='_blank';a.rel='noopener';
         if(link.label)a.title=link.label;
-        a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label';s.textContent=link.label;
+        a.appendChild(renderLinkIcon(link.icon));var s=document.createElement('span');s.className='link-label'+(/\s/.test(link.label||'')?'':' link-label-compact');s.textContent=link.label||link.url;
         a.appendChild(s);bindCtx(a,link,(sec.links||[]).indexOf(link));ig.appendChild(a);
       });cw.appendChild(ig);
     }
@@ -54,14 +54,14 @@ registerModule('links', {
       const row=document.createElement('div');row.className='me-link-tr';row.dataset.linkIdx=li2;
       const gh=document.createElement('span');gh.className='me-link-grab';gh.textContent='⠿';gh.title='Drag to reorder';
       gh.addEventListener('pointerdown',(e)=>startLinkDrag(e,row,sec,li2));
-      const li2_i=document.createElement('input');li2_i.className='cp-input';li2_i.placeholder='Label';li2_i.value=link.label;
+      const li2_i=document.createElement('input');li2_i.className='cp-input';li2_i.placeholder='Label';li2_i.setAttribute('aria-label','Link label');li2_i.value=link.label;
       li2_i.addEventListener('change',()=>{sec.links[li2].label=li2_i.value;saveAndRefresh();});
       const ic=document.createElement('button');ic.className='me-icon-btn';
       if(link.icon&&(link.icon.startsWith('http')||link.icon.startsWith('data:')||link.icon.startsWith('/'))){const img=document.createElement('img');img.src=link.icon;img.alt='';ic.appendChild(img);}else if(isLucideName(link.icon)){const li=document.createElement('i');li.setAttribute('data-lucide',link.icon);ic.appendChild(li);}else{ic.textContent=link.icon||'🔗';}
       ic.title='Change icon';ic.addEventListener('click',()=>openIconPicker(url=>{sec.links[li2].icon=url;ic.innerHTML='';if(url.startsWith('http')||url.startsWith('data:')||url.startsWith('/')){const img=document.createElement('img');img.src=url;img.alt='';ic.appendChild(img);}else if(isLucideName(url)){const li=document.createElement('i');li.setAttribute('data-lucide',url);ic.appendChild(li);renderIcons();}else{ic.textContent=url||'🔗';}saveAndRefresh();}));
-      const ui=document.createElement('input');ui.className='cp-input';ui.placeholder='https://';ui.value=link.url;
+      const ui=document.createElement('input');ui.className='cp-input';ui.placeholder='https://';ui.setAttribute('aria-label','Link URL');ui.value=link.url;
       ui.addEventListener('change',()=>{sec.links[li2].url=ui.value;saveAndRefresh();});
-      const rm = cpBtn('✕', true); rm.title = '';
+      const rm = cpBtn('✕', true); rm.title = 'Remove '+(link.label||'link');rm.setAttribute('aria-label',rm.title);
       rm.addEventListener('click',()=>{sec.links.splice(li2,1);saveAndRefreshStructural();});
       row.appendChild(gh);row.appendChild(li2_i);row.appendChild(ic);row.appendChild(ui);row.appendChild(rm);
       container.appendChild(row);
