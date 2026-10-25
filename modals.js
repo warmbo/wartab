@@ -17,18 +17,21 @@ function openModal(opts) {
   box.setAttribute('role', 'dialog');
   box.setAttribute('aria-modal', 'true');
   if (opts.label) box.setAttribute('aria-label', opts.label);
-  if (opts.width) box.style.maxWidth = opts.width;
+  if(opts.width)box.style.width=opts.width;
   if (opts.align !== 'left') box.style.textAlign = 'center';
 
   var returnFocus = document.activeElement;
+  var closed=false;
 
   function close() {
-    if (opts.beforeClose && opts.beforeClose() === false) return;
+    if(closed || (opts.beforeClose && opts.beforeClose()===false))return false;
+    closed=true;var ownsFocus=overlay===Array.from(document.querySelectorAll('.modal-overlay')).pop();
     overlay.remove();
     document.removeEventListener('keydown', onKey, true);
-    if (returnFocus && typeof returnFocus.focus === 'function') {
+    if(ownsFocus && returnFocus && returnFocus.isConnected && typeof returnFocus.focus==='function'){
       try { returnFocus.focus({ preventScroll: true }); } catch (e) {}
     }
+    return true;
   }
   function onKey(e) {
     // Only the newest shared modal owns keyboard dismissal and focus.
@@ -46,7 +49,7 @@ function openModal(opts) {
     }
   }
   overlay.addEventListener('click', function (e) {
-    if (e.target === overlay) close();
+    if(e.target===overlay && overlay===Array.from(document.querySelectorAll('.modal-overlay')).pop())close();
   });
   document.addEventListener('keydown', onKey, true);
 
@@ -82,24 +85,23 @@ function showConfirmModal(msg, onConfirm, okTextOrOptions) {
   }
   const m = openModal({ label: okText + '?', align: 'center' });
   const box = m.box;
-  const label = document.createElement('div');
+  const label = document.createElement('p');label.className='modal-message';
   label.textContent = msg;
-  label.style.cssText = 'font-size:var(--text-base);color:var(--text-primary);margin-bottom:var(--space-4);';
+
   box.appendChild(label);
   const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex;gap:var(--space-2);justify-content:center;';
+  btnRow.className='modal-actions';
   const okBtn = document.createElement('button');
   okBtn.textContent = okText;
   okBtn.className = 'btn btn-glass btn-sm' + (danger ? ' btn-danger' : '');
-  okBtn.addEventListener('click', () => { m.close(); onConfirm(); });
+  okBtn.type='button';okBtn.addEventListener('click',()=>{if(m.close())onConfirm();});
   const cancelBtn = document.createElement('button');
-  cancelBtn.className = 'btn btn-glass btn-sm';
+  cancelBtn.type='button';cancelBtn.className = 'btn btn-glass btn-sm';
   cancelBtn.textContent = 'Cancel';
   cancelBtn.addEventListener('click', () => m.close());
-  btnRow.appendChild(okBtn);
-  btnRow.appendChild(cancelBtn);
+  btnRow.append(cancelBtn,okBtn);
   box.appendChild(btnRow);
-  okBtn.focus({ preventScroll: true });
+  (danger?cancelBtn:okBtn).focus({preventScroll:true});
 }
 
 /* ── Info modal (message + OK button, no confirmation) ── */
@@ -108,8 +110,7 @@ function showModal(title, items) {
   const box = m.box;
   const body = document.createElement('div');
   if (title) {
-    const t = document.createElement('div');
-    t.style.cssText = 'font-weight:700;margin-bottom:var(--space-3);';
+    const t = document.createElement('h2');t.className='modal-heading';
     t.textContent = title;
     body.appendChild(t);
   }
@@ -125,10 +126,10 @@ function showModal(title, items) {
   }
   box.appendChild(body);
   const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex;gap:var(--space-2);justify-content:center;margin-top:var(--space-4);';
+  btnRow.className='modal-actions';
   const okBtn = document.createElement('button');
   okBtn.className = 'btn btn-glass btn-sm';
-  okBtn.textContent = 'OK';
+  okBtn.type='button';okBtn.textContent = 'OK';
   okBtn.addEventListener('click', () => m.close());
   btnRow.appendChild(okBtn);
   box.appendChild(btnRow);

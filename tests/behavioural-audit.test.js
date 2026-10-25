@@ -37,7 +37,7 @@ describe('behavioural audit fixes', () => {
 
   it('routes inner controls and surfaces through radius tokens instead of hardcoded px', () => {
     const css = read('style.css');
-    expect(css).toContain('.palette-item {\n  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;\n  padding: 10px 12px; background: transparent; border: none; border-radius: var(--control-radius);');
+    expect(css).toMatch(/\.palette-item\s*\{[^}]*border-radius:\s*var\(--control-radius\)/);
     expect(css).toContain('.context-edit-actions button{min-height:38px;display:flex;align-items:center;gap:6px;padding:0 9px;border:0;border-radius:var(--control-radius)');
     expect(css).toContain('.command-deck-menu button{width:100%;min-height:38px;display:flex;align-items:center;gap:9px;padding:8px 10px;border:0;border-radius:var(--control-radius)');
     expect(css).toContain('.modal-box { background:var(--surface-panel)');

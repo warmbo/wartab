@@ -64,7 +64,7 @@ describe('audit round 3 fixes', () => {
   it('converts stat labels to readable secondary color and palette badges to pills', () => {
     const css = read('style.css');
     expect(css).toContain('.stat-item .stat-label { font-weight: 500; color: var(--text-secondary);');
-    expect(css).toContain('border-radius: 999px; color: var(--text-tertiary, rgba(255,255,255,0.5));');
+    expect(css).toMatch(/\.palette-item-badge\s*\{[^}]*border-radius:\s*999px;\s*color:\s*var\(--text-secondary\)/);
   });
 
   it('coerces unbounded number settings to real numbers with default fallback', () => {

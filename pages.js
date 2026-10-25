@@ -28,7 +28,7 @@ function renderPageNav() {
     const p = config.pages[id];
     if (!p) return;
     const tab = document.createElement('button');
-    tab.type = 'button';
+    tab.type = 'button';tab.title=(p.name||'Page')+' · double-click to edit';
     tab.dataset.pageId = id;
     tab.className = 'page-tab' + (id === config.currentPage ? ' active' : '');
     if (id === config.currentPage) tab.setAttribute('aria-current', 'page');
@@ -43,6 +43,7 @@ function renderPageNav() {
     const nameSpan = document.createElement('span');
     nameSpan.textContent = p.name;
     let clickTimer = null;
+    WarTabLifecycle.addCleanup(tab,function(){clearTimeout(clickTimer);});
     tab.addEventListener('click', () => {
       if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
       clickTimer = setTimeout(() => { clickTimer = null; switchPage(id); }, 250);
@@ -86,20 +87,17 @@ function renderPageNav() {
   tabs.appendChild(leftArrow);
   tabs.appendChild(scrollWrap);
   tabs.appendChild(rightArrow);
-  setTimeout(updateArrows, 50);
+  var active=inner.querySelector('.page-tab.active');
+  if(active)inner.scrollLeft=Math.max(0,active.offsetLeft-inner.offsetLeft-(inner.clientWidth-active.offsetWidth)/2);
+  updateArrows();
   renderIcons();
 }
 function showShortcutsOverlay() {
   const existing = document.querySelector('#shortcuts-overlay');
-  if (existing) { existing.remove(); return; }
-  const overlay = document.createElement('div');
-  overlay.id = 'shortcuts-overlay';
-  overlay.className = 'modal-overlay shortcuts-overlay';
-  const box = document.createElement('div');
-  box.className = 'modal-box shortcuts-box';
-  box.setAttribute('role', 'dialog');
-  box.setAttribute('aria-modal', 'true');
-  box.setAttribute('aria-label', 'Keyboard shortcuts');
+  if(existing){existing._close();return;}
+  const modal=openModal({label:'Keyboard shortcuts',align:'left',width:'680px'});
+  const overlay=modal.overlay;overlay.id='shortcuts-overlay';overlay.classList.add('shortcuts-overlay');overlay._close=modal.close;
+  const box=modal.box;box.classList.add('shortcuts-box');
 
   // Header with icon, title, close button — matching slide-panel-header convention
   const hdr = document.createElement('div');
@@ -110,7 +108,7 @@ function showShortcutsOverlay() {
   closeBtn.className = 'btn btn-glass btn-icon';
   closeBtn.setAttribute('aria-label', 'Close shortcuts');
   closeBtn.textContent = '✕';
-  closeBtn.addEventListener('click', () => overlay.remove());
+  closeBtn.addEventListener('click',modal.close);
   hdr.appendChild(closeBtn);
   box.appendChild(hdr);
 
@@ -165,25 +163,20 @@ function showShortcutsOverlay() {
 
   const foot = document.createElement('div');
   foot.className = 'shortcuts-foot';
-  foot.textContent = 'Esc closes this window · Ctrl+K searches anytime';
+  foot.textContent = 'Esc or ? closes this window';
   box.appendChild(foot);
 
-  overlay.appendChild(box);
-  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
-  document.body.appendChild(overlay);
-  renderIcons();
-  // Focus the overlay so keydown events fire
-  overlay.setAttribute('tabindex', '-1');
-  overlay.focus();
+  renderIcons();closeBtn.focus({preventScroll:true});
   // Listen for single-key commands on the overlay itself
   function onShortcutKey(e) {
+    if(e.ctrlKey||e.metaKey||e.altKey||e.defaultPrevented)return;
     const key = e.key.toLowerCase();
-    if (key === 'n') { e.preventDefault(); overlay.remove(); addNewCard(); }
-    else if (key === 's') { e.preventDefault(); overlay.remove(); const fs=$('#card-grid .inline-search-wrap input'); if(fs)fs.focus(); }
-    else if (key === 'p') { e.preventDefault(); overlay.remove(); addPage(); }
-    else if (key === 'c') { e.preventDefault(); overlay.remove(); toggleConfigPanel(); }
-    else if (e.key === '?') { e.preventDefault(); overlay.remove(); }
-    else if (e.key === 'Escape') { overlay.remove(); }
+    if (key === 'n') { e.preventDefault();e.stopPropagation();modal.close(); addNewCard(); }
+    else if (key === 's') { e.preventDefault();e.stopPropagation();modal.close(); const fs=$('#card-grid .inline-search-wrap input'); if(fs)fs.focus(); }
+    else if (key === 'p') { e.preventDefault();e.stopPropagation();modal.close(); addPage(); }
+    else if (key === 'c') { e.preventDefault();e.stopPropagation();modal.close(); toggleConfigPanel(); }
+    else if (e.key === '?') { e.preventDefault();e.stopPropagation();modal.close(); }
+    else if(e.key==='Escape'){modal.close();}
   }
   overlay.addEventListener('keydown', onShortcutKey);
   // Also capture keys globally while overlay is visible (in case focus shifts)
@@ -197,16 +190,10 @@ function showShortcutsOverlay() {
 }
 
 function switchPage(pageId) {
-  if (!config.pages[pageId]) return;
-  config.currentPage = pageId;
-  saveConfig();
-  const grid = $('#card-grid');
-  if (grid) grid.classList.add('page-switching');
-  setTimeout(function() {
-    renderAll();
-    renderPageNav();
-    if (grid) grid.classList.remove('page-switching');
-  }, 200);
+  if (!config.pages[pageId] || pageId===config.currentPage) return;
+  const restoreFocus=document.activeElement?.classList.contains('page-tab');
+  config.currentPage=pageId;saveConfig();renderAll();renderPageNav();
+  if(restoreFocus)document.querySelector('.page-tab[aria-current=page]')?.focus({preventScroll:true});
 }
 
 function addPage() {

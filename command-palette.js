@@ -15,6 +15,7 @@
   var resultsEl = null;
   var items = [];          // {label, sublabel, icon, kind, run, match}
   var activeIdx = 0;
+  var returnFocus = null;
 
   var K = { ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', Enter: 'Enter', Escape: 'Escape' };
 
@@ -74,6 +75,7 @@
   /* ── Gather all launchable items from current config ── */
   function gatherItems() {
     var list = [];
+    var usageByUrl=typeof getLinkUsage==='function'?getLinkUsage():{};
 
     // Actions (always available)
     var actions = [
@@ -121,12 +123,12 @@
         card.sections.forEach(function (sec) {
           if (!sec || !sec.links) return;
           sec.links.forEach(function (link) {
-            if (!link || !link.url) return;
-            var usage=(typeof getLinkUsage==='function'?getLinkUsage():{})[link.url]||{};
+            if (!link || !link.url || !bookmarkHref(link.url)) return;
+            var usage=usageByUrl[link.url]||{};
             list.push({
               kind: 'link', label: link.label || link.url, sublabel: link.url,
               icon: link.icon || 'link', usage:usage.count||0,
-              run: function () { if(typeof recordLinkUsage==='function')recordLinkUsage(link);window.open(link.url, '_blank', 'noopener'); }
+              run: function () { if(typeof recordLinkUsage==='function')recordLinkUsage(link);window.open(bookmarkHref(link.url), '_blank', 'noopener,noreferrer'); }
             });
           });
         });
@@ -137,11 +139,15 @@
   }
 
   function closePalette() {
-    if (palette) { palette.remove(); palette = null; }
+    if (!palette)return;
+    palette.remove();palette=null;inputEl=null;resultsEl=null;
+    if(returnFocus&&returnFocus.isConnected&&!document.querySelector('.modal-overlay,.ux-overlay'))returnFocus.focus({preventScroll:true});
+    returnFocus=null;
   }
 
   function highlight(text, query) {
-    if (!query) return text;
+    text=String(text??'');
+    if (!query) return escapeHtml(text);
     var q = query.toLowerCase();
     var t = text.toLowerCase();
     var out = '', i = 0, qi = 0;
@@ -151,7 +157,7 @@
       i++;
     }
     out += escapeHtml(text.slice(i));
-    return out;
+    return out.replace(/<\/mark><mark>/g,'');
   }
 
   function escapeHtml(s) {
@@ -194,14 +200,14 @@
       empty.className = 'palette-empty';
       empty.textContent = 'No matches for "' + query + '"';
       resultsEl.appendChild(empty);
-      activeIdx = -1;
+      activeIdx = -1;inputEl.removeAttribute('aria-activedescendant');
       return;
     }
 
     activeIdx = 0;
     scored.forEach(function (entry, idx) {
       var row = document.createElement('button');
-      row.type = 'button';
+      row.type = 'button';row.tabIndex=-1;row.id='palette-result-'+idx;
       row.className = 'palette-item' + (idx === 0 ? ' active' : '');
       row.setAttribute('role', 'option');
       row.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
@@ -225,13 +231,14 @@
 
       var badge = document.createElement('span');
       badge.className = 'palette-item-badge';
-      badge.textContent = entry.item.kind;
+      badge.textContent=({'recent-search':'Recent',service:'Open'})[entry.item.kind]||entry.item.kind;
       row.appendChild(badge);
 
       row.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
       row.addEventListener('click', function () { runItem(entry.item); });
       resultsEl.appendChild(row);
     });
+    inputEl.setAttribute('aria-activedescendant','palette-result-0');
     renderIcons();
   }
 
@@ -263,11 +270,13 @@
       rows[i].classList.toggle('active', on);
       rows[i].setAttribute('aria-selected', on ? 'true' : 'false');
     }
+    inputEl.setAttribute('aria-activedescendant',rows[activeIdx].id);
     rows[activeIdx].scrollIntoView({ block: 'nearest' });
   }
 
   function openPalette() {
-    closePalette();
+    if(document.querySelector('.modal-overlay,.ux-overlay'))return;
+    closePalette();returnFocus=document.activeElement;
     items = gatherItems();
 
     palette = document.createElement('div');
@@ -282,15 +291,17 @@
     inputEl = document.createElement('input');
     inputEl.className = 'palette-input';
     inputEl.setAttribute('type', 'text');
-    inputEl.setAttribute('placeholder', 'Search anything · g query · yt query · @server name · IP address');
+    inputEl.setAttribute('placeholder', 'Search commands, pages and bookmarks…');
     inputEl.setAttribute('aria-label', 'Command palette search');
     inputEl.setAttribute('autocomplete', 'off');
     inputEl.setAttribute('spellcheck', 'false');
     inputEl.addEventListener('input', renderResults);
-    box.appendChild(inputEl);
+    inputEl.setAttribute('role','combobox');inputEl.setAttribute('aria-expanded','true');inputEl.setAttribute('aria-controls','palette-results');inputEl.setAttribute('aria-autocomplete','list');
+    var searchRow=document.createElement('div');searchRow.className='palette-search';searchRow.appendChild(inputEl);
+    var closeButton=document.createElement('button');closeButton.type='button';closeButton.className='palette-close btn btn-glass btn-icon';closeButton.textContent='×';closeButton.setAttribute('aria-label','Close commands');closeButton.onclick=closePalette;searchRow.appendChild(closeButton);box.appendChild(searchRow);
 
     resultsEl = document.createElement('div');
-    resultsEl.className = 'palette-results';
+    resultsEl.className = 'palette-results';resultsEl.id='palette-results';resultsEl.setAttribute('aria-label','Commands and destinations');
     resultsEl.setAttribute('role', 'listbox');
     box.appendChild(resultsEl);
 
@@ -304,29 +315,36 @@
     renderResults();
 
     // Focus input after attach
-    setTimeout(function () { if (inputEl) inputEl.focus(); }, 10);
+    var focusInput=inputEl;setTimeout(function(){if(focusInput.isConnected)focusInput.focus();},0);
   }
 
   document.addEventListener('keydown', function (e) {
     // Ctrl+K / Cmd+K or Ctrl+P / Cmd+P open the palette (unless already open)
     if ((e.key === 'k' || e.key === 'p') && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
       e.preventDefault();
+      if(document.querySelector('.modal-overlay,.ux-overlay'))return;
       if (palette) closePalette();
       else openPalette();
       return;
     }
-    if (!palette) return;
+    if (!palette || document.querySelector('.modal-overlay,.ux-overlay')) return;
+    e.stopPropagation();
 
     if (e.key === K.Escape) { e.preventDefault(); closePalette(); return; }
     if (e.key === K.ArrowDown) { e.preventDefault(); move(1); return; }
     if (e.key === K.ArrowUp) { e.preventDefault(); move(-1); return; }
+    if(e.key==='Tab'){
+      var closeButton=palette.querySelector('.palette-close');e.preventDefault();
+      (document.activeElement===inputEl?closeButton:inputEl).focus();return;
+    }
+    if (e.key === K.Enter && e.target.closest?.('.palette-close'))return;
     if (e.key === K.Enter) {
       e.preventDefault();
       var rows = resultsEl.querySelectorAll('.palette-item');
       if (rows[activeIdx] && activeIdx >= 0) rows[activeIdx].click();
       return;
     }
-  });
+  },true);
 
   // Click on backdrop closes
   document.addEventListener('mousedown', function (e) {

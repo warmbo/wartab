@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
 import { loadBrowserScript } from './browser-harness.js';
 
 describe('shortcuts overlay redesign', () => {
@@ -14,6 +15,7 @@ describe('shortcuts overlay redesign', () => {
       saveConfig: () => {},
       switchPage: () => {},
     });
+    h.window.eval(fs.readFileSync('modals.js','utf8'));
     h.exports.showShortcutsOverlay();
     const overlay = h.document.getElementById('shortcuts-overlay');
     expect(overlay).toBeTruthy();
